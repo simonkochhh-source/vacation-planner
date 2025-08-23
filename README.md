@@ -1,46 +1,164 @@
-# Getting Started with Create React App
+# Vacation Planner App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+Eine webbasierte Anwendung zur detaillierten Planung und Verfolgung von Urlaubsreisen mit zeitgenauer Strukturierung von Orten und Sehenswürdigkeiten.
 
-## Available Scripts
+## 🚀 Features
 
-In the project directory, you can run:
+- Detaillierte Planung von Reisestationen mit Zeitangaben
+- Strukturierte Verwaltung von Orten und Sehenswürdigkeiten
+- Interaktive Kartenansicht mit zeitlicher Abfolge
+- Export- und Sharing-Funktionen
+- Responsive Design für alle Geräte
 
-### `npm start`
+## 🛠️ Tech Stack
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+- **Frontend**: React 18 + TypeScript
+- **Styling**: Tailwind CSS
+- **Maps**: Leaflet + React-Leaflet
+- **Forms**: React Hook Form + Zod
+- **Icons**: Lucide React
+- **Routing**: React Router
+- **Date/Time**: date-fns
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## 📦 Installation & Start
 
-### `npm test`
+```bash
+# Dependencies installieren
+npm install
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+# Entwicklungsserver starten
+npm start
 
-### `npm run build`
+# Build für Produktion
+npm run build
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+# Tests ausführen
+npm test
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## 🎭 Mock-Daten für Entwicklung
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Die App enthält umfangreiche Mock-Daten zum Testen der Funktionalität:
 
-### `npm run eject`
+### Mock-Daten laden:
+1. **Entwicklungsserver starten** (`npm start`)
+2. **Datenbank-Symbol** (💾) unten rechts klicken
+3. **"Mock-Daten laden"** Button klicken
+4. **Seite neu laden** (F5)
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+### Enthaltene Mock-Daten:
+- **5 realistische Reisen**:
+  - 🏛️ **Berlin Entdeckungstour** - Brandenburger Tor, Museumsinsel, Café Einstein
+  - 🏔️ **Bayern Rundreise** - München, Hofbräuhaus, Schloss Neuschwanstein  
+  - ⚓ **Hamburg Hafenstadt** - Speicherstadt, Fischmarkt
+  - ⛪ **Rheinland Kulturreise** - Kölner Dom, Museum Ludwig
+  - 🎭 **Dresden Elbflorenz** - Frauenkirche
+- **12 detaillierte Ziele** mit echten Koordinaten
+- **Verschiedene Kategorien**: Sehenswürdigkeiten, Hotels, Restaurants, Museen
+- **Realistische Daten** und Zeitpläne
+- **Budget-Informationen** und Notizen
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+### Daten verwalten:
+- **"Alle Daten löschen"** - Entfernt alle gespeicherten Daten
+- **"Seite neu laden"** - Lädt die App neu
+- **Mock-Data-Loader** ist nur im Development-Modus sichtbar
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+## 🗂️ Projektstruktur
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+```
+src/
+├── components/          # React Komponenten
+├── hooks/              # Custom Hooks
+├── types/              # TypeScript Definitionen
+├── utils/              # Utility Funktionen
+├── stores/             # State Management
+├── services/           # API Services
+└── App.tsx             # Haupt-App Komponente
+```
 
-## Learn More
+## 📋 Entwicklungsstatus
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+- [x] Projekt Setup ✅
+- [ ] Datenmodelle
+- [ ] Basis Components
+- [ ] CRUD Operationen
+- [ ] Kartenintegration
+- [ ] Erweiterte Features
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+## 🎯 Roadmap
+
+### Phase 1: Grundfunktionalität (3 Wochen)
+- Projekt Setup ✅
+- Datenmodelle und CRUD
+- Basis UI Components
+- Listen- und Detailansicht
+
+### Phase 2: Kartenintegration (3 Wochen)
+- Leaflet Integration
+- Marker und Routing
+- Timeline Navigation
+
+### Phase 3: Erweiterte Features (3 Wochen)
+- API Integrationen
+- Export/Import
+- Performance Optimierung
+
+### Phase 4: Polish & Testing (2 Wochen)
+- Bug Fixes
+- Documentation
+- Testing & QA
+
+---
+
+## 📚 Create React App Info
+
+This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app) with TypeScript template.
+
+---
+
+## 📋 Detaillierte Todo-Liste
+
+### ✅ Abgeschlossen
+     ☒ Projekt-Setup und Grundstruktur erstellen                  
+     ☒ Datenmodelle definieren und TypeScript Interfaces erstellen
+     ☒ Basis-Components (Header, Sidebar, Layout) implementieren
+     ☒ LocalStorage Integration für Datenpersistierung
+     ☒ CRUD-Operationen für Destinations implementieren
+     ☒ Listen-Ansicht mit DestinationList und DestinationItem
+     ☒ Add/Edit Forms mit React Hook Form und Zod Validation
+     ☒ Basis-Filterung und Sortierung implementieren
+     ☒ Responsive Design mit CSS Grid und Flexbox
+     ☒ Grundlegende Navigation und Routing
+     ☒ Zeitplanung-Features (Start-/Endzeiten, Timeline)
+     ☒ Kategorie-System für Destinations
+     ☒ Status-Management (geplant/besucht/übersprungen)
+     ☒ Export/Import Basis-Funktionalität (JSON, CSV)
+     ☒ Leaflet/Google Maps Integration
+     ☒ Marker-System für Karte implementieren
+     ☒ Basis-Popup Funktionalität für Marker
+     ☒ Koordinaten-System Integration
+     ☒ Routing zwischen Destinationen
+     ☒ Timeline-Navigation auf Karte
+     ☒ Farbcodierung und Kategorien auf Karte
+     ☒ Zoom und Pan-Funktionalitäten optimieren
+     ☒ Erweiterte Kartenfeatures implementieren
+     ☒ Geocoding Integration (OpenStreetMap/Google)
+     ☒ Mobile Karten-Optimierung
+     ☒ Map Performance-Optimierung
+     ☒ Debug: Hinzufügen Button für Ziele funktioniert nicht
+     ☒ Mock-Daten für App erstellen
+     ☒ Welcome Screen für neue Benutzer implementiert
+
+### 🔄 In Arbeit / Nächste Schritte
+     ☐ Erweiterte Filter-Optionen
+     ☐ Drag & Drop für Reihenfolge-Änderungen
+     ☐ Batch-Operationen für mehrere Destinations
+     ☐ Erweiterte Export-Formate (GPX)
+     ☐ Wetter-API Integration (OpenWeatherMap)
+     ☐ Foto-Upload und -verwaltung
+     ☐ Erweiterte Zeitplanung-Tools
+     ☐ Budget-Tracking implementieren
+     ☐ Polish und Bug-Fixes
+     ☐ Performance-Optimierung (Virtual Scrolling, Code Splitting)
+     ☐ Dokumentation erstellen
+     ☐ Testing und QA durchführen
