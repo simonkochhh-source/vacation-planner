@@ -158,8 +158,6 @@ export const mockDestination = {
   startTime: '09:00',
   endTime: '17:00',
   category: 'attraction' as const,
-  priority: 5,
-  rating: 4,
   budget: 100,
   actualCost: 85,
   notes: 'Test notes',
@@ -208,7 +206,6 @@ export const mockUIState = {
   filters: {
     category: undefined,
     status: undefined,
-    priority: undefined,
     tags: undefined,
     dateRange: undefined,
     budgetRange: undefined

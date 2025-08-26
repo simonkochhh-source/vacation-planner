@@ -9,14 +9,29 @@ const MockDataLoader: React.FC = () => {
   const handleLoadMockData = () => {
     setLoading(true);
     try {
-      loadMockData();
+      const result = loadMockData();
+      console.log('Loading mock data...', result);
+      
+      // Verify data was stored
+      const storedTrips = localStorage.getItem('vacation-planner-trips');
+      const storedDestinations = localStorage.getItem('vacation-planner-destinations');
+      
+      console.log('Stored trips:', storedTrips ? JSON.parse(storedTrips).length : 0, 'trips');
+      console.log('Stored destinations:', storedDestinations ? JSON.parse(storedDestinations).length : 0, 'destinations');
+      
+      if (!storedTrips || !storedDestinations) {
+        throw new Error('Failed to store data in localStorage');
+      }
+      
+      alert(`Mock-Daten geladen: ${JSON.parse(storedTrips).length} Reisen, ${JSON.parse(storedDestinations).length} Ziele`);
+      
       // Automatic reload after short delay
       setTimeout(() => {
         window.location.reload();
       }, 1000);
     } catch (error) {
       console.error('Error loading mock data:', error);
-      alert('Fehler beim Laden der Mock-Daten');
+      alert(`Fehler beim Laden der Mock-Daten: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
       setLoading(false);
     }
   };

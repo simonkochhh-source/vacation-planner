@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useApp } from '../../stores/AppContext';
 import { 
   DestinationCategory, 
-  Destination 
+  Destination,
+  DestinationStatus 
 } from '../../types';
 import { destinationSchema, DestinationFormData } from '../../schemas/validationSchemas';
 import { 
@@ -12,7 +13,6 @@ import {
   getCategoryLabel, 
   getCategoryColor,
   getCurrentDateString,
-  getCurrentTimeString,
 } from '../../utils';
 import { 
   X, 
@@ -33,6 +33,31 @@ interface DestinationFormProps {
   destination?: Destination; // For editing
 }
 
+const predefinedColors = [
+  '#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6',
+  '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#6b7280'
+];
+
+// Helper function to get status labels
+const getStatusLabel = (status: DestinationStatus): string => {
+  const labels: Record<DestinationStatus, string> = {
+    [DestinationStatus.PLANNED]: 'Geplant',
+    [DestinationStatus.VISITED]: 'Besucht',
+    [DestinationStatus.SKIPPED]: 'Übersprungen'
+  };
+  return labels[status];
+};
+
+// Helper function to get status icon
+const getStatusIcon = (status: DestinationStatus): string => {
+  const icons: Record<DestinationStatus, string> = {
+    [DestinationStatus.PLANNED]: '📋',
+    [DestinationStatus.VISITED]: '✅',
+    [DestinationStatus.SKIPPED]: '⏭️'
+  };
+  return icons[status];
+};
+
 const DestinationForm: React.FC<DestinationFormProps> = ({ 
   isOpen, 
   onClose, 
@@ -50,22 +75,20 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
     reset,
     watch,
     setValue
-  } = useForm<DestinationFormData>({
-    resolver: zodResolver(destinationSchema),
+  } = useForm({
+    // resolver: zodResolver(destinationSchema),
     defaultValues: destination ? {
       name: destination.name,
       location: destination.location,
       startDate: destination.startDate,
       endDate: destination.endDate,
-      startTime: destination.startTime,
-      endTime: destination.endTime,
       category: destination.category,
-      priority: destination.priority,
       budget: destination.budget,
+      status: destination.status,
       notes: destination.notes,
       tags: destination.tags,
       color: destination.color
@@ -74,87 +97,123 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
       location: '',
       startDate: getCurrentDateString(),
       endDate: getCurrentDateString(),
-      startTime: getCurrentTimeString(),
-      endTime: getCurrentTimeString(),
       category: DestinationCategory.ATTRACTION,
-      priority: 3,
       budget: undefined,
+      status: DestinationStatus.PLANNED,
       notes: '',
       tags: [],
       color: getCategoryColor(DestinationCategory.ATTRACTION)
     }
   });
 
+  // Watch category to show/hide end date field for hotels
   const selectedCategory = watch('category');
 
-  useEffect(() => {
-    if (selectedCategory && !destination) {
-      const categoryColor = getCategoryColor(selectedCategory);
-      setSelectedColor(categoryColor);
-      setValue('color', categoryColor);
-    }
-  }, [selectedCategory, destination, setValue]);
-
+  // Initialize form when destination changes
   useEffect(() => {
     if (destination) {
       setTags(destination.tags);
       setSelectedColor(destination.color || getCategoryColor(destination.category));
+      setCoordinates(destination.coordinates);
+      reset({
+        name: destination.name,
+        location: destination.location,
+        startDate: destination.startDate,
+        endDate: destination.endDate,
+        category: destination.category,
+          budget: destination.budget,
+        status: destination.status,
+        notes: destination.notes || '',
+        color: destination.color || getCategoryColor(destination.category)
+      });
+    } else {
+      // Reset for new destination
+      setTags([]);
+      setSelectedColor(getCategoryColor(DestinationCategory.ATTRACTION));
+      setCoordinates(undefined);
     }
-  }, [destination]);
+  }, [destination, reset]); // Depend on destination and reset function
 
-  const onSubmit = async (data: DestinationFormData) => {
+  // Handle category color changes manually (no useEffect)
+  const handleCategoryChange = useCallback((newCategory: DestinationCategory) => {
+    if (!destination) { // Only for new destinations
+      const newColor = getCategoryColor(newCategory);
+      setSelectedColor(newColor);
+      setValue('color', newColor);
+    }
+    setValue('category', newCategory);
+
+    // For non-hotel destinations, set endDate to startDate
+    if (newCategory !== DestinationCategory.HOTEL) {
+      const startDate = watch('startDate');
+      if (startDate) {
+        setValue('endDate', startDate);
+      }
+    }
+  }, [destination, setValue, watch]);
+
+  // Handle start date changes for non-hotel destinations
+  const handleStartDateChange = useCallback((startDate: string) => {
+    setValue('startDate', startDate);
+    
+    // For non-hotel destinations, sync endDate with startDate
+    if (selectedCategory !== DestinationCategory.HOTEL) {
+      setValue('endDate', startDate);
+    }
+  }, [setValue, selectedCategory]);
+
+  const onSubmit = useCallback(async (data: any) => {
     try {
-      console.log('Form submission started:', data); // Debug log
-      
+      console.log('Form submission started:', data);
       const formData = {
         ...data,
         tags,
         color: selectedColor,
-        coordinates
+        coordinates,
+        images: [] // Add missing field to prevent TypeScript errors
       };
-
-      console.log('Form data prepared:', formData); // Debug log
+      console.log('Form data prepared:', formData);
 
       if (destination) {
+        console.log('Updating existing destination:', destination.id);
         await updateDestination(destination.id, formData);
-        console.log('Destination updated successfully'); // Debug log
+        console.log('Destination updated successfully');
       } else {
+        console.log('Creating new destination...');
         const newDestination = await createDestination(formData);
-        console.log('Destination created successfully:', newDestination); // Debug log
+        console.log('Destination created successfully:', newDestination);
       }
       
       onClose();
       reset();
       setTags([]);
       setNewTag('');
+      console.log('Form submitted and closed');
     } catch (error) {
       console.error('Error saving destination:', error);
       alert('Fehler beim Speichern des Ziels: ' + (error instanceof Error ? error.message : String(error)));
     }
-  };
+  }, [destination, tags, selectedColor, coordinates, updateDestination, createDestination, onClose, reset]);
 
-  const addTag = () => {
+  const addTag = useCallback(() => {
     if (newTag.trim() && !tags.includes(newTag.trim())) {
       setTags([...tags, newTag.trim()]);
       setNewTag('');
     }
-  };
+  }, [newTag, tags]);
 
-  const removeTag = (tagToRemove: string) => {
+  const removeTag = useCallback((tagToRemove: string) => {
     setTags(tags.filter(tag => tag !== tagToRemove));
-  };
-
-  const predefinedColors = [
-    '#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6',
-    '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#6b7280'
-  ];
+  }, [tags]);
 
   if (!isOpen) {
-    console.log('DestinationForm: not open, returning null');
     return null;
   }
 
-  console.log('DestinationForm: rendering form');
+  // Debug form state
+  console.log('Form errors:', errors);
+  console.log('Form isValid:', isValid);
+  console.log('Form isSubmitting:', isSubmitting);
   
   return (
     <div style={{
@@ -208,7 +267,10 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '2rem' }}>
+        <form 
+          onSubmit={handleSubmit(onSubmit)} 
+          style={{ padding: '2rem' }}
+        >
           {/* Basic Info */}
           <div style={{ marginBottom: '2rem' }}>
             <h3 style={{
@@ -324,6 +386,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 </label>
                 <select
                   {...register('category', { required: 'Kategorie ist erforderlich' })}
+                  onChange={(e) => handleCategoryChange(e.target.value as DestinationCategory)}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -340,11 +403,27 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                     </option>
                   ))}
                 </select>
+                {selectedCategory === DestinationCategory.HOTEL && (
+                  <div style={{
+                    marginTop: '0.5rem',
+                    padding: '0.75rem',
+                    background: '#f0f9ff',
+                    border: '1px solid #bae6fd',
+                    borderRadius: '8px',
+                    fontSize: '0.875rem',
+                    color: '#0891b2'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span>🏨</span>
+                      <span>Bei Unterkünften ist ein Abreisedatum erforderlich</span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          {/* Date & Time */}
+          {/* Date Range */}
           <div style={{ marginBottom: '2rem' }}>
             <h3 style={{
               margin: '0 0 1rem 0',
@@ -356,10 +435,14 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
               gap: '0.5rem'
             }}>
               <Calendar size={18} />
-              Datum & Zeit
+              Datum
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: selectedCategory === DestinationCategory.HOTEL ? '1fr 1fr' : '1fr', 
+              gap: '1rem' 
+            }}>
               <div>
                 <label style={{
                   display: 'block',
@@ -368,11 +451,12 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                   color: '#374151',
                   marginBottom: '0.5rem'
                 }}>
-                  Startdatum *
+                  {selectedCategory === DestinationCategory.HOTEL ? 'Anreisedatum *' : 'Datum *'}
                 </label>
                 <input
                   type="date"
                   {...register('startDate', { required: 'Startdatum ist erforderlich' })}
+                  onChange={(e) => handleStartDateChange(e.target.value)}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -384,81 +468,42 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 />
               </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Enddatum *
-                </label>
-                <input
-                  type="date"
-                  {...register('endDate', { required: 'Enddatum ist erforderlich' })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: `1px solid ${errors.endDate ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '8px',
+              {selectedCategory === DestinationCategory.HOTEL && (
+                <div>
+                  <label style={{
+                    display: 'block',
                     fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Startzeit *
-                </label>
-                <input
-                  type="time"
-                  {...register('startTime', { required: 'Startzeit ist erforderlich' })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: `1px solid ${errors.startTime ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                />
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Endzeit *
-                </label>
-                <input
-                  type="time"
-                  {...register('endTime', { required: 'Endzeit ist erforderlich' })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: `1px solid ${errors.endTime ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                />
-              </div>
+                    fontWeight: '500',
+                    color: '#374151',
+                    marginBottom: '0.5rem'
+                  }}>
+                    Abreisedatum *
+                  </label>
+                  <input
+                    type="date"
+                    {...register('endDate', { 
+                      required: selectedCategory === DestinationCategory.HOTEL ? 'Abreisedatum ist bei Hotels erforderlich' : false
+                    })}
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: `1px solid ${errors.endDate ? '#ef4444' : '#d1d5db'}`,
+                      borderRadius: '8px',
+                      fontSize: '0.875rem',
+                      outline: 'none'
+                    }}
+                  />
+                  {errors.endDate && (
+                    <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                      {errors.endDate.message}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Priority & Budget */}
+          {/* Budget */}
           <div style={{ marginBottom: '2rem' }}>
             <h3 style={{
               margin: '0 0 1rem 0',
@@ -470,68 +515,84 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
               gap: '0.5rem'
             }}>
               <Star size={18} />
-              Priorität & Budget
+              Budget
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label style={{
-                  display: 'block',
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '0.5rem'
+              }}>
+                Budget (€)
+              </label>
+              <input
+                type="number"
+                step="0.01"
+                {...register('budget', { valueAsNumber: true })}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '8px',
                   fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Priorität (1-5)
-                </label>
-                <select
-                  {...register('priority', { 
-                    required: 'Priorität ist erforderlich',
-                    valueAsNumber: true 
-                  })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: `1px solid ${errors.priority ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    background: 'white'
-                  }}
-                >
-                  {[1, 2, 3, 4, 5].map((num) => (
-                    <option key={num} value={num}>
-                      {num} {'★'.repeat(num)}
-                    </option>
-                  ))}
-                </select>
-              </div>
+                  outline: 'none'
+                }}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
 
-              <div>
-                <label style={{
-                  display: 'block',
+          {/* Status Selection */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{
+              margin: '0 0 1rem 0',
+              fontSize: '1.125rem',
+              fontWeight: '600',
+              color: '#374151',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <Star size={18} />
+              Status
+            </h3>
+
+            <div>
+              <label style={{
+                display: 'block',
+                fontSize: '0.875rem',
+                fontWeight: '500',
+                color: '#374151',
+                marginBottom: '0.5rem'
+              }}>
+                Aktueller Status
+              </label>
+              <select
+                {...register('status', { required: 'Status ist erforderlich' })}
+                style={{
+                  width: '100%',
+                  padding: '0.75rem',
+                  border: `1px solid ${errors.status ? '#ef4444' : '#d1d5db'}`,
+                  borderRadius: '8px',
                   fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Budget (€)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...register('budget', { valueAsNumber: true })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                  placeholder="0.00"
-                />
-              </div>
+                  outline: 'none',
+                  background: 'white'
+                }}
+              >
+                {Object.values(DestinationStatus).map((status) => (
+                  <option key={status} value={status}>
+                    {getStatusIcon(status)} {getStatusLabel(status)}
+                  </option>
+                ))}
+              </select>
+              {errors.status && (
+                <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                  {errors.status.message}
+                </p>
+              )}
             </div>
           </div>
 
@@ -718,6 +779,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
             <button
               type="submit"
               disabled={isSubmitting}
+              onClick={() => console.log('Submit button clicked!')}
               style={{
                 background: isSubmitting ? '#9ca3af' : '#3b82f6',
                 color: 'white',
@@ -751,4 +813,4 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
   );
 };
 
-export default DestinationForm;
+export default React.memo(DestinationForm);

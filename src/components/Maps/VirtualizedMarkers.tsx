@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { Marker, Popup, useMap } from 'react-leaflet';
 import { Icon, LatLngBounds } from 'leaflet';
 import { Destination } from '../../types';
-import { getCategoryIcon, getCategoryLabel, formatDate, formatTime } from '../../utils';
+import { getCategoryIcon, getCategoryLabel, formatDate } from '../../utils';
 import StatusBadge from '../UI/StatusBadge';
 import { MapPin } from 'lucide-react';
 
@@ -25,7 +25,7 @@ const createCustomIcon = (() => {
     }
     
     const icon = new Icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
+      iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
           <circle cx="16" cy="16" r="14" fill="${destination.color || '#3b82f6'}" stroke="white" stroke-width="2"/>
           <text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-family="Arial">
@@ -67,16 +67,15 @@ const VirtualizedMarkers: React.FC<VirtualizedMarkersProps> = ({
       
       // If too many markers in viewport, show only the most important ones
       if (inViewport.length > maxVisibleMarkers) {
-        // Sort by priority (higher priority first) and then by importance
+        // Sort by status importance and then by name
         return inViewport
           .sort((a, b) => {
-            // Primary sort: priority (5 = highest, 1 = lowest)
-            if (a.priority !== b.priority) {
-              return b.priority - a.priority;
-            }
-            // Secondary sort: status (planned > visited > skipped)
+            // Primary sort: status (planned > visited > skipped)
             const statusPriority = { 'planned': 3, 'visited': 2, 'skipped': 1 };
-            return (statusPriority[b.status] || 0) - (statusPriority[a.status] || 0);
+            const statusDiff = (statusPriority[b.status] || 0) - (statusPriority[a.status] || 0);
+            if (statusDiff !== 0) return statusDiff;
+            // Secondary sort: name
+            return a.name.localeCompare(b.name);
           })
           .slice(0, maxVisibleMarkers);
       }
@@ -170,14 +169,22 @@ const VirtualizedMarkers: React.FC<VirtualizedMarkersProps> = ({
         }}>
           <div>
             <strong>Start:</strong><br />
-            {formatDate(destination.startDate)}<br />
-            {formatTime(destination.startTime)}
+            {formatDate(destination.startDate)}
           </div>
           <div>
             <strong>Ende:</strong><br />
-            {formatDate(destination.endDate)}<br />
-            {formatTime(destination.endTime)}
+            {formatDate(destination.endDate)}
           </div>
+        </div>
+      )}
+      
+      {destination.duration && !isMobile && (
+        <div style={{
+          marginTop: '0.5rem',
+          fontSize: '0.875rem',
+          color: '#374151'
+        }}>
+          <strong>Dauer:</strong> {Math.floor(destination.duration / 60)}h {destination.duration % 60}min
         </div>
       )}
 

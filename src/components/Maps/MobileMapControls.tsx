@@ -14,7 +14,8 @@ import {
   Menu,
   X,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  MapPin
 } from 'lucide-react';
 
 interface MobileMapControlsProps {
@@ -32,6 +33,8 @@ interface MobileMapControlsProps {
   onToggleMeasurement: () => void;
   showClustering: boolean;
   onToggleClustering: () => void;
+  showTripRoutes?: boolean;
+  onToggleTripRoutes?: () => void;
   isMobile: boolean;
 }
 
@@ -50,6 +53,8 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
   onToggleMeasurement,
   showClustering,
   onToggleClustering,
+  showTripRoutes,
+  onToggleTripRoutes,
   isMobile
 }) => {
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
@@ -551,6 +556,37 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
                 Cluster
               </span>
             </button>
+
+            {/* Trip Routes */}
+            {onToggleTripRoutes && (
+              <button 
+                onClick={onToggleTripRoutes}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  gap: '0.25rem',
+                  background: showTripRoutes ? '#eff6ff' : '#f8fafc',
+                  border: `1px solid ${showTripRoutes ? '#3b82f6' : '#e2e8f0'}`,
+                  borderRadius: '8px',
+                  padding: '0.75rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  minWidth: '70px',
+                  boxShadow: showTripRoutes ? '0 2px 4px rgba(59, 130, 246, 0.1)' : '0 1px 2px rgba(0, 0, 0, 0.05)'
+                }}
+              >
+                <Route size={24} style={{ color: showTripRoutes ? '#3b82f6' : '#6b7280' }} />
+                <span style={{ 
+                  fontSize: '0.75rem', 
+                  fontWeight: '500',
+                  color: showTripRoutes ? '#3b82f6' : '#374151'
+                }}>
+                  Routen
+                </span>
+              </button>
+            )}
           </div>
 
           {/* Routing Mode Selection */}

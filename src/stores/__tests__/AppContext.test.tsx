@@ -113,7 +113,6 @@ describe('AppContext', () => {
       startTime: '09:00',
       endTime: '17:00',
       category: 'attraction' as const,
-      priority: 5,
       tags: ['sightseeing']
     };
 
@@ -144,7 +143,6 @@ describe('AppContext', () => {
         startTime: '09:00',
         endTime: '17:00',
         category: 'attraction' as const,
-        priority: 3,
         tags: []
       });
     });
@@ -153,15 +151,12 @@ describe('AppContext', () => {
     await act(async () => {
       await result.current.updateDestination(destination.id, {
         name: 'Updated Destination',
-        priority: 5,
-        rating: 4
+        budget: 500
       });
     });
 
     const updatedDestination = result.current.destinations.find(d => d.id === destination.id);
     expect(updatedDestination?.name).toBe('Updated Destination');
-    expect(updatedDestination?.priority).toBe(5);
-    expect(updatedDestination?.rating).toBe(4);
   });
 
   it('sets current trip correctly', async () => {
@@ -229,7 +224,6 @@ describe('AppContext', () => {
         startTime: '09:00',
         endTime: '12:00',
         category: 'attraction' as const,
-        priority: 5,
         tags: []
       });
       dest2 = await result.current.createDestination({
@@ -240,7 +234,6 @@ describe('AppContext', () => {
         startTime: '13:00',
         endTime: '17:00',
         category: 'restaurant' as const,
-        priority: 4,
         tags: []
       });
     });

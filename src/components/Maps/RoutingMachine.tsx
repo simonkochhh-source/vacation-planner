@@ -23,12 +23,12 @@ const RoutingMachine: React.FC<RoutingMachineProps> = ({
   useEffect(() => {
     if (!map || !showRouting || destinations.length < 2) return;
 
-    // Filter destinations that have coordinates and sort by date/time
+    // Filter destinations that have coordinates and sort by date
     const sortedDestinations = destinations
       .filter(dest => dest.coordinates)
       .sort((a, b) => {
-        const dateA = new Date(`${a.startDate}T${a.startTime}`);
-        const dateB = new Date(`${b.startDate}T${b.startTime}`);
+        const dateA = new Date(a.startDate);
+        const dateB = new Date(b.startDate);
         return dateA.getTime() - dateB.getTime();
       });
 

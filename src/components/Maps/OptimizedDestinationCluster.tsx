@@ -114,7 +114,7 @@ const createClusterIcon = (() => {
     }
     
     const icon = new Icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
+      iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
         <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
           <circle cx="${size/2}" cy="${size/2}" r="${size/2 - 2}" fill="${dominantColor}" stroke="white" stroke-width="3" opacity="0.8"/>
           <circle cx="${size/2}" cy="${size/2}" r="${size/2 - 8}" fill="white" opacity="0.9"/>
@@ -145,7 +145,7 @@ const createMarkerIcon = (() => {
     }
     
     const icon = new Icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
+      iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
           <circle cx="16" cy="16" r="14" fill="${destination.color || '#3b82f6'}" stroke="white" stroke-width="2"/>
           <text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-family="Arial">

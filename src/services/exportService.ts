@@ -1,5 +1,5 @@
 import { Trip, Destination, ExportOptions } from '../types';
-import { formatDate, formatTime } from '../utils';
+import { formatDate } from '../utils';
 
 export class ExportService {
   // GPX Export for GPS devices
@@ -45,9 +45,7 @@ export class ExportService {
       'Status',
       'Priorität',
       'Startdatum',
-      'Startzeit',
       'Enddatum',
-      'Endzeit',
       'Dauer (min)',
       'Budget',
       'Tatsächliche Kosten',
@@ -64,12 +62,9 @@ export class ExportService {
         this.escapeCSV(dest.location),
         this.escapeCSV(dest.category),
         this.escapeCSV(dest.status),
-        dest.priority.toString(),
         dest.startDate,
-        dest.startTime,
         dest.endDate,
-        dest.endTime,
-        dest.duration.toString(),
+        (dest.duration || 0).toString(),
         dest.budget?.toString() || '',
         dest.actualCost?.toString() || '',
         dest.coordinates?.lat.toString() || '',
@@ -165,8 +160,8 @@ X-WR-CALNAME:${trip.name}
 X-WR-CALDESC:${trip.description || 'Exported from Vacation Planner'}`;
 
     const events = filteredDestinations.map(dest => {
-      const startDateTime = this.formatICSDateTime(dest.startDate, dest.startTime);
-      const endDateTime = this.formatICSDateTime(dest.endDate, dest.endTime);
+      const startDateTime = this.formatICSDateTime(dest.startDate, '09:00'); // Default start time
+      const endDateTime = this.formatICSDateTime(dest.endDate || dest.startDate, '09:00', dest.duration || 0);
       
       return `
 BEGIN:VEVENT
@@ -178,7 +173,6 @@ DESCRIPTION:${this.escapeICS(this.createEventDescription(dest))}
 LOCATION:${this.escapeICS(dest.location)}
 CATEGORIES:${dest.category}
 STATUS:${dest.status === 'planned' ? 'TENTATIVE' : dest.status === 'visited' ? 'CONFIRMED' : 'CANCELLED'}
-PRIORITY:${10 - dest.priority}
 CREATED:${new Date(dest.createdAt).toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 LAST-MODIFIED:${new Date(dest.updatedAt).toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 END:VEVENT`;
@@ -195,9 +189,7 @@ END:VCALENDAR`;
     const parts = [
       `Kategorie: ${dest.category}`,
       `Status: ${dest.status}`,
-      `Priorität: ${dest.priority}/5`,
-      `Zeit: ${formatTime(dest.startTime)} - ${formatTime(dest.endTime)}`,
-      `Dauer: ${Math.floor(dest.duration / 60)}h ${dest.duration % 60}min`
+      `Dauer: ${Math.floor((dest.duration || 0) / 60)}h ${(dest.duration || 0) % 60}min`
     ];
 
     if (dest.budget) {
@@ -223,7 +215,7 @@ END:VCALENDAR`;
       .map(dest => `
     <trkpt lat="${dest.coordinates!.lat}" lon="${dest.coordinates!.lng}">
       <name>${this.escapeXML(dest.name)}</name>
-      <time>${new Date(`${dest.startDate}T${dest.startTime}`).toISOString()}</time>
+      <time>${new Date(`${dest.startDate}T09:00`).toISOString()}</time>
     </trkpt>`).join('');
 
     return `
@@ -241,9 +233,8 @@ END:VCALENDAR`;
       <p><strong>Ort:</strong> ${dest.location}</p>
       <p><strong>Kategorie:</strong> ${dest.category}</p>
       <p><strong>Status:</strong> ${dest.status}</p>
-      <p><strong>Priorität:</strong> ${dest.priority}/5</p>
-      <p><strong>Zeit:</strong> ${formatTime(dest.startTime)} - ${formatTime(dest.endTime)}</p>
-      <p><strong>Datum:</strong> ${formatDate(dest.startDate)} - ${formatDate(dest.endDate)}</p>
+      <p><strong>Datum:</strong> ${formatDate(dest.startDate)}${dest.endDate && dest.endDate !== dest.startDate ? ` - ${formatDate(dest.endDate)}` : ''}</p>
+      <p><strong>Dauer:</strong> ${Math.floor((dest.duration || 0) / 60)}h ${(dest.duration || 0) % 60}min</p>
       ${dest.budget ? `<p><strong>Budget:</strong> €${dest.budget}</p>` : ''}
       ${dest.notes ? `<p><strong>Notizen:</strong> ${dest.notes}</p>` : ''}
       ${dest.tags.length > 0 ? `<p><strong>Tags:</strong> ${dest.tags.join(', ')}</p>` : ''}
@@ -255,8 +246,7 @@ END:VCALENDAR`;
       `Ort: ${dest.location}`,
       `Kategorie: ${dest.category}`,
       `Status: ${dest.status}`,
-      `Priorität: ${dest.priority}/5`,
-      `Dauer: ${Math.floor(dest.duration / 60)}h ${dest.duration % 60}min`
+      `Dauer: ${Math.floor((dest.duration || 0) / 60)}h ${(dest.duration || 0) % 60}min`
     ];
 
     if (dest.budget) {
@@ -282,13 +272,16 @@ END:VCALENDAR`;
       skippedDestinations: destinations.filter(d => d.status === 'skipped').length,
       totalBudget: destinations.reduce((sum, d) => sum + (d.budget || 0), 0),
       actualCost: destinations.reduce((sum, d) => sum + (d.actualCost || 0), 0),
-      averagePriority: destinations.reduce((sum, d) => sum + d.priority, 0) / destinations.length,
-      totalDuration: destinations.reduce((sum, d) => sum + d.duration, 0)
+      totalDuration: destinations.reduce((sum, d) => sum + (d.duration || 0), 0)
     };
   }
 
-  private static formatICSDateTime(date: string, time: string): string {
-    return new Date(`${date}T${time}`).toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  private static formatICSDateTime(date: string, time: string = '09:00', durationMinutes?: number): string {
+    const baseDate = new Date(`${date}T${time}`);
+    if (durationMinutes) {
+      baseDate.setMinutes(baseDate.getMinutes() + durationMinutes);
+    }
+    return baseDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
   }
 
   private static escapeXML(text: string): string {

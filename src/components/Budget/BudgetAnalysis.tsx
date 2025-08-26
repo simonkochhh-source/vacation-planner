@@ -14,7 +14,7 @@ import {
   Minus,
   Download
 } from 'lucide-react';
-import { formatCurrency, formatDate, getCategoryLabel } from '../../utils';
+import { formatCurrency, formatDate, getCategoryLabel, calculateTravelCosts } from '../../utils';
 
 interface BudgetTrend {
   date: string;
@@ -40,7 +40,7 @@ interface BudgetAnalysisProps {
 const BudgetAnalysis: React.FC<BudgetAnalysisProps> = ({
   onExportData
 }) => {
-  const { currentTrip, destinations } = useApp();
+  const { currentTrip, destinations, settings } = useApp();
   const [analysisType, setAnalysisType] = useState<'overview' | 'category' | 'timeline' | 'forecast'>('overview');
   const [timeframe, setTimeframe] = useState<'all' | 'past' | 'upcoming'>('all');
 
@@ -91,6 +91,15 @@ const BudgetAnalysis: React.FC<BudgetAnalysisProps> = ({
       }
     };
   }, [currentTrip, filteredDestinations]);
+
+  // Calculate travel costs based on settings configuration
+  const travelCosts = useMemo(() => {
+    return calculateTravelCosts(
+      currentDestinations,
+      settings.fuelConsumption,
+      1.65 // Use fallback price - will be replaced by fuel price API in BudgetOverview
+    );
+  }, [currentDestinations, settings.fuelConsumption]);
 
   // Category analysis
   const categoryAnalysis = useMemo(() => {
@@ -155,7 +164,8 @@ const BudgetAnalysis: React.FC<BudgetAnalysisProps> = ({
 
   // Budget forecast
   const budgetForecast = useMemo(() => {
-    const remaining = budgetVariance.total.planned - budgetVariance.total.actual;
+    const totalWithTravel = budgetVariance.total.actual + travelCosts;
+    const remaining = budgetVariance.total.planned - totalWithTravel;
     const upcomingDestinations = currentDestinations.filter(dest => 
       new Date(dest.startDate) >= new Date()
     );
@@ -165,7 +175,7 @@ const BudgetAnalysis: React.FC<BudgetAnalysisProps> = ({
       currentDestinations.filter(dest => new Date(dest.startDate) < new Date()).length
     );
     
-    const forecastedTotal = budgetVariance.total.actual + (upcomingDestinations.length * avgSpendingRate);
+    const forecastedTotal = totalWithTravel + (upcomingDestinations.length * avgSpendingRate);
     const projectedOverrun = Math.max(0, forecastedTotal - budgetVariance.total.planned);
 
     return {
@@ -175,9 +185,10 @@ const BudgetAnalysis: React.FC<BudgetAnalysisProps> = ({
       forecastedTotal,
       projectedOverrun,
       daysLeft: upcomingDestinations.length,
-      dailyBudgetRemaining: upcomingDestinations.length > 0 ? remaining / upcomingDestinations.length : 0
+      dailyBudgetRemaining: upcomingDestinations.length > 0 ? remaining / upcomingDestinations.length : 0,
+      totalWithTravel
     };
-  }, [budgetVariance, currentDestinations]);
+  }, [budgetVariance, currentDestinations, travelCosts]);
 
   // Get variance indicator
   const getVarianceIndicator = (variance: number, amount: number = 1) => {
@@ -508,6 +519,63 @@ const BudgetAnalysis: React.FC<BudgetAnalysisProps> = ({
                   }}>
                     {budgetVariance.destinations.variancePercent >= 0 ? '+' : ''}{budgetVariance.destinations.variancePercent.toFixed(1)}%
                   </span>
+                </div>
+              </div>
+
+              {/* Travel Costs */}
+              <div style={{
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                padding: '1rem'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: '0.5rem'
+                }}>
+                  <span style={{ fontSize: '0.875rem', color: '#16a34a', fontWeight: '500' }}>
+                    Fahrtkosten (geschätzt)
+                  </span>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.25rem',
+                    color: '#16a34a'
+                  }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '500' }}>
+                      0,30 €/km
+                    </span>
+                  </div>
+                </div>
+                
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  <span style={{
+                    fontSize: '1.5rem',
+                    fontWeight: 'bold',
+                    color: '#14532d'
+                  }}>
+                    {formatCurrency(travelCosts)}
+                  </span>
+                  <span style={{
+                    fontSize: '0.875rem',
+                    color: '#16a34a'
+                  }}>
+                    geschätzte Autokosten
+                  </span>
+                </div>
+
+                <div style={{
+                  fontSize: '0.75rem',
+                  color: '#16a34a'
+                }}>
+                  Basiert auf realistischen Fahrtrouten zwischen Zielen
                 </div>
               </div>
             </div>
@@ -885,6 +953,36 @@ const BudgetAnalysis: React.FC<BudgetAnalysisProps> = ({
                 <div style={{
                   fontSize: '0.875rem',
                   color: '#0891b2',
+                  fontWeight: '600',
+                  marginBottom: '0.5rem'
+                }}>
+                  Gesamtausgaben (inkl. Fahrtkosten)
+                </div>
+                <div style={{
+                  fontSize: '1.75rem',
+                  fontWeight: 'bold',
+                  color: '#1f2937',
+                  marginBottom: '0.5rem'
+                }}>
+                  {formatCurrency(budgetForecast.totalWithTravel)}
+                </div>
+                <div style={{
+                  fontSize: '0.75rem',
+                  color: '#6b7280'
+                }}>
+                  Davon {formatCurrency(travelCosts)} Fahrtkosten
+                </div>
+              </div>
+
+              <div style={{
+                background: budgetForecast.remaining >= 0 ? '#f0fdf4' : '#fef2f2',
+                border: budgetForecast.remaining >= 0 ? '1px solid #bbf7d0' : '1px solid #fca5a5',
+                borderRadius: '8px',
+                padding: '1rem'
+              }}>
+                <div style={{
+                  fontSize: '0.875rem',
+                  color: budgetForecast.remaining >= 0 ? '#16a34a' : '#dc2626',
                   fontWeight: '600',
                   marginBottom: '0.5rem'
                 }}>

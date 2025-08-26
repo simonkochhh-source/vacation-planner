@@ -29,7 +29,6 @@ const BatchActions: React.FC<BatchActionsProps> = ({
   const [batchEditData, setBatchEditData] = useState({
     status: '' as DestinationStatus | '',
     category: '' as DestinationCategory | '',
-    priority: '',
     tags: ''
   });
 
@@ -79,7 +78,6 @@ const BatchActions: React.FC<BatchActionsProps> = ({
       
       if (batchEditData.status) updates.status = batchEditData.status;
       if (batchEditData.category) updates.category = batchEditData.category;
-      if (batchEditData.priority) updates.priority = parseInt(batchEditData.priority);
       if (batchEditData.tags) {
         const newTags = batchEditData.tags.split(',').map(tag => tag.trim()).filter(tag => tag);
         updates.tags = newTags;
@@ -91,7 +89,7 @@ const BatchActions: React.FC<BatchActionsProps> = ({
       
       onSelectionChange([]);
       setShowBatchEdit(false);
-      setBatchEditData({ status: '', category: '', priority: '', tags: '' });
+      setBatchEditData({ status: '', category: '', tags: '' });
       onBatchComplete();
     } catch (error) {
       console.error('Batch edit failed:', error);
@@ -110,10 +108,7 @@ const BatchActions: React.FC<BatchActionsProps> = ({
           coordinates: dest.coordinates,
           startDate: dest.startDate,
           endDate: dest.endDate,
-          startTime: dest.startTime,
-          endTime: dest.endTime,
           category: dest.category,
-          priority: dest.priority,
           budget: dest.budget,
           notes: dest.notes,
           tags: [...dest.tags],
@@ -377,36 +372,6 @@ const BatchActions: React.FC<BatchActionsProps> = ({
               </select>
             </div>
 
-            {/* Priority */}
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '0.5rem'
-              }}>
-                Priorität
-              </label>
-              <select
-                value={batchEditData.priority}
-                onChange={(e) => setBatchEditData(prev => ({ ...prev, priority: e.target.value }))}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '6px',
-                  fontSize: '0.875rem'
-                }}
-              >
-                <option value="">Nicht ändern</option>
-                <option value="1">1 - Niedrig</option>
-                <option value="2">2</option>
-                <option value="3">3 - Mittel</option>
-                <option value="4">4</option>
-                <option value="5">5 - Hoch</option>
-              </select>
-            </div>
 
             {/* Tags */}
             <div>

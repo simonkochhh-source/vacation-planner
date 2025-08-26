@@ -1,6 +1,6 @@
 import React from 'react';
 import { useApp } from '../../stores/AppContext';
-import { Menu, MapPin, List, Calendar, Settings, Search, Clock, DollarSign } from 'lucide-react';
+import { Menu, MapPin, Calendar, Settings, Search, DollarSign, Compass } from 'lucide-react';
 
 interface HeaderProps {
   onToggleSidebar: () => void;
@@ -9,8 +9,12 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
   const { currentTrip, uiState, updateUIState } = useApp();
 
-  const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'scheduling' | 'budget') => {
-    updateUIState({ currentView: view });
+  const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'budget' | 'discovery') => {
+    updateUIState({ currentView: view, activeView: view });
+  };
+
+  const handleSettingsClick = () => {
+    updateUIState({ currentView: 'settings' });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,17 +131,16 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             gap: '0.25rem'
           }}>
             {[
-              { view: 'list' as const, icon: List, label: 'Liste' },
-              { view: 'map' as const, icon: MapPin, label: 'Karte' },
               { view: 'timeline' as const, icon: Calendar, label: 'Timeline' },
-              { view: 'scheduling' as const, icon: Clock, label: 'Zeitplanung' },
-              { view: 'budget' as const, icon: DollarSign, label: 'Budget' }
+              { view: 'map' as const, icon: MapPin, label: 'Karte' },
+              { view: 'budget' as const, icon: DollarSign, label: 'Budget' },
+              { view: 'discovery' as const, icon: Compass, label: 'Entdecken' }
             ].map(({ view, icon: Icon, label }) => (
               <button
                 key={view}
                 onClick={() => handleViewChange(view)}
                 style={{
-                  background: uiState.currentView === view 
+                  background: (uiState.currentView === view || uiState.activeView === view)
                     ? 'rgba(255, 255, 255, 0.2)' 
                     : 'transparent',
                   border: 'none',
@@ -149,17 +152,17 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
                   alignItems: 'center',
                   gap: '0.5rem',
                   fontSize: '0.875rem',
-                  fontWeight: uiState.currentView === view ? '600' : '400',
+                  fontWeight: (uiState.currentView === view || uiState.activeView === view) ? '600' : '400',
                   transition: 'all 0.2s'
                 }}
                 title={label}
                 onMouseOver={(e) => {
-                  if (uiState.currentView !== view) {
+                  if (uiState.currentView !== view && uiState.activeView !== view) {
                     e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
                   }
                 }}
                 onMouseOut={(e) => {
-                  if (uiState.currentView !== view) {
+                  if (uiState.currentView !== view && uiState.activeView !== view) {
                     e.currentTarget.style.background = 'transparent';
                   }
                 }}
@@ -172,8 +175,11 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
 
           {/* Settings Button */}
           <button
+            onClick={handleSettingsClick}
             style={{
-              background: 'rgba(255, 255, 255, 0.1)',
+              background: uiState.currentView === 'settings' 
+                ? 'rgba(255, 255, 255, 0.2)' 
+                : 'rgba(255, 255, 255, 0.1)',
               border: 'none',
               borderRadius: '8px',
               padding: '0.5rem',
@@ -184,8 +190,16 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
               justifyContent: 'center'
             }}
             title="Einstellungen"
-            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+            onMouseOver={(e) => {
+              if (uiState.currentView !== 'settings') {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
+              }
+            }}
+            onMouseOut={(e) => {
+              if (uiState.currentView !== 'settings') {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
+              }
+            }}
           >
             <Settings size={18} />
           </button>

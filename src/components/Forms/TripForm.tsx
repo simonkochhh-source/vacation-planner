@@ -2,16 +2,18 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useApp } from '../../stores/AppContext';
-import { Trip } from '../../types';
+import { Trip, VehicleConfig, FuelType, Coordinates } from '../../types';
 import { tripSchema, TripFormData } from '../../schemas/validationSchemas';
-import { getCurrentDateString, addDaysToDate } from '../../utils';
+import { getCurrentDateString, addDaysToDate, getCenterCoordinates } from '../../utils';
+import VehicleConfigPanel from '../Trip/VehicleConfigPanel';
 import { 
   X, 
   Plane, 
   Calendar, 
   Users, 
   FileText,
-  Tag
+  Tag,
+  Car
 } from 'lucide-react';
 
 interface TripFormProps {
@@ -25,11 +27,16 @@ const TripForm: React.FC<TripFormProps> = ({
   onClose, 
   trip 
 }) => {
-  const { createTrip, updateTrip, setCurrentTrip } = useApp();
+  const { createTrip, updateTrip, setCurrentTrip, destinations } = useApp();
   const [participants, setParticipants] = useState<string[]>(trip?.participants || []);
   const [newParticipant, setNewParticipant] = useState('');
   const [tags, setTags] = useState<string[]>(trip?.tags || []);
   const [newTag, setNewTag] = useState('');
+  const [vehicleConfig, setVehicleConfig] = useState<VehicleConfig>(trip?.vehicleConfig || {
+    fuelType: FuelType.DIESEL,
+    fuelConsumption: 9.0,
+    fuelPrice: 1.65
+  });
 
   const {
     register,
@@ -60,12 +67,24 @@ const TripForm: React.FC<TripFormProps> = ({
 
   const startDate = watch('startDate');
 
+  // Get center coordinates for fuel price lookup
+  const tripCoordinates: Coordinates | undefined = React.useMemo(() => {
+    if (!trip) return undefined;
+    
+    const tripDestinations = destinations.filter(dest => 
+      trip.destinations.includes(dest.id) && dest.coordinates
+    );
+    
+    return getCenterCoordinates(tripDestinations) || undefined;
+  }, [trip, destinations]);
+
   const onSubmit = async (data: TripFormData) => {
     try {
       const formData = {
         ...data,
         participants,
-        tags
+        tags,
+        vehicleConfig
       };
 
       if (trip) {
@@ -80,6 +99,11 @@ const TripForm: React.FC<TripFormProps> = ({
       reset();
       setParticipants([]);
       setTags([]);
+      setVehicleConfig({
+        fuelType: FuelType.DIESEL,
+        fuelConsumption: 9.0,
+        fuelPrice: 1.65
+      });
       setNewParticipant('');
       setNewTag('');
     } catch (error) {
@@ -440,6 +464,28 @@ const TripForm: React.FC<TripFormProps> = ({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Vehicle Configuration */}
+          <div style={{ marginBottom: '2rem' }}>
+            <h3 style={{
+              margin: '0 0 1rem 0',
+              fontSize: '1.125rem',
+              fontWeight: '600',
+              color: '#374151',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
+            }}>
+              <Car size={18} />
+              Fahrzeug & Spritkosten
+            </h3>
+            
+            <VehicleConfigPanel
+              vehicleConfig={vehicleConfig}
+              onChange={setVehicleConfig}
+              tripCoordinates={tripCoordinates}
+            />
           </div>
 
           {/* Tags */}

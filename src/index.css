@@ -1,3 +1,6 @@
+/* Import Leaflet CSS globally */
+@import 'leaflet/dist/leaflet.css';
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
@@ -19,4 +22,17 @@ code {
 
 .shadow-card {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Fix Leaflet map display issues */
+.leaflet-container {
+  background-color: #f3f4f6;
+}
+
+.leaflet-tile {
+  max-width: none !important;
+}
+
+.leaflet-tile-pane {
+  opacity: 1;
 }

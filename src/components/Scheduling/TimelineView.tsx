@@ -1,11 +1,10 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useApp } from '../../stores/AppContext';
 import { Destination } from '../../types';
 import {
   Clock,
   Calendar,
   MapPin,
-  AlertTriangle,
   Route,
   Zap,
   ChevronLeft,
@@ -13,7 +12,6 @@ import {
 } from 'lucide-react';
 import { 
   formatDate, 
-  formatTime, 
   getCategoryIcon, 
   getCategoryLabel 
 } from '../../utils';
@@ -26,13 +24,6 @@ interface TimelineViewProps {
 interface TimelineDay {
   date: string;
   destinations: Destination[];
-  conflicts: ConflictInfo[];
-}
-
-interface ConflictInfo {
-  destination1: Destination;
-  destination2: Destination;
-  overlapMinutes: number;
 }
 
 const TimelineView: React.FC<TimelineViewProps> = ({
@@ -41,93 +32,234 @@ const TimelineView: React.FC<TimelineViewProps> = ({
 }) => {
   const { currentTrip, destinations } = useApp();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
-  const [showConflicts, setShowConflicts] = useState(true);
+  // Conflicts removed
 
   // Get current trip destinations
   const currentDestinations = currentTrip 
     ? destinations.filter(dest => currentTrip.destinations.includes(dest.id))
     : [];
 
-  // Group destinations by day and detect conflicts
+  // Group destinations by day and detect conflicts, handling multi-day accommodations
   const timelineData = useMemo(() => {
     const grouped = new Map<string, Destination[]>();
     
-    currentDestinations.forEach(dest => {
-      const dateKey = dest.startDate;
-      if (!grouped.has(dateKey)) {
-        grouped.set(dateKey, []);
+    // Helper function to get all dates between start and end date
+    const getDateRange = (startDate: string, endDate: string): string[] => {
+      const dates: string[] = [];
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      for (let current = new Date(start); current <= end; current.setDate(current.getDate() + 1)) {
+        dates.push(current.toISOString().split('T')[0]);
       }
-      grouped.get(dateKey)!.push(dest);
+      
+      return dates;
+    };
+    
+    currentDestinations.forEach(dest => {
+      // If it's a hotel (accommodation) and spans multiple days, add it to each day
+      if (dest.category === 'hotel' && dest.startDate !== dest.endDate) {
+        const dateRange = getDateRange(dest.startDate, dest.endDate);
+        
+        dateRange.forEach(dateKey => {
+          if (!grouped.has(dateKey)) {
+            grouped.set(dateKey, []);
+          }
+          // Only add if not already present on this day
+          const existsOnDay = grouped.get(dateKey)!.some(existing => existing.id === dest.id);
+          if (!existsOnDay) {
+            grouped.get(dateKey)!.push(dest);
+          }
+        });
+      } else {
+        // Regular single-day destination
+        const dateKey = dest.startDate;
+        if (!grouped.has(dateKey)) {
+          grouped.set(dateKey, []);
+        }
+        grouped.get(dateKey)!.push(dest);
+      }
     });
 
-    // Sort destinations within each day by start time
+    // Sort destinations within each day by category (hotels first) and start time
     const timelineDays: TimelineDay[] = [];
     
     Array.from(grouped.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([date, dests]) => {
         const sortedDests = dests.sort((a, b) => {
-          const timeA = new Date(`${a.startDate}T${a.startTime}`);
-          const timeB = new Date(`${b.startDate}T${b.startTime}`);
-          return timeA.getTime() - timeB.getTime();
+          // Hotels (accommodations) first
+          if (a.category === 'hotel' && b.category !== 'hotel') return -1;
+          if (a.category !== 'hotel' && b.category === 'hotel') return 1;
+          
+          
+          // Finally by name
+          return a.name.localeCompare(b.name);
         });
 
-        // Detect time conflicts
-        const conflicts: ConflictInfo[] = [];
-        for (let i = 0; i < sortedDests.length - 1; i++) {
-          for (let j = i + 1; j < sortedDests.length; j++) {
-            const dest1 = sortedDests[i];
-            const dest2 = sortedDests[j];
-            
-            const start1 = new Date(`${dest1.startDate}T${dest1.startTime}`);
-            const end1 = new Date(`${dest1.endDate}T${dest1.endTime}`);
-            const start2 = new Date(`${dest2.startDate}T${dest2.startTime}`);
-            const end2 = new Date(`${dest2.endDate}T${dest2.endTime}`);
-
-            // Check for overlap
-            const overlapStart = Math.max(start1.getTime(), start2.getTime());
-            const overlapEnd = Math.min(end1.getTime(), end2.getTime());
-            
-            if (overlapStart < overlapEnd) {
-              const overlapMinutes = (overlapEnd - overlapStart) / (1000 * 60);
-              conflicts.push({
-                destination1: dest1,
-                destination2: dest2,
-                overlapMinutes
-              });
-            }
-          }
-        }
-
-        timelineDays.push({ date, destinations: sortedDests, conflicts });
+        // Conflicts removed - no longer checking for overbooked days
+        timelineDays.push({ date, destinations: sortedDests });
       });
 
     return timelineDays;
   }, [currentDestinations]);
 
+  // Calculate estimated travel time between two destinations using car routes
+  const calculateEstimatedTravelTime = useCallback((current: Destination, next: Destination): number => {
+    if (current.coordinates && next.coordinates) {
+      const lat1 = current.coordinates.lat;
+      const lng1 = current.coordinates.lng;
+      const lat2 = next.coordinates.lat;
+      const lng2 = next.coordinates.lng;
+      
+      // Calculate straight-line distance using Haversine formula
+      const R = 6371; // Earth's radius in km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const straightDistance = R * c; // Distance in km
+      
+      // Apply road factor for realistic car routes (roads are typically 1.3-1.5x longer than straight line)
+      const roadDistance = straightDistance * 1.4;
+      
+      // Calculate time based on average car speed
+      let averageSpeed;
+      if (roadDistance < 5) {
+        averageSpeed = 30; // City driving: 30 km/h
+      } else if (roadDistance < 50) {
+        averageSpeed = 60; // Mixed city/highway: 60 km/h
+      } else if (roadDistance < 200) {
+        averageSpeed = 80; // Highway driving: 80 km/h
+      } else {
+        averageSpeed = 90; // Long-distance highway: 90 km/h
+      }
+      
+      const timeInHours = roadDistance / averageSpeed;
+      const timeInMinutes = Math.round(timeInHours * 60);
+      
+      return Math.max(10, timeInMinutes); // At least 10 minutes
+    }
+    return 30; // Default 30 minutes travel time
+  }, []);
+
+  // Helper function to calculate distance using Haversine formula
+  const calculateDistance = useCallback((from: Destination, to: Destination): number => {
+    if (from.coordinates && to.coordinates) {
+      const lat1 = from.coordinates.lat;
+      const lng1 = from.coordinates.lng;
+      const lat2 = to.coordinates.lat;
+      const lng2 = to.coordinates.lng;
+      
+      const R = 6371; // Earth's radius in km
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c; // Distance in km
+    }
+    return 0;
+  }, []);
+
+  // Calculate daily travel metrics including costs
+  const dailyTravelMetrics = useMemo(() => {
+    const metrics = new Map<string, { distance: number; travelTime: number; travelCost: number }>();
+    
+    timelineData.forEach((day, dayIndex) => {
+      const destinations = day.destinations.sort((a, b) => a.name.localeCompare(b.name));
+      let dayDistance = 0;
+      let dayTravelTime = 0;
+      
+      // Calculate travel within the day
+      for (let i = 0; i < destinations.length - 1; i++) {
+        const current = destinations[i];
+        const next = destinations[i + 1];
+        
+        if (current.coordinates && next.coordinates) {
+          const travelTime = calculateEstimatedTravelTime(current, next);
+          const distance = calculateDistance(current, next) * 1.4; // Apply road factor
+          
+          dayDistance += distance;
+          dayTravelTime += travelTime;
+        }
+      }
+      
+      // Calculate travel from previous day's last destination to today's first destination
+      if (dayIndex > 0) {
+        const previousDay = timelineData[dayIndex - 1];
+        const previousDestinations = previousDay.destinations;
+        const lastPreviousDestination = previousDestinations[previousDestinations.length - 1];
+        const firstTodayDestination = destinations[0];
+        
+        if (lastPreviousDestination && firstTodayDestination && 
+            lastPreviousDestination.coordinates && firstTodayDestination.coordinates) {
+          
+          const travelTime = calculateEstimatedTravelTime(lastPreviousDestination, firstTodayDestination);
+          const distance = calculateDistance(lastPreviousDestination, firstTodayDestination) * 1.4;
+          
+          dayDistance += distance;
+          dayTravelTime += travelTime;
+        }
+      }
+      
+      // Calculate travel costs using vehicle configuration
+      let travelCost = 0;
+      if (currentTrip?.vehicleConfig) {
+        const { fuelConsumption, fuelPrice } = currentTrip.vehicleConfig;
+        // Formula: (distance/100) * consumption * price
+        travelCost = (dayDistance / 100) * (fuelConsumption || 9.0) * (fuelPrice || 1.65);
+      } else {
+        // Fallback: old calculation
+        travelCost = dayDistance * 0.30;
+      }
+      
+      metrics.set(day.date, { 
+        distance: dayDistance, 
+        travelTime: dayTravelTime,
+        travelCost: travelCost
+      });
+    });
+    
+    return metrics;
+  }, [timelineData, calculateEstimatedTravelTime, calculateDistance]);
+
   // Get timeline statistics
   const stats = useMemo(() => {
     const totalDestinations = currentDestinations.length;
-    const totalConflicts = timelineData.reduce((sum, day) => sum + day.conflicts.length, 0);
+    // Conflicts removed - no longer needed
     const totalDays = timelineData.length;
-    const totalDuration = currentDestinations.reduce((sum, dest) => sum + dest.duration, 0);
+    const totalDuration = currentDestinations.reduce((sum, dest) => sum + (dest.duration || 0 || 0), 0);
+
+    // Calculate total travel time, distance and costs across all days
+    let totalTravelTime = 0;
+    let totalDistance = 0;
+    let totalTravelCost = 0;
+    
+    Array.from(dailyTravelMetrics.values()).forEach(metrics => {
+      totalTravelTime += metrics.travelTime;
+      totalDistance += metrics.distance;
+      totalTravelCost += metrics.travelCost;
+    });
 
     return {
       totalDestinations,
-      totalConflicts,
       totalDays,
       totalDuration: {
         hours: Math.floor(totalDuration / 60),
         minutes: totalDuration % 60
-      }
+      },
+      totalTravelTime: {
+        hours: Math.floor(totalTravelTime / 60),
+        minutes: totalTravelTime % 60
+      },
+      totalDistance,
+      totalTravelCost
     };
-  }, [currentDestinations, timelineData]);
-
-  const calculateTimeToNext = (current: Destination, next: Destination): number => {
-    const currentEnd = new Date(`${current.endDate}T${current.endTime}`);
-    const nextStart = new Date(`${next.startDate}T${next.startTime}`);
-    return (nextStart.getTime() - currentEnd.getTime()) / (1000 * 60); // minutes
-  };
+  }, [currentDestinations, timelineData, dailyTravelMetrics]);
 
   if (!currentTrip) {
     return (
@@ -185,7 +317,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             fontWeight: 'bold',
             color: '#1f2937'
           }}>
-            Zeitplanung
+            Reise-Rechner
           </h1>
           <p style={{
             margin: 0,
@@ -201,25 +333,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
           gap: '0.5rem',
           alignItems: 'center'
         }}>
-          <button
-            onClick={() => setShowConflicts(!showConflicts)}
-            style={{
-              background: showConflicts ? '#fef2f2' : 'white',
-              color: showConflicts ? '#dc2626' : '#6b7280',
-              border: showConflicts ? '1px solid #dc2626' : '1px solid #e5e7eb',
-              borderRadius: '8px',
-              padding: '0.75rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '500'
-            }}
-          >
-            <AlertTriangle size={16} />
-            Konflikte {showConflicts ? 'ausblenden' : 'anzeigen'}
-          </button>
+          {/* Conflicts button removed */}
         </div>
       </div>
 
@@ -275,8 +389,8 @@ const TimelineView: React.FC<TimelineViewProps> = ({
         </div>
 
         <div style={{
-          background: '#fef3c7',
-          border: '1px solid #fcd34d',
+          background: '#f0f9ff',
+          border: '1px solid #7dd3fc',
           borderRadius: '8px',
           padding: '1rem'
         }}>
@@ -286,39 +400,20 @@ const TimelineView: React.FC<TimelineViewProps> = ({
             gap: '0.5rem',
             marginBottom: '0.5rem'
           }}>
-            <Clock size={16} style={{ color: '#d97706' }} />
-            <span style={{ fontSize: '0.875rem', color: '#d97706', fontWeight: '600' }}>
-              Gesamtdauer
+            <Route size={16} style={{ color: '#0284c7' }} />
+            <span style={{ fontSize: '0.875rem', color: '#0284c7', fontWeight: '600' }}>
+              Fahrtzeit & Kosten
             </span>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#92400e' }}>
-            {stats.totalDuration.hours}h {stats.totalDuration.minutes}m
+          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0c4a6e' }}>
+            {stats.totalTravelTime.hours}h {stats.totalTravelTime.minutes}m
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#0284c7', marginTop: '0.25rem' }}>
+            {stats.totalDistance.toFixed(1)} km • {stats.totalTravelCost.toFixed(2)} €
           </div>
         </div>
 
-        {stats.totalConflicts > 0 && (
-          <div style={{
-            background: '#fef2f2',
-            border: '1px solid #fca5a5',
-            borderRadius: '8px',
-            padding: '1rem'
-          }}>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              marginBottom: '0.5rem'
-            }}>
-              <AlertTriangle size={16} style={{ color: '#dc2626' }} />
-              <span style={{ fontSize: '0.875rem', color: '#dc2626', fontWeight: '600' }}>
-                Konflikte
-              </span>
-            </div>
-            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#991b1b' }}>
-              {stats.totalConflicts}
-            </div>
-          </div>
-        )}
+        {/* Conflicts stats removed */}
       </div>
 
       {/* Timeline Days */}
@@ -353,35 +448,40 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                   fontSize: '0.875rem',
                   color: '#6b7280'
                 }}>
-                  {day.destinations.length} Ziele • {day.conflicts.length} Konflikte
+                  {day.destinations.length} Ziele
                 </p>
+                {dailyTravelMetrics.get(day.date) && (
+                  <div style={{
+                    marginTop: '0.5rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem',
+                    fontSize: '0.75rem',
+                    color: '#0284c7',
+                    fontWeight: '500'
+                  }}>
+                    {dailyTravelMetrics.get(day.date)!.travelTime > 0 && (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                          <Route size={12} />
+                          {Math.round(dailyTravelMetrics.get(day.date)!.travelTime / 60 * 10) / 10}h Fahrtzeit
+                        </div>
+                        <div>
+                          {dailyTravelMetrics.get(day.date)!.distance.toFixed(1)} km • {dailyTravelMetrics.get(day.date)!.travelCost.toFixed(2)} €
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
-              {day.conflicts.length > 0 && showConflicts && (
-                <div style={{
-                  background: '#fef2f2',
-                  color: '#dc2626',
-                  padding: '0.5rem 0.75rem',
-                  borderRadius: '6px',
-                  fontSize: '0.75rem',
-                  fontWeight: '600',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.25rem'
-                }}>
-                  <AlertTriangle size={12} />
-                  {day.conflicts.length} Konflikt{day.conflicts.length !== 1 ? 'e' : ''}
-                </div>
-              )}
+              {/* Conflicts removed */}
             </div>
 
             {/* Timeline */}
             <div style={{ padding: '1.5rem' }}>
               {day.destinations.map((destination, index) => {
                 const nextDestination = day.destinations[index + 1];
-                const timeToNext = nextDestination 
-                  ? calculateTimeToNext(destination, nextDestination)
-                  : null;
 
                 return (
                   <div key={destination.id}>
@@ -485,10 +585,14 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                             }}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                 <Clock size={12} />
-                                <span>{formatTime(destination.startTime)} - {formatTime(destination.endTime)}</span>
-                              </div>
-                              <div>
-                                Dauer: {Math.floor(destination.duration / 60)}h {destination.duration % 60}m
+                                <span>
+                                  {destination.category === 'hotel' && destination.startDate !== destination.endDate
+                                    ? `Übernachtung (${Math.ceil((new Date(destination.endDate).getTime() - new Date(destination.startDate).getTime()) / (1000 * 60 * 60 * 24))} Nächte)`
+                                    : destination.startTime && destination.endTime 
+                                    ? `${destination.startTime} - ${destination.endTime}`
+                                    : 'Zeit wird in der Timeline-Ansicht festgelegt'
+                                  }
+                                </span>
                               </div>
                             </div>
                           </div>
@@ -514,22 +618,37 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                           )}
                         </div>
 
-                        <div style={{
-                          display: 'inline-block',
-                          background: '#f3f4f6',
-                          color: '#374151',
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '12px',
-                          fontSize: '0.75rem',
-                          fontWeight: '500'
-                        }}>
-                          {getCategoryLabel(destination.category)}
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <div style={{
+                            display: 'inline-block',
+                            background: destination.category === 'hotel' ? '#dbeafe' : '#f3f4f6',
+                            color: destination.category === 'hotel' ? '#1e40af' : '#374151',
+                            padding: '0.25rem 0.75rem',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: '500'
+                          }}>
+                            {getCategoryLabel(destination.category)}
+                          </div>
+                          {destination.category === 'hotel' && destination.startDate !== destination.endDate && (
+                            <div style={{
+                              display: 'inline-block',
+                              background: '#1e40af',
+                              color: 'white',
+                              padding: '0.25rem 0.75rem',
+                              borderRadius: '12px',
+                              fontSize: '0.75rem',
+                              fontWeight: '500'
+                            }}>
+                              🏨 Mehrtägig
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {/* Travel Time to Next */}
-                    {timeToNext !== null && (
+                    {/* Estimated Travel Time to Next */}
+                    {nextDestination && (
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -537,16 +656,11 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                         gap: '0.5rem',
                         margin: '0.5rem 0',
                         fontSize: '0.75rem',
-                        color: timeToNext < 0 ? '#dc2626' : timeToNext < 30 ? '#d97706' : '#6b7280'
+                        color: '#6b7280'
                       }}>
                         <Route size={12} />
                         <span>
-                          {timeToNext < 0 
-                            ? `Überschneidung: ${Math.abs(timeToNext)} Min`
-                            : timeToNext === 0
-                              ? 'Direkt anschließend'
-                              : `${timeToNext} Min Pause`
-                          }
+                          Geschätzte Reisezeit: {calculateEstimatedTravelTime(destination, nextDestination)} Min
                         </span>
                       </div>
                     )}
@@ -554,50 +668,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
                 );
               })}
 
-              {/* Conflicts */}
-              {showConflicts && day.conflicts.length > 0 && (
-                <div style={{
-                  marginTop: '1.5rem',
-                  padding: '1rem',
-                  background: '#fef2f2',
-                  border: '1px solid #fca5a5',
-                  borderRadius: '8px'
-                }}>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    marginBottom: '0.75rem'
-                  }}>
-                    <AlertTriangle size={16} style={{ color: '#dc2626' }} />
-                    <span style={{
-                      fontSize: '0.875rem',
-                      fontWeight: '600',
-                      color: '#dc2626'
-                    }}>
-                      Zeitkonflikte
-                    </span>
-                  </div>
-
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    {day.conflicts.map((conflict, conflictIndex) => (
-                      <div key={conflictIndex} style={{
-                        padding: '0.75rem',
-                        background: 'white',
-                        borderRadius: '6px',
-                        fontSize: '0.875rem'
-                      }}>
-                        <div style={{ color: '#991b1b', fontWeight: '500', marginBottom: '0.25rem' }}>
-                          Überschneidung: {Math.round(conflict.overlapMinutes)} Minuten
-                        </div>
-                        <div style={{ color: '#7f1d1d' }}>
-                          {conflict.destination1.name} ↔ {conflict.destination2.name}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Conflicts removed */}
             </div>
           </div>
         ))}

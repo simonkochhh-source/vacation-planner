@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useApp } from '../../stores/AppContext';
 import { Destination } from '../../types';
 import {
@@ -14,7 +14,8 @@ import {
   Edit,
   Wallet
 } from 'lucide-react';
-import { formatCurrency, getCategoryLabel, formatDate } from '../../utils';
+import { formatCurrency, getCategoryLabel, formatDate, calculateTravelCosts } from '../../utils';
+import { fuelPriceService } from '../../services/fuelPriceService';
 
 interface BudgetCategory {
   category: string;
@@ -33,27 +34,62 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   onEditBudget,
   onAddExpense
 }) => {
-  const { currentTrip, destinations } = useApp();
+  const { currentTrip, destinations, settings } = useApp();
   const [selectedTimeframe, setSelectedTimeframe] = useState<'all' | 'upcoming' | 'past'>('all');
   const [groupBy, setGroupBy] = useState<'category' | 'date' | 'status'>('category');
+  const [currentFuelPrice, setCurrentFuelPrice] = useState<number>(1.65);
 
   // Get current trip destinations
   const currentDestinations = currentTrip 
     ? destinations.filter(dest => currentTrip.destinations.includes(dest.id))
     : [];
 
-  // Calculate budget statistics
+  // Fetch current fuel price on component mount
+  useEffect(() => {
+    const fetchCurrentFuelPrice = async () => {
+      try {
+        if (fuelPriceService.isConfigured()) {
+          const price = await fuelPriceService.getAverageFuelPrice(
+            {
+              lat: 50.1109, // Default to Germany center if no location
+              lng: 8.6821
+            },
+            settings.fuelType,
+            20 // 20km radius
+          );
+          setCurrentFuelPrice(price);
+        }
+      } catch (error) {
+        console.warn('Could not fetch current fuel price, using fallback');
+        // Keep the default value
+      }
+    };
+
+    fetchCurrentFuelPrice();
+  }, [settings.fuelType]);
+
+  // Calculate budget statistics including travel costs
   const budgetStats = useMemo(() => {
     const totalPlanned = currentTrip?.budget || 0;
     const totalActual = currentTrip?.actualCost || 0;
+    
+    // Calculate travel costs based on settings configuration
+    const travelCosts = calculateTravelCosts(
+      currentDestinations,
+      settings.fuelConsumption,
+      currentFuelPrice
+    );
     
     const destinationPlanned = currentDestinations.reduce((sum, dest) => 
       sum + (dest.budget || 0), 0);
     const destinationActual = currentDestinations.reduce((sum, dest) => 
       sum + (dest.actualCost || 0), 0);
+    
+    // Include travel costs in actual spending
+    const totalActualWithTravel = totalActual + travelCosts;
 
-    const remaining = totalPlanned - totalActual;
-    const percentageUsed = totalPlanned > 0 ? (totalActual / totalPlanned) * 100 : 0;
+    const remaining = totalPlanned - totalActualWithTravel;
+    const percentageUsed = totalPlanned > 0 ? (totalActualWithTravel / totalPlanned) * 100 : 0;
     
     const avgCostPerDestination = currentDestinations.length > 0 
       ? destinationActual / currentDestinations.length 
@@ -65,17 +101,18 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
     return {
       totalPlanned,
-      totalActual,
+      totalActual: totalActualWithTravel,
       destinationPlanned,
       destinationActual,
+      travelCosts,
       remaining,
       percentageUsed,
       avgCostPerDestination,
       destinationsWithBudget: destinationsWithBudget.length,
       destinationsOverBudget: destinationsOverBudget.length,
-      isOverBudget: totalActual > totalPlanned && totalPlanned > 0
+      isOverBudget: totalActualWithTravel > totalPlanned && totalPlanned > 0
     };
-  }, [currentTrip, currentDestinations]);
+  }, [currentTrip, currentDestinations, settings.fuelConsumption, currentFuelPrice]);
 
   // Group destinations by category for budget analysis
   const budgetByCategory = useMemo(() => {
@@ -457,7 +494,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           </div>
         </div>
 
-        {/* Average per Destination */}
+        {/* Travel Costs */}
         <div style={{
           background: 'white',
           border: '1px solid #e5e7eb',
@@ -472,7 +509,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             right: 0,
             width: '100px',
             height: '100px',
-            background: 'linear-gradient(135deg, #d97706 0%, #92400e 100%)',
+            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
             borderRadius: '0 0 0 100px',
             opacity: 0.1
           }} />
@@ -488,13 +525,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               width: '48px',
               height: '48px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #d97706 0%, #92400e 100%)',
+              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white'
             }}>
-              <PieChart size={24} />
+              🚗
             </div>
             <div>
               <h3 style={{
@@ -503,14 +540,14 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 fontWeight: '600',
                 color: '#6b7280'
               }}>
-                Ø pro Ziel
+                Fahrtkosten
               </h3>
               <div style={{
                 fontSize: '2rem',
                 fontWeight: 'bold',
                 color: '#1f2937'
               }}>
-                {formatCurrency(budgetStats.avgCostPerDestination)}
+                {formatCurrency(budgetStats.travelCosts)}
               </div>
             </div>
           </div>
@@ -523,7 +560,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             color: '#6b7280'
           }}>
             <MapPin size={14} />
-            <span>Durchschnittliche Kosten</span>
+            <span>{settings.fuelConsumption}L/100km • {formatCurrency(currentFuelPrice)}/L</span>
           </div>
         </div>
       </div>

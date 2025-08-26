@@ -59,18 +59,6 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ onApplyPreset }) => {
       createdAt: '2024-08-20'
     },
     {
-      id: 'must-see',
-      name: 'Must-See',
-      description: 'Höchste Priorität (4-5 Sterne)',
-      filters: {
-        priority: [4, 5]
-      },
-      icon: '⭐',
-      color: '#fbbf24',
-      isBuiltIn: true,
-      createdAt: '2024-08-20'
-    },
-    {
       id: 'free-activities',
       name: 'Kostenlos',
       description: 'Aktivitäten ohne Budget',
@@ -356,7 +344,6 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ onApplyPreset }) => {
                       switch (key) {
                         case 'category': return <Filter size={10} />;
                         case 'status': return <Clock size={10} />;
-                        case 'priority': return <Star size={10} />;
                         case 'dateRange': return <Calendar size={10} />;
                         case 'budgetRange': return <DollarSign size={10} />;
                         case 'tags': return <MapPin size={10} />;
@@ -382,7 +369,6 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ onApplyPreset }) => {
                         {getFilterIcon()}
                         {key === 'dateRange' ? 'Datum' :
                          key === 'budgetRange' ? 'Budget' :
-                         key === 'priority' ? 'Priorität' :
                          key === 'category' ? 'Kategorie' :
                          key === 'status' ? 'Status' :
                          key === 'tags' ? 'Tags' : key}

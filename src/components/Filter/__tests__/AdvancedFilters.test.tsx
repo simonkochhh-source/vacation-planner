@@ -17,7 +17,6 @@ const mockAppState = {
       name: 'Museum',
       category: DestinationCategory.MUSEUM,
       status: DestinationStatus.PLANNED,
-      priority: 5,
       budget: 50,
       actualCost: 45,
       startDate: '2024-01-01',
@@ -28,7 +27,6 @@ const mockAppState = {
       name: 'Restaurant',
       category: DestinationCategory.RESTAURANT,
       status: DestinationStatus.VISITED,
-      priority: 3,
       budget: 80,
       actualCost: 85,
       startDate: '2024-01-02',
@@ -39,7 +37,6 @@ const mockAppState = {
       name: 'Park',
       category: DestinationCategory.NATURE,
       status: DestinationStatus.PLANNED,
-      priority: 4,
       budget: 0,
       actualCost: 0,
       startDate: '2024-01-03',
@@ -54,7 +51,6 @@ const mockAppState = {
     filters: {
       category: undefined,
       status: undefined,
-      priority: undefined,
       tags: undefined,
       dateRange: undefined,
       budgetRange: undefined
@@ -131,19 +127,6 @@ describe('AdvancedFilters', () => {
     expect(screen.getByLabelText('Übersprungen')).toBeInTheDocument();
   });
 
-  it('displays priority filter', () => {
-    render(
-      <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
-      />
-    );
-    
-    expect(screen.getByText('Priorität')).toBeInTheDocument();
-    expect(screen.getByText('Mindestpriorität')).toBeInTheDocument();
-  });
 
   it('displays budget range filter', () => {
     render(
@@ -211,7 +194,6 @@ describe('AdvancedFilters', () => {
     expect(mockOnApply).toHaveBeenCalledWith({
       category: [DestinationCategory.MUSEUM],
       status: undefined,
-      priority: undefined,
       tags: undefined,
       dateRange: undefined,
       budgetRange: undefined
@@ -236,9 +218,6 @@ describe('AdvancedFilters', () => {
     const plannedCheckbox = screen.getByLabelText('Geplant');
     fireEvent.click(plannedCheckbox);
     
-    // Set priority
-    const prioritySlider = screen.getByRole('slider');
-    fireEvent.change(prioritySlider, { target: { value: '4' } });
     
     // Set budget range
     const minBudgetInput = screen.getByPlaceholderText('Min €');
@@ -252,7 +231,6 @@ describe('AdvancedFilters', () => {
     expect(mockOnApply).toHaveBeenCalledWith({
       category: [DestinationCategory.MUSEUM],
       status: [DestinationStatus.PLANNED],
-      priority: [4, 5],
       tags: undefined,
       dateRange: undefined,
       budgetRange: { min: 20, max: 100 }
@@ -281,7 +259,6 @@ describe('AdvancedFilters', () => {
     expect(mockOnApply).toHaveBeenCalledWith({
       category: undefined,
       status: undefined,
-      priority: undefined,
       tags: undefined,
       dateRange: {
         start: '2024-01-01',
@@ -313,7 +290,6 @@ describe('AdvancedFilters', () => {
     expect(mockOnApply).toHaveBeenCalledWith({
       category: undefined,
       status: undefined,
-      priority: undefined,
       tags: ['culture', 'outdoor'],
       dateRange: undefined,
       budgetRange: undefined
@@ -359,8 +335,7 @@ describe('AdvancedFilters', () => {
         filters: {
           category: [DestinationCategory.MUSEUM],
           status: [DestinationStatus.PLANNED],
-          priority: [4, 5],
-          tags: ['culture'],
+              tags: ['culture'],
           dateRange: {
             start: '2024-01-01',
             end: '2024-01-31'
@@ -399,8 +374,7 @@ describe('AdvancedFilters', () => {
         filters: {
           category: [DestinationCategory.MUSEUM],
           status: [DestinationStatus.PLANNED],
-          priority: undefined,
-          tags: ['culture'],
+              tags: ['culture'],
           dateRange: undefined,
           budgetRange: undefined
         }

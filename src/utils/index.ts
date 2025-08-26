@@ -1,21 +1,20 @@
 import { format, parseISO, addDays, differenceInMinutes, isWithinInterval } from 'date-fns';
-import { de } from 'date-fns/locale';
 import { Destination, UUID, Coordinates, DestinationCategory, DestinationStatus } from '../types';
 
 // Date and Time utilities
 export const formatDate = (dateString: string): string => {
-  return format(parseISO(dateString), 'dd.MM.yyyy', { locale: de });
+  return format(parseISO(dateString), 'dd.MM.yyyy');
 };
 
 export const formatTime = (timeString: string): string => {
   return timeString;
 };
 
-export const formatDateTime = (dateString: string, timeString: string): string => {
+export const formatDateTimeWithDuration = (dateString: string, duration: number): string => {
   const date = parseISO(dateString);
-  const [hours, minutes] = timeString.split(':');
-  date.setHours(parseInt(hours), parseInt(minutes));
-  return format(date, 'dd.MM.yyyy HH:mm', { locale: de });
+  const hours = Math.floor(duration / 60);
+  const minutes = duration % 60;
+  return `${format(date, 'dd.MM.yyyy')} (${hours}h ${minutes}min)`;
 };
 
 export const getCurrentDateString = (): string => {
@@ -30,10 +29,15 @@ export const addDaysToDate = (dateString: string, days: number): string => {
   return format(addDays(parseISO(dateString), days), 'yyyy-MM-dd');
 };
 
-export const calculateDuration = (startDate: string, startTime: string, endDate: string, endTime: string): number => {
-  const start = parseISO(`${startDate}T${startTime}`);
-  const end = parseISO(`${endDate}T${endTime}`);
-  return differenceInMinutes(end, start);
+export const calculateDurationFromDates = (startDate: string, endDate: string, defaultDuration: number = 60): number => {
+  // If end date is different from start date, calculate day difference in minutes
+  if (startDate !== endDate) {
+    const start = parseISO(startDate);
+    const end = parseISO(endDate);
+    return differenceInMinutes(end, start);
+  }
+  // If same date, return default duration
+  return defaultDuration;
 };
 
 // UUID generator
@@ -141,8 +145,8 @@ export const sortDestinations = (destinations: Destination[], field: string, dir
 
     // Handle different data types
     if (field === 'startDate' || field === 'endDate') {
-      aValue = new Date(`${aValue}T${a.startTime}`);
-      bValue = new Date(`${bValue}T${b.startTime}`);
+      aValue = new Date(aValue);
+      bValue = new Date(bValue);
     } else if (typeof aValue === 'string') {
       aValue = aValue.toLowerCase();
       bValue = bValue.toLowerCase();
@@ -167,10 +171,6 @@ export const filterDestinations = (destinations: Destination[], filters: any): D
       if (!filters.status.includes(destination.status)) return false;
     }
 
-    // Priority filter
-    if (filters.priority && filters.priority.length > 0) {
-      if (!filters.priority.includes(destination.priority)) return false;
-    }
 
     // Tags filter
     if (filters.tags && filters.tags.length > 0) {
@@ -231,15 +231,77 @@ export const formatCurrency = (amount: number, currency: string = 'EUR'): string
   }).format(amount);
 };
 
+// Travel cost calculation utilities
+export const calculateTravelCosts = (
+  destinations: Destination[],
+  fuelConsumption: number = 9.0, // liters per 100km
+  fuelPrice: number = 1.65 // EUR per liter (fallback price)
+): number => {
+  if (!destinations || destinations.length < 2) return 0;
+  
+  let totalDistance = 0;
+  
+  // Group destinations by day and sort chronologically
+  const destinationsByDay = destinations
+    .filter(dest => dest.coordinates)
+    .reduce((acc, dest) => {
+      const day = dest.startDate;
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(dest);
+      return acc;
+    }, {} as Record<string, Destination[]>);
+
+  const sortedDays = Object.entries(destinationsByDay).sort(([a], [b]) => a.localeCompare(b));
+
+  // Calculate travel within each day and between days
+  sortedDays.forEach(([day, dayDestinations], dayIndex) => {
+    const sortedDestinations = dayDestinations.sort((a, b) => a.name.localeCompare(b.name));
+    
+    // Calculate travel within the day
+    for (let i = 0; i < sortedDestinations.length - 1; i++) {
+      const current = sortedDestinations[i];
+      const next = sortedDestinations[i + 1];
+      
+      if (current.coordinates && next.coordinates) {
+        const distance = calculateDistance(current.coordinates, next.coordinates) * 1.4; // Apply road factor
+        totalDistance += distance;
+      }
+    }
+    
+    // Calculate travel from last destination of day to first of next day
+    if (dayIndex < sortedDays.length - 1) {
+      const nextDay = sortedDays[dayIndex + 1][1];
+      const nextDayDestinations = nextDay.sort((a, b) => a.name.localeCompare(b.name));
+      
+      const lastToday = sortedDestinations[sortedDestinations.length - 1];
+      const firstNextDay = nextDayDestinations[0];
+      
+      if (lastToday.coordinates && firstNextDay.coordinates) {
+        const distance = calculateDistance(lastToday.coordinates, firstNextDay.coordinates) * 1.4;
+        totalDistance += distance;
+      }
+    }
+  });
+  
+  // Calculate fuel costs: distance (km) * consumption (L/100km) * price (EUR/L) / 100
+  const fuelNeeded = (totalDistance * fuelConsumption) / 100;
+  return fuelNeeded * fuelPrice;
+};
+
+// Legacy function for backward compatibility
+export const calculateTravelCostsLegacy = (destinations: Destination[]): number => {
+  return calculateTravelCosts(destinations, 9.0, 1.65);
+};
+
 // Validation utilities
 export const isValidCoordinate = (coord: Coordinates): boolean => {
   return coord.lat >= -90 && coord.lat <= 90 && coord.lng >= -180 && coord.lng <= 180;
 };
 
-export const isValidTimeRange = (startDate: string, startTime: string, endDate: string, endTime: string): boolean => {
-  const start = new Date(`${startDate}T${startTime}`);
-  const end = new Date(`${endDate}T${endTime}`);
-  return start < end;
+export const isValidDateRange = (startDate: string, endDate: string): boolean => {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  return start <= end;
 };
 
 // Export utilities
@@ -248,20 +310,18 @@ export const exportToJSON = (data: any): string => {
 };
 
 export const exportToCSV = (destinations: Destination[]): string => {
-  const headers = ['Name', 'Ort', 'Kategorie', 'Start Datum', 'Start Zeit', 'Ende Datum', 'Ende Zeit', 'Status', 'Budget', 'Tatsächliche Kosten', 'Bewertung', 'Notizen'];
+  const headers = ['Name', 'Ort', 'Kategorie', 'Start Datum', 'Ende Datum', 'Dauer (min)', 'Status', 'Budget', 'Tatsächliche Kosten', 'Notizen'];
   
   const rows = destinations.map(dest => [
     dest.name,
     dest.location,
     getCategoryLabel(dest.category),
     dest.startDate,
-    dest.startTime,
-    dest.endDate,
-    dest.endTime,
+    dest.endDate || dest.startDate,
+    (dest.duration || 0).toString(),
     dest.status,
     dest.budget || '',
     dest.actualCost || '',
-    dest.rating || '',
     dest.notes || ''
   ]);
 
@@ -295,4 +355,74 @@ export const removeFromLocalStorage = (key: string): void => {
   } catch (error) {
     console.error('Failed to remove from localStorage:', error);
   }
+};
+
+// Reference Value utilities - for handling missing/undefined properties
+interface ReferenceValueResult<T> {
+  value: T;
+  isReference: boolean;
+}
+
+export const getDestinationDuration = (destination: Destination): ReferenceValueResult<number> => {
+  if (destination.duration !== undefined && destination.duration !== null) {
+    return { value: destination.duration, isReference: false };
+  }
+  
+  // Default duration based on category (reference value)
+  const defaultDurations: Record<DestinationCategory, number> = {
+    [DestinationCategory.HOTEL]: 720, // 12 hours (overnight stay)
+    [DestinationCategory.RESTAURANT]: 120, // 2 hours
+    [DestinationCategory.ATTRACTION]: 180, // 3 hours
+    [DestinationCategory.MUSEUM]: 150, // 2.5 hours
+    [DestinationCategory.NATURE]: 240, // 4 hours (nature/park)
+    [DestinationCategory.CULTURAL]: 180, // 3 hours
+    [DestinationCategory.SPORTS]: 120, // 2 hours
+    [DestinationCategory.SHOPPING]: 90, // 1.5 hours
+    [DestinationCategory.ENTERTAINMENT]: 180, // 3 hours
+    [DestinationCategory.TRANSPORT]: 60, // 1 hour
+    [DestinationCategory.OTHER]: 120 // 2 hours
+  };
+  
+  return { 
+    value: defaultDurations[destination.category] || 120, 
+    isReference: true 
+  };
+};
+
+export const formatDurationWithIndicator = (duration: ReferenceValueResult<number>): string => {
+  const hours = Math.floor(duration.value / 60);
+  const minutes = duration.value % 60;
+  const timeStr = hours > 0 ? `${hours}h ${minutes}min` : `${minutes}min`;
+  return duration.isReference ? `${timeStr} ⚠️` : timeStr;
+};
+
+export const getDestinationBudget = (destination: Destination): ReferenceValueResult<number> => {
+  if (destination.budget !== undefined && destination.budget !== null) {
+    return { value: destination.budget, isReference: false };
+  }
+  
+  // Default budget based on category (reference value)
+  const defaultBudgets: Record<DestinationCategory, number> = {
+    [DestinationCategory.HOTEL]: 150,
+    [DestinationCategory.RESTAURANT]: 50,
+    [DestinationCategory.ATTRACTION]: 25,
+    [DestinationCategory.MUSEUM]: 15,
+    [DestinationCategory.NATURE]: 0,
+    [DestinationCategory.CULTURAL]: 20,
+    [DestinationCategory.SPORTS]: 30,
+    [DestinationCategory.SHOPPING]: 100,
+    [DestinationCategory.ENTERTAINMENT]: 40,
+    [DestinationCategory.TRANSPORT]: 30,
+    [DestinationCategory.OTHER]: 25
+  };
+  
+  return { 
+    value: defaultBudgets[destination.category] || 25, 
+    isReference: true 
+  };
+};
+
+export const formatCurrencyWithIndicator = (budget: ReferenceValueResult<number>): string => {
+  const currencyStr = formatCurrency(budget.value);
+  return budget.isReference ? `${currencyStr} ⚠️` : currencyStr;
 };

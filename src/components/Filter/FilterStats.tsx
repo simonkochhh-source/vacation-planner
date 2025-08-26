@@ -54,10 +54,6 @@ const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
         if (!uiState.filters.status.includes(dest.status)) return false;
       }
 
-      // Priority filter
-      if (uiState.filters.priority?.length) {
-        if (!uiState.filters.priority.includes(dest.priority)) return false;
-      }
 
       // Tags filter
       if (uiState.filters.tags?.length) {
@@ -96,14 +92,9 @@ const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
     const minBudget = Math.min(...filteredDestinations.filter(d => (d.budget || 0) > 0).map(d => d.budget || 0), maxBudget);
 
     // Time statistics
-    const totalDuration = filteredDestinations.reduce((sum, dest) => sum + dest.duration, 0);
+    const totalDuration = filteredDestinations.reduce((sum, dest) => sum + (dest.duration || 0 || 0), 0);
     const avgDuration = filtered > 0 ? totalDuration / filtered : 0;
 
-    // Priority statistics
-    const avgPriority = filtered > 0 
-      ? filteredDestinations.reduce((sum, dest) => sum + dest.priority, 0) / filtered 
-      : 0;
-    const highPriorityCount = filteredDestinations.filter(d => d.priority >= 4).length;
 
     // Status distribution
     const statusDistribution = Object.values(DestinationStatus).map(status => ({
@@ -142,8 +133,6 @@ const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
       minBudget,
       totalDuration,
       avgDuration,
-      avgPriority,
-      highPriorityCount,
       statusDistribution,
       categoryDistribution,
       topTags
@@ -314,38 +303,6 @@ const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
             </div>
           </div>
 
-          {/* High Priority Count */}
-          <div style={{
-            background: '#fef3c7',
-            border: '1px solid #fbbf24',
-            borderRadius: '12px',
-            padding: '1rem',
-            textAlign: 'center'
-          }}>
-            <div style={{
-              color: '#f59e0b',
-              marginBottom: '0.5rem',
-              display: 'flex',
-              justifyContent: 'center'
-            }}>
-              <Star size={20} />
-            </div>
-            <div style={{
-              fontSize: '1.5rem',
-              fontWeight: '700',
-              color: '#d97706',
-              marginBottom: '0.25rem'
-            }}>
-              {stats.highPriorityCount}
-            </div>
-            <div style={{
-              fontSize: '0.75rem',
-              color: '#6b7280',
-              fontWeight: '500'
-            }}>
-              Must-See
-            </div>
-          </div>
         </div>
 
         {showDetailed && (

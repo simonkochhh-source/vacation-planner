@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
 import { 
   Trip, 
   Destination, 
@@ -10,7 +10,10 @@ import {
   ExportOptions,
   DestinationStatus,
   SortField,
-  SortDirection
+  SortDirection,
+  AppSettings,
+  TransportMode,
+  FuelType
 } from '../types';
 import { 
   generateUUID, 
@@ -34,6 +37,7 @@ type AppAction =
   | { type: 'REORDER_DESTINATIONS'; payload: { tripId: UUID; destinationIds: UUID[] } }
   | { type: 'SET_CURRENT_TRIP'; payload: UUID | undefined }
   | { type: 'UPDATE_UI_STATE'; payload: Partial<UIState> }
+  | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'SET_LOADING'; payload: boolean };
 
 // Initial UI State
@@ -44,7 +48,6 @@ const initialUIState: UIState = {
   filters: {
     category: [],
     status: [],
-    priority: [],
     tags: []
   },
   sortOptions: {
@@ -58,12 +61,51 @@ const initialUIState: UIState = {
   mapZoom: 10
 };
 
+// Initial Settings
+const initialSettings: AppSettings = {
+  // General Settings
+  language: 'de',
+  theme: 'auto',
+  currency: 'EUR',
+  dateFormat: 'dd.MM.yyyy',
+  timeFormat: '24h',
+  
+  // Map Settings
+  defaultMapProvider: 'osm',
+  defaultMapZoom: 10,
+  showTraffic: false,
+  showPublicTransport: true,
+  
+  // Travel Settings
+  defaultTransportMode: TransportMode.DRIVING,
+  fuelType: FuelType.E10,
+  fuelConsumption: 9.0,
+  
+  // Notification Settings
+  enableNotifications: true,
+  reminderTime: 30,
+  
+  // Export Settings
+  defaultExportFormat: 'json',
+  includePhotosInExport: true,
+  includeNotesInExport: true,
+  
+  // Privacy Settings
+  shareLocation: false,
+  trackVisitHistory: true,
+  
+  // Backup Settings
+  autoBackup: true,
+  backupInterval: 24
+};
+
 // App State Interface
 interface AppState {
   trips: Trip[];
   destinations: Destination[];
   currentTrip?: Trip;
   uiState: UIState;
+  settings: AppSettings;
 }
 
 // Initial State
@@ -71,7 +113,8 @@ const initialState: AppState = {
   trips: [],
   destinations: [],
   currentTrip: undefined,
-  uiState: initialUIState
+  uiState: initialUIState,
+  settings: initialSettings
 };
 
 // Reducer
@@ -172,6 +215,9 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
     case 'UPDATE_UI_STATE':
       return { ...state, uiState: { ...state.uiState, ...action.payload } };
     
+    case 'UPDATE_SETTINGS':
+      return { ...state, settings: { ...state.settings, ...action.payload } };
+    
     case 'SET_LOADING':
       return { ...state, uiState: { ...state.uiState, isLoading: action.payload } };
     
@@ -190,43 +236,85 @@ interface AppProviderProps {
 
 export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // Load data from localStorage on mount
   useEffect(() => {
     const savedTrips = loadFromLocalStorage<Trip[]>('vacation-planner-trips');
     const savedDestinations = loadFromLocalStorage<Destination[]>('vacation-planner-destinations');
     const savedUIState = loadFromLocalStorage<Partial<UIState>>('vacation-planner-ui-state');
+    const savedSettings = loadFromLocalStorage<Partial<AppSettings>>('vacation-planner-settings');
 
+    console.log('🔄 Loading data from localStorage...');
+    console.log('📍 Trips loaded:', savedTrips ? savedTrips.length : 0);
+    console.log('🎯 Destinations loaded:', savedDestinations ? savedDestinations.length : 0);
+    console.log('⚙️ Settings loaded:', savedSettings ? 'yes' : 'no');
+    
     if (savedTrips) {
+      console.log('✅ Setting trips:', savedTrips);
       dispatch({ type: 'SET_TRIPS', payload: savedTrips });
+    } else {
+      console.log('❌ No trips found in localStorage');
     }
 
     if (savedDestinations) {
+      console.log('✅ Setting destinations:', savedDestinations);
       dispatch({ type: 'SET_DESTINATIONS', payload: savedDestinations });
+    } else {
+      console.log('❌ No destinations found in localStorage');
     }
 
     if (savedUIState) {
       dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, ...savedUIState } });
     }
+
+    if (savedSettings) {
+      dispatch({ type: 'UPDATE_SETTINGS', payload: savedSettings });
+    }
+    
+    // Mark as initialized after loading
+    console.log('✅ AppContext initialized');
+    setIsInitialized(true);
   }, []);
 
-  // Save to localStorage when state changes
+  // Save to localStorage when state changes (but not on initial load)
+  
   useEffect(() => {
-    saveToLocalStorage('vacation-planner-trips', state.trips);
-  }, [state.trips]);
+    if (isInitialized) {
+      console.log('💾 Saving trips to localStorage:', state.trips.length);
+      saveToLocalStorage('vacation-planner-trips', state.trips);
+    }
+  }, [state.trips, isInitialized]);
 
   useEffect(() => {
-    saveToLocalStorage('vacation-planner-destinations', state.destinations);
-  }, [state.destinations]);
+    if (isInitialized) {
+      console.log('💾 Saving destinations to localStorage:', state.destinations.length);
+      saveToLocalStorage('vacation-planner-destinations', state.destinations);
+    }
+  }, [state.destinations, isInitialized]);
 
   useEffect(() => {
-    saveToLocalStorage('vacation-planner-ui-state', state.uiState);
-  }, [state.uiState]);
+    if (isInitialized) {
+      saveToLocalStorage('vacation-planner-ui-state', state.uiState);
+    }
+  }, [state.uiState, isInitialized]);
+
+  useEffect(() => {
+    if (isInitialized) {
+      console.log('💾 Saving settings to localStorage');
+      saveToLocalStorage('vacation-planner-settings', state.settings);
+    }
+  }, [state.settings, isInitialized]);
 
   // Auto-select first trip if no current trip is selected
   useEffect(() => {
+    console.log('🎯 Checking trip auto-selection...');
+    console.log('Available trips:', state.trips.length);
+    console.log('Current trip:', state.currentTrip?.name || 'None');
+    
     if (state.trips.length > 0 && !state.currentTrip) {
       const firstTrip = state.trips[0];
+      console.log('🚀 Auto-selecting first trip:', firstTrip.name);
       dispatch({ type: 'SET_CURRENT_TRIP', payload: firstTrip.id });
       dispatch({ type: 'UPDATE_UI_STATE', payload: { activeTripId: firstTrip.id } });
     }
@@ -262,14 +350,19 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   // Destination Actions
   const createDestination = async (data: CreateDestinationData): Promise<Destination> => {
+    console.log('Creating destination with data:', data);
+    
+    const activeTripId = state.uiState.activeTripId;
+    const activeTrip = state.trips.find(trip => trip.id === activeTripId);
+    console.log('Active trip:', activeTrip);
+    
     const newDestination: Destination = {
       id: generateUUID(),
       ...data,
-      rating: undefined,
       actualCost: undefined,
       photos: [],
       bookingInfo: undefined,
-      status: DestinationStatus.PLANNED,
+      status: (data as any).status || DestinationStatus.PLANNED, // Use form status or default
       duration: 60, // default 1 hour
       weatherInfo: undefined,
       transportToNext: undefined,
@@ -281,7 +374,25 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       updatedAt: getCurrentDateString()
     };
 
+    console.log('New destination created:', newDestination);
     dispatch({ type: 'ADD_DESTINATION', payload: newDestination });
+    
+    // Add the destination to the current trip if there is one
+    if (activeTrip) {
+      console.log('Adding destination to current trip:', activeTrip.id);
+      dispatch({ 
+        type: 'UPDATE_TRIP', 
+        payload: { 
+          id: activeTrip.id, 
+          data: { 
+            destinations: [...activeTrip.destinations, newDestination.id] 
+          } 
+        } 
+      });
+      console.log('Destination added to trip');
+    } else {
+      console.log('No current trip found');
+    }
     
     return newDestination;
   };
@@ -295,6 +406,23 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const deleteDestination = async (id: UUID): Promise<void> => {
     dispatch({ type: 'DELETE_DESTINATION', payload: id });
+    
+    // Remove the destination from all trips
+    const tripsWithDestination = state.trips.filter(trip => 
+      trip.destinations.includes(id)
+    );
+    
+    for (const trip of tripsWithDestination) {
+      dispatch({
+        type: 'UPDATE_TRIP',
+        payload: {
+          id: trip.id,
+          data: {
+            destinations: trip.destinations.filter(destId => destId !== id)
+          }
+        }
+      });
+    }
   };
 
   const reorderDestinations = async (tripId: UUID, destinationIds: UUID[]): Promise<void> => {
@@ -309,6 +437,10 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
 
   const updateUIState = (uiState: Partial<UIState>) => {
     dispatch({ type: 'UPDATE_UI_STATE', payload: uiState });
+  };
+
+  const updateSettings = (settings: Partial<AppSettings>) => {
+    dispatch({ type: 'UPDATE_SETTINGS', payload: settings });
   };
 
   // Export Action
@@ -341,6 +473,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     destinations: state.destinations,
     currentTrip: state.currentTrip,
     uiState: state.uiState,
+    settings: state.settings,
     createTrip,
     updateTrip,
     deleteTrip,
@@ -350,6 +483,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     reorderDestinations,
     setCurrentTrip,
     updateUIState,
+    updateSettings,
     exportTrip
   };
 

@@ -182,16 +182,25 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
         <div style={{
           flex: 1,
           minHeight: '400px',
-          position: 'relative'
+          position: 'relative',
+          backgroundColor: '#f3f4f6'
         }}>
           <MapContainer
             center={[mapCenter.lat, mapCenter.lng]}
             zoom={13}
-            style={{ height: '100%', width: '100%' }}
+            style={{ 
+              height: '400px', 
+              width: '100%',
+              zIndex: 1
+            }}
+            attributionControl={true}
+            zoomControl={true}
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              maxZoom={19}
+              detectRetina={true}
             />
             
             <MapClickHandler 

@@ -106,18 +106,6 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
     });
   }
 
-  // Priority filters
-  if (uiState.filters.priority?.length) {
-    uiState.filters.priority.forEach(priority => {
-      filterChips.push({
-        id: `priority-${priority}`,
-        label: `${priority} Stern${priority > 1 ? 'e' : ''}`,
-        icon: <Star size={12} fill="#fbbf24" color="#fbbf24" />,
-        color: '#fbbf24',
-        onRemove: () => removeFilter('priority', priority)
-      });
-    });
-  }
 
   // Tag filters
   if (uiState.filters.tags?.length) {

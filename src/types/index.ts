@@ -40,6 +40,12 @@ export enum TransportMode {
   TRAIN = 'train'
 }
 
+export enum FuelType {
+  DIESEL = 'diesel',
+  E5 = 'e5',
+  E10 = 'e10'
+}
+
 // Coordinate interface
 export interface Coordinates {
   lat: number;
@@ -54,6 +60,24 @@ export interface WeatherInfo {
   windSpeed?: number;
   icon?: string;
   description?: string;
+}
+
+// Vehicle and fuel configuration
+export interface VehicleConfig {
+  fuelType: FuelType;
+  fuelConsumption: number; // liters per 100km
+  fuelPrice?: number; // EUR per liter (cached from API)
+  lastPriceUpdate?: DateString; // when fuel price was last updated
+}
+
+// Fuel price information
+export interface FuelPrice {
+  type: FuelType;
+  price: number; // EUR per liter
+  stationId: string;
+  stationName: string;
+  location: Coordinates;
+  lastUpdated: DateString;
 }
 
 // Transport information
@@ -74,11 +98,7 @@ export interface Destination {
   coordinates?: Coordinates;
   startDate: DateString;
   endDate: DateString;
-  startTime: TimeString;
-  endTime: TimeString;
   category: DestinationCategory;
-  priority: number; // 1-5 (1 = lowest, 5 = highest)
-  rating?: number; // 1-5 stars
   budget?: number;
   actualCost?: number;
   notes?: string;
@@ -87,7 +107,12 @@ export interface Destination {
   status: DestinationStatus;
   tags: string[];
   color?: string; // hex color for map display
-  duration: number; // planned duration in minutes
+  duration?: number; // kept for compatibility but deprecated - use startTime/endTime instead
+  
+  // Enhanced timeline features
+  startTime?: TimeString; // HH:MM format for daily schedule
+  endTime?: TimeString; // HH:MM format for daily schedule
+  
   weatherInfo?: WeatherInfo;
   transportToNext?: TransportInfo;
   website?: string;
@@ -115,6 +140,9 @@ export interface Trip {
   coverImage?: string;
   tags: string[];
   
+  // Vehicle and fuel configuration for travel cost calculations
+  vehicleConfig?: VehicleConfig;
+  
   // Metadata
   createdAt: DateString;
   updatedAt: DateString;
@@ -124,7 +152,6 @@ export interface Trip {
 export interface DestinationFilters {
   category?: DestinationCategory[];
   status?: DestinationStatus[];
-  priority?: number[];
   tags?: string[];
   dateRange?: {
     start: DateString;
@@ -139,9 +166,6 @@ export interface DestinationFilters {
 export enum SortField {
   NAME = 'name',
   START_DATE = 'startDate',
-  START_TIME = 'startTime',
-  PRIORITY = 'priority',
-  RATING = 'rating',
   BUDGET = 'budget',
   CREATED_AT = 'createdAt'
 }
@@ -158,7 +182,8 @@ export interface SortOptions {
 
 // UI State types
 export interface UIState {
-  currentView: 'list' | 'map' | 'timeline' | 'scheduling' | 'budget';
+  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery';
+  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery';
   activeDestination?: UUID;
   activeTripId?: UUID;
   filters: DestinationFilters;
@@ -170,6 +195,44 @@ export interface UIState {
   mapZoom?: number;
 }
 
+// Settings types
+export interface AppSettings {
+  // General Settings
+  language: 'de' | 'en';
+  theme: 'light' | 'dark' | 'auto';
+  currency: string;
+  dateFormat: 'dd.MM.yyyy' | 'MM/dd/yyyy' | 'yyyy-MM-dd';
+  timeFormat: '24h' | '12h';
+  
+  // Map Settings
+  defaultMapProvider: 'osm' | 'google' | 'mapbox';
+  defaultMapZoom: number;
+  showTraffic: boolean;
+  showPublicTransport: boolean;
+  
+  // Travel Settings
+  defaultTransportMode: TransportMode;
+  fuelType: FuelType;
+  fuelConsumption: number; // L/100km
+  
+  // Notification Settings
+  enableNotifications: boolean;
+  reminderTime: number; // minutes before event
+  
+  // Export Settings
+  defaultExportFormat: 'json' | 'csv' | 'gpx' | 'kml';
+  includePhotosInExport: boolean;
+  includeNotesInExport: boolean;
+  
+  // Privacy Settings
+  shareLocation: boolean;
+  trackVisitHistory: boolean;
+  
+  // Backup Settings
+  autoBackup: boolean;
+  backupInterval: number; // hours
+}
+
 // Form types
 export interface CreateDestinationData {
   name: string;
@@ -177,11 +240,9 @@ export interface CreateDestinationData {
   coordinates?: Coordinates;
   startDate: DateString;
   endDate: DateString;
-  startTime: TimeString;
-  endTime: TimeString;
   category: DestinationCategory;
-  priority: number;
   budget?: number;
+  status?: DestinationStatus;
   notes?: string;
   tags: string[];
   color?: string;
@@ -195,6 +256,7 @@ export interface CreateTripData {
   budget?: number;
   participants: string[];
   tags: string[];
+  vehicleConfig?: VehicleConfig;
 }
 
 // API Response types
@@ -224,8 +286,7 @@ export interface TripStatistics {
   skippedDestinations: number;
   totalBudget: number;
   actualCost: number;
-  averageRating: number;
-  totalDuration: number; // in minutes
+  totalDuration?: number; // deprecated - kept for compatibility
   categoriesCount: Record<DestinationCategory, number>;
 }
 
@@ -247,6 +308,7 @@ export interface AppContextType {
   destinations: Destination[];
   currentTrip?: Trip;
   uiState: UIState;
+  settings: AppSettings;
   
   // Actions
   createTrip: (data: CreateTripData) => Promise<Trip>;
@@ -260,5 +322,6 @@ export interface AppContextType {
   
   setCurrentTrip: (tripId: UUID) => void;
   updateUIState: (state: Partial<UIState>) => void;
+  updateSettings: (settings: Partial<AppSettings>) => void;
   exportTrip: (tripId: UUID, options: ExportOptions) => Promise<string>;
 }

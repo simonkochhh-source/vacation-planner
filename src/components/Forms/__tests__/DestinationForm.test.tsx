@@ -37,7 +37,6 @@ describe('DestinationForm', () => {
       endDate: '2024-01-01',
       startTime: '09:00',
       endTime: '17:00',
-      priority: 4,
       tags: ['culture']
     };
 
@@ -125,7 +124,6 @@ describe('DestinationForm', () => {
     const endDateInput = screen.getByLabelText('Enddatum');
     const startTimeInput = screen.getByLabelText('Startzeit');
     const endTimeInput = screen.getByLabelText('Endzeit');
-    const priorityInput = screen.getByLabelText('Priorität');
     
     fireEvent.change(nameInput, { target: { value: 'Test Destination' } });
     fireEvent.change(locationInput, { target: { value: 'Test City' } });
@@ -134,7 +132,6 @@ describe('DestinationForm', () => {
     fireEvent.change(endDateInput, { target: { value: '2024-01-15' } });
     fireEvent.change(startTimeInput, { target: { value: '09:00' } });
     fireEvent.change(endTimeInput, { target: { value: '17:00' } });
-    fireEvent.change(priorityInput, { target: { value: '4' } });
     
     const submitButton = screen.getByRole('button', { name: /Hinzufügen/i });
     fireEvent.click(submitButton);
@@ -148,7 +145,6 @@ describe('DestinationForm', () => {
         endDate: '2024-01-15',
         startTime: '09:00',
         endTime: '17:00',
-        priority: 4,
         tags: []
       });
     });

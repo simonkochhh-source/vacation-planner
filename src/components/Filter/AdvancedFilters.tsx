@@ -39,7 +39,6 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   const [isExpanded, setIsExpanded] = useState(!isCompact);
   const [showDateRange, setShowDateRange] = useState(false);
   const [showBudgetRange, setShowBudgetRange] = useState(false);
-  const [showPriorityFilter, setShowPriorityFilter] = useState(false);
   const [showTagsFilter, setShowTagsFilter] = useState(false);
 
   // Get current trip destinations for filter calculations
@@ -77,7 +76,6 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     let count = 0;
     if (uiState.filters.category?.length) count++;
     if (uiState.filters.status?.length) count++;
-    if (uiState.filters.priority?.length) count++;
     if (uiState.filters.tags?.length) count++;
     if (uiState.filters.dateRange) count++;
     if (uiState.filters.budgetRange) count++;
@@ -257,7 +255,6 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               {[
                 { field: SortField.START_DATE, label: 'Datum', icon: Calendar },
                 { field: SortField.NAME, label: 'Name', icon: MapPin },
-                { field: SortField.PRIORITY, label: 'Priorität', icon: Star },
                 { field: SortField.BUDGET, label: 'Budget', icon: DollarSign }
               ].map(({ field, label, icon: Icon }) => (
                 <button
@@ -407,79 +404,6 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             </div>
           </div>
 
-          {/* Priority Filter */}
-          <div style={{ marginBottom: '1.5rem' }}>
-            <button
-              onClick={() => setShowPriorityFilter(!showPriorityFilter)}
-              style={{
-                width: '100%',
-                background: 'transparent',
-                border: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '0',
-                cursor: 'pointer',
-                marginBottom: '0.75rem'
-              }}
-            >
-              <h4 style={{
-                margin: '0',
-                fontSize: '0.875rem',
-                fontWeight: '600',
-                color: '#374151',
-                textTransform: 'uppercase',
-                letterSpacing: '0.05em'
-              }}>
-                Priorität
-              </h4>
-              {showPriorityFilter ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-            </button>
-            
-            {showPriorityFilter && (
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {[1, 2, 3, 4, 5].map((priority) => {
-                  const isSelected = uiState.filters.priority?.includes(priority);
-                  const count = currentDestinations.filter(d => d.priority === priority).length;
-                  
-                  return (
-                    <button
-                      key={priority}
-                      onClick={() => handleFilterChange('priority', priority)}
-                      disabled={count === 0}
-                      style={{
-                        background: isSelected ? '#fbbf24' : count === 0 ? '#f9fafb' : 'white',
-                        border: isSelected ? '1px solid #fbbf24' : '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        padding: '0.75rem',
-                        cursor: count === 0 ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        gap: '0.25rem',
-                        flex: 1,
-                        opacity: count === 0 ? 0.5 : 1
-                      }}
-                    >
-                      <div style={{ display: 'flex' }}>
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            size={12}
-                            style={{
-                              color: star <= priority ? '#fbbf24' : '#d1d5db',
-                              fill: star <= priority ? '#fbbf24' : 'transparent'
-                            }}
-                          />
-                        ))}
-                      </div>
-                      <span style={{ fontSize: '0.7rem', color: '#6b7280' }}>({count})</span>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
 
           {/* Tags Filter */}
           {filterStats.availableTags.length > 0 && (

@@ -27,7 +27,6 @@ import {
   getCategoryIcon, 
   getCategoryLabel, 
   formatDate, 
-  formatTime, 
   formatCurrency
 } from '../../utils';
 import { Destination, DestinationStatus } from '../../types';
@@ -236,22 +235,6 @@ export const DraggableDestinationCard: React.FC<DraggableDestinationCardProps> =
           </div>
 
           {/* Priority Stars */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.25rem'
-          }}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                size={14}
-                style={{
-                  color: star <= destination.priority ? '#fbbf24' : '#d1d5db',
-                  fill: star <= destination.priority ? '#fbbf24' : 'transparent'
-                }}
-              />
-            ))}
-          </div>
         </div>
 
         {/* Details */}
@@ -280,9 +263,6 @@ export const DraggableDestinationCard: React.FC<DraggableDestinationCardProps> =
                 ` - ${formatDate(destination.endDate)}`
               }
             </div>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
-              {formatTime(destination.startTime)} - {formatTime(destination.endTime)}
-            </div>
           </div>
 
           {/* Budget */}
@@ -310,23 +290,6 @@ export const DraggableDestinationCard: React.FC<DraggableDestinationCardProps> =
             </div>
           )}
 
-          {/* Duration */}
-          <div>
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              color: '#6b7280',
-              fontSize: '0.875rem',
-              marginBottom: '0.25rem'
-            }}>
-              <Clock size={14} />
-              <span>Dauer</span>
-            </div>
-            <div style={{ fontSize: '0.875rem', color: '#1f2937' }}>
-              {Math.floor(destination.duration / 60)}h {destination.duration % 60}min
-            </div>
-          </div>
 
           {/* Weather Widget */}
           {destination.coordinates && (

@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import { Icon, LatLngExpression } from 'leaflet';
 import { Destination } from '../../types';
-import { getCategoryIcon, formatDate, formatTime } from '../../utils';
+import { getCategoryIcon, formatDate } from '../../utils';
 import StatusBadge from '../UI/StatusBadge';
 
 interface ClusterPoint {
@@ -77,7 +77,7 @@ const DestinationCluster: React.FC<DestinationClusterProps> = ({
     const dominantColor = destinations[0].color || '#3b82f6';
 
     return new Icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
+      iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
         <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
           <circle cx="${size/2}" cy="${size/2}" r="${size/2 - 2}" fill="${dominantColor}" stroke="white" stroke-width="3" opacity="0.8"/>
           <circle cx="${size/2}" cy="${size/2}" r="${size/2 - 8}" fill="white" opacity="0.9"/>
@@ -94,7 +94,7 @@ const DestinationCluster: React.FC<DestinationClusterProps> = ({
 
   const createSingleIcon = (destination: Destination) => {
     return new Icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
+      iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(`
         <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
           <circle cx="16" cy="16" r="14" fill="${destination.color || '#3b82f6'}" stroke="white" stroke-width="2"/>
           <text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-family="Arial">
@@ -251,15 +251,23 @@ const DestinationCluster: React.FC<DestinationClusterProps> = ({
                 }}>
                   <div>
                     <strong>Start:</strong><br />
-                    {formatDate(cluster.destinations[0].startDate)}<br />
-                    {formatTime(cluster.destinations[0].startTime)}
+                    {formatDate(cluster.destinations[0].startDate)}
                   </div>
                   <div>
                     <strong>Ende:</strong><br />
-                    {formatDate(cluster.destinations[0].endDate)}<br />
-                    {formatTime(cluster.destinations[0].endTime)}
+                    {formatDate(cluster.destinations[0].endDate)}
                   </div>
                 </div>
+                
+                {cluster.destinations[0].duration && (
+                  <div style={{
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    color: '#374151'
+                  }}>
+                    <strong>Dauer:</strong> {Math.floor(cluster.destinations[0].duration / 60)}h {cluster.destinations[0].duration % 60}min
+                  </div>
+                )}
 
                 {cluster.destinations[0].notes && (
                   <div style={{

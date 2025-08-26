@@ -11,6 +11,7 @@ import OptimizedDestinationCluster from '../Maps/OptimizedDestinationCluster';
 import VirtualizedMarkers from '../Maps/VirtualizedMarkers';
 import MapMeasurement from '../Maps/MapMeasurement';
 import MobileMapControls from '../Maps/MobileMapControls';
+import TripRouteVisualizer from '../Maps/TripRouteVisualizer';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useMapPerformance } from '../../hooks/useMapPerformance';
 import { getCategoryIcon, getCategoryLabel, formatDate, formatTime } from '../../utils';
@@ -40,6 +41,7 @@ const MapView: React.FC = () => {
   const [showClustering, setShowClustering] = useState(isMobile); // Enable clustering by default on mobile
   const [currentMapLayer, setCurrentMapLayer] = useState('openstreetmap');
   const [currentZoom, setCurrentZoom] = useState(isMobile ? 8 : 10);
+  const [showTripRoutes, setShowTripRoutes] = useState(true); // Show routes by default
 
   // Performance monitoring and optimization
   const {
@@ -164,19 +166,32 @@ const MapView: React.FC = () => {
   };
 
   const createCustomIcon = (destination: Destination) => {
-    return new Icon({
-      iconUrl: `data:image/svg+xml;base64,${btoa(`
-        <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="16" cy="16" r="14" fill="${destination.color || '#3b82f6'}" stroke="white" stroke-width="2"/>
-          <text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-family="Arial">
-            ${getCategoryIcon(destination.category)}
-          </text>
-        </svg>
-      `)}`,
-      iconSize: [32, 32],
-      iconAnchor: [16, 16],
-      popupAnchor: [0, -16]
-    });
+    const svgContent = `
+      <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="16" cy="16" r="14" fill="${destination.color || '#3b82f6'}" stroke="white" stroke-width="2"/>
+        <text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-family="Arial">
+          ${getCategoryIcon(destination.category)}
+        </text>
+      </svg>
+    `;
+    
+    try {
+      return new Icon({
+        iconUrl: `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgContent)))}`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16]
+      });
+    } catch (error) {
+      // Fallback to simple circle icon if btoa fails
+      console.warn('SVG encoding failed, using fallback icon:', error);
+      return new Icon({
+        iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`,
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+        popupAnchor: [0, -16]
+      });
+    }
   };
 
   if (!currentTrip) {
@@ -261,6 +276,16 @@ const MapView: React.FC = () => {
           />
         )}
 
+        {/* Trip Route Visualizer - Shows routes between destinations */}
+        <TripRouteVisualizer
+          destinations={currentDestinations}
+          showRoutes={showTripRoutes}
+          onRouteClick={(from, to, travelTime) => {
+            console.log(`Route from ${from.name} to ${to.name}: ${travelTime} minutes`);
+            // Optional: Show route details in UI
+          }}
+        />
+
         {/* Routing Component */}
         <RoutingMachine 
           destinations={currentDestinations}
@@ -290,6 +315,8 @@ const MapView: React.FC = () => {
         onToggleMeasurement={() => setShowMeasurement(!showMeasurement)}
         showClustering={showClustering}
         onToggleClustering={() => setShowClustering(!showClustering)}
+        showTripRoutes={showTripRoutes}
+        onToggleTripRoutes={() => setShowTripRoutes(!showTripRoutes)}
         isMobile={isMobile || isTablet}
       />
 

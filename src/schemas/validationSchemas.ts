@@ -17,20 +17,10 @@ export const destinationSchema = z.object({
     .min(1, 'Startdatum ist erforderlich')
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datumsformat'),
   
-  startTime: z.string()
-    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Ungültiges Zeitformat (HH:MM)'),
-  
   endDate: z.string()
     .min(1, 'Enddatum ist erforderlich')
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Ungültiges Datumsformat'),
   
-  endTime: z.string()
-    .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Ungültiges Zeitformat (HH:MM)'),
-  
-  priority: z.number()
-    .min(1, 'Priorität muss zwischen 1 und 5 liegen')
-    .max(5, 'Priorität muss zwischen 1 und 5 liegen')
-    .int('Priorität muss eine ganze Zahl sein'),
   
   budget: z.number()
     .min(0, 'Budget kann nicht negativ sein')
@@ -54,9 +44,10 @@ export const destinationSchema = z.object({
     .optional(),
   
   images: z.array(z.string().url('Ungültige URL'))
-    .optional(),
+    .optional()
+    .default([]),
   
-  status: z.nativeEnum(DestinationStatus),
+  status: z.nativeEnum(DestinationStatus).optional(),
   
   tags: z.array(z.string())
     .optional(),
@@ -73,17 +64,6 @@ export const destinationSchema = z.object({
 }, {
   message: 'Enddatum muss nach dem Startdatum liegen',
   path: ['endDate']
-}).refine((data) => {
-  // Validate that end time is after start time if same date
-  if (data.endDate && data.startDate && data.endTime && data.startTime) {
-    if (data.endDate === data.startDate) {
-      return data.endTime > data.startTime;
-    }
-  }
-  return true;
-}, {
-  message: 'Endzeit muss nach der Startzeit liegen',
-  path: ['endTime']
 }).refine((data) => {
   // Validate actual cost doesn't exceed budget if both are set
   if (data.budget && data.actualCost) {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Destination } from '../../types';
-import { getCategoryIcon, formatTime, formatDate } from '../../utils';
+import { getCategoryIcon, formatDate } from '../../utils';
 import StatusBadge from '../UI/StatusBadge';
 import { 
   Play, 
@@ -228,7 +228,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   fontSize: '0.75rem',
                   color: '#6b7280'
                 }}>
-                  {formatDate(destinations[currentIndex].startDate)} • {formatTime(destinations[currentIndex].startTime)}
+                  {formatDate(destinations[currentIndex].startDate)}
                 </span>
               </div>
             </div>
@@ -482,7 +482,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                     }}>
                       <Clock size={12} />
                       <span>
-                        {formatDate(destination.startDate)} • {formatTime(destination.startTime)}
+                        {formatDate(destination.startDate)}
                       </span>
                     </div>
                   </div>

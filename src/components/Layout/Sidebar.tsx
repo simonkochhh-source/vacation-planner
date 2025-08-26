@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
 import { useApp } from '../../stores/AppContext';
-import DestinationForm from '../Forms/DestinationForm';
 import TripForm from '../Forms/TripForm';
 import ProgressRing from '../UI/ProgressRing';
 import { 
-  Plus, 
+  Plus,
   MapPin, 
   Calendar, 
   Filter, 
@@ -12,9 +11,10 @@ import {
   Plane,
   ChevronDown,
   ChevronRight,
-  Star,
   DollarSign,
-  X
+  X,
+  Edit3,
+  Compass
 } from 'lucide-react';
 import { DestinationCategory, DestinationStatus, SortField, SortDirection } from '../../types';
 import { getCategoryIcon, getCategoryLabel, formatCurrency } from '../../utils';
@@ -37,8 +37,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
 
   const [showFilters, setShowFilters] = useState(false);
   const [showTrips, setShowTrips] = useState(true);
-  const [showDestinationForm, setShowDestinationForm] = useState(false);
   const [showTripForm, setShowTripForm] = useState(false);
+  const [showEditTripForm, setShowEditTripForm] = useState(false);
 
   // Get current trip destinations
   const currentDestinations = currentTrip 
@@ -90,23 +90,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
         padding: '1rem 0.5rem',
         gap: '1rem'
       }}>
-        <button
-          style={{
-            background: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            padding: '0.75rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center'
-          }}
-          title="Neues Ziel hinzufügen"
-        >
-          <Plus size={20} />
-        </button>
-        
         <div style={{
           width: '100%',
           height: '1px',
@@ -185,38 +168,32 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           </button>
         )}
         <div style={{ width: '100%' }}>
-        <button
-          onClick={() => {
-            if (!currentTrip) {
-              // Show alert that a trip needs to be created first
-              alert('Bitte erstellen Sie zuerst eine Reise, bevor Sie Ziele hinzufügen können.');
-              setShowTripForm(true);
-            } else {
-              setShowDestinationForm(true);
-            }
-          }}
-          style={{
-            width: '100%',
-            background: '#3b82f6',
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '0.875rem 1rem',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '0.5rem',
-            fontSize: '0.875rem',
-            fontWeight: '600',
-            transition: 'all 0.2s'
-          }}
-          onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
-          onMouseOut={(e) => e.currentTarget.style.background = '#3b82f6'}
-        >
-          <Plus size={18} />
-          {currentTrip ? 'Neues Ziel hinzufügen' : 'Zuerst Reise erstellen'}
-        </button>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem' }}>
+          <button
+            onClick={() => updateUIState({ activeView: 'discovery' })}
+            style={{
+              width: '100%',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '0.875rem 1rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              fontSize: '0.875rem',
+              fontWeight: '600',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#3b82f6'}
+          >
+            <Compass size={18} />
+            Ziele entdecken
+          </button>
+        </div>
         </div>
       </div>
 
@@ -272,16 +249,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             {trips.map((trip) => (
               <div
                 key={trip.id}
-                onClick={() => setCurrentTrip(trip.id)}
                 style={{
                   padding: '0.5rem 0.75rem',
                   borderRadius: '8px',
-                  cursor: 'pointer',
                   background: currentTrip?.id === trip.id ? '#e0f2fe' : 'transparent',
                   color: currentTrip?.id === trip.id ? '#0891b2' : '#6b7280',
                   fontSize: '0.875rem',
                   marginBottom: '0.25rem',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
                 }}
                 onMouseOver={(e) => {
                   if (currentTrip?.id !== trip.id) {
@@ -294,10 +272,44 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
                   }
                 }}
               >
-                {trip.name}
-                <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.25rem' }}>
-                  {trip.destinations.length} Ziele
+                <div
+                  onClick={() => setCurrentTrip(trip.id)}
+                  style={{ 
+                    flex: 1,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {trip.name}
+                  <div style={{ fontSize: '0.75rem', opacity: 0.7, marginTop: '0.25rem' }}>
+                    {trip.destinations.length} Ziele
+                  </div>
                 </div>
+                
+                {currentTrip?.id === trip.id && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEditTripForm(true);
+                    }}
+                    style={{
+                      background: 'rgba(8, 145, 178, 0.1)',
+                      border: 'none',
+                      borderRadius: '4px',
+                      padding: '0.25rem',
+                      color: '#0891b2',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginLeft: '0.5rem'
+                    }}
+                    title="Reise bearbeiten"
+                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(8, 145, 178, 0.2)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(8, 145, 178, 0.1)'}
+                  >
+                    <Edit3 size={12} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
@@ -436,7 +448,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
               {[
                 { field: SortField.START_DATE, label: 'Datum', icon: Calendar },
                 { field: SortField.NAME, label: 'Name', icon: MapPin },
-                { field: SortField.PRIORITY, label: 'Priorität', icon: Star },
                 { field: SortField.BUDGET, label: 'Budget', icon: DollarSign }
               ].map(({ field, label, icon: Icon }) => (
                 <button
@@ -562,14 +573,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
       </div>
 
       {/* Forms */}
-      <DestinationForm 
-        isOpen={showDestinationForm}
-        onClose={() => setShowDestinationForm(false)}
-      />
-      
       <TripForm 
         isOpen={showTripForm}
         onClose={() => setShowTripForm(false)}
+      />
+      
+      <TripForm 
+        isOpen={showEditTripForm}
+        onClose={() => setShowEditTripForm(false)}
+        trip={currentTrip || undefined}
       />
     </div>
   );

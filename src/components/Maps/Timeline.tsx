@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, SkipBack, SkipForward, Clock, Calendar } from 'lucide-react';
 import { Destination } from '../../types';
-import { formatDate, formatTime, getCategoryIcon } from '../../utils';
+import { formatDate, getCategoryIcon } from '../../utils';
 import StatusBadge from '../UI/StatusBadge';
 
 interface TimelineProps {
@@ -23,12 +23,12 @@ const Timeline: React.FC<TimelineProps> = ({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Sort destinations by start date/time
+  // Sort destinations by start date
   const sortedDestinations = destinations
     .filter(dest => dest.coordinates)
     .sort((a, b) => {
-      const dateA = new Date(`${a.startDate}T${a.startTime || '00:00'}`);
-      const dateB = new Date(`${b.startDate}T${b.startTime || '00:00'}`);
+      const dateA = new Date(a.startDate);
+      const dateB = new Date(b.startDate);
       return dateA.getTime() - dateB.getTime();
     });
 
@@ -183,7 +183,7 @@ const Timeline: React.FC<TimelineProps> = ({
                 fontSize: '0.75rem',
                 color: '#6b7280'
               }}>
-                {formatDate(currentDest.startDate)} {formatTime(currentDest.startTime)}
+                {formatDate(currentDest.startDate)}
               </span>
             </div>
           </div>
