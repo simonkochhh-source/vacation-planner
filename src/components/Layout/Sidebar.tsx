@@ -11,8 +11,8 @@ import {
   X,
   Edit3
 } from 'lucide-react';
-import { DestinationCategory, DestinationStatus } from '../../types';
-import { getCategoryIcon, getCategoryLabel, formatCurrency, calculateTravelCosts } from '../../utils';
+import { DestinationStatus } from '../../types';
+import { getCategoryIcon, formatCurrency, calculateTravelCosts } from '../../utils';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -25,8 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
     currentTrip, 
     destinations, 
     trips, 
-    uiState, 
-    updateUIState, 
+ 
     setCurrentTrip,
     settings 
   } = useApp();

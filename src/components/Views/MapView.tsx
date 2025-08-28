@@ -2,11 +2,9 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, Marker, Popup } from 'react-leaflet';
 import { useApp } from '../../stores/AppContext';
 import { LatLngExpression, Icon } from 'leaflet';
-import StatusBadge from '../UI/StatusBadge';
 import RoutingMachine from '../Maps/RoutingMachine';
 import MobileTimeline from '../Maps/MobileTimeline';
 import MapLayerControl, { DynamicTileLayer } from '../Maps/MapLayerControl';
-import DestinationCluster from '../Maps/DestinationCluster';
 import OptimizedDestinationCluster from '../Maps/OptimizedDestinationCluster';
 import VirtualizedMarkers from '../Maps/VirtualizedMarkers';
 import MapMeasurement from '../Maps/MapMeasurement';
@@ -14,7 +12,6 @@ import MobileMapControls from '../Maps/MobileMapControls';
 import TripRouteVisualizer from '../Maps/TripRouteVisualizer';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useMapPerformance } from '../../hooks/useMapPerformance';
-import { getCategoryIcon, getCategoryLabel, formatDate, formatTime } from '../../utils';
 import { Destination } from '../../types';
 import { MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -50,7 +47,6 @@ const MapView: React.FC = () => {
 
   // Performance monitoring and optimization
   const {
-    metrics,
     isOptimizing,
     createDebouncedHandler,
     getAdaptiveSettings,
@@ -176,17 +172,6 @@ const MapView: React.FC = () => {
     }
   };
 
-  const handleReset = () => {
-    if (mapRef) {
-      mapRef.setView(getMapCenter(), 10);
-    }
-  };
-
-  const handleLocate = () => {
-    if (mapRef && userLocation) {
-      mapRef.setView(userLocation, 15);
-    }
-  };
 
   const handleTimelineDestinationSelect = (destination: Destination) => {
     setSelectedDestination(destination);
@@ -195,34 +180,6 @@ const MapView: React.FC = () => {
     }
   };
 
-  const createCustomIcon = (destination: Destination) => {
-    const svgContent = `
-      <svg width="32" height="32" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="14" fill="${destination.color || '#3b82f6'}" stroke="white" stroke-width="2"/>
-        <text x="16" y="20" text-anchor="middle" fill="white" font-size="14" font-family="Arial">
-          ${getCategoryIcon(destination.category)}
-        </text>
-      </svg>
-    `;
-    
-    try {
-      return new Icon({
-        iconUrl: `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgContent)))}`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -16]
-      });
-    } catch (error) {
-      // Fallback to simple circle icon if btoa fails
-      console.warn('SVG encoding failed, using fallback icon:', error);
-      return new Icon({
-        iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svgContent)}`,
-        iconSize: [32, 32],
-        iconAnchor: [16, 16],
-        popupAnchor: [0, -16]
-      });
-    }
-  };
 
   if (!currentTrip) {
     return (

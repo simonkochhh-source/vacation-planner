@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Destination } from '../../types';
 import { getCategoryIcon, formatDate } from '../../utils';
-import StatusBadge from '../UI/StatusBadge';
 import { 
   Play, 
   Pause, 

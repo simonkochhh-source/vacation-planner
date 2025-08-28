@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TileLayer, useMap } from 'react-leaflet';
+import { TileLayer } from 'react-leaflet';
 import { Layers, Map, Satellite, Navigation2 } from 'lucide-react';
 
 interface MapLayer {

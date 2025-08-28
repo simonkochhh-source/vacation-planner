@@ -9,7 +9,6 @@ import {
   Calendar,
   MapPin,
   Route,
-  DollarSign,
   ChevronLeft,
   ChevronRight,
   ArrowRight,
@@ -31,7 +30,6 @@ import {
   formatDate, 
   getCategoryIcon, 
   getCategoryLabel,
-  formatCurrency,
   calculateDistance,
   getDestinationBudget
 } from '../../utils';
@@ -680,6 +678,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     
     // Use the visual index for display and original index for drop handling
     throttledDragOver(dayDate, visualIndex, index);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [throttledDragOver, isProcessingDrop, dragState.isDragging]);
 
   // Add dragenter handler - required for HTML5 drag & drop
@@ -694,10 +693,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     }
   }, []);
 
-  // Add dragleave handler for debugging
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    console.log('🔼 DragLeave detected');
-  }, []);
 
   const handleDragEnd = useCallback((e: React.DragEvent) => {
     console.log('🏁 Drag ended - this will be handled by drop or timeout');
@@ -856,6 +851,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         });
       };
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragState.isDragging, isProcessingDrop, throttledDragOver]);
 
   const handleDrop = useCallback(async (e: React.DragEvent, targetDay: string, targetIndex: number) => {
@@ -1130,6 +1126,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
       });
     }
     // Note: No finally block needed since we handle cleanup in the try block for optimistic updates
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dragState.draggedItem, currentTrip, destinations, updateDestination, onReorderDestinations, isProcessingDrop, logDragPerformance]);
 
   // Mobile navigation
@@ -1360,6 +1357,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         returnDestinationId: undefined
       });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [creatingDestination, currentTrip, newDestinationForm, createDestination, updateDestination, destinations, onReorderDestinations]);
 
   // Handle place selection from autocomplete
