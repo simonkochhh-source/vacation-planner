@@ -4,20 +4,15 @@ import TripForm from '../Forms/TripForm';
 import ProgressRing from '../UI/ProgressRing';
 import { 
   Plus,
-  MapPin, 
-  Calendar, 
-  Filter, 
   Download,
   Plane,
   ChevronDown,
   ChevronRight,
-  DollarSign,
   X,
-  Edit3,
-  Compass
+  Edit3
 } from 'lucide-react';
-import { DestinationCategory, DestinationStatus, SortField, SortDirection } from '../../types';
-import { getCategoryIcon, getCategoryLabel, formatCurrency } from '../../utils';
+import { DestinationCategory, DestinationStatus } from '../../types';
+import { getCategoryIcon, getCategoryLabel, formatCurrency, calculateTravelCosts } from '../../utils';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -32,10 +27,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
     trips, 
     uiState, 
     updateUIState, 
-    setCurrentTrip 
+    setCurrentTrip,
+    settings 
   } = useApp();
 
-  const [showFilters, setShowFilters] = useState(false);
   const [showTrips, setShowTrips] = useState(true);
   const [showTripForm, setShowTripForm] = useState(false);
   const [showEditTripForm, setShowEditTripForm] = useState(false);
@@ -45,38 +40,24 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
     ? destinations.filter(dest => currentTrip.destinations.includes(dest.id))
     : [];
 
-  // Calculate stats
+  // Calculate stats including travel costs
+  const destinationCosts = currentDestinations.reduce((sum, d) => sum + (d.actualCost || 0), 0);
+  const travelCosts = calculateTravelCosts(
+    currentDestinations,
+    settings?.fuelConsumption || 9.0,
+    1.65 // Fallback fuel price
+  );
+  
   const stats = {
     total: currentDestinations.length,
-    visited: currentDestinations.filter(d => d.status === DestinationStatus.VISITED).length,
+    days: currentTrip ? Math.max(1, Math.ceil((new Date(currentTrip.endDate).getTime() - new Date(currentTrip.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1) : 0,
     planned: currentDestinations.filter(d => d.status === DestinationStatus.PLANNED).length,
-    budget: currentDestinations.reduce((sum, d) => sum + (d.budget || 0), 0),
-    actualCost: currentDestinations.reduce((sum, d) => sum + (d.actualCost || 0), 0)
+    budget: currentTrip?.budget || 0, // Use total trip budget instead of sum of individual destination budgets
+    destinationCosts: destinationCosts,
+    travelCosts: travelCosts,
+    actualCost: destinationCosts + travelCosts // Total costs including travel
   };
 
-  const handleFilterChange = (filterType: string, value: any) => {
-    const currentFilters = uiState.filters;
-    const newFilters = {
-      ...currentFilters,
-      [filterType]: Array.isArray(currentFilters[filterType as keyof typeof currentFilters])
-        ? (currentFilters[filterType as keyof typeof currentFilters] as any[]).includes(value)
-          ? (currentFilters[filterType as keyof typeof currentFilters] as any[]).filter((item: any) => item !== value)
-          : [...(currentFilters[filterType as keyof typeof currentFilters] as any[]), value]
-        : [value]
-    };
-    updateUIState({ filters: newFilters });
-  };
-
-  const handleSortChange = (field: SortField) => {
-    const currentSort = uiState.sortOptions;
-    const newSort = {
-      field,
-      direction: currentSort.field === field && currentSort.direction === SortDirection.ASC
-        ? SortDirection.DESC
-        : SortDirection.ASC
-    };
-    updateUIState({ sortOptions: newSort });
-  };
 
   if (!isOpen && !isMobile) {
     return (
@@ -168,32 +149,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           </button>
         )}
         <div style={{ width: '100%' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem' }}>
-          <button
-            onClick={() => updateUIState({ activeView: 'discovery' })}
-            style={{
-              width: '100%',
-              background: '#3b82f6',
-              color: 'white',
-              border: 'none',
-              borderRadius: '12px',
-              padding: '0.875rem 1rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.5rem',
-              fontSize: '0.875rem',
-              fontWeight: '600',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
-            onMouseOut={(e) => e.currentTarget.style.background = '#3b82f6'}
-          >
-            <Compass size={18} />
-            Ziele entdecken
-          </button>
-        </div>
         </div>
       </div>
 
@@ -343,10 +298,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             marginBottom: '1rem'
           }}>
             <ProgressRing 
-              progress={stats.total > 0 ? (stats.visited / stats.total) * 100 : 0}
+              progress={stats.budget > 0 ? (stats.actualCost / stats.budget) * 100 : 0}
               size={80}
-              color="#10b981"
-              text={`${stats.visited}/${stats.total}`}
+              color={stats.budget > 0 && stats.actualCost > stats.budget ? "#dc2626" : "#10b981"}
+              text={stats.budget > 0 ? `${Math.round((stats.actualCost / stats.budget) * 100)}%` : "0%"}
             />
           </div>
           
@@ -365,19 +320,19 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
               <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#0284c7' }}>
                 {stats.planned}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Geplant</div>
+              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Ziele geplant</div>
             </div>
             
             <div style={{ 
               textAlign: 'center', 
               padding: '0.75rem', 
-              background: '#ecfdf5', 
+              background: '#fef3c7', 
               borderRadius: '8px'
             }}>
-              <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#10b981' }}>
-                {stats.visited}
+              <div style={{ fontSize: '1.25rem', fontWeight: 'bold', color: '#d97706' }}>
+                {stats.days}
               </div>
-              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Besucht</div>
+              <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Tage</div>
             </div>
           </div>
           
@@ -402,147 +357,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
               textAlign: 'center', 
               padding: '0.75rem', 
               background: '#fef2f2', 
-              borderRadius: '8px'
+              borderRadius: '8px',
+              position: 'relative'
             }}>
               <div style={{ fontSize: '0.875rem', fontWeight: 'bold', color: '#dc2626' }}>
                 {formatCurrency(stats.actualCost)}
               </div>
               <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>Ausgaben</div>
+              {stats.travelCosts > 0 && (
+                <div style={{ 
+                  fontSize: '0.625rem', 
+                  color: '#9ca3af', 
+                  marginTop: '0.25rem',
+                  fontStyle: 'italic'
+                }}>
+                  {formatCurrency(stats.destinationCosts)} Ziele + {formatCurrency(stats.travelCosts)} Fahrt
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* Filters */}
-      <div style={{ padding: '0 1.5rem 1rem' }}>
-        <button
-          onClick={() => setShowFilters(!showFilters)}
-          style={{
-            width: '100%',
-            background: 'transparent',
-            border: 'none',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '0.5rem 0',
-            cursor: 'pointer',
-            fontSize: '0.875rem',
-            fontWeight: '600',
-            color: '#374151'
-          }}
-        >
-          <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Filter size={16} />
-            Filter & Sortierung
-          </span>
-          {showFilters ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-        </button>
-
-        {showFilters && (
-          <div style={{ marginTop: '1rem' }}>
-            {/* Sort Options */}
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#6b7280', marginBottom: '0.5rem' }}>
-                SORTIERUNG
-              </div>
-              {[
-                { field: SortField.START_DATE, label: 'Datum', icon: Calendar },
-                { field: SortField.NAME, label: 'Name', icon: MapPin },
-                { field: SortField.BUDGET, label: 'Budget', icon: DollarSign }
-              ].map(({ field, label, icon: Icon }) => (
-                <button
-                  key={field}
-                  onClick={() => handleSortChange(field)}
-                  style={{
-                    width: '100%',
-                    background: uiState.sortOptions.field === field ? '#e0f2fe' : 'transparent',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.5rem 0.75rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.875rem',
-                    color: uiState.sortOptions.field === field ? '#0891b2' : '#6b7280',
-                    marginBottom: '0.25rem'
-                  }}
-                >
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <Icon size={14} />
-                    {label}
-                  </span>
-                  {uiState.sortOptions.field === field && (
-                    <span style={{ fontSize: '0.75rem' }}>
-                      {uiState.sortOptions.direction === SortDirection.ASC ? '↑' : '↓'}
-                    </span>
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Category Filter */}
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#6b7280', marginBottom: '0.5rem' }}>
-                KATEGORIEN
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.25rem' }}>
-                {Object.values(DestinationCategory).slice(0, 6).map((category) => (
-                  <button
-                    key={category}
-                    onClick={() => handleFilterChange('category', category)}
-                    style={{
-                      background: uiState.filters.category?.includes(category) ? '#e0f2fe' : 'white',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '6px',
-                      padding: '0.5rem',
-                      cursor: 'pointer',
-                      fontSize: '0.75rem',
-                      color: uiState.filters.category?.includes(category) ? '#0891b2' : '#6b7280',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.25rem',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    <span>{getCategoryIcon(category)}</span>
-                    <span>{getCategoryLabel(category).slice(0, 8)}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Status Filter */}
-            <div>
-              <div style={{ fontSize: '0.75rem', fontWeight: '600', color: '#6b7280', marginBottom: '0.5rem' }}>
-                STATUS
-              </div>
-              {Object.values(DestinationStatus).map((status) => (
-                <button
-                  key={status}
-                  onClick={() => handleFilterChange('status', status)}
-                  style={{
-                    width: '100%',
-                    background: uiState.filters.status?.includes(status) ? '#e0f2fe' : 'white',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '6px',
-                    padding: '0.5rem 0.75rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem',
-                    color: uiState.filters.status?.includes(status) ? '#0891b2' : '#6b7280',
-                    marginBottom: '0.25rem',
-                    textAlign: 'left'
-                  }}
-                >
-                  {status === DestinationStatus.PLANNED && '⏳ Geplant'}
-                  {status === DestinationStatus.VISITED && '✅ Besucht'}
-                  {status === DestinationStatus.SKIPPED && '❌ Übersprungen'}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
 
       {/* Export Actions */}
       <div style={{ 

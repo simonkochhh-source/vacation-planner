@@ -2,20 +2,18 @@ import React, { useState } from 'react';
 import { useApp } from '../../stores/AppContext';
 import { 
   BudgetOverview, 
-  ExpenseTracker, 
-  BudgetAnalysis 
+  ExpenseTracker
 } from '../Budget';
 import {
   DollarSign,
   Receipt,
-  BarChart3,
   Target,
   Edit,
   AlertTriangle,
   Download
 } from 'lucide-react';
 
-type BudgetTab = 'overview' | 'expenses' | 'analysis';
+type BudgetTab = 'overview' | 'expenses';
 
 const BudgetView: React.FC = () => {
   const { currentTrip, destinations, updateTrip, updateDestination } = useApp();
@@ -35,12 +33,6 @@ const BudgetView: React.FC = () => {
       icon: <Receipt size={18} />,
       description: 'Detaillierte Ausgabenverfolgung'
     },
-    {
-      id: 'analysis' as BudgetTab,
-      label: 'Analyse',
-      icon: <BarChart3 size={18} />,
-      description: 'Finanzanalyse und Prognosen'
-    }
   ];
 
   // Calculate quick stats
@@ -276,11 +268,6 @@ const BudgetView: React.FC = () => {
           />
         )}
 
-        {activeTab === 'analysis' && (
-          <BudgetAnalysis 
-            onExportData={handleExportData}
-          />
-        )}
       </div>
 
       {/* Footer Info */}
@@ -297,7 +284,6 @@ const BudgetView: React.FC = () => {
         <div>
           {activeTab === 'overview' && 'Gesamtübersicht über Budget und Ausgaben'}
           {activeTab === 'expenses' && 'Detaillierte Ausgabenverfolgung mit Kategorisierung'}
-          {activeTab === 'analysis' && 'Erweiterte Analysen und Budget-Prognosen'}
         </div>
         
         <div style={{

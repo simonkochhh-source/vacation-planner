@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useApp } from '../../stores/AppContext';
 import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
@@ -23,7 +23,9 @@ import {
   Bike,
   Edit,
   Save,
-  Trash2
+  Trash2,
+  Home,
+  RotateCcw
 } from 'lucide-react';
 import { 
   formatDate, 
@@ -31,7 +33,6 @@ import {
   getCategoryLabel,
   formatCurrency,
   calculateDistance,
-  getDestinationDuration,
   getDestinationBudget
 } from '../../utils';
 
@@ -42,8 +43,6 @@ interface EnhancedTimelineViewProps {
 }
 
 interface TimelineDestination extends Destination {
-  startTime?: string;
-  endTime?: string;
   calculatedEndTime?: string;
 }
 
@@ -54,6 +53,9 @@ interface TimelineDay {
     totalDistance: number;
     totalTravelTime: number;
     totalCost: number;
+    drivingDistance: number;
+    walkingDistance: number;
+    bikingDistance: number;
   };
 }
 
@@ -62,6 +64,19 @@ interface DragState {
   draggedItem: TimelineDestination | null;
   dragOverDay: string | null;
   dragOverIndex: number | null;
+  dropTargetIndex?: number | null; // Store original index for drop handling
+}
+
+interface OverallStats {
+  destinations: number;
+  days: number;
+  distance: number;
+  travelTime: number;
+  cost: number;
+  drivingDistance: number;
+  walkingDistance: number;
+  bikingDistance: number;
+  hasReferenceBudgets: boolean;
 }
 
 const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
@@ -69,14 +84,17 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   onEditDestination,
   onReorderDestinations
 }) => {
-  const { currentTrip, destinations, createDestination, updateDestination, deleteDestination } = useApp();
+  const { currentTrip, destinations, createDestination, updateDestination, deleteDestination, settings } = useApp();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
     draggedItem: null,
     dragOverDay: null,
-    dragOverIndex: null
+    dragOverIndex: null,
+    dropTargetIndex: null
   });
+
+  const [isProcessingDrop, setIsProcessingDrop] = useState(false);
   const [creatingDestination, setCreatingDestination] = useState<{
     dayDate: string;
     position: 'before' | 'after' | 'initial';
@@ -91,6 +109,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     transportMode: TransportMode;
     actualCost?: number;
     isPaid: boolean;
+    returnDestinationId?: string;
   }>({
     name: '',
     location: '',
@@ -98,7 +117,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     category: DestinationCategory.ATTRACTION,
     transportMode: TransportMode.DRIVING,
     actualCost: undefined,
-    isPaid: false
+    isPaid: false,
+    returnDestinationId: undefined
   });
   const [newDestinationForm, setNewDestinationForm] = useState<{
     name: string;
@@ -109,6 +129,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     category: DestinationCategory;
     actualCost?: number;
     isPaid: boolean;
+    returnDestinationId?: string;
   }>({ 
     name: '', 
     location: '', 
@@ -117,42 +138,230 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     transportMode: TransportMode.DRIVING,
     category: DestinationCategory.ATTRACTION,
     actualCost: undefined,
-    isPaid: false
+    isPaid: false,
+    returnDestinationId: undefined
   });
 
   const [showMapPicker, setShowMapPicker] = useState(false);
 
   // Removed complex search functionality - now using simple OpenStreetMapAutocomplete
+  
+  // Pre-defined styles for better performance
+  const dropZoneStyles = useMemo(() => ({
+    base: {
+      height: '8px',
+      borderRadius: '4px',
+      margin: '4px 0',
+      cursor: 'copy',
+      transition: 'all 0.2s ease'
+    },
+    active: {
+      height: '12px',
+      background: 'linear-gradient(45deg, #3b82f6, #60a5fa)',
+      borderRadius: '6px',
+      margin: '6px 0',
+      cursor: 'copy',
+      position: 'relative' as const,
+      boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
+      border: '2px solid #1d4ed8',
+      transform: 'scale(1.05)'
+    },
+    inactive: {
+      height: '6px',
+      background: 'transparent',
+      border: '1px dashed #d1d5db',
+      borderRadius: '3px',
+      margin: '3px 0',
+      cursor: 'copy',
+      opacity: 0.6,
+      transition: 'all 0.2s ease'
+    },
+    lastActive: {
+      height: '16px',
+      background: 'linear-gradient(45deg, #10b981, #34d399)',
+      borderRadius: '8px',
+      margin: '10px 0',
+      cursor: 'copy',
+      position: 'relative' as const,
+      boxShadow: '0 6px 16px rgba(16, 185, 129, 0.4)',
+      border: '2px solid #047857',
+      transform: 'scale(1.1)'
+    },
+    lastInactive: {
+      height: '10px',
+      background: 'transparent',
+      border: '2px dashed #d1d5db',
+      borderRadius: '5px',
+      margin: '6px 0',
+      cursor: 'copy',
+      opacity: 0.5,
+      transition: 'all 0.2s ease'
+    }
+  }), []);
 
-  // Enhanced time calculations
-  const calculateTimeFromDuration = useCallback((startTime: string, durationMinutes: number): string => {
-    const [hours, minutes] = startTime.split(':').map(Number);
-    const startMinutes = hours * 60 + minutes;
-    const endMinutes = startMinutes + durationMinutes;
-    const endHours = Math.floor(endMinutes / 60) % 24;
-    const endMins = endMinutes % 60;
-    return `${endHours.toString().padStart(2, '0')}:${endMins.toString().padStart(2, '0')}`;
+  // Performance monitoring for drag & drop operations
+  const dragPerformanceRef = useRef({
+    startTime: 0,
+    dragCount: 0,
+    dropCount: 0,
+    cancelCount: 0
+  });
+
+  const logDragPerformance = useCallback((operation: string, additionalData?: any) => {
+    const now = performance.now();
+    const duration = now - dragPerformanceRef.current.startTime;
+    
+    console.log(`🔍 Drag Performance [${operation}]:`, {
+      operation,
+      duration: `${duration.toFixed(2)}ms`,
+      totalDrags: dragPerformanceRef.current.dragCount,
+      totalDrops: dragPerformanceRef.current.dropCount,
+      totalCancels: dragPerformanceRef.current.cancelCount,
+      ...additionalData
+    });
+  }, []);
+
+  // Error boundary for drag operations
+  const handleDragError = useCallback((error: Error, context: string) => {
+    console.error(`🚨 Drag & Drop Error [${context}]:`, error);
+    
+    // Reset drag state on error
+    setDragState({
+      isDragging: false,
+      draggedItem: null,
+      dragOverDay: null,
+      dragOverIndex: null
+    });
+    
+    // Cancel RAF calls
+    if (dragOverRafId.current) {
+      cancelAnimationFrame(dragOverRafId.current);
+      dragOverRafId.current = null;
+    }
+    
+    // Restore visual state
+    document.querySelectorAll('[draggable="true"]').forEach(el => {
+      (el as HTMLElement).style.opacity = '1';
+    });
+    
+    dragPerformanceRef.current.cancelCount++;
+  }, []);
+
+  // Helper function to get transport-specific label
+  const getTransportLabel = useCallback((transportMode: TransportMode): string => {
+    switch (transportMode) {
+      case TransportMode.WALKING:
+        return 'Wanderung';
+      case TransportMode.BICYCLE:
+        return 'Radtour';
+      case TransportMode.PUBLIC_TRANSPORT:
+        return 'ÖPNV-Fahrt';
+      case TransportMode.DRIVING:
+      default:
+        return 'Fahrt';
+    }
   }, []);
 
   const calculateTravelTime = useCallback((from: Destination, to: Destination): number => {
     if (from.coordinates && to.coordinates) {
-      const distance = calculateDistance(from.coordinates, to.coordinates) * 1.4;
-      let averageSpeed: number;
-      if (distance < 5) averageSpeed = 30;
-      else if (distance < 50) averageSpeed = 60;
-      else if (distance < 200) averageSpeed = 80;
-      else averageSpeed = 90;
+      const straightDistance = calculateDistance(from.coordinates, to.coordinates);
       
-      const timeInHours = distance / averageSpeed;
-      return Math.max(10, Math.round(timeInHours * 60));
+      // Special case: If current destination (from) is walking/biking with returnDestinationId,
+      // use the transport mode from 'from' destination instead of 'to' destination
+      let transportMode: TransportMode;
+      
+      if (from.returnDestinationId && from.transportToNext?.mode && 
+          (from.transportToNext.mode === TransportMode.WALKING || from.transportToNext.mode === TransportMode.BICYCLE)) {
+        // Use the transport mode from the current (from) destination for walking/biking return journeys
+        transportMode = from.transportToNext.mode;
+      } else {
+        // Default behavior: Get transport mode from 'to' destination (how we get TO that destination)
+        transportMode = to.transportToNext?.mode || TransportMode.DRIVING;
+      }
+      
+      // Apply transport-specific distance and speed factors (similar to routeCalculationService)
+      let distanceFactor: number;
+      let averageSpeed: number;
+      
+      switch (transportMode) {
+        case TransportMode.DRIVING:
+          distanceFactor = 1.4; // Roads are typically 40% longer than straight line
+          averageSpeed = straightDistance < 5 ? 30 : straightDistance < 50 ? 60 : straightDistance < 200 ? 80 : 90;
+          break;
+        case TransportMode.WALKING:
+          distanceFactor = 1.2; // Walking paths are typically 20% longer
+          averageSpeed = 4.5; // Average walking speed: 4.5 km/h
+          break;
+        case TransportMode.BICYCLE:
+          distanceFactor = 1.3; // Bike paths are typically 30% longer
+          averageSpeed = straightDistance < 5 ? 12 : straightDistance < 20 ? 15 : 18; // 12-18 km/h depending on distance
+          break;
+        case TransportMode.PUBLIC_TRANSPORT:
+          distanceFactor = 1.6; // Public transport routes are typically 60% longer
+          averageSpeed = straightDistance < 10 ? 20 : straightDistance < 50 ? 35 : 50; // Including waiting times
+          break;
+        default:
+          distanceFactor = 1.4;
+          averageSpeed = 50;
+      }
+      
+      const actualDistance = straightDistance * distanceFactor;
+      const timeInHours = actualDistance / averageSpeed;
+      const duration = Math.round(timeInHours * 60);
+      
+      // Minimum durations based on transport mode
+      const minDuration = transportMode === TransportMode.WALKING ? 5 : 10;
+      return Math.max(minDuration, duration);
     }
     return 30;
+  }, []);
+
+  // Calculate auto travel time, skipping walking/biking destinations in between
+  const calculateAutoTravelTime = useCallback((destinations: Destination[], currentIndex: number): { distance: number; time: number; fromDestination?: Destination } => {
+    const currentDest = destinations[currentIndex];
+    
+    // Only for auto transport mode
+    if (!currentDest || currentDest.transportToNext?.mode !== TransportMode.DRIVING) {
+      return { distance: 0, time: 0 };
+    }
+    
+    // Find the last destination with auto transport mode (working backwards)
+    let lastAutoDestIndex = -1;
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      const dest = destinations[i];
+      // Check if this destination has auto transport OR is the starting point
+      if (i === 0 || dest.transportToNext?.mode === TransportMode.DRIVING) {
+        lastAutoDestIndex = i;
+        break;
+      }
+    }
+    
+    if (lastAutoDestIndex === -1 || !destinations[lastAutoDestIndex].coordinates || !currentDest.coordinates) {
+      return { distance: 0, time: 0 };
+    }
+    
+    const fromDest = destinations[lastAutoDestIndex];
+    const straightDistance = calculateDistance(fromDest.coordinates!, currentDest.coordinates);
+    
+    // Use driving parameters for calculation
+    const distanceFactor = 1.4; // Roads are typically 40% longer than straight line
+    const actualDistance = straightDistance * distanceFactor;
+    const averageSpeed = straightDistance < 5 ? 30 : straightDistance < 50 ? 60 : straightDistance < 200 ? 80 : 90;
+    const duration = Math.round((actualDistance / averageSpeed) * 60); // Convert to minutes
+    
+    return { 
+      distance: actualDistance, 
+      time: Math.max(10, duration), // Minimum 10 minutes
+      fromDestination: fromDest 
+    };
   }, []);
 
   // Enhanced timeline data with time calculations
   const enhancedTimelineData = useMemo((): TimelineDay[] => {
     const currentDestinations = currentTrip 
-      ? destinations.filter(dest => currentTrip.destinations.includes(dest.id))
+      ? currentTrip.destinations
+          .map(id => destinations.find(dest => dest.id === id))
+          .filter((dest): dest is Destination => dest !== undefined)
       : [];
     
     const grouped = new Map<string, TimelineDestination[]>();
@@ -160,19 +369,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     // Group destinations by day
     currentDestinations.forEach(dest => {
       const enhancedDest: TimelineDestination = {
-        ...dest,
-        startTime: dest.startTime || '09:00',
-        endTime: dest.endTime
+        ...dest
       };
-
-      // Calculate end time if not provided
-      if (!enhancedDest.endTime) {
-        const durationData = getDestinationDuration(dest);
-        enhancedDest.calculatedEndTime = calculateTimeFromDuration(
-          enhancedDest.startTime!,
-          durationData.value
-        );
-      }
 
       if (dest.category === 'hotel' && dest.startDate !== dest.endDate) {
         // Multi-day accommodation logic
@@ -199,17 +397,21 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     return Array.from(grouped.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, dests]) => {
-        // Sort destinations by time
+        // Sort destinations by their position in the trip.destinations array to maintain user-defined order
         const sortedDests = [...dests].sort((a, b) => {
-          if (a.category === 'hotel' && b.category !== 'hotel') return -1;
-          if (a.category !== 'hotel' && b.category === 'hotel') return 1;
-          return (a.startTime || '09:00').localeCompare(b.startTime || '09:00');
+          if (!currentTrip) return 0;
+          const indexA = currentTrip.destinations.indexOf(a.id);
+          const indexB = currentTrip.destinations.indexOf(b.id);
+          return indexA - indexB;
         });
 
-        // Calculate day statistics
+        // Calculate day statistics with breakdown by transport mode
         let totalDistance = 0;
         let totalTravelTime = 0;
         let totalCost = 0;
+        let drivingDistance = 0;
+        let walkingDistance = 0;
+        let bikingDistance = 0;
 
         // Calculate travel between destinations
         for (let i = 0; i < sortedDests.length - 1; i++) {
@@ -217,18 +419,61 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           const next = sortedDests[i + 1];
           
           if (current.coordinates && next.coordinates) {
-            const distance = calculateDistance(current.coordinates, next.coordinates) * 1.4;
+            const straightDistance = calculateDistance(current.coordinates, next.coordinates);
             const travelTime = calculateTravelTime(current, next);
             
-            totalDistance += distance;
+            // Get transport mode from the current destination
+            const transportMode = current.transportToNext?.mode || TransportMode.DRIVING;
+            
+            // Apply transport-specific distance factor
+            let distanceFactor: number;
+            switch (transportMode) {
+              case TransportMode.DRIVING:
+                distanceFactor = 1.4; // Roads are typically 40% longer than straight line
+                break;
+              case TransportMode.WALKING:
+                distanceFactor = 1.2; // Walking paths are typically 20% longer
+                break;
+              case TransportMode.BICYCLE:
+                distanceFactor = 1.3; // Bike paths are typically 30% longer
+                break;
+              case TransportMode.PUBLIC_TRANSPORT:
+                distanceFactor = 1.6; // Public transport routes are typically 60% longer
+                break;
+              default:
+                distanceFactor = 1.4;
+            }
+            
+            const actualDistance = straightDistance * distanceFactor;
+            
+            // Add to appropriate category
+            switch (transportMode) {
+              case TransportMode.DRIVING:
+                drivingDistance += actualDistance;
+                break;
+              case TransportMode.WALKING:
+                walkingDistance += actualDistance;
+                break;
+              case TransportMode.BICYCLE:
+                bikingDistance += actualDistance;
+                break;
+              case TransportMode.PUBLIC_TRANSPORT:
+                // Count public transport as driving for cost calculations
+                drivingDistance += actualDistance;
+                break;
+            }
+            
+            totalDistance += actualDistance;
             totalTravelTime += travelTime;
 
-            // Calculate travel cost
-            if (currentTrip?.vehicleConfig) {
-              const { fuelConsumption, fuelPrice } = currentTrip.vehicleConfig;
-              totalCost += (distance / 100) * (fuelConsumption || 9.0) * (fuelPrice || 1.65);
-            } else {
-              totalCost += distance * 0.30;
+            // Calculate travel cost (only for driving/public transport)
+            if (transportMode === TransportMode.DRIVING || transportMode === TransportMode.PUBLIC_TRANSPORT) {
+              if (currentTrip?.vehicleConfig) {
+                const { fuelConsumption, fuelPrice } = currentTrip.vehicleConfig;
+                totalCost += (actualDistance / 100) * (fuelConsumption || 9.0) * (fuelPrice || 1.65);
+              } else {
+                totalCost += actualDistance * 0.30;
+              }
             }
           }
         }
@@ -239,55 +484,653 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           dayStats: {
             totalDistance,
             totalTravelTime,
-            totalCost
+            totalCost,
+            drivingDistance,
+            walkingDistance,
+            bikingDistance
           }
         };
       });
-  }, [destinations, currentTrip, calculateTimeFromDuration, calculateTravelTime]);
+  }, [destinations, currentTrip, calculateTravelTime]);
 
   // Drag and drop handlers
   const handleDragStart = useCallback((dest: TimelineDestination, e: React.DragEvent) => {
-    setDragState({
-      isDragging: true,
-      draggedItem: dest,
-      dragOverDay: null,
-      dragOverIndex: null
-    });
+    try {
+      // Don't allow new drag while processing a drop
+      if (isProcessingDrop) {
+        e.preventDefault();
+        return;
+      }
+
+      // Start performance monitoring
+      dragPerformanceRef.current.startTime = performance.now();
+      dragPerformanceRef.current.dragCount++;
+
+      console.log('🚀 Starting drag for:', dest.name);
+      logDragPerformance('dragStart', { destinationName: dest.name });
     
-    if (e.dataTransfer) {
-      e.dataTransfer.effectAllowed = 'move';
+      // Create custom drag image for better visual feedback
+      const dragElement = e.currentTarget as HTMLElement;
+      const dragImage = dragElement.cloneNode(true) as HTMLElement;
+      dragImage.style.position = 'absolute';
+      dragImage.style.top = '-1000px';
+      dragImage.style.opacity = '0.8';
+      dragImage.style.transform = 'rotate(2deg)';
+      dragImage.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
+      dragImage.style.borderRadius = '12px';
+      dragImage.style.border = '2px solid #3b82f6';
+      dragImage.style.background = '#ffffff';
+      dragImage.style.minWidth = '200px';
+      document.body.appendChild(dragImage);
+      
+      // Set custom drag image
+      e.dataTransfer?.setDragImage(dragImage, dragElement.offsetWidth / 2, dragElement.offsetHeight / 2);
+      
+      // Clean up drag image after a delay
+      setTimeout(() => {
+        if (document.body.contains(dragImage)) {
+          document.body.removeChild(dragImage);
+        }
+      }, 100);
+      
+      setDragState({
+        isDragging: true,
+        draggedItem: dest,
+        dragOverDay: null,
+        dragOverIndex: null,
+        dropTargetIndex: null
+      });
+      
+      // Enhanced drag data - CRITICAL for drop to work
+      if (e.dataTransfer) {
+        e.dataTransfer.effectAllowed = 'move';
+        // MUST set some data for drop to work in most browsers
+        e.dataTransfer.setData('text/plain', dest.id);
+        e.dataTransfer.setData('application/json', JSON.stringify({
+          id: dest.id,
+          name: dest.name,
+          sourceDay: dest.startDate
+        }));
+        console.log('📦 Drag data set:', dest.id);
+      }
+      
+      // Add visual feedback to the dragged element
+      (e.target as HTMLElement).style.opacity = '0.5';
+    } catch (error) {
+      handleDragError(error as Error, 'dragStart');
+    }
+  }, [isProcessingDrop, logDragPerformance, handleDragError]);
+
+  // Enhanced throttled drag over with RAF for optimal performance
+  const lastDragOverTime = useRef(0);
+  const dragOverRafId = useRef<number | null>(null);
+  
+  const throttledDragOver = useCallback((dayDate: string, visualIndex: number, originalIndex?: number) => {
+    const now = Date.now();
+    
+    // Use original index for drop handling if provided, otherwise use visual index
+    const indexForDrop = originalIndex !== undefined ? originalIndex : visualIndex;
+    
+    // Cancel previous RAF if exists
+    if (dragOverRafId.current) {
+      cancelAnimationFrame(dragOverRafId.current);
+    }
+    
+    // Throttle to ~60fps (16ms) for smooth experience
+    if (now - lastDragOverTime.current > 16) {
+      setDragState(prev => {
+        if (prev.dragOverDay === dayDate && prev.dragOverIndex === visualIndex) {
+          return prev; // No change, prevent re-render
+        }
+        return {
+          ...prev,
+          dragOverDay: dayDate,
+          dragOverIndex: visualIndex, // Use visual index for display
+          dropTargetIndex: indexForDrop // Store original index for drop handling
+        };
+      });
+      lastDragOverTime.current = now;
+    } else {
+      // Schedule for next frame
+      dragOverRafId.current = requestAnimationFrame(() => {
+        setDragState(prev => {
+          if (prev.dragOverDay === dayDate && prev.dragOverIndex === visualIndex) {
+            return prev;
+          }
+          return {
+            ...prev,
+            dragOverDay: dayDate,
+            dragOverIndex: visualIndex, // Use visual index for display
+            dropTargetIndex: indexForDrop // Store original index for drop handling
+          };
+        });
+        lastDragOverTime.current = Date.now();
+      });
     }
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent, dayDate: string, index: number) => {
     e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling that might interfere
+    
+    // Don't process drag over if we're processing a drop
+    if (isProcessingDrop || !dragState.isDragging) {
+      return;
+    }
+    
+    console.log('🔄 DragOver detected:', dayDate, 'index:', index);
+    
+    // Find the destination at this position for context
+    const currentDestinations = currentTrip 
+      ? currentTrip.destinations
+          .map(id => destinations.find(dest => dest.id === id))
+          .filter((dest): dest is Destination => dest !== undefined && dest.startDate === dayDate)
+      : [];
+    const destAtIndex = currentDestinations[index];
+    if (destAtIndex) {
+      console.log('📍 Drop would be BEFORE:', destAtIndex.name);
+    } else {
+      console.log('📍 Drop would be at END of day');
+    }
+    
+    // Enhanced visual feedback - CRITICAL for drop to work
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = 'move';
+      e.dataTransfer.effectAllowed = 'move';
+    }
+    
+    // Calculate the visual index for drop zone highlighting
+    // We need to adjust the visual index if we're dragging within the same day
+    let visualIndex = index;
+    
+    if (dragState.draggedItem && dragState.draggedItem.startDate === dayDate) {
+      // Find the current position of the dragged item in this day
+      const draggedItemDayIndex = currentDestinations.findIndex(d => d.id === dragState.draggedItem!.id);
+      
+      // If the drop target is after the dragged item's original position,
+      // we need to adjust the visual index down by 1 for correct visual feedback
+      if (draggedItemDayIndex !== -1 && index > draggedItemDayIndex) {
+        visualIndex = index - 1;
+        console.log(`🎨 Visual index adjusted from ${index} to ${visualIndex} for display`);
+      }
+    }
+    
+    // Skip unnecessary updates for better performance
+    if (dragState.dragOverDay === dayDate && dragState.dragOverIndex === visualIndex) {
+      return;
+    }
+    
+    // Auto-scroll functionality for better UX
+    const container = (e.currentTarget as HTMLElement).closest('[data-timeline-container]');
+    if (container) {
+      const rect = container.getBoundingClientRect();
+      const mouseY = e.clientY;
+      const scrollTop = container.scrollTop;
+      const scrollThreshold = 100;
+      
+      // Auto-scroll up
+      if (mouseY < rect.top + scrollThreshold) {
+        container.scrollTop = Math.max(0, scrollTop - 10);
+      }
+      // Auto-scroll down
+      else if (mouseY > rect.bottom - scrollThreshold) {
+        container.scrollTop = scrollTop + 10;
+      }
+    }
+    
+    // Use the visual index for display and original index for drop handling
+    throttledDragOver(dayDate, visualIndex, index);
+  }, [throttledDragOver, isProcessingDrop, dragState.isDragging]);
+
+  // Add dragenter handler - required for HTML5 drag & drop
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔽 DragEnter detected');
+    
+    // Force set the drop effect to ensure drop is allowed
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = 'move';
     }
-    
-    setDragState(prev => ({
-      ...prev,
-      dragOverDay: dayDate,
-      dragOverIndex: index
-    }));
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent, targetDay: string, targetIndex: number) => {
-    e.preventDefault();
-    
-    if (!dragState.draggedItem) return;
+  // Add dragleave handler for debugging
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    console.log('🔼 DragLeave detected');
+  }, []);
 
-    // Implementation for reordering would go here
-    // This is a complex feature that requires careful state management
-    console.log('Drop:', dragState.draggedItem.name, 'to', targetDay, 'at index', targetIndex);
+  const handleDragEnd = useCallback((e: React.DragEvent) => {
+    console.log('🏁 Drag ended - this will be handled by drop or timeout');
     
-    setDragState({
-      isDragging: false,
-      draggedItem: null,
-      dragOverDay: null,
-      dragOverIndex: null
-    });
-  }, [dragState.draggedItem]);
+    // Restore visual state of dragged element
+    (e.target as HTMLElement).style.opacity = '1';
+    
+    // Cancel any pending RAF calls
+    if (dragOverRafId.current) {
+      cancelAnimationFrame(dragOverRafId.current);
+      dragOverRafId.current = null;
+    }
+    
+    // Set timeout fallback to reset state if drop doesn't occur
+    setTimeout(() => {
+      if (dragState.isDragging && !isProcessingDrop) {
+        console.log('⏰ Drag end timeout - resetting state');
+        setDragState({
+          isDragging: false,
+          draggedItem: null,
+          dragOverDay: null,
+          dragOverIndex: null,
+          dropTargetIndex: null
+        });
+      }
+    }, 20000); // 20 seconds timeout for cleanup
+  }, [dragState.isDragging, isProcessingDrop]);
+
+  // Global drop event debugging
+  useEffect(() => {
+    const globalDropHandler = (e: DragEvent) => {
+      console.log('🌍 GLOBAL DROP EVENT detected!', e);
+      // Don't prevent default here, just log
+    };
+
+    const globalDragOverHandler = (e: DragEvent) => {
+      // console.log('🌍 Global dragover'); // Too verbose
+    };
+
+    if (dragState.isDragging) {
+      document.addEventListener('drop', globalDropHandler);
+      document.addEventListener('dragover', globalDragOverHandler);
+      
+      return () => {
+        document.removeEventListener('drop', globalDropHandler);
+        document.removeEventListener('dragover', globalDragOverHandler);
+      };
+    }
+  }, [dragState.isDragging]);
+
+  // Enhanced global event listeners with keyboard accessibility
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && dragState.isDragging) {
+        console.log('⚠️ Drag canceled by Escape key');
+        // Cancel RAF calls
+        if (dragOverRafId.current) {
+          cancelAnimationFrame(dragOverRafId.current);
+          dragOverRafId.current = null;
+        }
+        setDragState({
+          isDragging: false,
+          draggedItem: null,
+          dragOverDay: null,
+          dragOverIndex: null,
+          dropTargetIndex: null
+        });
+        // Restore visual state of all dragged elements
+        document.querySelectorAll('[draggable="true"]').forEach(el => {
+          (el as HTMLElement).style.opacity = '1';
+        });
+      }
+      
+      // Enhanced keyboard navigation during drag
+      if (dragState.isDragging && dragState.draggedItem) {
+        
+        switch(e.key) {
+          case 'ArrowUp':
+            e.preventDefault();
+            // Move to previous drop zone
+            if (dragState.dragOverIndex !== null && dragState.dragOverIndex > 0) {
+              throttledDragOver(dragState.dragOverDay!, dragState.dragOverIndex - 1);
+            }
+            break;
+          case 'ArrowDown':
+            e.preventDefault();
+            // Move to next drop zone
+            if (dragState.dragOverIndex !== null && dragState.dragOverDay) {
+              throttledDragOver(dragState.dragOverDay, dragState.dragOverIndex + 1);
+            }
+            break;
+          case 'Enter':
+          case ' ':
+            e.preventDefault();
+            // Execute drop at current position via direct handler call
+            if (dragState.dragOverDay && dragState.dragOverIndex !== null) {
+              console.log('🎯 Keyboard drop triggered');
+              // Create a mock event that satisfies the interface
+              const mockEvent = {
+                preventDefault: () => {},
+                dataTransfer: {
+                  getData: (format: string) => dragState.draggedItem!.id,
+                  setData: () => {},
+                  effectAllowed: 'move' as const,
+                  dropEffect: 'move' as const
+                }
+              };
+              // Use type assertion to satisfy TypeScript
+              const targetIndex = (dragState.dropTargetIndex !== null && dragState.dropTargetIndex !== undefined) 
+                ? dragState.dropTargetIndex 
+                : dragState.dragOverIndex;
+              if (targetIndex !== null) {
+                handleDrop(mockEvent as any, dragState.dragOverDay, targetIndex);
+              }
+            }
+            break;
+        }
+      }
+    };
+
+    const handleClickOutside = (e: MouseEvent) => {
+      // Cancel drag if clicking outside the timeline area while dragging
+      if (dragState.isDragging && !isProcessingDrop) {
+        const target = e.target as HTMLElement;
+        const timelineContainer = document.querySelector('[data-timeline-container]');
+        if (timelineContainer && !timelineContainer.contains(target)) {
+          console.log('⚠️ Drag canceled by clicking outside');
+          setDragState({
+            isDragging: false,
+            draggedItem: null,
+            dragOverDay: null,
+            dragOverIndex: null,
+            dropTargetIndex: null
+          });
+        }
+      }
+    };
+
+    if (dragState.isDragging) {
+      document.addEventListener('keydown', handleKeyDown);
+      document.addEventListener('mousedown', handleClickOutside);
+      
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+        document.removeEventListener('mousedown', handleClickOutside);
+        
+        // Cancel any pending RAF calls on cleanup
+        if (dragOverRafId.current) {
+          cancelAnimationFrame(dragOverRafId.current);
+          dragOverRafId.current = null;
+        }
+        
+        // Restore visual state of all dragged elements on cleanup
+        document.querySelectorAll('[draggable="true"]').forEach(el => {
+          (el as HTMLElement).style.opacity = '1';
+        });
+      };
+    }
+  }, [dragState.isDragging, isProcessingDrop, throttledDragOver]);
+
+  const handleDrop = useCallback(async (e: React.DragEvent, targetDay: string, targetIndex: number) => {
+    e.preventDefault();
+    e.stopPropagation(); // Prevent event bubbling
+    console.log('🎯 DROP HANDLER CALLED! Drop triggered for', targetDay, 'index', targetIndex);
+    console.log('📦 Received drag data:', e.dataTransfer?.getData('text/plain'));
+    
+    // Use dropTargetIndex from dragState if available for accurate drop positioning
+    const actualTargetIndex = dragState.dropTargetIndex !== null && dragState.dropTargetIndex !== undefined 
+      ? dragState.dropTargetIndex 
+      : targetIndex;
+    console.log(`🎯 Using drop index: ${actualTargetIndex} (visual: ${targetIndex}, stored: ${dragState.dropTargetIndex})`);
+    
+    // Increment drop counter for performance monitoring
+    dragPerformanceRef.current.dropCount++;
+    logDragPerformance('dropStart', { targetDay, actualTargetIndex });
+    
+    // Ultra-fast prevention of multiple simultaneous drops
+    if (isProcessingDrop) {
+      console.warn('Drop already in progress, ignoring...');
+      return;
+    }
+    
+    if (!dragState.draggedItem || !currentTrip || !onReorderDestinations) {
+      setDragState({
+        isDragging: false,
+        draggedItem: null,
+        dragOverDay: null,
+        dragOverIndex: null,
+        dropTargetIndex: null
+      });
+      return;
+    }
+
+    setIsProcessingDrop(true);
+    
+    // Extended timeout to allow for longer drag operations
+    const timeoutId = setTimeout(() => {
+      console.warn('Drop operation timed out after 20 seconds, resetting state');
+      setIsProcessingDrop(false);
+      setDragState({
+        isDragging: false,
+        draggedItem: null,
+        dragOverDay: null,
+        dragOverIndex: null,
+        dropTargetIndex: null
+      });
+    }, 20000); // 20 seconds timeout as requested - operations should complete much faster
+
+    const draggedItem = dragState.draggedItem;
+    const draggedDestination = destinations.find(d => d.id === draggedItem.id);
+    
+    if (!draggedDestination) {
+      console.error('Dragged destination not found in destinations array');
+      setIsProcessingDrop(false);
+      setDragState({
+        isDragging: false,
+        draggedItem: null,
+        dragOverDay: null,
+        dragOverIndex: null,
+        dropTargetIndex: null
+      });
+      return;
+    }
+
+    // Prevent dropping on itself (same position, same day)
+    if (draggedDestination.startDate === targetDay) {
+      const currentDayDests = destinations.filter(d => d.startDate === targetDay);
+      const currentIndex = currentDayDests.findIndex(d => d.id === draggedItem.id);
+      if (currentIndex === actualTargetIndex) {
+        // Same position, just cleanup
+        setIsProcessingDrop(false);
+        setDragState({
+          isDragging: false,
+          draggedItem: null,
+          dragOverDay: null,
+          dragOverIndex: null,
+          dropTargetIndex: null
+        });
+        return;
+      }
+    }
+    
+    try {
+      console.log(`🚀 Instant Reordering: Moving ${draggedDestination.name} to ${targetDay} at position ${actualTargetIndex}`);
+      
+      // PROPER UPDATE STRATEGY: Complete reordering first, then update UI
+      
+      // Step 1: Clear timeout but keep drag state until reordering is done
+      clearTimeout(timeoutId);
+      
+      // Step 2: Smart reordering based on whether it's same-day or cross-day
+      const newDestinationIds = [...currentTrip.destinations];
+      const draggedId = draggedItem.id;
+      const draggedCurrentDate = draggedDestination.startDate;
+      
+      // Remove from current position
+      const currentIndex = newDestinationIds.indexOf(draggedId);
+      if (currentIndex !== -1) {
+        newDestinationIds.splice(currentIndex, 1);
+      }
+      
+      let globalTargetIndex: number;
+      
+      if (draggedCurrentDate === targetDay) {
+        // INTRA-DAY REORDERING: Much simpler logic
+        console.log(`📍 Intra-day reorder within ${targetDay}, actualTargetIndex: ${actualTargetIndex}`);
+        
+        // Get the current destinations for this day before any modifications
+        const currentDestinations = currentTrip 
+          ? currentTrip.destinations
+              .map(id => destinations.find(dest => dest.id === id))
+              .filter((dest): dest is Destination => dest !== undefined && dest.startDate === targetDay)
+          : [];
+        
+        // Find all destinations for the same day (excluding the dragged one)
+        const sameDayIds: string[] = [];
+        const destinationDateMap = new Map<string, string>();
+        destinations.forEach(dest => {
+          destinationDateMap.set(dest.id, dest.startDate);
+        });
+        
+        let foundDayStart = false;
+        let dayStartIndex = 0;
+        
+        for (let i = 0; i < newDestinationIds.length; i++) {
+          const id = newDestinationIds[i];
+          const destDate = destinationDateMap.get(id);
+          
+          if (destDate === targetDay) {
+            if (!foundDayStart) {
+              foundDayStart = true;
+              dayStartIndex = i;
+            }
+            sameDayIds.push(id);
+          } else if (foundDayStart) {
+            // We've passed the target day
+            break;
+          }
+        }
+        
+        // Calculate insertion point within the day
+        // IMPORTANT: When dragging within the same day, we need to account for the fact that
+        // the dragged item was already removed from newDestinationIds at this point
+        let adjustedTargetIndex = actualTargetIndex;
+        
+        // Find the original position of the dragged item within the day
+        const draggedItemOriginalDayIndex = currentDestinations.findIndex((d: Destination) => d.id === draggedId);
+        
+        // If the target index is after the original position, we need to adjust it down by 1
+        // because the original item was already removed from the array
+        if (draggedItemOriginalDayIndex !== -1 && actualTargetIndex > draggedItemOriginalDayIndex) {
+          adjustedTargetIndex = actualTargetIndex - 1;
+          console.log(`🔧 Adjusting target index from ${actualTargetIndex} to ${adjustedTargetIndex} (dragged item was at position ${draggedItemOriginalDayIndex})`);
+        }
+        
+        globalTargetIndex = dayStartIndex + Math.min(adjustedTargetIndex, sameDayIds.length);
+        console.log(`🔢 Index calculation - dayStartIndex: ${dayStartIndex}, originalTargetIndex: ${actualTargetIndex}, adjustedTargetIndex: ${adjustedTargetIndex}, sameDayIds.length: ${sameDayIds.length}, globalTargetIndex: ${globalTargetIndex}`);
+        
+      } else {
+        // CROSS-DAY REORDERING: Fixed logic for precise positioning
+        console.log(`🔄 Cross-day reorder from ${draggedCurrentDate} to ${targetDay}, actualTargetIndex: ${actualTargetIndex}`);
+        
+        const destinationDateMap = new Map<string, string>();
+        destinations.forEach(dest => {
+          destinationDateMap.set(dest.id, dest.startDate);
+        });
+        
+        // Use same strategy as intra-day: find day start + offset
+        let foundTargetDayStart = false;
+        let targetDayStartIndex = 0;
+        let targetDayCount = 0;
+        
+        for (let i = 0; i < newDestinationIds.length; i++) {
+          const id = newDestinationIds[i];
+          const destDate = destinationDateMap.get(id);
+          
+          if (destDate === targetDay) {
+            if (!foundTargetDayStart) {
+              foundTargetDayStart = true;
+              targetDayStartIndex = i;
+            }
+            targetDayCount++;
+          } else if (foundTargetDayStart) {
+            // We've passed the target day
+            break;
+          }
+        }
+        
+        // Calculate precise insertion point within target day
+        globalTargetIndex = targetDayStartIndex + Math.min(actualTargetIndex, targetDayCount);
+        
+        console.log(`📊 Cross-day calculation: dayStart=${targetDayStartIndex}, dayCount=${targetDayCount}, actualTargetIndex=${actualTargetIndex}, result=${globalTargetIndex}`);
+      }
+      
+      // Insert at calculated position
+      console.log(`🎯 Inserting ${draggedDestination.name} at global index ${globalTargetIndex}`);
+      newDestinationIds.splice(globalTargetIndex, 0, draggedId);
+      
+      // Step 3: Build optimized destinations array (minimal object creation)
+      const reorderedDestinations = newDestinationIds.map(id => {
+        if (id === draggedId) {
+          return {
+            ...draggedDestination, 
+            startDate: targetDay, 
+            endDate: draggedDestination.category === DestinationCategory.HOTEL ? draggedDestination.endDate : targetDay
+          };
+        }
+        return destinations.find(dest => dest.id === id)!;
+      });
+      
+      // Step 4: Fire-and-forget background updates (no await blocking)
+      
+      // Execute reorder synchronously (since it's not async)
+      try {
+        onReorderDestinations(reorderedDestinations);
+        console.log('✅ Destinations reordered synchronously');
+        logDragPerformance('dropComplete', { 
+          draggedDestination: draggedDestination.name,
+          targetDay, 
+          actualTargetIndex,
+          reorderedCount: reorderedDestinations.length 
+        });
+        
+        // Step 5: Reset UI state AFTER successful reordering
+        setDragState({
+          isDragging: false,
+          draggedItem: null,
+          dragOverDay: null,
+          dragOverIndex: null,
+          dropTargetIndex: null
+        });
+        setIsProcessingDrop(false);
+      } catch (err) {
+        console.error('❌ Sync reorder failed:', err);
+        
+        // Reset state even on error
+        setDragState({
+          isDragging: false,
+          draggedItem: null,
+          dragOverDay: null,
+          dragOverIndex: null,
+          dropTargetIndex: null
+        });
+        setIsProcessingDrop(false);
+      }
+      
+      // Handle async destination date update if needed
+      if (draggedDestination.startDate !== targetDay) {
+        updateDestination(draggedId, {
+          startDate: targetDay,
+          endDate: draggedDestination.category === DestinationCategory.HOTEL ? draggedDestination.endDate : targetDay
+        }).then(() => {
+          console.log('✅ Background destination date update completed');
+        }).catch((err: any) => {
+          console.error('❌ Background destination update failed:', err);
+        });
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to calculate drag position:', error);
+      // For calculation errors, immediately reset UI state
+      clearTimeout(timeoutId);
+      setIsProcessingDrop(false);
+      setDragState({
+        isDragging: false,
+        draggedItem: null,
+        dragOverDay: null,
+        dragOverIndex: null,
+        dropTargetIndex: null
+      });
+    }
+    // Note: No finally block needed since we handle cleanup in the try block for optimistic updates
+  }, [dragState.draggedItem, currentTrip, destinations, updateDestination, onReorderDestinations, isProcessingDrop, logDragPerformance]);
 
   // Mobile navigation
   const currentDayIndex = useMemo(() => {
@@ -322,24 +1165,202 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           : '',
         tags: newDestinationForm.transportMode !== TransportMode.DRIVING 
           ? [getTransportModeLabel(newDestinationForm.transportMode).toLowerCase()]
-          : []
+          : [],
+        returnDestinationId: newDestinationForm.returnDestinationId
       };
 
       const createdDestination = await createDestination(destinationData);
       
-      // Update the destination with additional fields that aren't in CreateDestinationData
-      if (createdDestination) {
-        await updateDestination(createdDestination.id, {
-          actualCost: newDestinationForm.isPaid ? newDestinationForm.actualCost : undefined
+      // Update the created destination with actualCost if provided
+      if (createdDestination && newDestinationForm.actualCost !== undefined && newDestinationForm.actualCost !== null) {
+        console.log(`Saving actualCost ${newDestinationForm.actualCost} for new destination "${createdDestination.name}"`);
+        await updateDestination(createdDestination.id, { actualCost: newDestinationForm.actualCost });
+      }
+
+      // Position the destination correctly based on creatingDestination position
+      if (createdDestination && onReorderDestinations && creatingDestination.position !== 'initial') {
+        // Get all current destinations for the trip, including the newly created one
+        const allDestinations = [...destinations, createdDestination];
+        const currentTripDestinations = currentTrip.destinations
+          .map(id => allDestinations.find(dest => dest.id === id))
+          .filter((dest): dest is Destination => dest !== undefined);
+
+        // Remove the newly created destination from the current list (it was added at the end)
+        const existingDestinations = currentTripDestinations.filter(dest => dest.id !== createdDestination.id);
+        
+        // Get destinations for the target day sorted by their current order within the trip
+        const sameDayDestinations = existingDestinations
+          .filter(dest => dest.startDate === creatingDestination.dayDate)
+          .sort((a, b) => {
+            // Sort by existing position within the trip to maintain current order
+            const aIndex = currentTrip.destinations.indexOf(a.id);
+            const bIndex = currentTrip.destinations.indexOf(b.id);
+            return aIndex - bIndex;
+          });
+        
+        let insertIndex: number;
+        
+        if (creatingDestination.position === 'before' && creatingDestination.destinationIndex !== undefined) {
+          // destinationIndex is relative to the day's sorted destinations
+          insertIndex = creatingDestination.destinationIndex;
+        } else if (creatingDestination.position === 'after' && creatingDestination.destinationIndex !== undefined) {
+          // destinationIndex is relative to the day's sorted destinations, add 1 for 'after'
+          insertIndex = creatingDestination.destinationIndex + 1;
+        } else {
+          // Default: add at the end of the same day destinations
+          insertIndex = sameDayDestinations.length;
+        }
+        
+        // Ensure insertIndex is within bounds
+        insertIndex = Math.max(0, Math.min(insertIndex, sameDayDestinations.length));
+        
+        // Insert the new destination at the correct position within the same day
+        sameDayDestinations.splice(insertIndex, 0, createdDestination);
+        
+        // Rebuild the full destination list maintaining order for all days
+        const allDaysDestinations = existingDestinations.filter(dest => dest.startDate !== creatingDestination.dayDate);
+        
+        // Group all destinations by day, including our modified same-day destinations
+        const destinationsByDay = new Map<string, Destination[]>();
+        
+        // Add other days' destinations maintaining their order
+        allDaysDestinations.forEach(dest => {
+          if (!destinationsByDay.has(dest.startDate)) {
+            destinationsByDay.set(dest.startDate, []);
+          }
+          destinationsByDay.get(dest.startDate)!.push(dest);
         });
+        
+        // Sort destinations within each day by their original trip order
+        destinationsByDay.forEach((dayDestinations, dayKey) => {
+          if (dayKey !== creatingDestination.dayDate) { // Don't re-sort the day we just modified
+            dayDestinations.sort((a, b) => {
+              const aIndex = currentTrip.destinations.indexOf(a.id);
+              const bIndex = currentTrip.destinations.indexOf(b.id);
+              return aIndex - bIndex;
+            });
+            destinationsByDay.set(dayKey, dayDestinations);
+          }
+        });
+        
+        // Add our modified same-day destinations
+        destinationsByDay.set(creatingDestination.dayDate, sameDayDestinations);
+        
+        // Sort days by date and flatten the destinations while maintaining day-internal order
+        const sortedDays = Array.from(destinationsByDay.keys()).sort();
+        const finalDestinations = sortedDays.flatMap(date => destinationsByDay.get(date) || []);
+
+        await onReorderDestinations(finalDestinations);
+      }
+
+      // Clone return destination if returnDestinationId is provided
+      if (createdDestination && newDestinationForm.returnDestinationId) {
+        let returnDestination: Destination | undefined;
+        
+        if (newDestinationForm.returnDestinationId === 'home' && settings.homePoint) {
+          // Create a home destination object for cloning
+          returnDestination = {
+            id: 'temp-home',
+            name: settings.homePoint.name,
+            location: settings.homePoint.address,
+            coordinates: settings.homePoint.coordinates,
+            startDate: createdDestination.endDate,
+            endDate: createdDestination.endDate,
+            category: DestinationCategory.OTHER,
+            status: DestinationStatus.PLANNED,
+            notes: '',
+            photos: [],
+            tags: ['home'],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          } as Destination;
+        } else {
+          returnDestination = destinations.find(dest => dest.id === newDestinationForm.returnDestinationId);
+        }
+        
+        if (returnDestination) {
+          // Clone the return destination and place it after the current destination
+          // Use the transport mode of the original destination for the return journey
+          const clonedDestinationData: CreateDestinationData = {
+            name: returnDestination.name,
+            location: returnDestination.location,
+            coordinates: returnDestination.coordinates,
+            startDate: createdDestination.endDate, // Use end date of the created destination
+            endDate: createdDestination.endDate, // Same day return
+            category: returnDestination.category,
+            budget: returnDestination.budget,
+            status: DestinationStatus.PLANNED,
+            notes: `Rückweg von ${createdDestination.name} (${getTransportModeLabel(newDestinationForm.transportMode)})`,
+            tags: [...returnDestination.tags, 'rückweg'],
+            color: returnDestination.color
+          };
+
+          const clonedDestination = await createDestination(clonedDestinationData);
+          
+          // Set the transport mode of the cloned destination to match the original destination's transport mode
+          if (clonedDestination) {
+            await updateDestination(clonedDestination.id, {
+              transportToNext: {
+                mode: newDestinationForm.transportMode, // Use original destination's transport mode
+                duration: 0,
+                distance: 0
+              }
+            });
+          }
+          
+          // Reorder destinations to place the cloned destination right after the original
+          if (clonedDestination && onReorderDestinations) {
+            const allDestinationsWithCloned = [...destinations, createdDestination, clonedDestination];
+            const currentTripDestinationsWithCloned = currentTrip.destinations
+              .map(id => allDestinationsWithCloned.find(dest => dest.id === id))
+              .filter((dest): dest is Destination => dest !== undefined);
+            
+            // Add the cloned destinations to the list
+            currentTripDestinationsWithCloned.push(clonedDestination);
+            
+            // Find the position of the created destination and insert the cloned one after it
+            const createdIndex = currentTripDestinationsWithCloned.findIndex(dest => dest.id === createdDestination.id);
+            if (createdIndex !== -1 && createdIndex < currentTripDestinationsWithCloned.length - 1) {
+              // Remove the cloned destination from the end and insert it after the created destination
+              const clonedDest = currentTripDestinationsWithCloned.pop()!;
+              currentTripDestinationsWithCloned.splice(createdIndex + 1, 0, clonedDest);
+            }
+            
+            await onReorderDestinations(currentTripDestinationsWithCloned);
+          }
+        }
       }
       
+      // Hide the form after successful creation
       setCreatingDestination(null);
-      resetForm();
+      setNewDestinationForm({ 
+        name: '', 
+        location: '', 
+        coordinates: undefined,
+        endDate: '',
+        transportMode: TransportMode.DRIVING,
+        category: DestinationCategory.ATTRACTION,
+        actualCost: undefined,
+        isPaid: false,
+        returnDestinationId: undefined
+      });
     } catch (error) {
       console.error('Failed to create destination:', error);
+      // Even if there's an error, hide the form to prevent double-entry
+      setCreatingDestination(null);
+      setNewDestinationForm({ 
+        name: '', 
+        location: '', 
+        coordinates: undefined,
+        endDate: '',
+        transportMode: TransportMode.DRIVING,
+        category: DestinationCategory.ATTRACTION,
+        actualCost: undefined,
+        isPaid: false,
+        returnDestinationId: undefined
+      });
     }
-  }, [creatingDestination, currentTrip, newDestinationForm, createDestination, updateDestination]);
+  }, [creatingDestination, currentTrip, newDestinationForm, createDestination, updateDestination, destinations, onReorderDestinations]);
 
   // Handle place selection from autocomplete
   const handlePlaceSelect = useCallback((place: PlacePrediction) => {
@@ -350,6 +1371,28 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
       coordinates: place.coordinates
     }));
   }, []);
+
+  const handleUseHomePoint = useCallback(() => {
+    if (settings.homePoint) {
+      setNewDestinationForm(prev => ({
+        ...prev,
+        name: 'Zuhause',
+        location: settings.homePoint!.address,
+        coordinates: settings.homePoint!.coordinates
+      }));
+    }
+  }, [settings.homePoint]);
+
+  const handleUseHomePointForEdit = useCallback(() => {
+    if (settings.homePoint) {
+      setEditForm(prev => ({
+        ...prev,
+        name: 'Zuhause',
+        location: settings.homePoint!.address,
+        coordinates: settings.homePoint!.coordinates
+      }));
+    }
+  }, [settings.homePoint]);
 
   const resetForm = useCallback(() => {
     setNewDestinationForm({ 
@@ -374,7 +1417,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
       category: destination.category,
       transportMode: destination.transportToNext?.mode || TransportMode.DRIVING,
       actualCost: destination.actualCost,
-      isPaid: !!destination.actualCost
+      isPaid: !!destination.actualCost,
+      returnDestinationId: destination.returnDestinationId
     });
   }, []);
 
@@ -382,24 +1426,128 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     if (!editingDestination) return;
     
     try {
+      console.log(`Updating destination "${editForm.name}" with actualCost: ${editForm.actualCost}`);
+      const originalDestination = destinations.find(dest => dest.id === editingDestination);
+      const originalReturnDestinationId = originalDestination?.returnDestinationId;
+      
       await updateDestination(editingDestination, {
         name: editForm.name,
         location: editForm.location,
         coordinates: editForm.coordinates,
         category: editForm.category,
-        actualCost: editForm.isPaid ? editForm.actualCost : undefined,
+        actualCost: editForm.actualCost !== undefined && editForm.actualCost !== null ? editForm.actualCost : undefined,
         transportToNext: editForm.transportMode ? {
           mode: editForm.transportMode,
           duration: 0,
           distance: 0
-        } : undefined
+        } : undefined,
+        returnDestinationId: editForm.returnDestinationId
       });
+      
+      // Handle return destination logic for walking/biking destinations
+      if (editForm.transportMode === TransportMode.WALKING || editForm.transportMode === TransportMode.BICYCLE) {
+        
+        // If returnDestinationId changed or was newly added
+        if (editForm.returnDestinationId !== originalReturnDestinationId) {
+          
+          // First, find and remove any existing cloned return destination
+          if (originalReturnDestinationId && currentTrip) {
+            const existingClonedDestinations = destinations.filter(dest => 
+              currentTrip.destinations.includes(dest.id) &&
+              dest.tags.includes('rückweg') &&
+              dest.notes?.includes(`Rückweg von ${originalDestination?.name}`)
+            );
+            
+            for (const clonedDest of existingClonedDestinations) {
+              await deleteDestination(clonedDest.id);
+            }
+          }
+          
+          // Then create new cloned destination if returnDestinationId is set
+          if (editForm.returnDestinationId) {
+            let returnDestination: Destination | undefined;
+            
+            if (editForm.returnDestinationId === 'home' && settings.homePoint) {
+              // Create a home destination object for cloning
+              returnDestination = {
+                id: 'temp-home',
+                name: settings.homePoint.name,
+                location: settings.homePoint.address,
+                coordinates: settings.homePoint.coordinates,
+                startDate: originalDestination?.endDate || originalDestination?.startDate || '',
+                endDate: originalDestination?.endDate || originalDestination?.startDate || '',
+                category: DestinationCategory.OTHER,
+                status: DestinationStatus.PLANNED,
+                notes: '',
+                photos: [],
+                tags: ['home'],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+              } as Destination;
+            } else {
+              returnDestination = destinations.find(dest => dest.id === editForm.returnDestinationId);
+            }
+            
+            if (returnDestination && originalDestination) {
+              // Clone the return destination and place it after the current destination
+              // Use the transport mode of the original destination for the return journey
+              const clonedDestinationData: CreateDestinationData = {
+                name: returnDestination.name,
+                location: returnDestination.location,
+                coordinates: returnDestination.coordinates,
+                startDate: originalDestination.endDate, // Use end date of the edited destination
+                endDate: originalDestination.endDate, // Same day return
+                category: returnDestination.category,
+                budget: returnDestination.budget,
+                status: DestinationStatus.PLANNED,
+                notes: `Rückweg von ${originalDestination.name} (${getTransportModeLabel(editForm.transportMode)})`,
+                tags: [...returnDestination.tags, 'rückweg'],
+                color: returnDestination.color
+              };
+
+              const clonedDestination = await createDestination(clonedDestinationData);
+              
+              // Set the transport mode of the cloned destination to match the original destination's transport mode
+              if (clonedDestination) {
+                await updateDestination(clonedDestination.id, {
+                  transportToNext: {
+                    mode: editForm.transportMode, // Use original destination's transport mode
+                    duration: 0,
+                    distance: 0
+                  }
+                });
+              }
+              
+              // Reorder destinations to place the cloned destination right after the original
+              if (clonedDestination && onReorderDestinations && currentTrip) {
+                const allDestinationsWithCloned = [...destinations, clonedDestination];
+                const currentTripDestinationsWithCloned = currentTrip.destinations
+                  .map(id => allDestinationsWithCloned.find(dest => dest.id === id))
+                  .filter((dest): dest is Destination => dest !== undefined);
+                
+                // Add the cloned destinations to the list
+                currentTripDestinationsWithCloned.push(clonedDestination);
+                
+                // Find the position of the edited destination and insert the cloned one after it
+                const editedIndex = currentTripDestinationsWithCloned.findIndex(dest => dest.id === editingDestination);
+                if (editedIndex !== -1 && editedIndex < currentTripDestinationsWithCloned.length - 1) {
+                  // Remove the cloned destination from the end and insert it after the edited destination
+                  const clonedDest = currentTripDestinationsWithCloned.pop()!;
+                  currentTripDestinationsWithCloned.splice(editedIndex + 1, 0, clonedDest);
+                }
+                
+                await onReorderDestinations(currentTripDestinationsWithCloned);
+              }
+            }
+          }
+        }
+      }
       
       setEditingDestination(null);
     } catch (error) {
       console.error('Failed to update destination:', error);
     }
-  }, [editingDestination, editForm, updateDestination]);
+  }, [editingDestination, editForm, updateDestination, destinations, currentTrip, settings, createDestination, deleteDestination, onReorderDestinations]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingDestination(null);
@@ -470,6 +1618,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     }
   };
 
+  // Check if a destination is a cloned return destination
+  const isClonedReturnDestination = (destination: Destination): boolean => {
+    return destination.notes?.includes('Rückweg von') || false;
+  };
+
 
   const handleCancelCreation = useCallback(() => {
     setCreatingDestination(null);
@@ -484,7 +1637,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     }));
   }, []);
 
-  const overallStats = useMemo(() => {
+  const overallStats: OverallStats = useMemo(() => {
     let hasReferenceBudgets = false;
 
     const totalStats = enhancedTimelineData.reduce((acc, day) => {
@@ -500,14 +1653,20 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         days: acc.days + 1,
         distance: acc.distance + day.dayStats.totalDistance,
         travelTime: acc.travelTime + day.dayStats.totalTravelTime,
-        cost: acc.cost + day.dayStats.totalCost
+        cost: acc.cost + day.dayStats.totalCost,
+        drivingDistance: acc.drivingDistance + day.dayStats.drivingDistance,
+        walkingDistance: acc.walkingDistance + day.dayStats.walkingDistance,
+        bikingDistance: acc.bikingDistance + day.dayStats.bikingDistance
       };
     }, {
       destinations: 0,
       days: 0,
       distance: 0,
       travelTime: 0,
-      cost: 0
+      cost: 0,
+      drivingDistance: 0,
+      walkingDistance: 0,
+      bikingDistance: 0
     });
 
     return {
@@ -538,7 +1697,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
   return (
     <>
-    <div style={{ padding: '1.5rem' }}>
+    <div data-timeline-container style={{ padding: '1.5rem' }}>
       {/* Enhanced Header */}
       <div style={{
         display: 'flex',
@@ -573,89 +1732,129 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         gap: '1rem',
         marginBottom: '2rem'
       }}>
-        <div style={{
-          background: '#f0f9ff',
-          border: '1px solid #bae6fd',
-          borderRadius: '12px',
-          padding: '1rem'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '0.5rem'
-          }}>
-            <MapPin size={16} style={{ color: '#0891b2' }} />
-            <span style={{ fontSize: '0.875rem', color: '#0891b2', fontWeight: '600' }}>
-              Ziele
-            </span>
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0c4a6e' }}>
-            {overallStats.destinations}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#0891b2', marginTop: '0.25rem' }}>
-            über {overallStats.days} Tage
-          </div>
-        </div>
 
 
+        {/* Übergeordnete Gesamtreisestrecke-Kachel */}
         <div style={{
           background: '#f0f9ff',
           border: '1px solid #7dd3fc',
           borderRadius: '12px',
-          padding: '1rem'
+          padding: '1.5rem',
+          gridColumn: '1 / -1' // Spannt über alle Spalten
         }}>
+          {/* Header der übergeordneten Kachel */}
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
-            marginBottom: '0.5rem'
+            marginBottom: '1rem'
           }}>
-            <Route size={16} style={{ color: '#0284c7' }} />
-            <span style={{ fontSize: '0.875rem', color: '#0284c7', fontWeight: '600' }}>
-              Fahrtstrecke
+            <Route size={20} style={{ color: '#0284c7' }} />
+            <span style={{ fontSize: '1.125rem', color: '#0284c7', fontWeight: '700' }}>
+              Gesamtstrecke
             </span>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#0c4a6e' }}>
+          
+          {/* Gesamtdistanz */}
+          <div style={{ 
+            fontSize: '2.5rem', 
+            fontWeight: 'bold', 
+            color: '#0c4a6e',
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
             {Math.round(overallStats.distance)}km
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#0284c7', marginTop: '0.25rem' }}>
-            ~{Math.floor(overallStats.travelTime / 60)}h {overallStats.travelTime % 60}min
+
+          {/* Eingebettete Transportmodi-Kacheln */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: '1rem'
+          }}>
+            {/* Auto-Strecke */}
+            {overallStats.drivingDistance > 0 && (
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid #bfdbfe',
+                borderRadius: '8px',
+                padding: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  <Car size={16} style={{ color: '#0284c7' }} />
+                  <span style={{ fontSize: '0.875rem', color: '#0284c7', fontWeight: '600' }}>
+                    Auto
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0284c7' }}>
+                  {Math.round(overallStats.drivingDistance)}km
+                </div>
+              </div>
+            )}
+
+            {/* Wandern-Strecke */}
+            {overallStats.walkingDistance > 0 && (
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid #bbf7d0',
+                borderRadius: '8px',
+                padding: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  <Mountain size={16} style={{ color: '#059669' }} />
+                  <span style={{ fontSize: '0.875rem', color: '#059669', fontWeight: '600' }}>
+                    Wandern
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#059669' }}>
+                  {Math.round(overallStats.walkingDistance)}km
+                </div>
+              </div>
+            )}
+
+            {/* Fahrrad-Strecke */}
+            {overallStats.bikingDistance > 0 && (
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                border: '1px solid #fecaca',
+                borderRadius: '8px',
+                padding: '1rem',
+                textAlign: 'center'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.5rem',
+                  marginBottom: '0.5rem'
+                }}>
+                  <Bike size={16} style={{ color: '#dc2626' }} />
+                  <span style={{ fontSize: '0.875rem', color: '#dc2626', fontWeight: '600' }}>
+                    Fahrrad
+                  </span>
+                </div>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc2626' }}>
+                  {Math.round(overallStats.bikingDistance)}km
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        <div style={{
-          background: '#f0fdf4',
-          border: '1px solid #bbf7d0',
-          borderRadius: '12px',
-          padding: '1rem'
-        }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '0.5rem'
-          }}>
-            <DollarSign size={16} style={{ color: '#16a34a' }} />
-            <span style={{ fontSize: '0.875rem', color: '#16a34a', fontWeight: '600' }}>
-              Fahrtkosten
-            </span>
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#14532d' }}>
-            {formatCurrency(overallStats.cost)}
-            {overallStats.hasReferenceBudgets && (
-              <span style={{ 
-                marginLeft: '0.5rem', 
-                color: '#f59e0b',
-                fontSize: '1rem',
-                fontWeight: 'bold'
-              }} title="Beinhaltet Referenzwerte für fehlende Budget-Angaben">⚠️</span>
-            )}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#16a34a', marginTop: '0.25rem' }}>
-            basierend auf Fahrzeugconfig
-          </div>
-        </div>
 
       </div>
 
@@ -776,7 +1975,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       style={{
                         width: '100%',
                         padding: '0.75rem',
-                        paddingRight: '3rem',
+                        paddingRight: settings.homePoint ? '5.5rem' : '3rem', // Extra space for home button when available
                         border: '1px solid #e5e7eb',
                         borderRadius: '8px',
                         fontSize: '1rem',
@@ -785,6 +1984,39 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       }}
                       readOnly={!!newDestinationForm.coordinates}
                     />
+                    {/* Home Point Button */}
+                    {settings.homePoint && (
+                      <button
+                        type="button"
+                        onClick={handleUseHomePoint}
+                        style={{
+                          position: 'absolute',
+                          right: '50px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: '#059669',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '4px',
+                          padding: '0.375rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                        title={`Zuhause auswählen: ${settings.homePoint.name}`}
+                        onMouseOver={(e) => {
+                          e.currentTarget.style.background = '#047857';
+                        }}
+                        onMouseOut={(e) => {
+                          e.currentTarget.style.background = '#059669';
+                        }}
+                      >
+                        <Home size={16} />
+                      </button>
+                    )}
+                    
+                    {/* Map Picker Button */}
                     <button
                       type="button"
                       onClick={handleOpenMapPicker}
@@ -916,6 +2148,73 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     ))}
                   </div>
                 </div>
+
+                {/* Return Destination Selection (only for walking/biking) */}
+                {(newDestinationForm.transportMode === TransportMode.WALKING || newDestinationForm.transportMode === TransportMode.BICYCLE) && (
+                  <div style={{
+                    background: 'white',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    padding: '1rem',
+                    marginBottom: '1rem'
+                  }}>
+                    <label style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.75rem'
+                    }}>
+                      Rückweg zu (optional)
+                    </label>
+                    
+                    <div style={{
+                      position: 'relative'
+                    }}>
+                      <select
+                        value={newDestinationForm.returnDestinationId || ''}
+                        onChange={(e) => setNewDestinationForm(prev => ({ 
+                          ...prev, 
+                          returnDestinationId: e.target.value || undefined 
+                        }))}
+                        style={{
+                          width: '100%',
+                          padding: '0.75rem',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          background: 'white'
+                        }}
+                      >
+                        <option value="">Kein Rückweg</option>
+                        {settings.homePoint && (
+                          <option value="home">🏠 {settings.homePoint.name}</option>
+                        )}
+                        {currentTrip && destinations
+                          .filter(dest => currentTrip.destinations.includes(dest.id))
+                          .map(dest => (
+                            <option key={dest.id} value={dest.id}>
+                              {getCategoryIcon(dest.category)} {dest.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                    
+                    {newDestinationForm.returnDestinationId && (
+                      <div style={{
+                        marginTop: '0.5rem',
+                        padding: '0.5rem',
+                        background: '#f0f9ff',
+                        border: '1px solid #bae6fd',
+                        borderRadius: '6px',
+                        fontSize: '0.75rem',
+                        color: '#0369a1'
+                      }}>
+                        💡 Ein Rückweg-Ziel wird automatisch nach diesem Ziel erstellt
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Category Selection */}
                 <div style={{
@@ -1203,10 +2502,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     <Route size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
                     {Math.round(day.dayStats.totalDistance)}km
                   </span>
-                  <span>
-                    <DollarSign size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
-                    {formatCurrency(day.dayStats.totalCost)}
-                  </span>
                 </div>
               </div>
 
@@ -1252,8 +2547,38 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 
                 {day.destinations.map((dest, destIndex) => (
                   <div key={dest.id}>
+                    {/* Drop Zone - Before each destination when dragging */}
+                    {dragState.isDragging && (
+                      <div
+                        onDragEnter={handleDragEnter}
+                        onDragOver={(e) => handleDragOver(e, day.date, destIndex)}
+                        onDrop={(e) => handleDrop(e, day.date, destIndex)}
+                        style={dragState.dragOverDay === day.date && dragState.dragOverIndex === destIndex 
+                          ? dropZoneStyles.active 
+                          : dropZoneStyles.inactive}
+                      >
+                        {dragState.dragOverDay === day.date && dragState.dragOverIndex === destIndex && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            background: '#3b82f6',
+                            color: 'white',
+                            fontSize: '0.75rem',
+                            padding: '2px 8px',
+                            borderRadius: '12px',
+                            whiteSpace: 'nowrap',
+                            pointerEvents: 'none'
+                          }}>
+                            Hier ablegen
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {/* Add Destination Button - Between destinations only (not before first) */}
-                    {!creatingDestination && destIndex > 0 && (
+                    {!creatingDestination && !dragState.isDragging && destIndex > 0 && (
                       <div style={{
                         display: 'flex',
                         justifyContent: 'center',
@@ -1438,7 +2763,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               onChange={(e) => setNewDestinationForm(prev => ({ ...prev, location: e.target.value }))}
                               style={{
                                 width: '100%',
-                                padding: '0.75rem 3rem 0.75rem 0.75rem',
+                                padding: settings.homePoint ? '0.75rem 5.5rem 0.75rem 0.75rem' : '0.75rem 3rem 0.75rem 0.75rem', // Extra space for home button when available
                                 border: '1px solid #e5e7eb',
                                 borderRadius: '6px',
                                 fontSize: '0.875rem',
@@ -1447,6 +2772,41 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               }}
                               readOnly={!!newDestinationForm.coordinates}
                             />
+                            {/* Home Point Button */}
+                            {settings.homePoint && (
+                              <button
+                                type="button"
+                                onClick={handleUseHomePoint}
+                                style={{
+                                  position: 'absolute',
+                                  right: '40px',
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
+                                  background: '#059669',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  padding: '0.25rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '2rem',
+                                  height: '2rem'
+                                }}
+                                title={`Zuhause auswählen: ${settings.homePoint.name}`}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.background = '#047857';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.background = '#059669';
+                                }}
+                              >
+                                <Home size={14} />
+                              </button>
+                            )}
+                            
+                            {/* Map Picker Button */}
                             <button
                               type="button"
                               onClick={handleOpenMapPicker}
@@ -1799,8 +3159,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                     {/* Destination Block */}
                     <div
-                      draggable
+                      draggable={!isProcessingDrop}
                       onDragStart={(e) => handleDragStart(dest, e)}
+                      onDragEnd={handleDragEnd}
+                      onDragEnter={handleDragEnter}
                       onDragOver={(e) => handleDragOver(e, day.date, destIndex)}
                       onDrop={(e) => handleDrop(e, day.date, destIndex)}
                       style={{
@@ -1810,8 +3172,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         background: dragState.dragOverDay === day.date && dragState.dragOverIndex === destIndex 
                           ? '#f0f9ff' : '#fafafa',
                         borderRadius: '8px',
+                        opacity: isProcessingDrop ? 0.6 : 1,
+                        cursor: isProcessingDrop ? 'wait' : (dragState.isDragging ? 'move' : 'grab'),
                         marginBottom: '0.5rem',
-                        cursor: dragState.isDragging ? 'move' : 'pointer',
                         border: dragState.draggedItem?.id === dest.id ? '2px dashed #3b82f6' : '1px solid #e5e7eb',
                         transition: 'all 0.2s'
                       }}
@@ -1820,8 +3183,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       {/* Drag Handle */}
                       <div style={{
                         marginRight: '1rem',
-                        color: '#9ca3af',
-                        cursor: 'move'
+                        color: '#9ca3af'
                       }}>
                         <GripVertical size={16} />
                       </div>
@@ -1841,9 +3203,30 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           margin: '0 0 0.25rem 0',
                           fontSize: '1rem',
                           fontWeight: '600',
-                          color: '#1f2937'
+                          color: '#1f2937',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.5rem'
                         }}>
                           {dest.name}
+                          {/* Icon for cloned/return destinations */}
+                          {isClonedReturnDestination(dest) && (
+                            <span 
+                              title="Wiederkehrendes Ziel (Rückkehr)"
+                              style={{ 
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <RotateCcw 
+                                size={16} 
+                                style={{ 
+                                  color: '#f97316',
+                                  opacity: 0.8
+                                }}
+                              />
+                            </span>
+                          )}
                         </h4>
                         <div style={{
                           fontSize: '0.875rem',
@@ -1944,14 +3327,57 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           border: '1px solid #e5e7eb'
                         }}>
                           <ArrowRight size={14} />
-                          <span>
-                            {calculateTravelTime(dest, day.destinations[destIndex + 1])}min Fahrt
-                          </span>
-                          {dest.coordinates && day.destinations[destIndex + 1].coordinates && (
-                            <span>
-                              • {Math.round(calculateDistance(dest.coordinates, day.destinations[destIndex + 1].coordinates!) * 1.4)}km
-                            </span>
-                          )}
+                          {(() => {
+                            const nextDest = day.destinations[destIndex + 1];
+                            
+                            // Determine the transport mode to display (same logic as calculateTravelTime)
+                            let displayTransportMode: TransportMode;
+                            if (dest.returnDestinationId && dest.transportToNext?.mode && 
+                                (dest.transportToNext.mode === TransportMode.WALKING || dest.transportToNext.mode === TransportMode.BICYCLE)) {
+                              // Use the transport mode from the current destination for walking/biking return journeys
+                              displayTransportMode = dest.transportToNext.mode;
+                            } else {
+                              // Default behavior: Get transport mode from next destination
+                              displayTransportMode = nextDest.transportToNext?.mode || TransportMode.DRIVING;
+                            }
+                            
+                            const nextTransportMode = displayTransportMode;
+                            
+                            // Check if auto transport with walking/biking in between
+                            if (nextTransportMode === TransportMode.DRIVING) {
+                              const allDestinations = currentTrip?.destinations
+                                .map(id => destinations.find(d => d.id === id))
+                                .filter((d): d is Destination => d !== undefined) || [];
+                              const nextDestGlobalIndex = allDestinations.findIndex(d => d.id === nextDest.id);
+                              
+                              if (nextDestGlobalIndex > 0) {
+                                const autoTravelInfo = calculateAutoTravelTime(allDestinations, nextDestGlobalIndex);
+                                
+                                if (autoTravelInfo.fromDestination && autoTravelInfo.fromDestination.id !== dest.id) {
+                                  // Show auto travel from last auto destination, not from immediate previous
+                                  return (
+                                    <span>
+                                      {autoTravelInfo.time} min {getTransportLabel(nextTransportMode)}
+                                      <span style={{ fontSize: '0.75rem', opacity: 0.8 }}>
+                                        {' '}(von {autoTravelInfo.fromDestination.name})
+                                      </span>
+                                      • {Math.round(autoTravelInfo.distance)}km
+                                    </span>
+                                  );
+                                }
+                              }
+                            }
+                            
+                            // Default behavior for non-auto or direct connection
+                            return (
+                              <span>
+                                {calculateTravelTime(dest, nextDest)} min {getTransportLabel(nextTransportMode)}
+                                {dest.coordinates && nextDest.coordinates && (
+                                  <>• {Math.round(calculateDistance(dest.coordinates, nextDest.coordinates!) * 1.4)}km</>
+                                )}
+                              </span>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
@@ -2004,7 +3430,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               style={{
                                 width: '100%',
                                 padding: '0.75rem',
-                                paddingRight: '3rem',
+                                paddingRight: settings.homePoint ? '5.5rem' : '3rem', // Extra space for home button when available
                                 border: '1px solid #e5e7eb',
                                 borderRadius: '6px',
                                 fontSize: '0.875rem',
@@ -2013,6 +3439,39 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               }}
                               readOnly={!!editForm.coordinates}
                             />
+                            {/* Home Point Button */}
+                            {settings.homePoint && (
+                              <button
+                                type="button"
+                                onClick={handleUseHomePointForEdit}
+                                style={{
+                                  position: 'absolute',
+                                  right: '50px',
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
+                                  background: '#059669',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  padding: '0.375rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                                title={`Zuhause auswählen: ${settings.homePoint.name}`}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.background = '#047857';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.background = '#059669';
+                                }}
+                              >
+                                <Home size={14} />
+                              </button>
+                            )}
+                            
+                            {/* Map Picker Button */}
                             <button
                               type="button"
                               onClick={handleOpenMapPicker}
@@ -2132,6 +3591,68 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             ))}
                           </div>
                         </div>
+
+                        {/* Return Destination Selection (only for walking/biking) */}
+                        {(editForm.transportMode === TransportMode.WALKING || editForm.transportMode === TransportMode.BICYCLE) && (
+                          <div style={{
+                            background: 'white',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '6px',
+                            padding: '0.75rem',
+                            marginBottom: '1rem'
+                          }}>
+                            <label style={{
+                              display: 'block',
+                              fontSize: '0.75rem',
+                              color: '#6b7280',
+                              marginBottom: '0.5rem'
+                            }}>
+                              Rückweg zu (optional)
+                            </label>
+                            
+                            <select
+                              value={editForm.returnDestinationId || ''}
+                              onChange={(e) => setEditForm(prev => ({ 
+                                ...prev, 
+                                returnDestinationId: e.target.value || undefined 
+                              }))}
+                              style={{
+                                width: '100%',
+                                padding: '0.5rem',
+                                border: '1px solid #e5e7eb',
+                                borderRadius: '6px',
+                                fontSize: '0.75rem',
+                                background: 'white'
+                              }}
+                            >
+                              <option value="">Kein Rückweg</option>
+                              {settings.homePoint && (
+                                <option value="home">🏠 {settings.homePoint.name}</option>
+                              )}
+                              {currentTrip && destinations
+                                .filter(dest => currentTrip.destinations.includes(dest.id) && dest.id !== editingDestination)
+                                .map(dest => (
+                                  <option key={dest.id} value={dest.id}>
+                                    {getCategoryIcon(dest.category)} {dest.name}
+                                  </option>
+                                ))}
+                            </select>
+                            
+                            {editForm.returnDestinationId && (
+                              <div style={{
+                                marginTop: '0.5rem',
+                                padding: '0.5rem',
+                                background: '#f0f9ff',
+                                border: '1px solid #bae6fd',
+                                borderRadius: '4px',
+                                fontSize: '0.7rem',
+                                color: '#0369a1'
+                              }}>
+                                💡 Rückweg-Ziel wird automatisch aktualisiert
+                              </div>
+                            )}
+                          </div>
+                        )}
 
                         {/* Kosten und Bezahlt-Status */}
                         <div style={{
@@ -2273,8 +3794,38 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       </div>
                     )}
 
+                    {/* Drop Zone - After last destination when dragging */}
+                    {dragState.isDragging && destIndex === day.destinations.length - 1 && (
+                      <div
+                        onDragEnter={handleDragEnter}
+                        onDragOver={(e) => handleDragOver(e, day.date, destIndex + 1)}
+                        onDrop={(e) => handleDrop(e, day.date, destIndex + 1)}
+                        style={dragState.dragOverDay === day.date && dragState.dragOverIndex === destIndex + 1 
+                          ? dropZoneStyles.lastActive 
+                          : dropZoneStyles.lastInactive}
+                      >
+                        {dragState.dragOverDay === day.date && dragState.dragOverIndex === destIndex + 1 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                            background: '#3b82f6',
+                            color: 'white',
+                            fontSize: '0.75rem',
+                            padding: '4px 12px',
+                            borderRadius: '12px',
+                            whiteSpace: 'nowrap',
+                            pointerEvents: 'none'
+                          }}>
+                            Am Ende hinzufügen
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
                     {/* Add Destination Button - Only after the last destination */}
-                    {!creatingDestination && destIndex === day.destinations.length - 1 && (
+                    {!creatingDestination && !dragState.isDragging && destIndex === day.destinations.length - 1 && (
                       <div style={{
                         display: 'flex',
                         justifyContent: 'center',
@@ -2459,7 +4010,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               onChange={(e) => setNewDestinationForm(prev => ({ ...prev, location: e.target.value }))}
                               style={{
                                 width: '100%',
-                                padding: '0.75rem 3rem 0.75rem 0.75rem',
+                                padding: settings.homePoint ? '0.75rem 5.5rem 0.75rem 0.75rem' : '0.75rem 3rem 0.75rem 0.75rem', // Extra space for home button when available
                                 border: '1px solid #e5e7eb',
                                 borderRadius: '6px',
                                 fontSize: '0.875rem',
@@ -2468,6 +4019,41 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               }}
                               readOnly={!!newDestinationForm.coordinates}
                             />
+                            {/* Home Point Button */}
+                            {settings.homePoint && (
+                              <button
+                                type="button"
+                                onClick={handleUseHomePoint}
+                                style={{
+                                  position: 'absolute',
+                                  right: '40px',
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
+                                  background: '#059669',
+                                  color: 'white',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  padding: '0.25rem',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '2rem',
+                                  height: '2rem'
+                                }}
+                                title={`Zuhause auswählen: ${settings.homePoint.name}`}
+                                onMouseOver={(e) => {
+                                  e.currentTarget.style.background = '#047857';
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.background = '#059669';
+                                }}
+                              >
+                                <Home size={14} />
+                              </button>
+                            )}
+                            
+                            {/* Map Picker Button */}
                             <button
                               type="button"
                               onClick={handleOpenMapPicker}

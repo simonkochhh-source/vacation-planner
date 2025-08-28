@@ -34,14 +34,19 @@ const MapView: React.FC = () => {
   const [mapRef, setMapRef] = useState<any>(null);
   const [userLocation, setUserLocation] = useState<LatLngExpression | null>(null);
   const [showRouting, setShowRouting] = useState(false);
-  const [routingMode, setRoutingMode] = useState<'driving' | 'walking' | 'cycling'>('driving');
+  
+  // Debug logging for routing state
+  useEffect(() => {
+    console.log('🔄 MapView: showRouting state changed to:', showRouting);
+    console.log('🔄 MapView: Current trip:', currentTrip?.name, 'Destinations:', currentDestinations.length);
+  }, [showRouting]);
   const [selectedDestination, setSelectedDestination] = useState<Destination | undefined>();
   const [showTimeline, setShowTimeline] = useState(!isMobile); // Hide timeline by default on mobile
   const [showMeasurement, setShowMeasurement] = useState(false);
   const [showClustering, setShowClustering] = useState(isMobile); // Enable clustering by default on mobile
   const [currentMapLayer, setCurrentMapLayer] = useState('openstreetmap');
   const [currentZoom, setCurrentZoom] = useState(isMobile ? 8 : 10);
-  const [showTripRoutes, setShowTripRoutes] = useState(true); // Show routes by default
+  const [showTripRoutes, setShowTripRoutes] = useState(false); // Hide routes by default for cleaner initial view
 
   // Performance monitoring and optimization
   const {
@@ -64,12 +69,11 @@ const MapView: React.FC = () => {
     return showClustering || adaptiveSettings.clusteringEnabled || isOptimizing;
   }, [showClustering, adaptiveSettings.clusteringEnabled, isOptimizing]);
 
-  // Get current trip destinations with coordinates
+  // Get current trip destinations with coordinates - using same logic as EnhancedTimelineView
   const currentDestinations = currentTrip 
-    ? destinations.filter(dest => 
-        currentTrip.destinations.includes(dest.id) && 
-        dest.coordinates
-      )
+    ? currentTrip.destinations
+        .map(id => destinations.find(dest => dest.id === id))
+        .filter((dest): dest is Destination => dest !== undefined && !!dest.coordinates)
     : [];
 
   // Default center (Berlin)
@@ -108,6 +112,32 @@ const MapView: React.FC = () => {
   useEffect(() => {
     updateMarkerCount(currentDestinations.length);
   }, [currentDestinations.length, updateMarkerCount]);
+
+  // Auto-fit map to show all destinations on initial load
+  useEffect(() => {
+    if (!mapRef || currentDestinations.length === 0) return;
+    
+    // Create bounds from all destination coordinates
+    const bounds = currentDestinations
+      .filter(dest => dest.coordinates)
+      .map(dest => [dest.coordinates!.lat, dest.coordinates!.lng] as [number, number]);
+    
+    if (bounds.length > 0) {
+      try {
+        // Fit map to show all destinations with some padding
+        mapRef.fitBounds(bounds, {
+          padding: [20, 20], // Add some padding around the bounds
+          maxZoom: isMobile ? 12 : 14 // Limit max zoom to avoid being too close
+        });
+        console.log(`🗺️ Auto-fitted map to ${bounds.length} destinations`);
+      } catch (error) {
+        console.warn('Could not auto-fit map bounds:', error);
+        // Fallback to center calculation
+        const center = getMapCenter();
+        mapRef.setView(center, isMobile ? 8 : 10);
+      }
+    }
+  }, [mapRef, currentDestinations, isMobile]);
 
   // Debounced event handlers for better performance
   const handleDebouncedZoomIn = createDebouncedHandler('zoomIn', () => {
@@ -279,7 +309,7 @@ const MapView: React.FC = () => {
         {/* Trip Route Visualizer - Shows routes between destinations */}
         <TripRouteVisualizer
           destinations={currentDestinations}
-          showRoutes={showTripRoutes}
+          showRoutes={showTripRoutes && !showRouting}
           onRouteClick={(from, to, travelTime) => {
             console.log(`Route from ${from.name} to ${to.name}: ${travelTime} minutes`);
             // Optional: Show route details in UI
@@ -290,7 +320,6 @@ const MapView: React.FC = () => {
         <RoutingMachine 
           destinations={currentDestinations}
           showRouting={showRouting}
-          routingMode={routingMode}
         />
 
         {/* Measurement Component */}
@@ -306,9 +335,15 @@ const MapView: React.FC = () => {
         onReset={handleDebouncedReset}
         onLocate={handleDebouncedLocate}
         showRouting={showRouting}
-        onToggleRouting={() => setShowRouting(!showRouting)}
-        routingMode={routingMode}
-        onChangeRoutingMode={setRoutingMode}
+        onToggleRouting={() => {
+          console.log('🔘 MapView: Toggle routing CALLED!');
+          console.log('🔘 Current showRouting state:', showRouting);
+          const newState = !showRouting;
+          console.log('🔘 Setting new state to:', newState);
+          
+          setShowRouting(newState);
+          console.log('🔘 setShowRouting called with:', newState);
+        }}
         showTimeline={showTimeline}
         onToggleTimeline={() => setShowTimeline(!showTimeline)}
         showMeasurement={showMeasurement}
@@ -335,62 +370,7 @@ const MapView: React.FC = () => {
         </div>
       )}
 
-      {/* Map Info Panel with Performance Metrics */}
-      {!isMobile && (
-        <div style={{
-          position: 'absolute',
-          bottom: showTimeline ? '180px' : '1rem',
-          left: '1rem',
-          background: 'white',
-          padding: '1rem',
-          borderRadius: '8px',
-          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-          maxWidth: '300px',
-          zIndex: 1000
-        }}>
-          <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '1rem', fontWeight: '600' }}>
-            {currentTrip.name}
-          </h4>
-          <div style={{ fontSize: '0.875rem', color: '#6b7280', marginBottom: '0.5rem' }}>
-            {currentDestinations.length} Ziele auf der Karte
-          </div>
-          
-          {/* Performance Metrics */}
-          <div style={{
-            fontSize: '0.75rem',
-            color: '#6b7280',
-            paddingTop: '0.5rem',
-            borderTop: '1px solid #e5e7eb'
-          }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>FPS:</span>
-              <span style={{ 
-                color: metrics.fps >= (isMobile ? 20 : 30) ? '#10b981' : '#ef4444',
-                fontWeight: '500'
-              }}>
-                {metrics.fps}
-              </span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <span>Marker:</span>
-              <span>{metrics.markerCount}</span>
-            </div>
-            {isOptimizing && (
-              <div style={{
-                marginTop: '0.25rem',
-                padding: '0.25rem 0.5rem',
-                background: '#fef3c7',
-                color: '#f59e0b',
-                borderRadius: '4px',
-                fontSize: '0.6875rem',
-                textAlign: 'center'
-              }}>
-                Performance-Modus aktiv
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+
 
       {/* Timeline */}
       {showTimeline && currentDestinations.length > 0 && (

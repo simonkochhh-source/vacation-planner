@@ -1,12 +1,29 @@
 import React from 'react';
 import { useApp } from '../../stores/AppContext';
+import { Destination } from '../../types';
 import EnhancedTimelineView from '../Scheduling/EnhancedTimelineView';
 import {
   Calendar
 } from 'lucide-react';
 
 const SchedulingView: React.FC = () => {
-  const { currentTrip } = useApp();
+  const { currentTrip, reorderDestinations } = useApp();
+
+  const handleReorderDestinations = async (reorderedDestinations: Destination[]) => {
+    if (!currentTrip) return;
+    
+    try {
+      console.log('Scheduling: Reordering destinations:', reorderedDestinations.map(d => d.name));
+      
+      // Update the trip with the new destination order using the proper reorderDestinations action
+      const destinationIds = reorderedDestinations.map(dest => dest.id);
+      await reorderDestinations(currentTrip.id, destinationIds);
+      
+      console.log('✅ Trip destinations reordered successfully');
+    } catch (error) {
+      console.error('❌ Failed to reorder destinations:', error);
+    }
+  };
 
   if (!currentTrip) {
     return (
@@ -36,9 +53,7 @@ const SchedulingView: React.FC = () => {
       onEditDestination={(dest) => {
         console.log('Edit destination:', dest.name);
       }}
-      onReorderDestinations={(reorderedDests) => {
-        console.log('Reorder destinations:', reorderedDests.map(d => d.name));
-      }}
+      onReorderDestinations={handleReorderDestinations}
     />
   );
 };

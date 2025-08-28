@@ -7,29 +7,18 @@ interface MainLayoutProps {
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
-      // Auto-close sidebar on mobile
-      if (mobile) {
-        setSidebarOpen(false);
-      } else {
-        setSidebarOpen(true);
-      }
     };
 
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-
-  const toggleSidebar = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
 
   return (
     <div className={`layout ${isMobile ? 'mobile' : 'desktop'}`} style={{
@@ -40,27 +29,14 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       position: 'relative'
     }}>
       {/* Mobile Header */}
-      {isMobile && <Header onToggleSidebar={toggleSidebar} />}
+      {isMobile && <Header />}
       
       {/* Sidebar */}
       <Sidebar 
-        isOpen={sidebarOpen} 
+        isOpen={!isMobile} 
         isMobile={isMobile}
-        onClose={() => setSidebarOpen(false)}
+        onClose={() => {}}
       />
-      
-      {/* Mobile Overlay */}
-      {isMobile && sidebarOpen && (
-        <div 
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0, 0, 0, 0.5)',
-            zIndex: 999
-          }}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
       
       {/* Main Content */}
       <main className="main-content" style={{
@@ -72,7 +48,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         ...(isMobile && { marginTop: 0 })
       }}>
         {/* Desktop Header */}
-        {!isMobile && <Header onToggleSidebar={toggleSidebar} />}
+        {!isMobile && <Header />}
         
         <div style={{
           flex: 1,

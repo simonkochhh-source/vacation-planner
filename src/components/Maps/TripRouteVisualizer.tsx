@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Polyline, Popup } from 'react-leaflet';
-import { Destination } from '../../types';
+import { Destination, TransportMode } from '../../types';
 import { LatLngExpression } from 'leaflet';
 import { Clock, Route, MapPin, Car, Bike, User } from 'lucide-react';
 import { routeCalculationService, RouteSegment } from '../../services/routeCalculationService';
@@ -36,49 +36,111 @@ const TripRouteVisualizer: React.FC<TripRouteVisualizerProps> = ({
       setIsLoading(true);
       
       try {
-        // Calculate comprehensive trip route
-        const tripCalculation = await routeCalculationService.calculateTripRoute(destinations);
+        // Use destinations in the order provided by MapView (already chronologically sorted)
+        const chronologicalDestinations = destinations.filter(dest => dest.coordinates);
 
-        // Group destinations by day for visualization
-        const destinationsByDay = destinations
-          .filter(dest => dest.coordinates)
-          .reduce((acc, dest) => {
-            const day = dest.startDate;
-            if (!acc[day]) acc[day] = [];
-            acc[day].push(dest);
-            return acc;
-          }, {} as Record<string, Destination[]>);
-
-        // Create visual segments for each route segment
+        // Create visual segments based on the already correct chronological order
         const visualSegments: VisualRouteSegment[] = [];
         
-        Object.entries(destinationsByDay).forEach(([day, dayDestinations], dayIndex) => {
-          const sortedDestinations = dayDestinations.sort((a, b) => a.name.localeCompare(b.name));
+        // Create route segments for each consecutive pair in chronological order
+        for (let i = 0; i < chronologicalDestinations.length - 1; i++) {
+          const from = chronologicalDestinations[i];
+          const to = chronologicalDestinations[i + 1];
           
-          // Find matching segments for this day
-          for (let i = 0; i < sortedDestinations.length - 1; i++) {
-            const from = sortedDestinations[i];
-            const to = sortedDestinations[i + 1];
+          // Determine the transport mode using the same logic as EnhancedTimelineView
+          // Special case: If current destination (from) is walking/biking with returnDestinationId,
+          // use the transport mode from 'from' destination instead of 'to' destination
+          let transportMode: TransportMode;
+          
+          if (from.returnDestinationId && from.transportToNext?.mode && 
+              (from.transportToNext.mode === TransportMode.WALKING || from.transportToNext.mode === TransportMode.BICYCLE)) {
+            // Use the transport mode from the current (from) destination for walking/biking return journeys
+            transportMode = from.transportToNext.mode;
+          } else {
+            // Default behavior: Get transport mode from 'to' destination (how we get TO that destination)
+            transportMode = to.transportToNext?.mode || TransportMode.DRIVING;
+          }
+          
+          // Calculate the route segment using the explicit transport mode
+          const segment = await routeCalculationService.calculateRoute(from, to, transportMode);
+          
+          // Use actual route if available, otherwise straight line
+          const path: LatLngExpression[] = segment.actualRoute 
+            ? segment.actualRoute.map(coord => [coord.lat, coord.lng])
+            : [[from.coordinates!.lat, from.coordinates!.lng], [to.coordinates!.lat, to.coordinates!.lng]];
+
+          visualSegments.push({
+            segment,
+            path,
+            dayIndex: 0 // Since we process all destinations chronologically, dayIndex is not needed
+          });
+        }
+        
+        // Create additional car route segments that skip over walking/biking destinations
+        // This allows showing continuous car routes even when interrupted by walking/biking
+        const carDestinations = chronologicalDestinations.filter((dest, index) => {
+          if (index === 0 || !dest.transportToNext) {
+            return true; // First destination or no transport defined
+          }
+          
+          // Apply same logic as the main transport mode determination
+          // Check if previous destination has walking/biking with returnDestinationId
+          const prevDest = chronologicalDestinations[index - 1];
+          
+          if (prevDest.returnDestinationId && prevDest.transportToNext?.mode && 
+              (prevDest.transportToNext.mode === TransportMode.WALKING || prevDest.transportToNext.mode === TransportMode.BICYCLE)) {
+            // For walking/biking return journeys, exclude from car destinations
+            return false;
+          } else {
+            // Default behavior: Include if we DRIVE TO this destination
+            return dest.transportToNext?.mode === TransportMode.DRIVING;
+          }
+        });
+        
+        // Create car route segments between car-accessible destinations
+        for (let i = 0; i < carDestinations.length - 1; i++) {
+          const from = carDestinations[i];
+          const to = carDestinations[i + 1];
+          
+          // Only create car route if there are walking/biking destinations in between
+          const fromIndex = chronologicalDestinations.indexOf(from);
+          const toIndex = chronologicalDestinations.indexOf(to);
+          
+          if (toIndex - fromIndex > 1 && from.coordinates && to.coordinates) {
+            // Check if there are non-driving destinations in between using the new logic
+            const hasNonDrivingInBetween = chronologicalDestinations
+              .slice(fromIndex + 1, toIndex + 1) // Include toIndex destination to check how we get to it
+              .some((dest, relativeIndex) => {
+                const actualIndex = fromIndex + 1 + relativeIndex;
+                const prevDest = actualIndex > 0 ? chronologicalDestinations[actualIndex - 1] : null;
+                
+                // Apply same transport mode determination logic
+                if (prevDest?.returnDestinationId && prevDest.transportToNext?.mode && 
+                    (prevDest.transportToNext.mode === TransportMode.WALKING || prevDest.transportToNext.mode === TransportMode.BICYCLE)) {
+                  // Walking/biking return journey
+                  return prevDest.transportToNext.mode === TransportMode.WALKING || prevDest.transportToNext.mode === TransportMode.BICYCLE;
+                } else {
+                  // Default behavior: Check destination's own transport mode
+                  return dest.transportToNext?.mode === TransportMode.WALKING || dest.transportToNext?.mode === TransportMode.BICYCLE;
+                }
+              });
             
-            // Find the calculated segment that matches this route
-            const matchingSegment = tripCalculation.segments.find(seg => 
-              seg.from.id === from.id && seg.to.id === to.id
-            );
-            
-            if (matchingSegment && from.coordinates && to.coordinates) {
-              // Use actual route if available, otherwise straight line
-              const path: LatLngExpression[] = matchingSegment.actualRoute 
-                ? matchingSegment.actualRoute.map(coord => [coord.lat, coord.lng])
+            if (hasNonDrivingInBetween) {
+              // Create a car route segment that skips the walking/biking section
+              const segment = await routeCalculationService.calculateRoute(from, to, TransportMode.DRIVING);
+              
+              const path: LatLngExpression[] = segment.actualRoute 
+                ? segment.actualRoute.map(coord => [coord.lat, coord.lng])
                 : [[from.coordinates.lat, from.coordinates.lng], [to.coordinates.lat, to.coordinates.lng]];
 
               visualSegments.push({
-                segment: matchingSegment,
+                segment,
                 path,
-                dayIndex
+                dayIndex: 0 // Since we process chronologically, dayIndex is not relevant
               });
             }
           }
-        });
+        }
 
         setRouteCalculations(visualSegments);
       } catch (error) {
@@ -92,19 +154,19 @@ const TripRouteVisualizer: React.FC<TripRouteVisualizerProps> = ({
     calculateRoutes();
   }, [destinations, showRoutes]);
 
-  // Get transport mode icon and color
-  const getTransportInfo = useCallback((transportMode: string) => {
+  // Get transport mode icon, color, and time label - Updated colors as requested
+  const getTransportInfo = useCallback((transportMode: TransportMode) => {
     switch (transportMode) {
-      case 'driving':
-        return { icon: Car, color: '#ef4444', label: 'Auto' };
-      case 'walking':
-        return { icon: User, color: '#10b981', label: 'Wanderung' };
-      case 'bicycle':
-        return { icon: Bike, color: '#f59e0b', label: 'Fahrrad' };
-      case 'public_transport':
-        return { icon: Route, color: '#3b82f6', label: 'ÖPNV' };
+      case TransportMode.DRIVING:
+        return { icon: Car, color: '#ef4444', label: 'Auto', timeLabel: 'Fahrzeit' }; // Red for driving
+      case TransportMode.WALKING:
+        return { icon: User, color: '#f97316', label: 'Wanderung', timeLabel: 'Wanderzeit' }; // Orange for walking
+      case TransportMode.BICYCLE:
+        return { icon: Bike, color: '#3b82f6', label: 'Fahrrad', timeLabel: 'Fahrradzeit' }; // Blue for bicycle
+      case TransportMode.PUBLIC_TRANSPORT:
+        return { icon: Route, color: '#8b5cf6', label: 'ÖPNV', timeLabel: 'Reisezeit' }; // Purple for public transport
       default:
-        return { icon: Route, color: '#6b7280', label: 'Route' };
+        return { icon: Route, color: '#6b7280', label: 'Route', timeLabel: 'Reisezeit' };
     }
   }, []);
 
@@ -137,7 +199,7 @@ const TripRouteVisualizer: React.FC<TripRouteVisualizerProps> = ({
               color: transportInfo.color,
               weight: 4,
               opacity: 0.8,
-              dashArray: segment.transportMode === 'walking' ? '10, 5' : undefined,
+              dashArray: segment.transportMode === TransportMode.WALKING ? '10, 5' : undefined,
               lineCap: 'round',
               lineJoin: 'round'
             }}
@@ -207,7 +269,7 @@ const TripRouteVisualizer: React.FC<TripRouteVisualizerProps> = ({
                     color: '#6b7280'
                   }}>
                     <Clock size={10} />
-                    <strong>Reisezeit:</strong>
+                    <strong>{transportInfo.timeLabel}:</strong>
                   </div>
                   <div style={{
                     fontSize: '0.75rem',

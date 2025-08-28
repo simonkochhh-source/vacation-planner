@@ -120,6 +120,9 @@ export interface Destination {
   address?: string;
   openingHours?: string;
   
+  // Return destination for walking/biking activities (optional)
+  returnDestinationId?: UUID; // ID of existing destination to return to
+  
   // Metadata
   createdAt: DateString;
   updatedAt: DateString;
@@ -215,6 +218,13 @@ export interface AppSettings {
   fuelType: FuelType;
   fuelConsumption: number; // L/100km
   
+  // Home Point Settings
+  homePoint?: {
+    name: string;
+    address: string;
+    coordinates: Coordinates;
+  };
+  
   // Notification Settings
   enableNotifications: boolean;
   reminderTime: number; // minutes before event
@@ -246,6 +256,7 @@ export interface CreateDestinationData {
   notes?: string;
   tags: string[];
   color?: string;
+  returnDestinationId?: UUID;
 }
 
 export interface CreateTripData {

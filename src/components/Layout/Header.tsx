@@ -1,15 +1,11 @@
 import React from 'react';
 import { useApp } from '../../stores/AppContext';
-import { Menu, MapPin, Calendar, Settings, Search, DollarSign, Compass } from 'lucide-react';
+import { MapPin, Calendar, Settings, Search, DollarSign } from 'lucide-react';
 
-interface HeaderProps {
-  onToggleSidebar: () => void;
-}
-
-const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
+const Header: React.FC = () => {
   const { currentTrip, uiState, updateUIState } = useApp();
 
-  const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'budget' | 'discovery') => {
+  const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'budget') => {
     updateUIState({ currentView: view, activeView: view });
   };
 
@@ -40,25 +36,6 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
       }}>
         {/* Left Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button
-            onClick={onToggleSidebar}
-            style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '0.5rem',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
-          >
-            <Menu size={20} />
-          </button>
-
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '1.5rem' }}>🏖️</span>
             <h1 style={{ 
@@ -133,8 +110,7 @@ const Header: React.FC<HeaderProps> = ({ onToggleSidebar }) => {
             {[
               { view: 'timeline' as const, icon: Calendar, label: 'Timeline' },
               { view: 'map' as const, icon: MapPin, label: 'Karte' },
-              { view: 'budget' as const, icon: DollarSign, label: 'Budget' },
-              { view: 'discovery' as const, icon: Compass, label: 'Entdecken' }
+              { view: 'budget' as const, icon: DollarSign, label: 'Budget' }
             ].map(({ view, icon: Icon, label }) => (
               <button
                 key={view}

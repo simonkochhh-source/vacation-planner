@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { useApp } from '../../stores/AppContext';
-import { AppSettings, TransportMode, FuelType } from '../../types';
+import { AppSettings, TransportMode, FuelType, Coordinates } from '../../types';
+import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
+import { PlacePrediction } from '../../services/openStreetMapService';
 import {
   Settings, Globe, Palette, MapPin, Car, Bell, Download,
   Shield, HardDrive, RotateCcw, AlertTriangle,
-  Moon, Sun, Monitor, Languages, DollarSign, Clock
+  Moon, Sun, Monitor, Languages, DollarSign, Clock, Home
 } from 'lucide-react';
 
 const SettingsView: React.FC = () => {
@@ -665,6 +667,86 @@ const TravelSettings: React.FC<{
           }}
         />
       </div>
+
+      {/* Home Point Configuration */}
+      <div style={{
+        borderTop: '1px solid #e5e7eb',
+        paddingTop: '1.5rem',
+        marginTop: '1.5rem'
+      }}>
+        <label style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '0.5rem',
+          fontSize: '1rem',
+          fontWeight: '500',
+          marginBottom: '1rem',
+          color: '#374151'
+        }}>
+          <Home size={18} />
+          Home-Point (Zuhause)
+        </label>
+        
+        {settings.homePoint ? (
+          <div style={{
+            background: '#f0fdf4',
+            border: '1px solid #bbf7d0',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginBottom: '1rem'
+          }}>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '0.5rem'
+            }}>
+              <div>
+                <div style={{ fontWeight: '600', color: '#166534' }}>
+                  {settings.homePoint.name}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: '#16a34a' }}>
+                  {settings.homePoint.address}
+                </div>
+              </div>
+              <button
+                onClick={() => onSettingChange('homePoint', undefined)}
+                style={{
+                  background: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '0.5rem 1rem',
+                  fontSize: '0.875rem',
+                  cursor: 'pointer'
+                }}
+              >
+                Entfernen
+              </button>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#15803d' }}>
+              📍 {settings.homePoint.coordinates.lat.toFixed(4)}, {settings.homePoint.coordinates.lng.toFixed(4)}
+            </div>
+          </div>
+        ) : (
+          <div style={{
+            background: '#fef3c7',
+            border: '1px solid #fcd34d',
+            borderRadius: '8px',
+            padding: '1rem',
+            marginBottom: '1rem',
+            fontSize: '0.875rem',
+            color: '#92400e'
+          }}>
+            ℹ️ Kein Home-Point konfiguriert. Definieren Sie Ihren Wohnort für eine einfachere Zielauswahl.
+          </div>
+        )}
+
+        <HomePointConfigurator 
+          currentHomePoint={settings.homePoint}
+          onHomePointChange={(homePoint) => onSettingChange('homePoint', homePoint)}
+        />
+      </div>
     </div>
   </div>
 );
@@ -868,5 +950,176 @@ const BackupSettings: React.FC<{
     </div>
   </div>
 );
+
+// Home Point Configurator Component
+const HomePointConfigurator: React.FC<{
+  currentHomePoint?: { name: string; address: string; coordinates: Coordinates };
+  onHomePointChange: (homePoint?: { name: string; address: string; coordinates: Coordinates }) => void;
+}> = ({ currentHomePoint, onHomePointChange }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [homePointForm, setHomePointForm] = useState({
+    name: currentHomePoint?.name || '',
+    address: currentHomePoint?.address || '',
+    coordinates: currentHomePoint?.coordinates
+  });
+
+  const handlePlaceSelect = (place: PlacePrediction) => {
+    setHomePointForm({
+      name: place.structured_formatting?.main_text || place.display_name,
+      address: place.display_name,
+      coordinates: place.coordinates
+    });
+  };
+
+  const handleSave = () => {
+    if (homePointForm.name && homePointForm.address && homePointForm.coordinates) {
+      onHomePointChange({
+        name: homePointForm.name,
+        address: homePointForm.address,
+        coordinates: homePointForm.coordinates
+      });
+      setIsEditing(false);
+    }
+  };
+
+  const handleCancel = () => {
+    setHomePointForm({
+      name: currentHomePoint?.name || '',
+      address: currentHomePoint?.address || '',
+      coordinates: currentHomePoint?.coordinates
+    });
+    setIsEditing(false);
+  };
+
+  if (!isEditing) {
+    return (
+      <button
+        onClick={() => setIsEditing(true)}
+        style={{
+          background: currentHomePoint ? '#f3f4f6' : '#3b82f6',
+          color: currentHomePoint ? '#374151' : 'white',
+          border: currentHomePoint ? '1px solid #d1d5db' : 'none',
+          borderRadius: '8px',
+          padding: '0.75rem 1rem',
+          fontSize: '0.875rem',
+          fontWeight: '500',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}
+      >
+        <Home size={16} />
+        {currentHomePoint ? 'Home-Point ändern' : 'Home-Point definieren'}
+      </button>
+    );
+  }
+
+  return (
+    <div style={{
+      background: '#f9fafb',
+      border: '1px solid #e5e7eb',
+      borderRadius: '8px',
+      padding: '1rem',
+      marginTop: '1rem'
+    }}>
+      <h4 style={{ margin: '0 0 1rem 0', color: '#374151' }}>
+        Home-Point {currentHomePoint ? 'bearbeiten' : 'definieren'}
+      </h4>
+      
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '0.875rem',
+          fontWeight: '500',
+          color: '#374151',
+          marginBottom: '0.5rem'
+        }}>
+          Name (z.B. "Zuhause", "Wohnung")
+        </label>
+        <input
+          type="text"
+          value={homePointForm.name}
+          onChange={(e) => setHomePointForm(prev => ({ ...prev, name: e.target.value }))}
+          placeholder="Zuhause"
+          style={{
+            width: '100%',
+            padding: '0.5rem',
+            borderRadius: '6px',
+            border: '1px solid #d1d5db',
+            background: 'white'
+          }}
+        />
+      </div>
+
+      <div style={{ marginBottom: '1rem' }}>
+        <label style={{
+          display: 'block',
+          fontSize: '0.875rem',
+          fontWeight: '500',
+          color: '#374151',
+          marginBottom: '0.5rem'
+        }}>
+          Adresse oder Ort suchen
+        </label>
+        <OpenStreetMapAutocomplete
+          value={homePointForm.address}
+          onChange={(value) => setHomePointForm(prev => ({ ...prev, address: value }))}
+          onPlaceSelect={handlePlaceSelect}
+          placeholder="Suche nach Ihrer Adresse..."
+          style={{ width: '100%' }}
+        />
+      </div>
+
+      {homePointForm.coordinates && (
+        <div style={{
+          background: '#ecfdf5',
+          border: '1px solid #d1fae5',
+          borderRadius: '6px',
+          padding: '0.5rem',
+          marginBottom: '1rem',
+          fontSize: '0.75rem',
+          color: '#065f46'
+        }}>
+          📍 Koordinaten: {homePointForm.coordinates.lat.toFixed(4)}, {homePointForm.coordinates.lng.toFixed(4)}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+        <button
+          onClick={handleCancel}
+          style={{
+            background: '#6b7280',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '0.5rem 1rem',
+            fontSize: '0.875rem',
+            cursor: 'pointer'
+          }}
+        >
+          Abbrechen
+        </button>
+        <button
+          onClick={handleSave}
+          disabled={!homePointForm.name || !homePointForm.address || !homePointForm.coordinates}
+          style={{
+            background: (!homePointForm.name || !homePointForm.address || !homePointForm.coordinates) 
+              ? '#9ca3af' : '#16a34a',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '0.5rem 1rem',
+            fontSize: '0.875rem',
+            cursor: (!homePointForm.name || !homePointForm.address || !homePointForm.coordinates) 
+              ? 'not-allowed' : 'pointer'
+          }}
+        >
+          Speichern
+        </button>
+      </div>
+    </div>
+  );
+};
 
 export default SettingsView;

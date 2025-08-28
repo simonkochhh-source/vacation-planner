@@ -221,13 +221,12 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                marginBottom: '0.5rem'
+                marginBottom: '0.5rem',
+                fontSize: '0.75rem',
+                color: '#6b7280'
               }}>
-                <StatusBadge status={destinations[currentIndex].status} size="sm" />
-                <span style={{
-                  fontSize: '0.75rem',
-                  color: '#6b7280'
-                }}>
+                <Clock size={12} />
+                <span>
                   {formatDate(destinations[currentIndex].startDate)}
                 </span>
               </div>
@@ -487,9 +486,6 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                     </div>
                   </div>
 
-                  <div style={{ flexShrink: 0 }}>
-                    <StatusBadge status={destination.status} size="sm" />
-                  </div>
                 </button>
               ))}
             </div>

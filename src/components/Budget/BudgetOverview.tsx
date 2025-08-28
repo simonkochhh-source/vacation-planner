@@ -17,11 +17,11 @@ import {
 import { formatCurrency, getCategoryLabel, formatDate, calculateTravelCosts } from '../../utils';
 import { fuelPriceService } from '../../services/fuelPriceService';
 
-interface BudgetCategory {
+interface CostCategory {
   category: string;
-  planned: number;
-  actual: number;
-  remaining: number;
+  totalCost: number;
+  destinationCount: number;
+  avgCostPerDestination: number;
   destinations: Destination[];
 }
 
@@ -39,10 +39,12 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   const [groupBy, setGroupBy] = useState<'category' | 'date' | 'status'>('category');
   const [currentFuelPrice, setCurrentFuelPrice] = useState<number>(1.65);
 
-  // Get current trip destinations
-  const currentDestinations = currentTrip 
-    ? destinations.filter(dest => currentTrip.destinations.includes(dest.id))
-    : [];
+  // Get current trip destinations in the same order as EnhancedTimelineView
+  const currentDestinations = useMemo(() => currentTrip 
+    ? currentTrip.destinations
+        .map(id => destinations.find(dest => dest.id === id))
+        .filter((dest): dest is Destination => dest !== undefined)
+    : [], [currentTrip, destinations]);
 
   // Fetch current fuel price on component mount
   useEffect(() => {
@@ -71,7 +73,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   // Calculate budget statistics including travel costs
   const budgetStats = useMemo(() => {
     const totalPlanned = currentTrip?.budget || 0;
-    const totalActual = currentTrip?.actualCost || 0;
+    // Calculate actual cost from destination data (same as EnhancedTimelineView)
+    const totalActual = currentDestinations.reduce((sum, dest) => sum + (dest.actualCost || 0), 0);
     
     // Calculate travel costs based on settings configuration
     const travelCosts = calculateTravelCosts(
@@ -82,8 +85,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
     
     const destinationPlanned = currentDestinations.reduce((sum, dest) => 
       sum + (dest.budget || 0), 0);
-    const destinationActual = currentDestinations.reduce((sum, dest) => 
-      sum + (dest.actualCost || 0), 0);
+    // destinationActual is same as totalActual since both come from destination data
+    const destinationActual = totalActual;
     
     // Include travel costs in actual spending
     const totalActualWithTravel = totalActual + travelCosts;
@@ -114,9 +117,10 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
     };
   }, [currentTrip, currentDestinations, settings.fuelConsumption, currentFuelPrice]);
 
-  // Group destinations by category for budget analysis
-  const budgetByCategory = useMemo(() => {
-    const categories = new Map<string, BudgetCategory>();
+  // Group destinations by category for cost analysis
+  const costsByCategory = useMemo(() => {
+    const categories = new Map<string, CostCategory>();
+    
 
     currentDestinations.forEach(dest => {
       const categoryKey = dest.category;
@@ -125,25 +129,26 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       if (!categories.has(categoryKey)) {
         categories.set(categoryKey, {
           category: categoryLabel,
-          planned: 0,
-          actual: 0,
-          remaining: 0,
+          totalCost: 0,
+          destinationCount: 0,
+          avgCostPerDestination: 0,
           destinations: []
         });
       }
 
       const cat = categories.get(categoryKey)!;
-      cat.planned += dest.budget || 0;
-      cat.actual += dest.actualCost || 0;
+      const destCost = dest.actualCost || 0;
+      cat.totalCost += destCost;
+      cat.destinationCount += 1;
       cat.destinations.push(dest);
     });
 
-    // Calculate remaining for each category
+    // Calculate average cost per destination for each category
     categories.forEach(cat => {
-      cat.remaining = cat.planned - cat.actual;
+      cat.avgCostPerDestination = cat.destinationCount > 0 ? cat.totalCost / cat.destinationCount : 0;
     });
 
-    return Array.from(categories.values()).sort((a, b) => b.planned - a.planned);
+    return Array.from(categories.values()).sort((a, b) => b.totalCost - a.totalCost);
   }, [currentDestinations]);
 
   // Get recent expenses (last 7 days)
@@ -158,20 +163,22 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       .slice(0, 5);
   }, [currentDestinations]);
 
-  const getBudgetStatusColor = (planned: number, actual: number) => {
-    if (planned === 0) return '#6b7280';
-    const percentage = (actual / planned) * 100;
-    if (percentage <= 80) return '#16a34a';
-    if (percentage <= 100) return '#d97706';
-    return '#dc2626';
-  };
-
-  const getBudgetStatusLabel = (planned: number, actual: number) => {
-    if (planned === 0) return 'Kein Budget';
-    const percentage = (actual / planned) * 100;
-    if (percentage <= 80) return 'Im Rahmen';
-    if (percentage <= 100) return 'Knapp';
-    return 'Überschritten';
+  const getCategoryColor = (categoryKey: string) => {
+    // Use the existing getCategoryColor function from utils but with fallback colors
+    const colors: Record<string, string> = {
+      'museum': '#8B5CF6',
+      'restaurant': '#EF4444',
+      'attraction': '#F59E0B',
+      'hotel': '#3B82F6',
+      'transport': '#6B7280',
+      'nature': '#10B981',
+      'entertainment': '#EC4899',
+      'shopping': '#8B5CF6',
+      'cultural': '#F97316',
+      'sports': '#06B6D4',
+      'other': '#6B7280'
+    };
+    return colors[categoryKey] || '#6B7280';
   };
 
   if (!currentTrip) {
@@ -589,7 +596,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             gap: '0.5rem'
           }}>
             <PieChart size={18} />
-            Budget nach Kategorie
+            Kosten pro Kategorie
           </h3>
 
           <div style={{
@@ -597,11 +604,11 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             flexDirection: 'column',
             gap: '0.75rem'
           }}>
-            {budgetByCategory.map((category, index) => {
-              const percentage = budgetStats.totalPlanned > 0 
-                ? (category.planned / budgetStats.totalPlanned) * 100 
+            {costsByCategory.map((category, index) => {
+              const percentage = budgetStats.destinationActual > 0 
+                ? (category.totalCost / budgetStats.destinationActual) * 100 
                 : 0;
-              const color = getBudgetStatusColor(category.planned, category.actual);
+              const color = getCategoryColor(category.destinations[0]?.category || 'other');
 
               return (
                 <div key={index} style={{
@@ -632,36 +639,42 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                       fontSize: '0.75rem',
                       fontWeight: '500'
                     }}>
-                      {getBudgetStatusLabel(category.planned, category.actual)}
+                      {formatCurrency(category.totalCost)}
                     </span>
                   </div>
 
                   <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: '1rem',
                     marginBottom: '0.5rem',
                     fontSize: '0.875rem',
                     color: '#374151'
                   }}>
-                    <span>Geplant: {formatCurrency(category.planned)}</span>
-                    <span>Ausgegeben: {formatCurrency(category.actual)}</span>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Gesamtkosten:</span>
+                      <div style={{ fontWeight: '600', color: '#1f2937' }}>{formatCurrency(category.totalCost)}</div>
+                    </div>
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Ø pro Ziel:</span>
+                      <div style={{ fontWeight: '600', color: '#1f2937' }}>{formatCurrency(category.avgCostPerDestination)}</div>
+                    </div>
                   </div>
 
-                  {/* Progress Bar */}
+                  {/* Cost Distribution Bar */}
                   <div style={{
                     width: '100%',
-                    height: '8px',
+                    height: '6px',
                     background: '#e5e7eb',
-                    borderRadius: '4px',
+                    borderRadius: '3px',
                     overflow: 'hidden',
                     marginBottom: '0.5rem'
                   }}>
                     <div style={{
-                      width: category.planned > 0 ? `${Math.min((category.actual / category.planned) * 100, 100)}%` : '0%',
+                      width: `${percentage}%`,
                       height: '100%',
                       background: color,
-                      borderRadius: '4px',
+                      borderRadius: '3px',
                       transition: 'width 0.3s ease'
                     }} />
                   </div>
@@ -673,8 +686,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                     fontSize: '0.75rem',
                     color: '#6b7280'
                   }}>
-                    <span>{category.destinations.length} Ziele</span>
-                    <span>{percentage.toFixed(1)}% des Gesamtbudgets</span>
+                    <span>{category.destinationCount} Ziele</span>
+                    <span>{percentage.toFixed(1)}% der Gesamtkosten</span>
                   </div>
                 </div>
               );

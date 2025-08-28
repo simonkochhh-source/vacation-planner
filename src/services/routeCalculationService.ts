@@ -34,7 +34,8 @@ class RouteCalculationService {
     }
 
     // Use transport mode from destination notes/tags if not provided
-    const mode = transportMode || this.extractTransportMode(from) || TransportMode.DRIVING;
+    // Extract from 'to' destination since transport mode defines how to GET TO that destination
+    const mode = transportMode || this.extractTransportMode(to) || TransportMode.DRIVING;
     
     const cacheKey = `${from.id}-${to.id}-${mode}`;
     

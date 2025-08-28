@@ -65,41 +65,15 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   const [selectedDestination, setSelectedDestination] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'all' | 'today' | 'week' | 'month'>('all');
 
-  // Get current trip destinations
-  const currentDestinations = currentTrip 
-    ? destinations.filter(dest => currentTrip.destinations.includes(dest.id))
-    : [];
+  // Get current trip destinations in the same order as EnhancedTimelineView
+  const currentDestinations = useMemo(() => currentTrip 
+    ? currentTrip.destinations
+        .map(id => destinations.find(dest => dest.id === id))
+        .filter((dest): dest is Destination => dest !== undefined)
+    : [], [currentTrip, destinations]);
 
-  // Mock expenses data (in real app this would come from context/API)
-  const [expenses, setExpenses] = useState<Expense[]>([
-    {
-      id: 'exp1',
-      destinationId: 'dest1',
-      destinationName: 'Brandenburger Tor',
-      amount: 25.50,
-      category: 'food',
-      description: 'Mittagessen im Café',
-      date: '2024-01-15',
-      time: '12:30',
-      paymentMethod: 'card',
-      currency: 'EUR',
-      tags: ['restaurant', 'tourist'],
-      notes: 'Sehr gutes Schnitzel'
-    },
-    {
-      id: 'exp2',
-      destinationId: 'dest2',
-      destinationName: 'Museumsinsel',
-      amount: 12.00,
-      category: 'activities',
-      description: 'Eintritt Museum',
-      date: '2024-01-15',
-      time: '14:00',
-      paymentMethod: 'card',
-      currency: 'EUR',
-      tags: ['museum', 'kultur']
-    }
-  ]);
+  // Expenses data - initially empty, will be populated from actual destination costs
+  const [expenses, setExpenses] = useState<Expense[]>([]);
 
   // Form state for adding/editing expenses
   const [formData, setFormData] = useState({

@@ -5,17 +5,11 @@ import {
   Navigation, 
   RotateCcw, 
   Route, 
-  Car, 
-  PersonStanding, 
-  Bike, 
   Clock, 
   Ruler, 
   Layers,
   Menu,
-  X,
-  ChevronUp,
-  ChevronDown,
-  MapPin
+  X
 } from 'lucide-react';
 
 interface MobileMapControlsProps {
@@ -25,8 +19,6 @@ interface MobileMapControlsProps {
   onLocate: () => void;
   showRouting: boolean;
   onToggleRouting: () => void;
-  routingMode: 'driving' | 'walking' | 'cycling';
-  onChangeRoutingMode: (mode: 'driving' | 'walking' | 'cycling') => void;
   showTimeline: boolean;
   onToggleTimeline: () => void;
   showMeasurement: boolean;
@@ -45,8 +37,6 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
   onLocate,
   showRouting,
   onToggleRouting,
-  routingMode,
-  onChangeRoutingMode,
   showTimeline,
   onToggleTimeline,
   showMeasurement,
@@ -58,7 +48,6 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
   isMobile
 }) => {
   const [isControlsExpanded, setIsControlsExpanded] = useState(false);
-  const [showRoutingModes, setShowRoutingModes] = useState(false);
 
   if (!isMobile) {
     // Desktop controls (same as before but more compact)
@@ -160,7 +149,11 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           overflow: 'hidden'
         }}>
           <button
-            onClick={onToggleRouting}
+            onClick={() => {
+              console.log('🖱️ DESKTOP routing button clicked, current state:', showRouting);
+              onToggleRouting();
+              console.log('🖱️ DESKTOP onToggleRouting called');
+            }}
             style={{
               background: showRouting ? '#3b82f6' : 'white',
               color: showRouting ? 'white' : '#374151',
@@ -172,7 +165,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
               justifyContent: 'center',
               borderBottom: '1px solid #e5e7eb'
             }}
-            title="Route"
+            title="Alle Routen"
           >
             <Route size={18} />
           </button>
@@ -228,63 +221,6 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           </button>
         </div>
 
-        {/* Routing Mode Selection */}
-        {showRouting && (
-          <div style={{
-            background: 'white',
-            borderRadius: '8px',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            overflow: 'hidden'
-          }}>
-            <button
-              onClick={() => onChangeRoutingMode('driving')}
-              style={{
-                background: routingMode === 'driving' ? '#f3f4f6' : 'white',
-                border: 'none',
-                padding: '0.75rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderBottom: '1px solid #e5e7eb'
-              }}
-              title="Auto"
-            >
-              <Car size={18} />
-            </button>
-            <button
-              onClick={() => onChangeRoutingMode('walking')}
-              style={{
-                background: routingMode === 'walking' ? '#f3f4f6' : 'white',
-                border: 'none',
-                padding: '0.75rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderBottom: '1px solid #e5e7eb'
-              }}
-              title="Zu Fuß"
-            >
-              <PersonStanding size={18} />
-            </button>
-            <button
-              onClick={() => onChangeRoutingMode('cycling')}
-              style={{
-                background: routingMode === 'cycling' ? '#f3f4f6' : 'white',
-                border: 'none',
-                padding: '0.75rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-              title="Fahrrad"
-            >
-              <Bike size={18} />
-            </button>
-          </div>
-        )}
       </div>
     );
   }
@@ -455,7 +391,13 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
 
             {/* Routing */}
             <button
-              onClick={() => setShowRoutingModes(!showRoutingModes)}
+              onClick={() => {
+                console.log('📱 MOBILE routing button clicked, current state:', showRouting);
+                onToggleRouting();
+                console.log('📱 MOBILE onToggleRouting called');
+                // Don't close the menu immediately to see the result
+                console.log('📱 Mobile routing button - not closing menu to see result');
+              }}
               style={{
                 background: showRouting ? '#eff6ff' : '#f8fafc',
                 border: `1px solid ${showRouting ? '#3b82f6' : '#e2e8f0'}`,
@@ -475,7 +417,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
                 fontWeight: '500',
                 color: showRouting ? '#3b82f6' : '#374151'
               }}>
-                Route
+                Alle Routen
               </span>
             </button>
 
@@ -589,132 +531,6 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             )}
           </div>
 
-          {/* Routing Mode Selection */}
-          {showRoutingModes && (
-            <div style={{
-              padding: '0 1rem 1rem 1rem',
-              borderTop: '1px solid #e5e7eb',
-              marginTop: '1rem',
-              paddingTop: '1rem'
-            }}>
-              <div style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                marginBottom: '1rem'
-              }}>
-                <h4 style={{ 
-                  margin: 0, 
-                  fontSize: '1rem', 
-                  fontWeight: '600',
-                  color: '#374151'
-                }}>
-                  Fortbewegungsmittel
-                </h4>
-                <button
-                  onClick={() => setShowRoutingModes(false)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '0.25rem'
-                  }}
-                >
-                  <ChevronUp size={20} style={{ color: '#6b7280' }} />
-                </button>
-              </div>
-              
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(3, 1fr)',
-                gap: '0.75rem'
-              }}>
-                <button
-                  onClick={() => {
-                    onChangeRoutingMode('driving');
-                    onToggleRouting();
-                    setShowRoutingModes(false);
-                  }}
-                  style={{
-                    background: routingMode === 'driving' ? '#eff6ff' : '#f8fafc',
-                    border: `1px solid ${routingMode === 'driving' ? '#3b82f6' : '#e2e8f0'}`,
-                    borderRadius: '8px',
-                    padding: '0.75rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <Car size={20} style={{ color: routingMode === 'driving' ? '#3b82f6' : '#6b7280' }} />
-                  <span style={{ 
-                    fontSize: '0.75rem', 
-                    fontWeight: '500',
-                    color: routingMode === 'driving' ? '#3b82f6' : '#374151'
-                  }}>
-                    Auto
-                  </span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onChangeRoutingMode('walking');
-                    onToggleRouting();
-                    setShowRoutingModes(false);
-                  }}
-                  style={{
-                    background: routingMode === 'walking' ? '#eff6ff' : '#f8fafc',
-                    border: `1px solid ${routingMode === 'walking' ? '#3b82f6' : '#e2e8f0'}`,
-                    borderRadius: '8px',
-                    padding: '0.75rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <PersonStanding size={20} style={{ color: routingMode === 'walking' ? '#3b82f6' : '#6b7280' }} />
-                  <span style={{ 
-                    fontSize: '0.75rem', 
-                    fontWeight: '500',
-                    color: routingMode === 'walking' ? '#3b82f6' : '#374151'
-                  }}>
-                    Zu Fuß
-                  </span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onChangeRoutingMode('cycling');
-                    onToggleRouting();
-                    setShowRoutingModes(false);
-                  }}
-                  style={{
-                    background: routingMode === 'cycling' ? '#eff6ff' : '#f8fafc',
-                    border: `1px solid ${routingMode === 'cycling' ? '#3b82f6' : '#e2e8f0'}`,
-                    borderRadius: '8px',
-                    padding: '0.75rem',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: '0.5rem'
-                  }}
-                >
-                  <Bike size={20} style={{ color: routingMode === 'cycling' ? '#3b82f6' : '#6b7280' }} />
-                  <span style={{ 
-                    fontSize: '0.75rem', 
-                    fontWeight: '500',
-                    color: routingMode === 'cycling' ? '#3b82f6' : '#374151'
-                  }}>
-                    Fahrrad
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       )}
 

@@ -17,7 +17,7 @@ export const mockDestinations: Destination[] = [
     tags: ['Geschichte', 'Architektur', 'Wahrzeichen'],
     color: '#3b82f6',
     status: DestinationStatus.PLANNED,
-    actualCost: undefined,
+    actualCost: 0,
     photos: [],
     bookingInfo: undefined,
     weatherInfo: undefined,
@@ -43,7 +43,7 @@ export const mockDestinations: Destination[] = [
     tags: ['Kultur', 'Museum', 'Kunst'],
     color: '#8b5cf6',
     status: DestinationStatus.PLANNED,
-    actualCost: undefined,
+    actualCost: 28.00,
     photos: [],
     bookingInfo: undefined,
     weatherInfo: undefined,
@@ -69,7 +69,7 @@ export const mockDestinations: Destination[] = [
     tags: ['Kaffee', 'Wiener Küche', 'Traditionell'],
     color: '#f59e0b',
     status: DestinationStatus.PLANNED,
-    actualCost: undefined,
+    actualCost: 18.50,
     photos: [],
     bookingInfo: undefined,
     weatherInfo: undefined,
@@ -95,7 +95,7 @@ export const mockDestinations: Destination[] = [
     tags: ['Luxus', 'Zentral', '5-Sterne'],
     color: '#ec4899',
     status: DestinationStatus.PLANNED,
-    actualCost: undefined,
+    actualCost: 425.00,
     photos: [],
     bookingInfo: undefined,
     weatherInfo: undefined,
@@ -149,7 +149,7 @@ export const mockDestinations: Destination[] = [
     tags: ['Bier', 'Bayerisch', 'Tradition'],
     color: '#f59e0b',
     status: DestinationStatus.PLANNED,
-    actualCost: undefined,
+    actualCost: 32.80,
     photos: [],
     bookingInfo: undefined,
     weatherInfo: undefined,
@@ -175,7 +175,7 @@ export const mockDestinations: Destination[] = [
     tags: ['Schloss', 'Märchen', 'Bayern', 'Tagesausflug'],
     color: '#ec4899',
     status: DestinationStatus.PLANNED,
-    actualCost: undefined,
+    actualCost: 42.00,
     photos: [],
     bookingInfo: undefined,
     weatherInfo: undefined,
@@ -417,11 +417,18 @@ export const loadMockData = () => {
   
   console.log('Mock data loaded successfully!');
   console.log(`${mockTrips.length} trips and ${mockDestinations.length} destinations loaded.`);
+  console.log('Some destinations now have actualCost values for testing budget categories.');
   
   return {
     trips: mockTrips,
     destinations: mockDestinations
   };
+};
+
+// Helper function to reload mock data with updated actualCost values
+export const reloadMockDataWithCosts = () => {
+  console.log('Reloading mock data with updated actualCost values...');
+  return loadMockData();
 };
 
 // Helper function to clear all data

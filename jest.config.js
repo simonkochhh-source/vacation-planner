@@ -37,7 +37,7 @@ module.exports = {
     '^.+\\.css$': 'jest-transform-css'
   },
   transformIgnorePatterns: [
-    'node_modules/(?!(react-leaflet|@react-leaflet)/)'
+    'node_modules/(?!(react-leaflet|@react-leaflet|zod|@hookform)/)'
   ],
   moduleFileExtensions: [
     'web.js',
