@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
@@ -82,7 +82,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   onEditDestination,
   onReorderDestinations
 }) => {
-  const { currentTrip, destinations, createDestination, updateDestination, deleteDestination, settings } = useApp();
+  const { currentTrip, destinations, createDestination, updateDestination, deleteDestination, settings } = useSupabaseApp();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
@@ -356,11 +356,19 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
   // Enhanced timeline data with time calculations
   const enhancedTimelineData = useMemo((): TimelineDay[] => {
+    console.log('🔍 EnhancedTimelineView: Computing timeline data');
+    console.log('🎯 Current trip:', currentTrip);
+    console.log('📊 All destinations:', destinations);
+    console.log('📊 Destinations length:', destinations?.length);
+    
     const currentDestinations = currentTrip 
       ? currentTrip.destinations
           .map(id => destinations.find(dest => dest.id === id))
           .filter((dest): dest is Destination => dest !== undefined)
       : [];
+      
+    console.log('✅ Filtered destinations for current trip:', currentDestinations);
+    console.log('✅ Filtered destinations length:', currentDestinations.length);
     
     const grouped = new Map<string, TimelineDestination[]>();
     

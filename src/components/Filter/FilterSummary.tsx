@@ -1,5 +1,5 @@
 import React from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { X, RotateCcw, Star, Tag, Calendar, DollarSign } from 'lucide-react';
 import { 
   DestinationCategory, 
@@ -17,7 +17,7 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
   showClearAll = true,
   compact = false
 }) => {
-  const { uiState, updateUIState } = useApp();
+  const { uiState, updateUIState } = useSupabaseApp();
 
   const removeFilter = (filterType: keyof DestinationFilters, value?: any) => {
     const currentFilters = uiState.filters;

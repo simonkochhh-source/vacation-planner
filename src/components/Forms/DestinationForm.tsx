@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { 
   DestinationCategory, 
   Destination,
@@ -63,7 +63,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
   onClose, 
   destination 
 }) => {
-  const { createDestination, updateDestination } = useApp();
+  const { createDestination, updateDestination } = useSupabaseApp();
   const [tags, setTags] = useState<string[]>(destination?.tags || []);
   const [newTag, setNewTag] = useState('');
   const [selectedColor, setSelectedColor] = useState(

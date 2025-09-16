@@ -1,9 +1,24 @@
 import React from 'react';
-import { useApp } from '../../stores/AppContext';
-import { MapPin, Calendar, Settings, Search, DollarSign } from 'lucide-react';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { MapPin, Calendar, Settings, Search, DollarSign, Menu } from 'lucide-react';
 
-const Header: React.FC = () => {
-  const { currentTrip, uiState, updateUIState } = useApp();
+interface HeaderProps {
+  onMenuClick?: () => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
+  const { currentTrip, uiState, updateUIState } = useSupabaseApp();
+  const [isLargeScreen, setIsLargeScreen] = React.useState(false);
+
+  React.useEffect(() => {
+    const checkScreenSize = () => {
+      setIsLargeScreen(window.innerWidth > 640);
+    };
+    
+    checkScreenSize();
+    window.addEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener('resize', checkScreenSize);
+  }, []);
 
   const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'budget') => {
     updateUIState({ currentView: view, activeView: view });
@@ -36,13 +51,34 @@ const Header: React.FC = () => {
       }}>
         {/* Left Section */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          {/* Mobile Menu Button */}
+          {onMenuClick && (
+            <button
+              onClick={onMenuClick}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '0.5rem',
+                color: 'white',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              title="Menu öffnen"
+            >
+              <Menu size={20} />
+            </button>
+          )}
+          
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '1.5rem' }}>🏖️</span>
             <h1 style={{ 
               fontSize: '1.5rem', 
               fontWeight: 'bold', 
               margin: 0,
-              display: 'none'
+              display: isLargeScreen ? 'block' : 'none'
             }}>
               Vacation Planner
             </h1>

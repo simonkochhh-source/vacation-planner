@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import TripForm from '../Forms/TripForm';
 import ProgressRing from '../UI/ProgressRing';
 import { 
@@ -28,15 +28,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
  
     setCurrentTrip,
     settings 
-  } = useApp();
+  } = useSupabaseApp();
 
   const [showTrips, setShowTrips] = useState(true);
   const [showTripForm, setShowTripForm] = useState(false);
   const [showEditTripForm, setShowEditTripForm] = useState(false);
 
-  // Get current trip destinations
-  const currentDestinations = currentTrip 
-    ? destinations.filter(dest => currentTrip.destinations.includes(dest.id))
+  // Get current trip destinations - safely handle null/undefined destinations
+  const currentDestinations = currentTrip && destinations && Array.isArray(destinations)
+    ? destinations.filter(dest => currentTrip.destinations?.includes(dest.id))
     : [];
 
   // Calculate stats including travel costs
@@ -119,7 +119,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
         top: isMobile ? 0 : 'auto',
         left: isMobile ? 0 : 'auto',
         zIndex: isMobile ? 1000 : 'auto',
-        maxWidth: isMobile ? '90vw' : '320px'
+        maxWidth: isMobile ? '100vw' : '320px'
       }}>
       {/* Header */}
       <div style={{
@@ -200,7 +200,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
               Neue Reise erstellen
             </button>
             
-            {trips.map((trip) => (
+            {trips && Array.isArray(trips) ? trips.map((trip) => (
               <div
                 key={trip.id}
                 style={{
@@ -265,7 +265,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
                   </button>
                 )}
               </div>
-            ))}
+            )) : null}
           </div>
         )}
       </div>

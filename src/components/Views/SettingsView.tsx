@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { AppSettings, TransportMode, FuelType, Coordinates } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 const SettingsView: React.FC = () => {
-  const { settings, updateSettings } = useApp();
+  const { settings, updateSettings } = useSupabaseApp();
   const [activeTab, setActiveTab] = useState<'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup'>('general');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 

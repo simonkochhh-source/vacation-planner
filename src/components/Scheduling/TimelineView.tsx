@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { Destination } from '../../types';
 import {
   Clock,
@@ -30,7 +30,7 @@ const TimelineView: React.FC<TimelineViewProps> = ({
   onDestinationClick,
   onEditDestination
 }) => {
-  const { currentTrip, destinations } = useApp();
+  const { currentTrip, destinations } = useSupabaseApp();
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   // Conflicts removed
 

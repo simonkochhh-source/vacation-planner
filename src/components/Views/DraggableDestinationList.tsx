@@ -14,7 +14,7 @@ import {
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { Destination } from '../../types';
 import { DraggableDestinationCard } from './DraggableDestinationCard';
 
@@ -41,7 +41,7 @@ const DraggableDestinationList: React.FC<DraggableDestinationListProps> = ({
   onPhotoUpload,
   onPhotoGallery
 }) => {
-  const { currentTrip, reorderDestinations } = useApp();
+  const { currentTrip, reorderDestinations } = useSupabaseApp();
   
   const sensors = useSensors(
     useSensor(PointerSensor, {

@@ -71,12 +71,7 @@ describe('AdvancedFilters', () => {
 
   it('renders without crashing', () => {
     render(
-      <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
-      />
+      <AdvancedFilters />
     );
     
     expect(screen.getByText('Erweiterte Filter')).toBeInTheDocument();
@@ -85,10 +80,6 @@ describe('AdvancedFilters', () => {
   it('does not render when closed', () => {
     render(
       <AdvancedFilters
-        isOpen={false}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -98,10 +89,6 @@ describe('AdvancedFilters', () => {
   it('displays category filter options', () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -114,10 +101,6 @@ describe('AdvancedFilters', () => {
   it('displays status filter options', () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -131,10 +114,6 @@ describe('AdvancedFilters', () => {
   it('displays budget range filter', () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -146,10 +125,6 @@ describe('AdvancedFilters', () => {
   it('displays date range filter', () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -161,10 +136,6 @@ describe('AdvancedFilters', () => {
   it('displays available tags', () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -178,10 +149,6 @@ describe('AdvancedFilters', () => {
   it('applies category filter correctly', async () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -203,10 +170,6 @@ describe('AdvancedFilters', () => {
   it('applies multiple filters correctly', async () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -240,10 +203,6 @@ describe('AdvancedFilters', () => {
   it('applies date range filter correctly', async () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -271,10 +230,6 @@ describe('AdvancedFilters', () => {
   it('applies tag filter correctly', async () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -299,10 +254,6 @@ describe('AdvancedFilters', () => {
   it('resets filters when reset button is clicked', () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -315,10 +266,6 @@ describe('AdvancedFilters', () => {
   it('closes when close button is clicked', () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -350,10 +297,6 @@ describe('AdvancedFilters', () => {
 
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -383,10 +326,6 @@ describe('AdvancedFilters', () => {
 
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -397,10 +336,6 @@ describe('AdvancedFilters', () => {
   it('validates budget range input', async () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     
@@ -420,10 +355,6 @@ describe('AdvancedFilters', () => {
   it('validates date range input', async () => {
     render(
       <AdvancedFilters
-        isOpen={true}
-        onClose={mockOnClose}
-        onApply={mockOnApply}
-        onReset={mockOnReset}
       />
     );
     

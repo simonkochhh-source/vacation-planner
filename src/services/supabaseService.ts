@@ -1,0 +1,439 @@
+import { supabase, isUsingPlaceholderCredentials } from '../lib/supabase';
+import { Database, Tables } from '../types/supabase';
+import { Destination, Trip } from '../types';
+
+// Type aliases for better readability
+type SupabaseDestination = Tables<'destinations'>;
+type SupabaseTrip = Tables<'trips'>;
+
+// Helper function to get current user ID
+const getCurrentUserId = async (): Promise<string | null> => {
+  if (isUsingPlaceholderCredentials) {
+    // Return a placeholder user ID for demo mode
+    return 'demo-user-id';
+  }
+  
+  const { data: { session }, error } = await supabase.auth.getSession();
+  if (error) {
+    console.error('❌ Auth: Error getting session for user ID:', error);
+    return null;
+  }
+  
+  return session?.user?.id || null;
+};
+
+// Helper functions to convert between Supabase and local types
+const convertSupabaseToDestination = (dest: SupabaseDestination): Destination => ({
+  id: dest.id,
+  name: dest.name,
+  location: dest.location,
+  category: dest.category as any,
+  startDate: dest.start_date,
+  endDate: dest.end_date,
+  startTime: dest.start_time || undefined,
+  endTime: dest.end_time || undefined,
+  budget: dest.budget || undefined,
+  actualCost: dest.actual_cost || undefined,
+  coordinates: dest.coordinates_lat && dest.coordinates_lng ? {
+    lat: dest.coordinates_lat,
+    lng: dest.coordinates_lng
+  } : undefined,
+  notes: dest.notes || '',
+  photos: dest.images || [],
+  bookingInfo: dest.booking_info || '',
+  status: dest.status as any || 'planned',
+  tags: dest.tags || [],
+  color: dest.color || '#6b7280',
+  duration: dest.duration || 120,
+  weatherInfo: dest.weather_info as any,
+  transportToNext: dest.transport_to_next as any,
+  website: undefined,
+  phoneNumber: undefined,
+  address: dest.location,
+  openingHours: (dest.opening_hours as string) || undefined,
+  createdAt: dest.created_at || '',
+  updatedAt: dest.updated_at || '',
+});
+
+const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId?: string): Promise<Database['public']['Tables']['destinations']['Insert']> => {
+  if (!tripId) {
+    throw new Error('tripId is required when converting destination for Supabase');
+  }
+  
+  const userId = await getCurrentUserId();
+  if (!userId) {
+    throw new Error('No user ID available for destination conversion');
+  }
+  
+  return {
+    ...(dest.id && { id: dest.id }),
+    user_id: userId,
+    trip_id: tripId, // Required field - must not be null
+    name: dest.name || '',
+    location: dest.location || '',
+    category: dest.category as any || 'other',
+    start_date: dest.startDate || '',
+    end_date: dest.endDate || '',
+    start_time: dest.startTime || null,
+    end_time: dest.endTime || null,
+    budget: dest.budget || null,
+    actual_cost: dest.actualCost || null,
+    coordinates_lat: dest.coordinates?.lat || null,
+    coordinates_lng: dest.coordinates?.lng || null,
+    notes: dest.notes || null,
+    images: dest.photos || null,
+    booking_info: dest.bookingInfo || null,
+    status: dest.status as any || 'planned',
+    tags: dest.tags || null,
+    color: dest.color || null,
+    weather_info: dest.weatherInfo as any || null,
+    transport_to_next: dest.transportToNext as any || null,
+    duration: dest.duration || 120,
+    opening_hours: dest.openingHours || null,
+    sort_order: 0,
+  };
+};
+
+const convertSupabaseToTrip = (trip: SupabaseTrip): Trip => ({
+  id: trip.id,
+  name: trip.name,
+  description: trip.description || '',
+  startDate: trip.start_date,
+  endDate: trip.end_date,
+  budget: trip.budget || undefined,
+  actualCost: 0,
+  participants: trip.participants || [],
+  status: trip.status as any || 'planned',
+  destinations: [], // Will be populated separately
+  tags: trip.tags || [],
+  coverImage: undefined,
+  vehicleConfig: undefined,
+  createdAt: trip.created_at || '',
+  updatedAt: trip.updated_at || '',
+});
+
+export class SupabaseService {
+  // Trip operations
+  static async getTrips(): Promise<Trip[]> {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      console.warn('❌ SupabaseService: No user ID available for getTrips');
+      return [];
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .or(`user_id.eq.${userId},participants.cs.{${userId}}`)
+        .order('created_at', { ascending: false });
+
+      // Handle case where table doesn't exist or data is null
+      if (error) {
+        console.error('Supabase getTrips error:', error);
+        // Return empty array instead of throwing
+        return [];
+      }
+      
+      if (!data) {
+        console.warn('No trips data returned from Supabase');
+        return [];
+      }
+
+      // Get all destinations to populate trip.destinations arrays
+      console.log('🔗 Populating trips with destination IDs...');
+      
+      const tripsWithDestinations = [];
+      for (const trip of data) {
+        // Get destination IDs for this trip
+        const { data: rawDestinations } = await supabase
+          .from('destinations')
+          .select('id, trip_id')
+          .eq('trip_id', trip.id);
+        
+        const tripDestinations = rawDestinations?.map(dest => dest.id) || [];
+        
+        console.log(`🎯 Trip "${trip.name}" has ${tripDestinations.length} destinations:`, tripDestinations);
+        
+        tripsWithDestinations.push({
+          ...convertSupabaseToTrip(trip),
+          destinations: tripDestinations
+        });
+      }
+      
+      return tripsWithDestinations;
+    } catch (error) {
+      console.error('Failed to fetch trips:', error);
+      return []; // Return empty array as fallback
+    }
+  }
+
+  static async getTripById(id: string): Promise<Trip | null> {
+    try {
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') return null; // Not found
+        console.error('Supabase getTripById error:', error);
+        return null;
+      }
+      
+      if (!data) return null;
+      
+      return convertSupabaseToTrip(data);
+    } catch (error) {
+      console.error('Failed to fetch trip by ID:', error);
+      return null;
+    }
+  }
+
+  static async createTrip(trip: Omit<Trip, 'id' | 'destinations' | 'createdAt' | 'updatedAt'>): Promise<Trip> {
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      throw new Error('No user ID available for createTrip');
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('trips')
+        .insert({
+          user_id: userId,
+          name: trip.name,
+          description: trip.description || null,
+          start_date: trip.startDate,
+          end_date: trip.endDate,
+          budget: trip.budget || null,
+          participants: trip.participants || null,
+          status: trip.status as any || 'planned',
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Supabase createTrip error:', error);
+        throw new Error(`Failed to create trip: ${error.message}`);
+      }
+      
+      if (!data) {
+        throw new Error('No data returned from trip creation');
+      }
+      
+      return convertSupabaseToTrip(data);
+    } catch (error) {
+      console.error('Failed to create trip:', error);
+      throw error;
+    }
+  }
+
+  static async updateTrip(id: string, updates: Partial<Trip>): Promise<Trip> {
+    const updateData: Database['public']['Tables']['trips']['Update'] = {};
+    
+    if (updates.name) updateData.name = updates.name;
+    if (updates.description !== undefined) updateData.description = updates.description || null;
+    if (updates.startDate) updateData.start_date = updates.startDate;
+    if (updates.endDate) updateData.end_date = updates.endDate;
+    if (updates.budget !== undefined) updateData.budget = updates.budget || null;
+    if (updates.participants) updateData.participants = updates.participants;
+    if (updates.status) updateData.status = updates.status as any;
+
+    const { data, error } = await supabase
+      .from('trips')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return convertSupabaseToTrip(data);
+  }
+
+  static async deleteTrip(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('trips')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  // Destination operations
+  static async getDestinations(tripId?: string): Promise<Destination[]> {
+    console.log('🔍 SupabaseService.getDestinations called with tripId:', tripId);
+    
+    const userId = await getCurrentUserId();
+    if (!userId) {
+      console.warn('❌ SupabaseService: No user ID available for getDestinations');
+      return [];
+    }
+    
+    try {
+      let query = supabase
+        .from('destinations')
+        .select('*')
+        .eq('user_id', userId);
+
+      if (tripId) {
+        query = query.eq('trip_id', tripId);
+        console.log('🎯 Filtering by tripId:', tripId);
+      }
+
+      query = query.order('sort_order', { ascending: true });
+
+      console.log('📡 Executing Supabase destinations query...');
+      const { data, error } = await query;
+      
+      console.log('📊 Supabase destinations query result:', { 
+        dataLength: data?.length, 
+        error: error?.message,
+        hasData: !!data,
+        dataType: typeof data,
+        isArray: Array.isArray(data)
+      });
+
+      if (error) {
+        console.error('❌ Supabase getDestinations error:', error);
+        return []; // Return empty array instead of throwing
+      }
+      
+      if (!data) {
+        console.warn('⚠️ No destinations data returned from Supabase');
+        return [];
+      }
+
+      console.log('🎯 Raw destinations from Supabase:', data);
+      
+      const converted = data.map(convertSupabaseToDestination);
+      console.log('✅ Converted destinations:', converted.length, 'items');
+      if (converted.length > 0) {
+        console.log('🎯 First converted destination:', converted[0]);
+      }
+      
+      return converted;
+    } catch (error) {
+      console.error('❌ Failed to fetch destinations:', error);
+      return []; // Return empty array as fallback
+    }
+  }
+
+  static async getDestinationById(id: string): Promise<Destination | null> {
+    const { data, error } = await supabase
+      .from('destinations')
+      .select('*')
+      .eq('id', id)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') return null; // Not found
+      throw error;
+    }
+    return convertSupabaseToDestination(data);
+  }
+
+  static async createDestination(destination: Omit<Destination, 'id'>, tripId?: string): Promise<Destination> {
+    if (!tripId) {
+      throw new Error('tripId is required for creating destinations');
+    }
+    
+    const insertData = await convertDestinationToSupabase(destination, tripId);
+    
+    console.log('🎯 SupabaseService.createDestination called with:');
+    console.log('  - tripId:', tripId);
+    console.log('  - destination name:', destination.name);
+    console.log('  - insertData:', insertData);
+    
+    const { data, error } = await supabase
+      .from('destinations')
+      .insert(insertData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Supabase destination insert error:', error);
+      throw error;
+    }
+    
+    console.log('✅ Supabase destination created successfully:', data);
+    return convertSupabaseToDestination(data);
+  }
+
+  static async updateDestination(id: string, updates: Partial<Destination>): Promise<Destination> {
+    const updateData = await convertDestinationToSupabase(updates);
+    delete updateData.id; // Remove id from update data
+
+    const { data, error } = await supabase
+      .from('destinations')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return convertSupabaseToDestination(data);
+  }
+
+  static async deleteDestination(id: string): Promise<void> {
+    const { error } = await supabase
+      .from('destinations')
+      .delete()
+      .eq('id', id);
+
+    if (error) throw error;
+  }
+
+  static async updateDestinationsOrder(destinations: { id: string; sortOrder: number }[]): Promise<void> {
+    const updates = destinations.map(dest => 
+      supabase
+        .from('destinations')
+        .update({ sort_order: dest.sortOrder })
+        .eq('id', dest.id)
+    );
+
+    const results = await Promise.all(updates);
+    
+    for (const { error } of results) {
+      if (error) throw error;
+    }
+  }
+
+  // Real-time subscriptions
+  static subscribeToTrips(callback: (trips: Trip[]) => void) {
+    return supabase
+      .channel('trips-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'trips'
+        },
+        async () => {
+          const trips = await this.getTrips();
+          callback(trips);
+        }
+      )
+      .subscribe();
+  }
+
+  static subscribeToDestinations(callback: (destinations: Destination[]) => void, tripId?: string) {
+    return supabase
+      .channel('destinations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'destinations',
+          ...(tripId && { filter: `trip_id=eq.${tripId}` })
+        },
+        async () => {
+          const destinations = await this.getDestinations(tripId);
+          callback(destinations);
+        }
+      )
+      .subscribe();
+  }
+}

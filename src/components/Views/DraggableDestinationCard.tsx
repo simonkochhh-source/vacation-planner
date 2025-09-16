@@ -5,7 +5,7 @@ import {
 import {
   CSS
 } from '@dnd-kit/utilities';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import StatusDropdown from '../UI/StatusDropdown';
 import StatusBadge from '../UI/StatusBadge';
 import { WeatherWidget } from '../Weather';
@@ -54,7 +54,7 @@ export const DraggableDestinationCard: React.FC<DraggableDestinationCardProps> =
   onPhotoUpload,
   onPhotoGallery
 }) => {
-  const { updateDestination } = useApp();
+  const { updateDestination } = useSupabaseApp();
   
   const {
     attributes,

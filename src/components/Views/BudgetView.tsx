@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { 
   BudgetOverview, 
   ExpenseTracker
@@ -16,7 +16,7 @@ import {
 type BudgetTab = 'overview' | 'expenses';
 
 const BudgetView: React.FC = () => {
-  const { currentTrip, destinations, updateTrip, updateDestination } = useApp();
+  const { currentTrip, destinations, updateTrip, updateDestination } = useSupabaseApp();
   const [activeTab, setActiveTab] = useState<BudgetTab>('overview');
   const [showBudgetForm, setShowBudgetForm] = useState(false);
 

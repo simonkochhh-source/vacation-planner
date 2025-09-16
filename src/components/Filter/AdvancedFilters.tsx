@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { 
   Filter, 
   Calendar,
@@ -34,7 +34,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     destinations, 
     uiState, 
     updateUIState 
-  } = useApp();
+  } = useSupabaseApp();
 
   const [isExpanded, setIsExpanded] = useState(!isCompact);
   const [showDateRange, setShowDateRange] = useState(false);

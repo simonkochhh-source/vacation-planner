@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { 
   Search, 
   X,
@@ -31,7 +31,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
     destinations,
     uiState, 
     updateUIState 
-  } = useApp();
+  } = useSupabaseApp();
   
   const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);

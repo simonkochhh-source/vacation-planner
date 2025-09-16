@@ -8,11 +8,15 @@ interface MainLayoutProps {
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
       const mobile = window.innerWidth < 768;
       setIsMobile(mobile);
+      if (!mobile) {
+        setSidebarOpen(false); // Close sidebar when switching to desktop
+      }
     };
 
     checkMobile();
@@ -29,13 +33,13 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       position: 'relative'
     }}>
       {/* Mobile Header */}
-      {isMobile && <Header />}
+      {isMobile && <Header onMenuClick={() => setSidebarOpen(true)} />}
       
       {/* Sidebar */}
       <Sidebar 
-        isOpen={!isMobile} 
+        isOpen={isMobile ? sidebarOpen : true} 
         isMobile={isMobile}
-        onClose={() => {}}
+        onClose={() => setSidebarOpen(false)}
       />
       
       {/* Main Content */}

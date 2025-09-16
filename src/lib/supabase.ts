@@ -1,0 +1,28 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
+const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
+
+// Check for placeholder values or missing credentials
+const isPlaceholder = 
+  !supabaseUrl || 
+  !supabaseAnonKey || 
+  supabaseUrl.includes('your-project-ref') ||
+  supabaseAnonKey.includes('your_supabase_anon_key');
+
+if (isPlaceholder) {
+  console.warn('⚠️ Supabase: Using placeholder credentials. App will fallback to LocalStorage.');
+  console.log('ℹ️ To enable Supabase integration:');
+  console.log('1. Create a Supabase project at https://supabase.com');
+  console.log('2. Update .env file with real credentials');
+  console.log('3. Restart the development server');
+}
+
+// Create Supabase client - use placeholder values if real credentials are not available
+const clientUrl = isPlaceholder ? 'https://placeholder.supabase.co' : supabaseUrl;
+const clientKey = isPlaceholder ? 'placeholder-key' : supabaseAnonKey;
+
+export const supabase = createClient(clientUrl, clientKey);
+
+// Export flag to check if using placeholder credentials
+export const isUsingPlaceholderCredentials = isPlaceholder;

@@ -284,10 +284,32 @@
 
   .sidebar {
     width: 100vw;
+    max-width: 100vw;
   }
 
   .sidebar.open {
     width: 100vw;
+    max-width: 100vw;
+  }
+}
+
+/* Viewport fix for mobile */
+@media (max-width: 767px) {
+  .layout {
+    overflow-x: hidden;
+    width: 100vw;
+  }
+  
+  .main-content {
+    width: 100%;
+    min-width: 0;
+  }
+  
+  .sidebar {
+    width: 100vw;
+    max-width: 100vw;
+    left: 0 !important;
+    right: 0 !important;
   }
 }
 

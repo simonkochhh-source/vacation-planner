@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { Trip, VehicleConfig, FuelType, Coordinates } from '../../types';
 import { tripSchema, TripFormData } from '../../schemas/validationSchemas';
 import { getCurrentDateString, addDaysToDate, getCenterCoordinates } from '../../utils';
@@ -27,7 +27,7 @@ const TripForm: React.FC<TripFormProps> = ({
   onClose, 
   trip 
 }) => {
-  const { createTrip, updateTrip, setCurrentTrip, destinations } = useApp();
+  const { createTrip, updateTrip, setCurrentTrip, destinations } = useSupabaseApp();
   const [participants, setParticipants] = useState<string[]>(trip?.participants || []);
   const [newParticipant, setNewParticipant] = useState('');
   const [tags, setTags] = useState<string[]>(trip?.tags || []);
@@ -37,6 +37,18 @@ const TripForm: React.FC<TripFormProps> = ({
     fuelConsumption: 9.0,
     fuelPrice: 1.65
   });
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Check for mobile view
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const {
     register,
@@ -139,28 +151,35 @@ const TripForm: React.FC<TripFormProps> = ({
     <div style={{
       position: 'fixed',
       inset: 0,
-      background: 'rgba(0, 0, 0, 0.5)',
+      background: isMobile ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: isMobile ? 'flex-start' : 'center',
       justifyContent: 'center',
       zIndex: 1000,
-      padding: '1rem'
+      padding: isMobile ? '0' : '1rem',
+      overflowY: 'auto'
     }}>
       <div style={{
         background: 'white',
-        borderRadius: '16px',
+        borderRadius: isMobile ? '0' : '16px',
         width: '100%',
-        maxWidth: '600px',
-        maxHeight: '90vh',
+        maxWidth: isMobile ? '100vw' : '600px',
+        height: isMobile ? '100vh' : 'auto',
+        maxHeight: isMobile ? '100vh' : '90vh',
         overflow: 'auto',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        boxShadow: isMobile ? 'none' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+        ...(isMobile && {
+          position: 'fixed',
+          top: 0,
+          left: 0
+        })
       }}>
         {/* Header */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: '1.5rem 2rem',
+          padding: isMobile ? '1rem' : '1.5rem 2rem',
           borderBottom: '1px solid #e5e7eb'
         }}>
           <h2 style={{
@@ -191,7 +210,10 @@ const TripForm: React.FC<TripFormProps> = ({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} style={{ padding: '2rem' }}>
+        <form onSubmit={handleSubmit(onSubmit)} style={{ 
+          padding: isMobile ? '1rem' : '2rem',
+          paddingBottom: isMobile ? '2rem' : '2rem'
+        }}>
           {/* Basic Info */}
           <div style={{ marginBottom: '2rem' }}>
             <h3 style={{
@@ -284,7 +306,11 @@ const TripForm: React.FC<TripFormProps> = ({
               Reisedaten & Budget
             </h3>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div style={{ 
+              display: 'grid', 
+              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
+              gap: '1rem'
+            }}>
               <div>
                 <label style={{
                   display: 'block',

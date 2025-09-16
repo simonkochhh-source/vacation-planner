@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { 
   BarChart3,
   TrendingUp,
@@ -22,7 +22,7 @@ interface FilterStatsProps {
 }
 
 const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
-  const { currentTrip, destinations, uiState } = useApp();
+  const { currentTrip, destinations, uiState } = useSupabaseApp();
 
   // Get current trip destinations
   const currentDestinations = currentTrip 

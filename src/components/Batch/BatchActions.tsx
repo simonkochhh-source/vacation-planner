@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { 
   CheckSquare, 
   Square, 
@@ -24,7 +24,7 @@ const BatchActions: React.FC<BatchActionsProps> = ({
   destinations,
   onBatchComplete
 }) => {
-  const { updateDestination, deleteDestination, createDestination } = useApp();
+  const { updateDestination, deleteDestination, createDestination } = useSupabaseApp();
   const [showBatchEdit, setShowBatchEdit] = useState(false);
   const [batchEditData, setBatchEditData] = useState({
     status: '' as DestinationStatus | '',

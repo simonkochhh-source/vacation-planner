@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { Destination } from '../../types';
 import {
   DollarSign,
@@ -34,7 +34,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   onEditBudget,
   onAddExpense
 }) => {
-  const { currentTrip, destinations, settings } = useApp();
+  const { currentTrip, destinations, settings } = useSupabaseApp();
   const [selectedTimeframe, setSelectedTimeframe] = useState<'all' | 'upcoming' | 'past'>('all');
   const [groupBy, setGroupBy] = useState<'category' | 'date' | 'status'>('category');
   const [currentFuelPrice, setCurrentFuelPrice] = useState<number>(1.65);

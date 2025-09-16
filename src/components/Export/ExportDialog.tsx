@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { ExportService } from '../../services/exportService';
 import { ExportOptions } from '../../types';
 import {
@@ -24,7 +24,7 @@ interface ExportDialogProps {
 type ExportFormat = 'gpx' | 'csv' | 'json' | 'kml' | 'ics';
 
 const ExportDialog: React.FC<ExportDialogProps> = ({ isOpen, onClose }) => {
-  const { currentTrip, destinations } = useApp();
+  const { currentTrip, destinations } = useSupabaseApp();
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('gpx');
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     format: 'gpx',

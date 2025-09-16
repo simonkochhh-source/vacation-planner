@@ -1,5 +1,8 @@
 import React from 'react';
-import { AppProvider, useApp } from './stores/AppContext';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/Auth/ProtectedRoute';
+import DashboardLayout from './components/Layout/DashboardLayout';
+import { SupabaseAppProvider, useSupabaseApp } from './stores/SupabaseAppContext';
 import MainLayout from './components/Layout/MainLayout';
 import EnhancedTimelineView from './components/Scheduling/EnhancedTimelineView';
 import MapView from './components/Views/MapView';
@@ -7,14 +10,13 @@ import TimelineView from './components/Views/TimelineView';
 import BudgetView from './components/Views/BudgetView';
 import SettingsView from './components/Views/SettingsView';
 import DestinationDiscovery from './components/Discovery/DestinationDiscovery';
-import MockDataLoader from './components/Dev/MockDataLoader';
 import { Destination } from './types';
 import './App.css';
 import './styles/responsive.css';
 import './styles/components.css';
 
 const AppContent: React.FC = () => {
-  const { uiState, currentTrip, reorderDestinations } = useApp();
+  const { uiState, currentTrip, reorderDestinations } = useSupabaseApp();
 
   const handleReorderDestinations = async (reorderedDestinations: Destination[]) => {
     if (!currentTrip) return;
@@ -61,18 +63,23 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <MainLayout>
-      {renderCurrentView()}
-      <MockDataLoader />
-    </MainLayout>
+    <DashboardLayout>
+      <MainLayout>
+        {renderCurrentView()}
+      </MainLayout>
+    </DashboardLayout>
   );
 };
 
 function App() {
   return (
-    <AppProvider>
-      <AppContent />
-    </AppProvider>
+    <AuthProvider>
+      <ProtectedRoute>
+        <SupabaseAppProvider>
+          <AppContent />
+        </SupabaseAppProvider>
+      </ProtectedRoute>
+    </AuthProvider>
   );
 }
 

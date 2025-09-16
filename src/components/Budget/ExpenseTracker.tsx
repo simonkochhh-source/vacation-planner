@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { Destination, DestinationCategory } from '../../types';
 import {
   Plus,
@@ -57,7 +57,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   onEditExpense,
   onDeleteExpense
 }) => {
-  const { currentTrip, destinations, updateDestination } = useApp();
+  const { currentTrip, destinations, updateDestination } = useSupabaseApp();
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [searchQuery, setSearchQuery] = useState('');

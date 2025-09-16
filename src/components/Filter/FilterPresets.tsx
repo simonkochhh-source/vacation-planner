@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useApp } from '../../stores/AppContext';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { 
   Bookmark, 
   BookmarkCheck,
@@ -31,7 +31,7 @@ interface FilterPresetsProps {
 }
 
 const FilterPresets: React.FC<FilterPresetsProps> = ({ onApplyPreset }) => {
-  const { uiState, updateUIState } = useApp();
+  const { uiState, updateUIState } = useSupabaseApp();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingPreset, setEditingPreset] = useState<FilterPreset | null>(null);
   const [newPresetName, setNewPresetName] = useState('');
