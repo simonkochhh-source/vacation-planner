@@ -1,32 +1,28 @@
-/* Import Leaflet CSS globally */
+/* 🏕️ Freedom Trail Design System */
+@import './styles/design-tokens.css';
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+/* Import Leaflet CSS */
 @import 'leaflet/dist/leaflet.css';
 
-body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
-}
-
-/* Custom styles for vacation planner */
+/* Custom styles with Freedom Trail theme */
 .bg-gradient-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%);
 }
 
-.shadow-card {
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+.bg-gradient-ocean {
+  background: linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-sky) 100%);
 }
 
-/* Fix Leaflet map display issues */
+.bg-gradient-sunset {
+  background: linear-gradient(135deg, var(--color-secondary-sunset) 0%, var(--color-accent-campfire) 100%);
+}
+
+/* Fix Leaflet map display issues with theme colors */
 .leaflet-container {
-  background-color: #f3f4f6;
+  background-color: var(--color-neutral-mist);
 }
 
 .leaflet-tile {

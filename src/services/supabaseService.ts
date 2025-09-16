@@ -28,8 +28,8 @@ const convertSupabaseToDestination = (dest: SupabaseDestination): Destination =>
   name: dest.name,
   location: dest.location,
   category: dest.category as any,
-  startDate: dest.start_date,
-  endDate: dest.end_date,
+  startDate: dest.start_date || '',
+  endDate: dest.end_date || '',
   startTime: dest.start_time || undefined,
   endTime: dest.end_time || undefined,
   budget: dest.budget || undefined,
@@ -65,6 +65,9 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId?:
     throw new Error('No user ID available for destination conversion');
   }
   
+  // Use current date as fallback if dates are not provided or are empty
+  const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+  
   return {
     ...(dest.id && { id: dest.id }),
     user_id: userId,
@@ -72,8 +75,8 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId?:
     name: dest.name || '',
     location: dest.location || '',
     category: dest.category as any || 'other',
-    start_date: dest.startDate || '',
-    end_date: dest.endDate || '',
+    start_date: (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate,
+    end_date: (dest.endDate && dest.endDate.trim()) ? dest.endDate : currentDate,
     start_time: dest.startTime || null,
     end_time: dest.endTime || null,
     budget: dest.budget || null,
@@ -361,8 +364,36 @@ export class SupabaseService {
   }
 
   static async updateDestination(id: string, updates: Partial<Destination>): Promise<Destination> {
-    const updateData = await convertDestinationToSupabase(updates);
-    delete updateData.id; // Remove id from update data
+    // Build update data directly for Update operations
+    const updateData: Database['public']['Tables']['destinations']['Update'] = {};
+    
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.location !== undefined) updateData.location = updates.location;
+    if (updates.category !== undefined) updateData.category = updates.category as any;
+    if (updates.startDate !== undefined) {
+      updateData.start_date = (updates.startDate && updates.startDate.trim()) ? updates.startDate : undefined;
+    }
+    if (updates.endDate !== undefined) {
+      updateData.end_date = (updates.endDate && updates.endDate.trim()) ? updates.endDate : undefined;
+    }
+    if (updates.startTime !== undefined) updateData.start_time = updates.startTime || null;
+    if (updates.endTime !== undefined) updateData.end_time = updates.endTime || null;
+    if (updates.budget !== undefined) updateData.budget = updates.budget || null;
+    if (updates.actualCost !== undefined) updateData.actual_cost = updates.actualCost || null;
+    if (updates.coordinates !== undefined) {
+      updateData.coordinates_lat = updates.coordinates?.lat || null;
+      updateData.coordinates_lng = updates.coordinates?.lng || null;
+    }
+    if (updates.notes !== undefined) updateData.notes = updates.notes || null;
+    if (updates.photos !== undefined) updateData.images = updates.photos || null;
+    if (updates.bookingInfo !== undefined) updateData.booking_info = updates.bookingInfo || null;
+    if (updates.status !== undefined) updateData.status = updates.status as any || null;
+    if (updates.tags !== undefined) updateData.tags = updates.tags || null;
+    if (updates.color !== undefined) updateData.color = updates.color || null;
+    if (updates.weatherInfo !== undefined) updateData.weather_info = updates.weatherInfo as any || null;
+    if (updates.transportToNext !== undefined) updateData.transport_to_next = updates.transportToNext as any || null;
+    if (updates.duration !== undefined) updateData.duration = updates.duration || null;
+    if (updates.openingHours !== undefined) updateData.opening_hours = updates.openingHours as any || null;
 
     const { data, error } = await supabase
       .from('destinations')

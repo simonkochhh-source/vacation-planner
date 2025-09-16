@@ -97,6 +97,8 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
   };
 
   const isApiConfigured = fuelPriceService.isConfigured();
+  const apiStatus = fuelPriceService.getConfigurationStatus();
+  const isUsingDemo = fuelPriceService.isUsingDemoKey();
 
   const estimatedCostPer100km = useMemo(() => {
     return (config.fuelConsumption * (config.fuelPrice || 0)).toFixed(2);
@@ -104,11 +106,12 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
 
   return (
     <div style={{
-      background: 'white',
-      border: '1px solid #e5e7eb',
-      borderRadius: '12px',
-      padding: '1.5rem',
-      marginBottom: '1rem'
+      background: 'var(--color-surface)',
+      border: '2px solid var(--color-border)',
+      borderRadius: 'var(--radius-xl)',
+      padding: 'var(--space-xl)',
+      marginBottom: 'var(--space-lg)',
+      boxShadow: 'var(--shadow-md)'
     }}>
       <div style={{
         display: 'flex',
@@ -116,12 +119,13 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
         gap: '0.5rem',
         marginBottom: '1.5rem'
       }}>
-        <Car size={20} style={{ color: '#3b82f6' }} />
+        <Car size={20} style={{ color: 'var(--color-primary-ocean)' }} />
         <h3 style={{
           margin: 0,
-          fontSize: '1.125rem',
-          fontWeight: '600',
-          color: '#1f2937'
+          fontFamily: 'var(--font-heading)',
+          fontSize: 'var(--text-xl)',
+          fontWeight: 'var(--font-weight-semibold)',
+          color: 'var(--color-text-primary)'
         }}>
           Fahrzeug-Konfiguration
         </h3>
@@ -189,12 +193,14 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
             step="0.1"
             value={config.fuelConsumption}
             onChange={(e) => handleConsumptionChange(Number(e.target.value))}
+            className="input"
             style={{
               width: '100%',
-              padding: '0.5rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '0.875rem'
+              padding: 'var(--space-md)',
+              border: '2px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--font-body)'
             }}
           />
           <div style={{
@@ -254,12 +260,14 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
             step="0.001"
             value={config.fuelPrice || 0}
             onChange={(e) => handleManualPriceChange(Number(e.target.value))}
+            className="input"
             style={{
               width: '100%',
-              padding: '0.5rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              fontSize: '0.875rem'
+              padding: 'var(--space-md)',
+              border: '2px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--text-base)',
+              fontFamily: 'var(--font-body)'
             }}
           />
           <div style={{
@@ -327,39 +335,60 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
       </div>
 
       {/* API Configuration Info */}
-      {!isApiConfigured && (
+      <div style={{
+        background: isApiConfigured ? 'var(--color-accent-moss)' : (isUsingDemo ? 'var(--color-secondary-sky)' : 'var(--color-secondary-sunset)'),
+        color: 'white',
+        border: '2px solid rgba(255, 255, 255, 0.3)',
+        borderRadius: 'var(--radius-md)',
+        padding: 'var(--space-lg)',
+        marginTop: 'var(--space-lg)'
+      }}>
         <div style={{
-          background: '#fef3c7',
-          border: '1px solid #fcd34d',
-          borderRadius: '8px',
-          padding: '1rem',
-          marginTop: '1rem'
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'var(--space-sm)',
+          marginBottom: 'var(--space-sm)'
         }}>
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '0.5rem'
+          <AlertCircle size={18} />
+          <span style={{ 
+            fontSize: 'var(--text-sm)', 
+            fontWeight: 'var(--font-weight-semibold)',
+            fontFamily: 'var(--font-body)'
           }}>
-            <AlertCircle size={16} style={{ color: '#d97706' }} />
-            <span style={{ fontSize: '0.875rem', fontWeight: '600', color: '#d97706' }}>
-              Tankerkönig API nicht konfiguriert
-            </span>
-          </div>
-          <p style={{
-            margin: 0,
-            fontSize: '0.75rem',
-            color: '#92400e',
-            lineHeight: '1.4'
-          }}>
-            Für aktuelle Spritpreise wird ein kostenloser API-Schlüssel von{' '}
-            <a href="https://creativecommons.tankerkoenig.de" target="_blank" rel="noopener noreferrer" style={{ color: '#d97706' }}>
-              Tankerkönig
-            </a>{' '}
-            benötigt. Ohne API werden Durchschnittspreise verwendet.
-          </p>
+            {isApiConfigured ? '✅ Tankerkönig API aktiv' : '⚠️ Tankerkönig API Status'}
+          </span>
         </div>
-      )}
+        <p style={{
+          margin: 0,
+          fontSize: 'var(--text-sm)',
+          lineHeight: 1.5,
+          fontFamily: 'var(--font-body)'
+        }}>
+          {apiStatus}
+          {!isApiConfigured && (
+            <>
+              <br /><br />
+              <strong>So erhältst du einen kostenlosen API-Schlüssel:</strong>
+              <br />1. Besuche{' '}
+              <a 
+                href="https://creativecommons.tankerkoenig.de" 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ 
+                  color: 'white', 
+                  textDecoration: 'underline',
+                  fontWeight: 'var(--font-weight-medium)'
+                }}
+              >
+                creativecommons.tankerkoenig.de
+              </a>
+              <br />2. Registriere dich kostenlos
+              <br />3. Füge den API-Key in die .env.local Datei ein
+              <br />4. Starte die App neu
+            </>
+          )}
+        </p>
+      </div>
 
       <style>{`
         @keyframes spin {

@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { AppSettings, TransportMode, FuelType, Coordinates } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
 import {
   Settings, Globe, Palette, MapPin, Car, Bell, Download,
   Shield, HardDrive, RotateCcw, AlertTriangle,
-  Moon, Sun, Monitor, Languages, DollarSign, Clock, Home
+  Moon, Sun, Monitor, Languages, DollarSign, Clock, Home, User, Power
 } from 'lucide-react';
 
 const SettingsView: React.FC = () => {
   const { settings, updateSettings } = useSupabaseApp();
-  const [activeTab, setActiveTab] = useState<'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup'>('general');
+  const { user, signOut } = useAuth();
+  const [activeTab, setActiveTab] = useState<'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup'>('account');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleSettingChange = <K extends keyof AppSettings>(
     key: K,
     value: AppSettings[K]
   ) => {
+    console.log('⚙️ Settings: Changing', key, 'to', value);
     updateSettings({ [key]: value });
   };
 
@@ -64,6 +67,7 @@ const SettingsView: React.FC = () => {
   };
 
   const tabs = [
+    { id: 'account', label: 'Account', icon: User },
     { id: 'general', label: 'Allgemein', icon: Settings },
     { id: 'map', label: 'Karte', icon: MapPin },
     { id: 'travel', label: 'Reise', icon: Car },
@@ -74,25 +78,25 @@ const SettingsView: React.FC = () => {
   ];
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="settings-page" style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{
         display: 'flex',
         alignItems: 'center',
         gap: '1rem',
         marginBottom: '2rem'
       }}>
-        <Settings size={32} color="#3b82f6" />
+        <Settings size={32} style={{ color: 'var(--color-primary-ocean)' }} />
         <div>
           <h1 style={{ 
             fontSize: '2rem', 
             fontWeight: 'bold', 
             margin: 0,
-            color: '#1f2937'
+            color: 'var(--color-text-primary)'
           }}>
             Einstellungen
           </h1>
           <p style={{ 
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             margin: '0.5rem 0 0 0',
             fontSize: '1rem'
           }}>
@@ -109,16 +113,17 @@ const SettingsView: React.FC = () => {
       }}>
         {/* Sidebar Navigation */}
         <div style={{
-          background: '#f9fafb',
+          background: 'var(--color-surface)',
           borderRadius: '12px',
           padding: '1.5rem',
-          height: 'fit-content'
+          height: 'fit-content',
+          border: '1px solid var(--color-border)'
         }}>
           <h3 style={{
             fontSize: '1.125rem',
             fontWeight: '600',
             margin: '0 0 1rem 0',
-            color: '#374151'
+            color: 'var(--color-text-primary)'
           }}>
             Kategorien
           </h3>
@@ -135,8 +140,8 @@ const SettingsView: React.FC = () => {
                   padding: '0.75rem 1rem',
                   borderRadius: '8px',
                   border: 'none',
-                  background: activeTab === id ? '#3b82f6' : 'transparent',
-                  color: activeTab === id ? 'white' : '#374151',
+                  background: activeTab === id ? 'var(--color-primary-ocean)' : 'transparent',
+                  color: activeTab === id ? 'white' : 'var(--color-text-primary)',
                   cursor: 'pointer',
                   textAlign: 'left',
                   fontWeight: activeTab === id ? '600' : '400',
@@ -144,7 +149,7 @@ const SettingsView: React.FC = () => {
                 }}
                 onMouseOver={(e) => {
                   if (activeTab !== id) {
-                    e.currentTarget.style.background = '#e5e7eb';
+                    e.currentTarget.style.background = 'var(--color-neutral-mist)';
                   }
                 }}
                 onMouseOut={(e) => {
@@ -162,7 +167,7 @@ const SettingsView: React.FC = () => {
           <div style={{
             marginTop: '2rem',
             padding: '1rem 0',
-            borderTop: '1px solid #e5e7eb'
+            borderTop: '1px solid var(--color-border)'
           }}>
             <button
               onClick={() => setShowResetConfirm(true)}
@@ -172,9 +177,9 @@ const SettingsView: React.FC = () => {
                 gap: '0.5rem',
                 padding: '0.5rem 1rem',
                 borderRadius: '6px',
-                border: '1px solid #dc2626',
+                border: '1px solid var(--color-error)',
                 background: 'transparent',
-                color: '#dc2626',
+                color: 'var(--color-error)',
                 cursor: 'pointer',
                 fontSize: '0.875rem',
                 width: '100%'
@@ -188,11 +193,161 @@ const SettingsView: React.FC = () => {
 
         {/* Content Area */}
         <div style={{
-          background: 'white',
+          background: 'var(--color-surface)',
           borderRadius: '12px',
           padding: '2rem',
-          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+          boxShadow: 'var(--shadow-md)',
+          border: '1px solid var(--color-border)'
         }}>
+          {activeTab === 'account' && (
+            <div>
+              <h2 style={{
+                fontSize: '1.5rem',
+                fontWeight: '600',
+                marginBottom: '1.5rem',
+                color: 'var(--color-text-primary)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
+              }}>
+                <User size={24} />
+                Account-Informationen
+              </h2>
+
+              {/* User Info Card */}
+              <div style={{
+                background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
+                borderRadius: '12px',
+                padding: '2rem',
+                marginBottom: '2rem',
+                color: 'white',
+                border: '2px solid rgba(255, 255, 255, 0.2)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  marginBottom: '1rem'
+                }}>
+                  {user?.user_metadata?.avatar_url ? (
+                    <img
+                      src={user.user_metadata.avatar_url}
+                      alt="Avatar"
+                      style={{
+                        width: '64px',
+                        height: '64px',
+                        borderRadius: '50%',
+                        border: '3px solid rgba(255, 255, 255, 0.3)'
+                      }}
+                    />
+                  ) : (
+                    <div style={{
+                      width: '64px',
+                      height: '64px',
+                      borderRadius: '50%',
+                      background: 'rgba(255, 255, 255, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '3px solid rgba(255, 255, 255, 0.3)'
+                    }}>
+                      <User size={32} />
+                    </div>
+                  )}
+                  <div>
+                    <h3 style={{
+                      fontSize: '1.25rem',
+                      fontWeight: '600',
+                      margin: '0 0 0.5rem 0'
+                    }}>
+                      {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Benutzer'}
+                    </h3>
+                    {user?.email && (
+                      <p style={{
+                        margin: 0,
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        fontSize: '0.875rem'
+                      }}>
+                        {user.email}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
+                  gap: '1rem',
+                  marginTop: '1.5rem'
+                }}>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Angemeldet seit
+                    </p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontWeight: '600', color: 'white' }}>
+                      {user?.created_at ? new Date(user.created_at).toLocaleDateString('de-DE') : 'Unbekannt'}
+                    </p>
+                  </div>
+                  <div>
+                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                      Provider
+                    </p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontWeight: '600', color: 'white' }}>
+                      {user?.app_metadata?.provider === 'google' ? 'Google' : user?.app_metadata?.provider || 'E-Mail'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Logout Button */}
+              <div style={{
+                background: 'var(--color-surface)',
+                border: '1px solid var(--color-border)',
+                borderRadius: '8px',
+                padding: '1.5rem',
+                marginBottom: '2rem'
+              }}>
+                <h3 style={{
+                  fontSize: '1rem',
+                  fontWeight: '600',
+                  margin: '0 0 1rem 0',
+                  color: 'var(--color-error)'
+                }}>
+                  Account-Verwaltung
+                </h3>
+                <p style={{
+                  margin: '0 0 1rem 0',
+                  color: 'var(--color-text-secondary)',
+                  fontSize: '0.875rem'
+                }}>
+                  Möchten Sie sich von Ihrem Account abmelden?
+                </p>
+                <button
+                  onClick={signOut}
+                  style={{
+                    background: 'var(--color-error)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '0.75rem 1.5rem',
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    transition: 'background-color 0.2s'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
+                  onMouseOut={(e) => e.currentTarget.style.background = 'var(--color-error)'}
+                >
+                  <Power size={16} />
+                  Abmelden
+                </button>
+              </div>
+            </div>
+          )}
+
           {activeTab === 'general' && (
             <GeneralSettings settings={settings} onSettingChange={handleSettingChange} />
           )}
@@ -240,11 +395,11 @@ const SettingsView: React.FC = () => {
             boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem' }}>
-              <AlertTriangle size={24} color="#dc2626" />
-              <h3 style={{ margin: 0, color: '#1f2937' }}>Einstellungen zurücksetzen</h3>
+              <AlertTriangle size={24} style={{ color: 'var(--color-error)' }} />
+              <h3 style={{ margin: 0, color: 'var(--color-text-primary)' }}>Einstellungen zurücksetzen</h3>
             </div>
             
-            <p style={{ color: '#6b7280', marginBottom: '2rem' }}>
+            <p style={{ color: 'var(--color-text-secondary)', marginBottom: '2rem' }}>
               Sind Sie sicher, dass Sie alle Einstellungen auf die Standardwerte zurücksetzen möchten? 
               Diese Aktion kann nicht rückgängig gemacht werden.
             </p>
@@ -257,7 +412,7 @@ const SettingsView: React.FC = () => {
                   borderRadius: '6px',
                   border: '1px solid #d1d5db',
                   background: 'white',
-                  color: '#374151',
+                  color: 'var(--color-text-primary)',
                   cursor: 'pointer'
                 }}
               >
@@ -290,7 +445,7 @@ const GeneralSettings: React.FC<{
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }> = ({ settings, onSettingChange }) => (
   <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: '#1f2937' }}>
+    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
       Allgemeine Einstellungen
     </h2>
     
@@ -304,7 +459,7 @@ const GeneralSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           <Languages size={18} />
           Sprache
@@ -334,7 +489,7 @@ const GeneralSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           <Palette size={18} />
           Design
@@ -354,9 +509,9 @@ const GeneralSettings: React.FC<{
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
                 borderRadius: '8px',
-                border: `2px solid ${settings.theme === value ? '#3b82f6' : '#e5e7eb'}`,
-                background: settings.theme === value ? '#eff6ff' : 'white',
-                color: settings.theme === value ? '#3b82f6' : '#374151',
+                border: `2px solid ${settings.theme === value ? 'var(--color-primary-ocean)' : 'var(--color-border)'}`,
+                background: settings.theme === value ? 'var(--color-primary-ocean)' : 'var(--color-surface)',
+                color: settings.theme === value ? 'white' : 'var(--color-text-primary)',
                 cursor: 'pointer'
               }}
             >
@@ -376,7 +531,7 @@ const GeneralSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           <DollarSign size={18} />
           Währung
@@ -408,7 +563,7 @@ const GeneralSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           <Clock size={18} />
           Datumsformat
@@ -439,7 +594,7 @@ const GeneralSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           <Clock size={18} />
           Zeitformat
@@ -455,9 +610,9 @@ const GeneralSettings: React.FC<{
               style={{
                 padding: '0.75rem 1rem',
                 borderRadius: '8px',
-                border: `2px solid ${settings.timeFormat === value ? '#3b82f6' : '#e5e7eb'}`,
-                background: settings.timeFormat === value ? '#eff6ff' : 'white',
-                color: settings.timeFormat === value ? '#3b82f6' : '#374151',
+                border: `2px solid ${settings.timeFormat === value ? 'var(--color-primary-ocean)' : 'var(--color-border)'}`,
+                background: settings.timeFormat === value ? 'var(--color-primary-ocean)' : 'var(--color-surface)',
+                color: settings.timeFormat === value ? 'white' : 'var(--color-text-primary)',
                 cursor: 'pointer'
               }}
             >
@@ -475,7 +630,7 @@ const MapSettings: React.FC<{
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }> = ({ settings, onSettingChange }) => (
   <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: '#1f2937' }}>
+    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
       Karteneinstellungen
     </h2>
     
@@ -489,7 +644,7 @@ const MapSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           <Globe size={18} />
           Kartenanbieter
@@ -520,7 +675,7 @@ const MapSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           Standard-Zoom: {settings.defaultMapZoom}
         </label>
@@ -536,7 +691,7 @@ const MapSettings: React.FC<{
 
       {/* Map Features */}
       <div>
-        <h3 style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '1rem', color: '#374151' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '1rem', color: 'var(--color-text-primary)' }}>
           Kartenfeatures
         </h3>
         
@@ -569,7 +724,7 @@ const TravelSettings: React.FC<{
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }> = ({ settings, onSettingChange }) => (
   <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: '#1f2937' }}>
+    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
       Reiseeinstellungen
     </h2>
     
@@ -583,7 +738,7 @@ const TravelSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           <Car size={18} />
           Standard-Transportmittel
@@ -617,7 +772,7 @@ const TravelSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           Kraftstoffart
         </label>
@@ -647,7 +802,7 @@ const TravelSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           Kraftstoffverbrauch (L/100km)
         </label>
@@ -681,7 +836,7 @@ const TravelSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '1rem',
-          color: '#374151'
+          color: 'var(--color-text-primary)'
         }}>
           <Home size={18} />
           Home-Point (Zuhause)
@@ -689,8 +844,8 @@ const TravelSettings: React.FC<{
         
         {settings.homePoint ? (
           <div style={{
-            background: '#f0fdf4',
-            border: '1px solid #bbf7d0',
+            background: 'rgba(139, 195, 143, 0.2)',
+            border: '1px solid var(--color-success)',
             borderRadius: '8px',
             padding: '1rem',
             marginBottom: '1rem'
@@ -702,17 +857,17 @@ const TravelSettings: React.FC<{
               marginBottom: '0.5rem'
             }}>
               <div>
-                <div style={{ fontWeight: '600', color: '#166534' }}>
+                <div style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>
                   {settings.homePoint.name}
                 </div>
-                <div style={{ fontSize: '0.875rem', color: '#16a34a' }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                   {settings.homePoint.address}
                 </div>
               </div>
               <button
                 onClick={() => onSettingChange('homePoint', undefined)}
                 style={{
-                  background: '#dc2626',
+                  background: 'var(--color-error)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '6px',
@@ -724,19 +879,19 @@ const TravelSettings: React.FC<{
                 Entfernen
               </button>
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#15803d' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
               📍 {settings.homePoint.coordinates.lat.toFixed(4)}, {settings.homePoint.coordinates.lng.toFixed(4)}
             </div>
           </div>
         ) : (
           <div style={{
-            background: '#fef3c7',
-            border: '1px solid #fcd34d',
+            background: 'rgba(204, 139, 101, 0.2)',
+            border: '1px solid var(--color-warning)',
             borderRadius: '8px',
             padding: '1rem',
             marginBottom: '1rem',
             fontSize: '0.875rem',
-            color: '#92400e'
+            color: 'var(--color-text-primary)'
           }}>
             ℹ️ Kein Home-Point konfiguriert. Definieren Sie Ihren Wohnort für eine einfachere Zielauswahl.
           </div>
@@ -756,7 +911,7 @@ const NotificationSettings: React.FC<{
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }> = ({ settings, onSettingChange }) => (
   <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: '#1f2937' }}>
+    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
       Benachrichtigungseinstellungen
     </h2>
     
@@ -776,7 +931,7 @@ const NotificationSettings: React.FC<{
             fontSize: '1rem',
             fontWeight: '500',
             marginBottom: '0.5rem',
-            color: '#374151',
+            color: 'var(--color-text-primary)',
             display: 'block'
           }}>
             Erinnerungszeit (Minuten vor Termin)
@@ -806,7 +961,7 @@ const ExportSettings: React.FC<{
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }> = ({ settings, onSettingChange }) => (
   <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: '#1f2937' }}>
+    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
       Export-Einstellungen
     </h2>
     
@@ -817,7 +972,7 @@ const ExportSettings: React.FC<{
           fontSize: '1rem',
           fontWeight: '500',
           marginBottom: '0.5rem',
-          color: '#374151',
+          color: 'var(--color-text-primary)',
           display: 'block'
         }}>
           Standard-Exportformat
@@ -842,7 +997,7 @@ const ExportSettings: React.FC<{
 
       {/* Export Options */}
       <div>
-        <h3 style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '1rem', color: '#374151' }}>
+        <h3 style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '1rem', color: 'var(--color-text-primary)' }}>
           Export-Optionen
         </h3>
         
@@ -875,7 +1030,7 @@ const PrivacySettings: React.FC<{
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }> = ({ settings, onSettingChange }) => (
   <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: '#1f2937' }}>
+    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
       Datenschutzeinstellungen
     </h2>
     
@@ -906,7 +1061,7 @@ const BackupSettings: React.FC<{
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
 }> = ({ settings, onSettingChange }) => (
   <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: '#1f2937' }}>
+    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
       Backup-Einstellungen
     </h2>
     
@@ -926,7 +1081,7 @@ const BackupSettings: React.FC<{
             fontSize: '1rem',
             fontWeight: '500',
             marginBottom: '0.5rem',
-            color: '#374151',
+            color: 'var(--color-text-primary)',
             display: 'block'
           }}>
             Backup-Intervall (Stunden)
@@ -1017,13 +1172,13 @@ const HomePointConfigurator: React.FC<{
 
   return (
     <div style={{
-      background: '#f9fafb',
-      border: '1px solid #e5e7eb',
+      background: 'var(--color-surface)',
+      border: '1px solid var(--color-border)',
       borderRadius: '8px',
       padding: '1rem',
       marginTop: '1rem'
     }}>
-      <h4 style={{ margin: '0 0 1rem 0', color: '#374151' }}>
+      <h4 style={{ margin: '0 0 1rem 0', color: 'var(--color-text-primary)' }}>
         Home-Point {currentHomePoint ? 'bearbeiten' : 'definieren'}
       </h4>
       
@@ -1032,7 +1187,7 @@ const HomePointConfigurator: React.FC<{
           display: 'block',
           fontSize: '0.875rem',
           fontWeight: '500',
-          color: '#374151',
+          color: 'var(--color-text-primary)',
           marginBottom: '0.5rem'
         }}>
           Name (z.B. "Zuhause", "Wohnung")
@@ -1046,8 +1201,9 @@ const HomePointConfigurator: React.FC<{
             width: '100%',
             padding: '0.5rem',
             borderRadius: '6px',
-            border: '1px solid #d1d5db',
-            background: 'white'
+            border: '1px solid var(--color-border)',
+            background: 'var(--color-surface)',
+            color: 'var(--color-text-primary)'
           }}
         />
       </div>
@@ -1057,7 +1213,7 @@ const HomePointConfigurator: React.FC<{
           display: 'block',
           fontSize: '0.875rem',
           fontWeight: '500',
-          color: '#374151',
+          color: 'var(--color-text-primary)',
           marginBottom: '0.5rem'
         }}>
           Adresse oder Ort suchen
@@ -1073,13 +1229,14 @@ const HomePointConfigurator: React.FC<{
 
       {homePointForm.coordinates && (
         <div style={{
-          background: '#ecfdf5',
-          border: '1px solid #d1fae5',
+          background: 'var(--color-success)',
+          border: '1px solid var(--color-success)',
           borderRadius: '6px',
           padding: '0.5rem',
           marginBottom: '1rem',
           fontSize: '0.75rem',
-          color: '#065f46'
+          color: 'white',
+          opacity: 0.9
         }}>
           📍 Koordinaten: {homePointForm.coordinates.lat.toFixed(4)}, {homePointForm.coordinates.lng.toFixed(4)}
         </div>
@@ -1089,7 +1246,7 @@ const HomePointConfigurator: React.FC<{
         <button
           onClick={handleCancel}
           style={{
-            background: '#6b7280',
+            background: 'var(--color-text-secondary)',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
@@ -1105,14 +1262,16 @@ const HomePointConfigurator: React.FC<{
           disabled={!homePointForm.name || !homePointForm.address || !homePointForm.coordinates}
           style={{
             background: (!homePointForm.name || !homePointForm.address || !homePointForm.coordinates) 
-              ? '#9ca3af' : '#16a34a',
+              ? 'var(--color-text-secondary)' : 'var(--color-success)',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
             padding: '0.5rem 1rem',
             fontSize: '0.875rem',
             cursor: (!homePointForm.name || !homePointForm.address || !homePointForm.coordinates) 
-              ? 'not-allowed' : 'pointer'
+              ? 'not-allowed' : 'pointer',
+            opacity: (!homePointForm.name || !homePointForm.address || !homePointForm.coordinates) 
+              ? 0.6 : 1
           }}
         >
           Speichern

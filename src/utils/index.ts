@@ -2,7 +2,8 @@ import { format, parseISO, addDays, differenceInMinutes, isWithinInterval } from
 import { Destination, UUID, Coordinates, DestinationCategory, DestinationStatus } from '../types';
 
 // Date and Time utilities
-export const formatDate = (dateString: string): string => {
+export const formatDate = (dateString: string | null | undefined): string => {
+  if (!dateString) return '';
   return format(parseISO(dateString), 'dd.MM.yyyy');
 };
 
@@ -10,7 +11,8 @@ export const formatTime = (timeString: string): string => {
   return timeString;
 };
 
-export const formatDateTimeWithDuration = (dateString: string, duration: number): string => {
+export const formatDateTimeWithDuration = (dateString: string | null | undefined, duration: number): string => {
+  if (!dateString) return `(${Math.floor(duration / 60)}h ${duration % 60}min)`;
   const date = parseISO(dateString);
   const hours = Math.floor(duration / 60);
   const minutes = duration % 60;

@@ -1,6 +1,7 @@
 import React from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { MapPin, Calendar, Settings, Search, DollarSign, Menu } from 'lucide-react';
+import { MapPin, Calendar, Settings, Search, DollarSign, Menu, Compass, Mountain } from 'lucide-react';
+import Button from '../Common/Button';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -12,7 +13,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
   React.useEffect(() => {
     const checkScreenSize = () => {
-      setIsLargeScreen(window.innerWidth > 640);
+      setIsLargeScreen(window.innerWidth > 768);
     };
     
     checkScreenSize();
@@ -33,189 +34,255 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header style={{
-      background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+    <header className="bg-gradient-primary" style={{
       color: 'white',
-      padding: '1rem 1.5rem',
-      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+      padding: 'var(--space-md) 0',
+      boxShadow: 'var(--shadow-md)',
       position: 'sticky',
       top: 0,
       zIndex: 50
     }}>
-      <div style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'space-between',
-        maxWidth: '1200px',
-        margin: '0 auto'
-      }}>
-        {/* Left Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          {/* Mobile Menu Button */}
-          {onMenuClick && (
-            <button
-              onClick={onMenuClick}
-              style={{
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.5rem',
-                color: 'white',
-                cursor: 'pointer',
+      <div className="container">
+        <div className="flex items-center justify-between">
+          {/* Left Section - Brand & Current Trip */}
+          <div className="flex items-center gap-4">
+            {/* Mobile Menu Button */}
+            {onMenuClick && (
+              <button
+                onClick={onMenuClick}
+                className="btn-ghost"
+                style={{
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  color: 'white',
+                  padding: 'var(--space-sm)',
+                  minWidth: 'auto'
+                }}
+                title="Menu öffnen"
+              >
+                <Menu size={20} />
+              </button>
+            )}
+            
+            {/* Brand */}
+            <div className="flex items-center gap-3">
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                padding: 'var(--space-sm)',
+                borderRadius: 'var(--radius-md)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'
-              }}
-              title="Menu öffnen"
-            >
-              <Menu size={20} />
-            </button>
-          )}
-          
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.5rem' }}>🏖️</span>
-            <h1 style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: 'bold', 
-              margin: 0,
-              display: isLargeScreen ? 'block' : 'none'
-            }}>
-              Vacation Planner
-            </h1>
+              }}>
+                <Mountain size={24} />
+              </div>
+              <div>
+                <h1 style={{ 
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: isLargeScreen ? 'var(--text-xl)' : 'var(--text-lg)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  margin: 0,
+                  lineHeight: 1.2
+                }}>
+                  {isLargeScreen ? 'Freedom Trail' : 'Trail'}
+                </h1>
+                {isLargeScreen && (
+                  <p style={{ 
+                    fontSize: 'var(--text-xs)', 
+                    margin: 0, 
+                    opacity: 0.8,
+                    fontWeight: 'var(--font-weight-normal)'
+                  }}>
+                    Vacation Planner
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Current Trip Badge */}
+            {currentTrip && isLargeScreen && (
+              <div style={{
+                background: 'var(--color-secondary-sunset)',
+                color: 'white',
+                padding: 'var(--space-sm) var(--space-md)',
+                borderRadius: 'var(--radius-full)',
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-weight-medium)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}>
+                <Compass size={16} />
+                {currentTrip.name}
+              </div>
+            )}
           </div>
 
-          {currentTrip && (
-            <div style={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              padding: '0.5rem 1rem',
-              borderRadius: '20px',
-              fontSize: '0.875rem'
+          {/* Center Section - Search (Desktop only) */}
+          {isLargeScreen && (
+            <div style={{ 
+              flex: 1, 
+              maxWidth: '400px', 
+              margin: '0 var(--space-2xl)',
+              position: 'relative'
             }}>
-              📍 {currentTrip.name}
+              <div style={{ position: 'relative' }}>
+                <Search 
+                  size={18} 
+                  style={{
+                    position: 'absolute',
+                    left: 'var(--space-md)',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--color-neutral-stone)'
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Orte, Sehenswürdigkeiten suchen..."
+                  value={uiState.searchQuery}
+                  onChange={handleSearchChange}
+                  className="input"
+                  style={{
+                    width: '100%',
+                    paddingLeft: '3rem',
+                    borderRadius: 'var(--radius-full)',
+                    border: 'none',
+                    background: 'rgba(255, 255, 255, 0.95)',
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-normal)'
+                  }}
+                />
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Center Section - Search */}
-        <div style={{ 
-          flex: 1, 
-          maxWidth: '400px', 
-          margin: '0 2rem',
-          position: 'relative'
-        }}>
-          <div style={{ position: 'relative' }}>
+          {/* Right Section - Navigation & Actions */}
+          <div className="flex items-center gap-2">
+            {/* Quick Navigation */}
+            <div className="flex items-center gap-1" style={{ 
+              background: 'rgba(255, 255, 255, 0.1)', 
+              borderRadius: 'var(--radius-md)',
+              padding: '4px'
+            }}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewChange('map')}
+                style={{
+                  background: uiState.currentView === 'map' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                  color: 'white',
+                  minWidth: 'auto',
+                  padding: 'var(--space-sm)'
+                }}
+                title="Karte"
+              >
+                <MapPin size={18} />
+                {isLargeScreen && <span style={{ fontSize: 'var(--text-sm)' }}>Karte</span>}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewChange('timeline')}
+                style={{
+                  background: uiState.currentView === 'timeline' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                  color: 'white',
+                  minWidth: 'auto',
+                  padding: 'var(--space-sm)'
+                }}
+                title="Timeline"
+              >
+                <Calendar size={18} />
+                {isLargeScreen && <span style={{ fontSize: 'var(--text-sm)' }}>Timeline</span>}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewChange('budget')}
+                style={{
+                  background: uiState.currentView === 'budget' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                  color: 'white',
+                  minWidth: 'auto',
+                  padding: 'var(--space-sm)'
+                }}
+                title="Budget"
+              >
+                <DollarSign size={18} />
+                {isLargeScreen && <span style={{ fontSize: 'var(--text-sm)' }}>Budget</span>}
+              </Button>
+            </div>
+
+            {/* Settings */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSettingsClick}
+              style={{
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: 'white',
+                minWidth: 'auto',
+                padding: 'var(--space-sm)'
+              }}
+              title="Einstellungen"
+            >
+              <Settings size={18} />
+            </Button>
+          </div>
+        </div>
+        
+        {/* Mobile Search Bar */}
+        {!isLargeScreen && (
+          <div style={{ 
+            marginTop: 'var(--space-md)',
+            position: 'relative'
+          }}>
             <Search 
-              size={18} 
+              size={16} 
               style={{
                 position: 'absolute',
-                left: '12px',
+                left: 'var(--space-md)',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: '#9CA3AF'
+                color: 'var(--color-neutral-stone)'
               }}
             />
             <input
               type="text"
-              placeholder="Orte, Sehenswürdigkeiten suchen..."
+              placeholder="Suchen..."
               value={uiState.searchQuery}
               onChange={handleSearchChange}
+              className="input"
               style={{
                 width: '100%',
-                padding: '0.75rem 0.75rem 0.75rem 2.5rem',
+                paddingLeft: '2.5rem',
+                borderRadius: 'var(--radius-full)',
                 border: 'none',
-                borderRadius: '25px',
-                background: 'rgba(255, 255, 255, 0.9)',
-                color: '#374151',
-                fontSize: '0.875rem',
-                outline: 'none'
+                background: 'rgba(255, 255, 255, 0.95)',
+                fontSize: 'var(--text-sm)'
               }}
             />
           </div>
-        </div>
-
-        {/* Right Section - View Toggle */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {/* View Toggle Buttons */}
+        )}
+        
+        {/* Mobile Current Trip */}
+        {currentTrip && !isLargeScreen && (
           <div style={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            borderRadius: '12px',
-            padding: '0.25rem',
+            marginTop: 'var(--space-sm)',
+            background: 'rgba(255, 255, 255, 0.15)',
+            padding: 'var(--space-sm) var(--space-md)',
+            borderRadius: 'var(--radius-md)',
+            fontSize: 'var(--text-sm)',
+            fontWeight: 'var(--font-weight-medium)',
             display: 'flex',
-            gap: '0.25rem'
+            alignItems: 'center',
+            gap: 'var(--space-sm)'
           }}>
-            {[
-              { view: 'timeline' as const, icon: Calendar, label: 'Timeline' },
-              { view: 'map' as const, icon: MapPin, label: 'Karte' },
-              { view: 'budget' as const, icon: DollarSign, label: 'Budget' }
-            ].map(({ view, icon: Icon, label }) => (
-              <button
-                key={view}
-                onClick={() => handleViewChange(view)}
-                style={{
-                  background: (uiState.currentView === view || uiState.activeView === view)
-                    ? 'rgba(255, 255, 255, 0.2)' 
-                    : 'transparent',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: '0.5rem 0.75rem',
-                  color: 'white',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: (uiState.currentView === view || uiState.activeView === view) ? '600' : '400',
-                  transition: 'all 0.2s'
-                }}
-                title={label}
-                onMouseOver={(e) => {
-                  if (uiState.currentView !== view && uiState.activeView !== view) {
-                    e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (uiState.currentView !== view && uiState.activeView !== view) {
-                    e.currentTarget.style.background = 'transparent';
-                  }
-                }}
-              >
-                <Icon size={16} />
-                <span style={{ display: 'none' }}>{label}</span>
-              </button>
-            ))}
+            <Compass size={14} />
+            Aktuelle Reise: {currentTrip.name}
           </div>
-
-          {/* Settings Button */}
-          <button
-            onClick={handleSettingsClick}
-            style={{
-              background: uiState.currentView === 'settings' 
-                ? 'rgba(255, 255, 255, 0.2)' 
-                : 'rgba(255, 255, 255, 0.1)',
-              border: 'none',
-              borderRadius: '8px',
-              padding: '0.5rem',
-              color: 'white',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            title="Einstellungen"
-            onMouseOver={(e) => {
-              if (uiState.currentView !== 'settings') {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (uiState.currentView !== 'settings') {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)';
-              }
-            }}
-          >
-            <Settings size={18} />
-          </button>
-        </div>
+        )}
       </div>
     </header>
   );

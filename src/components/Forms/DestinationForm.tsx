@@ -18,13 +18,19 @@ import {
   X, 
   MapPin, 
   Calendar, 
-  Star, 
+  DollarSign, 
   FileText,
   Tag,
-  Palette
+  Palette,
+  Coffee,
+  CheckCircle,
+  Mountain,
+  Compass
 } from 'lucide-react';
 import LocationSearch from '../UI/LocationSearch';
 import MapSelectionModal from '../UI/MapSelectionModal';
+import Button from '../Common/Button';
+import Card from '../Common/Card';
 import { Coordinates } from '../../types';
 
 interface DestinationFormProps {
@@ -34,8 +40,9 @@ interface DestinationFormProps {
 }
 
 const predefinedColors = [
-  '#3b82f6', '#ef4444', '#f59e0b', '#10b981', '#8b5cf6',
-  '#ec4899', '#06b6d4', '#f97316', '#84cc16', '#6b7280'
+  'var(--color-primary-sage)', 'var(--color-primary-ocean)', 'var(--color-secondary-sunset)', 
+  'var(--color-secondary-forest)', 'var(--color-accent-campfire)', 'var(--color-accent-moss)',
+  '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899'
 ];
 
 // Helper function to get status labels
@@ -224,46 +231,72 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
       alignItems: 'center',
       justifyContent: 'center',
       zIndex: 1000,
-      padding: '1rem'
+      padding: 'var(--space-lg)'
     }}>
       <div style={{
-        background: 'white',
-        borderRadius: '16px',
+        background: 'var(--color-surface)',
+        borderRadius: 'var(--radius-xl)',
         width: '100%',
-        maxWidth: '600px',
-        maxHeight: '90vh',
+        maxWidth: '700px',
+        maxHeight: '95vh',
         overflow: 'auto',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+        boxShadow: 'var(--shadow-lg)',
+        border: '1px solid var(--color-border)'
       }}>
         {/* Header */}
         <div style={{
+          background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-primary-ocean) 100%)',
+          color: 'white',
+          padding: 'var(--space-xl)',
+          borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '1.5rem 2rem',
-          borderBottom: '1px solid #e5e7eb'
+          justifyContent: 'space-between'
         }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            color: '#1f2937'
-          }}>
-            {destination ? 'Ziel bearbeiten' : 'Neues Ziel hinzufügen'}
-          </h2>
-          <button
+          <div className="flex items-center gap-3">
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.2)',
+              padding: 'var(--space-sm)',
+              borderRadius: 'var(--radius-md)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              {destination ? <Mountain size={24} /> : <Compass size={24} />}
+            </div>
+            <div>
+              <h2 style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'var(--text-2xl)',
+                fontWeight: 'var(--font-weight-semibold)',
+                margin: 0,
+                lineHeight: 1.2
+              }}>
+                {destination ? 'Ziel bearbeiten' : 'Neues Ziel hinzufügen'}
+              </h2>
+              <p style={{
+                fontSize: 'var(--text-sm)',
+                margin: 0,
+                opacity: 0.8,
+                fontWeight: 'var(--font-weight-normal)'
+              }}>
+                {destination ? 'Aktualisiere deine Destination' : 'Plane dein nächstes Abenteuer'}
+              </p>
+            </div>
+          </Card>
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={onClose}
             style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '8px',
-              color: '#6b7280'
+              background: 'rgba(255, 255, 255, 0.15)',
+              color: 'white',
+              minWidth: 'auto',
+              padding: 'var(--space-sm)'
             }}
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         {/* Form */}
@@ -335,38 +368,30 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 />
                 
                 {/* Map Selection Button */}
-                <button
-                  type="button"
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setShowMapSelection(true)}
+                  leftIcon={<MapPin size={16} />}
                   style={{
-                    marginTop: '0.5rem',
-                    padding: '0.5rem 0.75rem',
-                    background: '#f3f4f6',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    color: '#374151',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.25rem'
+                    marginTop: 'var(--space-sm)',
+                    fontSize: 'var(--text-sm)',
+                    justifyContent: 'flex-start'
                   }}
-                  onMouseOver={(e) => e.currentTarget.style.background = '#e5e7eb'}
-                  onMouseOut={(e) => e.currentTarget.style.background = '#f3f4f6'}
                 >
-                  <MapPin size={12} />
                   Auf Karte auswählen
-                </button>
+                </Button>
                 
                 {/* Current Coordinates Display */}
                 {coordinates && (
                   <div style={{
-                    marginTop: '0.5rem',
-                    padding: '0.5rem',
-                    background: '#f0f9ff',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    color: '#0891b2'
+                    marginTop: 'var(--space-sm)',
+                    padding: 'var(--space-sm)',
+                    background: 'var(--color-accent-moss)',
+                    color: 'white',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-xs)',
+                    fontWeight: 'var(--font-weight-medium)'
                   }}>
                     📍 Koordinaten: {coordinates.lat.toFixed(6)}, {coordinates.lng.toFixed(6)}
                   </div>
@@ -377,24 +402,26 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
               <div>
                 <label style={{
                   display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: 'var(--space-sm)'
                 }}>
                   Kategorie *
                 </label>
                 <select
                   {...register('category', { required: 'Kategorie ist erforderlich' })}
                   onChange={(e) => handleCategoryChange(e.target.value as DestinationCategory)}
+                  className="input"
                   style={{
                     width: '100%',
-                    padding: '0.75rem',
-                    border: `1px solid ${errors.category ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    background: 'white'
+                    border: `2px solid ${errors.category ? 'var(--color-error)' : 'var(--color-border)'}`,
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-base)',
+                    padding: 'var(--space-md)',
+                    fontFamily: 'var(--font-body)',
+                    backgroundColor: 'var(--color-surface)'
                   }}
                 >
                   {Object.values(DestinationCategory).map((category) => (
@@ -405,15 +432,16 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 </select>
                 {selectedCategory === DestinationCategory.HOTEL && (
                   <div style={{
-                    marginTop: '0.5rem',
-                    padding: '0.75rem',
-                    background: '#f0f9ff',
-                    border: '1px solid #bae6fd',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    color: '#0891b2'
+                    marginTop: 'var(--space-sm)',
+                    padding: 'var(--space-md)',
+                    background: 'var(--color-secondary-sky)',
+                    color: 'white',
+                    border: `2px solid rgba(255, 255, 255, 0.3)`,
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-medium)'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
                       <span>🏨</span>
                       <span>Bei Unterkünften ist ein Abreisedatum erforderlich</span>
                     </div>
@@ -421,7 +449,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 )}
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Date Range */}
           <div style={{ marginBottom: '2rem' }}>
@@ -472,10 +500,11 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 <div>
                   <label style={{
                     display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: '#374151',
-                    marginBottom: '0.5rem'
+                    fontFamily: 'var(--font-body)',
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    color: 'var(--color-text-primary)',
+                    marginBottom: 'var(--space-sm)'
                   }}>
                     Abreisedatum *
                   </label>
@@ -484,116 +513,141 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                     {...register('endDate', { 
                       required: selectedCategory === DestinationCategory.HOTEL ? 'Abreisedatum ist bei Hotels erforderlich' : false
                     })}
+                    className="input"
                     style={{
                       width: '100%',
-                      padding: '0.75rem',
-                      border: `1px solid ${errors.endDate ? '#ef4444' : '#d1d5db'}`,
-                      borderRadius: '8px',
-                      fontSize: '0.875rem',
-                      outline: 'none'
+                      border: `2px solid ${errors.endDate ? 'var(--color-error)' : 'var(--color-border)'}`,
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: 'var(--text-base)',
+                      padding: 'var(--space-md)',
+                      fontFamily: 'var(--font-body)'
                     }}
                   />
                   {errors.endDate && (
-                    <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                    <p style={{ color: 'var(--color-error)', fontSize: 'var(--text-xs)', margin: 'var(--space-xs) 0 0 0' }}>
                       {errors.endDate.message}
                     </p>
                   )}
                 </div>
               )}
             </div>
-          </div>
+          </Card>
 
-          {/* Budget */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              margin: '0 0 1rem 0',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <Star size={18} />
-              Budget
-            </h3>
-
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '0.5rem'
+          {/* Budget & Status */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
+            
+            {/* Budget */}
+            <Card>
+              <div style={{
+                background: 'linear-gradient(135deg, var(--color-accent-campfire) 0%, var(--color-secondary-sunset) 100%)',
+                color: 'white',
+                padding: 'var(--space-md)',
+                margin: '-var(--space-lg) -var(--space-lg) var(--space-lg) -var(--space-lg)',
+                borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)'
               }}>
-                Budget (€)
-              </label>
-              <input
-                type="number"
-                step="0.01"
-                {...register('budget', { valueAsNumber: true })}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: '1px solid #d1d5db',
-                  borderRadius: '8px',
-                  fontSize: '0.875rem',
-                  outline: 'none'
-                }}
-                placeholder="0.00"
-              />
-            </div>
-          </div>
+                <DollarSign size={20} />
+                <h3 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-lg)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  margin: 0
+                }}>
+                  Budget
+                </h3>
+              </div>
 
-          {/* Status Selection */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              margin: '0 0 1rem 0',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <Star size={18} />
-              Status
-            </h3>
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: 'var(--space-sm)'
+                }}>
+                  Budget (€)
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  {...register('budget', { valueAsNumber: true })}
+                  className="input"
+                  style={{
+                    width: '100%',
+                    border: '2px solid var(--color-border)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-base)',
+                    padding: 'var(--space-md)',
+                    fontFamily: 'var(--font-body)'
+                  }}
+                  placeholder="0.00"
+                />
+              </div>
+            </Card>
 
-            <div>
-              <label style={{
-                display: 'block',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151',
-                marginBottom: '0.5rem'
+            {/* Status */}
+            <Card>
+              <div style={{
+                background: 'linear-gradient(135deg, var(--color-accent-moss) 0%, var(--color-secondary-forest) 100%)',
+                color: 'white',
+                padding: 'var(--space-md)',
+                margin: '-var(--space-lg) -var(--space-lg) var(--space-lg) -var(--space-lg)',
+                borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)'
               }}>
-                Aktueller Status
-              </label>
-              <select
-                {...register('status', { required: 'Status ist erforderlich' })}
-                style={{
-                  width: '100%',
-                  padding: '0.75rem',
-                  border: `1px solid ${errors.status ? '#ef4444' : '#d1d5db'}`,
-                  borderRadius: '8px',
-                  fontSize: '0.875rem',
-                  outline: 'none',
-                  background: 'white'
-                }}
-              >
-                {Object.values(DestinationStatus).map((status) => (
-                  <option key={status} value={status}>
-                    {getStatusIcon(status)} {getStatusLabel(status)}
-                  </option>
-                ))}
-              </select>
-              {errors.status && (
-                <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
-                  {errors.status.message}
-                </p>
-              )}
-            </div>
+                <CheckCircle size={20} />
+                <h3 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-lg)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  margin: 0
+                }}>
+                  Status
+                </h3>
+              </div>
+
+              <div>
+                <label style={{
+                  display: 'block',
+                  fontFamily: 'var(--font-body)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: 'var(--space-sm)'
+                }}>
+                  Aktueller Status
+                </label>
+                <select
+                  {...register('status', { required: 'Status ist erforderlich' })}
+                  className="input"
+                  style={{
+                    width: '100%',
+                    border: `2px solid ${errors.status ? 'var(--color-error)' : 'var(--color-border)'}`,
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-base)',
+                    padding: 'var(--space-md)',
+                    fontFamily: 'var(--font-body)',
+                    backgroundColor: 'var(--color-surface)'
+                  }}
+                >
+                  {Object.values(DestinationStatus).map((status) => (
+                    <option key={status} value={status}>
+                      {getStatusIcon(status)} {getStatusLabel(status)}
+                    </option>
+                  ))}
+                </select>
+                {errors.status && (
+                  <p style={{ color: 'var(--color-error)', fontSize: 'var(--text-xs)', margin: 'var(--space-xs) 0 0 0' }}>
+                    {errors.status.message}
+                  </p>
+                )}
+              </div>
+            </Card>
           </div>
 
           {/* Color Selection */}
@@ -632,71 +686,78 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 />
               ))}
             </div>
-          </div>
+          </Card>
 
           {/* Tags */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              margin: '0 0 1rem 0',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
+          <Card className="mb-6">
+            <div style={{
+              background: 'linear-gradient(135deg, var(--color-secondary-sky) 0%, var(--color-primary-ocean) 100%)',
+              color: 'white',
+              padding: 'var(--space-md)',
+              margin: '-var(--space-lg) -var(--space-lg) var(--space-lg) -var(--space-lg)',
+              borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              gap: 'var(--space-sm)'
             }}>
-              <Tag size={18} />
-              Tags
-            </h3>
+              <Tag size={20} />
+              <h3 style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'var(--text-lg)',
+                fontWeight: 'var(--font-weight-medium)',
+                margin: 0
+              }}>
+                Tags
+              </h3>
+            </div>
 
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ marginBottom: 'var(--space-lg)' }}>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
                 <input
                   value={newTag}
                   onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  className="input"
                   style={{
                     flex: 1,
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
+                    border: '2px solid var(--color-border)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-base)',
+                    padding: 'var(--space-md)',
+                    fontFamily: 'var(--font-body)'
                   }}
                   placeholder="Tag hinzufügen..."
                 />
-                <button
-                  type="button"
+                <Button
+                  variant="primary"
+                  size="sm"
                   onClick={addTag}
                   style={{
-                    background: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem'
+                    minWidth: 'auto',
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   Hinzufügen
-                </button>
+                </Button>
               </div>
             </div>
 
             {tags.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
                 {tags.map((tag) => (
                   <span
                     key={tag}
                     style={{
-                      background: '#e0f2fe',
-                      color: '#0891b2',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '16px',
-                      fontSize: '0.875rem',
+                      background: 'var(--color-secondary-sky)',
+                      color: 'white',
+                      padding: 'var(--space-xs) var(--space-md)',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.5rem'
+                      gap: 'var(--space-xs)',
+                      boxShadow: 'var(--shadow-sm)'
                     }}
                   >
                     #{tag}
@@ -704,13 +765,15 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                       type="button"
                       onClick={() => removeTag(tag)}
                       style={{
-                        background: 'transparent',
+                        background: 'rgba(255, 255, 255, 0.2)',
                         border: 'none',
                         cursor: 'pointer',
-                        color: '#0891b2',
-                        padding: 0,
+                        color: 'white',
+                        padding: '2px',
+                        borderRadius: 'var(--radius-full)',
                         display: 'flex',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        transition: 'background-color var(--transition-fast)'
                       }}
                     >
                       <X size={14} />
@@ -722,77 +785,74 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
           </div>
 
           {/* Notes */}
-          <div style={{ marginBottom: '2rem' }}>
-            <label style={{
+          <Card className="mb-6">
+            <div style={{
+              background: 'linear-gradient(135deg, var(--color-neutral-stone) 0%, var(--color-neutral-charcoal) 100%)',
+              color: 'white',
+              padding: 'var(--space-md)',
+              margin: '-var(--space-lg) -var(--space-lg) var(--space-lg) -var(--space-lg)',
+              borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
-              marginBottom: '1rem'
+              gap: 'var(--space-sm)'
             }}>
-              <FileText size={18} />
-              Notizen
-            </label>
+              <FileText size={20} />
+              <h3 style={{
+                fontFamily: 'var(--font-heading)',
+                fontSize: 'var(--text-lg)',
+                fontWeight: 'var(--font-weight-medium)',
+                margin: 0
+              }}>
+                Notizen
+              </h3>
+            </div>
+            
             <textarea
               {...register('notes')}
               rows={4}
+              className="textarea"
               style={{
                 width: '100%',
-                padding: '0.75rem',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                fontSize: '0.875rem',
-                outline: 'none',
+                border: '2px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: 'var(--text-base)',
+                padding: 'var(--space-md)',
+                fontFamily: 'var(--font-body)',
                 resize: 'vertical',
-                fontFamily: 'inherit'
+                minHeight: '120px'
               }}
               placeholder="Zusätzliche Informationen, Öffnungszeiten, etc..."
             />
-          </div>
+          </Card>
 
           {/* Form Actions */}
           <div style={{
             display: 'flex',
-            gap: '1rem',
+            gap: 'var(--space-md)',
             justifyContent: 'flex-end',
-            paddingTop: '1rem',
-            borderTop: '1px solid #e5e7eb'
+            paddingTop: 'var(--space-lg)',
+            borderTop: `2px solid var(--color-border)`
           }}>
-            <button
-              type="button"
+            <Button
+              variant="secondary"
               onClick={onClose}
               style={{
-                background: 'white',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                padding: '0.75rem 1.5rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151'
+                minWidth: '120px'
               }}
             >
               Abbrechen
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="primary"
               type="submit"
-              disabled={isSubmitting}
+              loading={isSubmitting}
               onClick={() => console.log('Submit button clicked!')}
               style={{
-                background: isSubmitting ? '#9ca3af' : '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.75rem 1.5rem',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500'
+                minWidth: '140px'
               }}
             >
-              {isSubmitting ? 'Speichern...' : destination ? 'Aktualisieren' : 'Hinzufügen'}
-            </button>
+              {destination ? 'Aktualisieren' : 'Hinzufügen'}
+            </Button>
           </div>
         </form>
       </div>

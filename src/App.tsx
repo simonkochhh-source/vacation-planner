@@ -10,6 +10,7 @@ import TimelineView from './components/Views/TimelineView';
 import BudgetView from './components/Views/BudgetView';
 import SettingsView from './components/Views/SettingsView';
 import DestinationDiscovery from './components/Discovery/DestinationDiscovery';
+import { useTheme } from './hooks/useTheme';
 import { Destination } from './types';
 import './App.css';
 import './styles/responsive.css';
@@ -17,6 +18,9 @@ import './styles/components.css';
 
 const AppContent: React.FC = () => {
   const { uiState, currentTrip, reorderDestinations } = useSupabaseApp();
+  
+  // Initialize theme system
+  useTheme();
 
   const handleReorderDestinations = async (reorderedDestinations: Destination[]) => {
     if (!currentTrip) return;
@@ -63,11 +67,13 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <DashboardLayout>
-      <MainLayout>
-        {renderCurrentView()}
-      </MainLayout>
-    </DashboardLayout>
+    <div className="app-container">
+      <DashboardLayout>
+        <MainLayout>
+          {renderCurrentView()}
+        </MainLayout>
+      </DashboardLayout>
+    </div>
   );
 };
 

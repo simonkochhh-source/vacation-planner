@@ -2,10 +2,12 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { Trip, VehicleConfig, FuelType, Coordinates } from '../../types';
+import { Trip, VehicleConfig, FuelType, CreateTripData } from '../../types';
 import { tripSchema, TripFormData } from '../../schemas/validationSchemas';
 import { getCurrentDateString, addDaysToDate, getCenterCoordinates } from '../../utils';
 import VehicleConfigPanel from '../Trip/VehicleConfigPanel';
+import Button from '../Common/Button';
+import Card from '../Common/Card';
 import { 
   X, 
   Plane, 
@@ -13,7 +15,10 @@ import {
   Users, 
   FileText,
   Tag,
-  Car
+  Car,
+  MapPin,
+  Coffee,
+  Mountain
 } from 'lucide-react';
 
 interface TripFormProps {
@@ -37,18 +42,7 @@ const TripForm: React.FC<TripFormProps> = ({
     fuelConsumption: 9.0,
     fuelPrice: 1.65
   });
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Check for mobile view
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const [showVehicleConfig, setShowVehicleConfig] = useState(false);
 
   const {
     register,
@@ -58,66 +52,42 @@ const TripForm: React.FC<TripFormProps> = ({
     watch
   } = useForm<TripFormData>({
     resolver: zodResolver(tripSchema),
-    defaultValues: trip ? {
-      name: trip.name,
-      description: trip.description,
-      startDate: trip.startDate,
-      endDate: trip.endDate,
-      budget: trip.budget,
-      participants: trip.participants,
-      tags: trip.tags
-    } : {
-      name: '',
-      description: '',
-      startDate: getCurrentDateString(),
-      endDate: addDaysToDate(getCurrentDateString(), 7),
-      budget: undefined,
-      participants: [],
-      tags: []
+    defaultValues: {
+      name: trip?.name || '',
+      description: trip?.description || '',
+      startDate: trip?.startDate || getCurrentDateString(),
+      endDate: trip?.endDate || addDaysToDate(getCurrentDateString(), 7),
+      budget: trip?.budget || 1000
     }
   });
 
-  const startDate = watch('startDate');
-
-  // Get center coordinates for fuel price lookup
-  const tripCoordinates: Coordinates | undefined = React.useMemo(() => {
-    if (!trip) return undefined;
-    
-    const tripDestinations = destinations.filter(dest => 
-      trip.destinations.includes(dest.id) && dest.coordinates
-    );
-    
-    return getCenterCoordinates(tripDestinations) || undefined;
-  }, [trip, destinations]);
+  const watchedValues = watch();
 
   const onSubmit = async (data: TripFormData) => {
     try {
-      const formData = {
+      const tripData: Partial<Trip> = {
         ...data,
         participants,
         tags,
-        vehicleConfig
+        vehicleConfig,
+        destinations: trip?.destinations || [],
+        createdAt: trip?.createdAt || new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
+      let savedTrip: Trip;
       if (trip) {
-        await updateTrip(trip.id, formData);
+        savedTrip = await updateTrip(trip.id, tripData);
       } else {
-        const newTrip = await createTrip(formData);
-        // Auto-select the newly created trip
-        setCurrentTrip(newTrip.id);
+        const createData = tripData as CreateTripData;
+        savedTrip = await createTrip(createData);
+        setCurrentTrip(savedTrip.id);
       }
-      
-      onClose();
+
       reset();
       setParticipants([]);
       setTags([]);
-      setVehicleConfig({
-        fuelType: FuelType.DIESEL,
-        fuelConsumption: 9.0,
-        fuelPrice: 1.65
-      });
-      setNewParticipant('');
-      setNewTag('');
+      onClose();
     } catch (error) {
       console.error('Error saving trip:', error);
     }
@@ -130,8 +100,8 @@ const TripForm: React.FC<TripFormProps> = ({
     }
   };
 
-  const removeParticipant = (participantToRemove: string) => {
-    setParticipants(participants.filter(p => p !== participantToRemove));
+  const removeParticipant = (index: number) => {
+    setParticipants(participants.filter((_, i) => i !== index));
   };
 
   const addTag = () => {
@@ -141,8 +111,8 @@ const TripForm: React.FC<TripFormProps> = ({
     }
   };
 
-  const removeTag = (tagToRemove: string) => {
-    setTags(tags.filter(tag => tag !== tagToRemove));
+  const removeTag = (index: number) => {
+    setTags(tags.filter((_, i) => i !== index));
   };
 
   if (!isOpen) return null;
@@ -150,497 +120,484 @@ const TripForm: React.FC<TripFormProps> = ({
   return (
     <div style={{
       position: 'fixed',
-      inset: 0,
-      background: isMobile ? 'rgba(0, 0, 0, 0.8)' : 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: isMobile ? 'flex-start' : 'center',
-      justifyContent: 'center',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0, 0, 0, 0.6)',
+      backdropFilter: 'blur(4px)',
       zIndex: 1000,
-      padding: isMobile ? '0' : '1rem',
-      overflowY: 'auto'
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 'var(--space-lg)'
     }}>
       <div style={{
-        background: 'white',
-        borderRadius: isMobile ? '0' : '16px',
+        background: 'var(--color-surface)',
+        borderRadius: 'var(--radius-xl)',
+        maxWidth: '600px',
         width: '100%',
-        maxWidth: isMobile ? '100vw' : '600px',
-        height: isMobile ? '100vh' : 'auto',
-        maxHeight: isMobile ? '100vh' : '90vh',
-        overflow: 'auto',
-        boxShadow: isMobile ? 'none' : '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        ...(isMobile && {
-          position: 'fixed',
-          top: 0,
-          left: 0
-        })
+        maxHeight: '90vh',
+        overflowY: 'auto',
+        boxShadow: 'var(--shadow-lg)',
+        border: '1px solid var(--color-border)'
       }}>
         {/* Header */}
         <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: isMobile ? '1rem' : '1.5rem 2rem',
-          borderBottom: '1px solid #e5e7eb'
+          padding: 'var(--space-xl)',
+          borderBottom: '1px solid var(--color-border)',
+          background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
+          color: 'white',
+          borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
+          position: 'relative'
         }}>
-          <h2 style={{
-            margin: 0,
-            fontSize: '1.5rem',
-            fontWeight: '600',
-            color: '#1f2937',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem'
-          }}>
-            <Plane size={24} />
-            {trip ? 'Reise bearbeiten' : 'Neue Reise erstellen'}
-          </h2>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '8px',
-              color: '#6b7280'
-            }}
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit(onSubmit)} style={{ 
-          padding: isMobile ? '1rem' : '2rem',
-          paddingBottom: isMobile ? '2rem' : '2rem'
-        }}>
-          {/* Basic Info */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              margin: '0 0 1rem 0',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <FileText size={18} />
-              Grundinformationen
-            </h3>
-
-            <div style={{ display: 'grid', gap: '1rem' }}>
-              {/* Trip Name */}
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Name der Reise *
-                </label>
-                <input
-                  {...register('name', { required: 'Name ist erforderlich' })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: `1px solid ${errors.name ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    transition: 'border-color 0.2s'
-                  }}
-                  placeholder="z.B. Berlin Städtetrip"
-                />
-                {errors.name && (
-                  <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
-                    {errors.name.message}
-                  </p>
-                )}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.2)',
+                padding: 'var(--space-sm)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {trip ? <Mountain size={24} /> : <MapPin size={24} />}
               </div>
-
-              {/* Description */}
               <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
+                <h2 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-xl)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  margin: 0,
+                  lineHeight: 1.2
                 }}>
-                  Beschreibung
-                </label>
-                <textarea
-                  {...register('description')}
-                  rows={3}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none',
-                    resize: 'vertical',
-                    fontFamily: 'inherit'
-                  }}
-                  placeholder="Kurze Beschreibung der Reise..."
-                />
+                  {trip ? 'Reise bearbeiten' : 'Neue Reise planen'}
+                </h2>
+                <p style={{
+                  fontSize: 'var(--text-sm)',
+                  margin: 0,
+                  opacity: 0.9,
+                  fontWeight: 'var(--font-weight-normal)'
+                }}>
+                  {trip ? 'Details deiner Reise anpassen' : 'Dein nächstes Abenteuer wartet'}
+                </p>
               </div>
             </div>
-          </div>
-
-          {/* Dates & Budget */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              margin: '0 0 1rem 0',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <Calendar size={18} />
-              Reisedaten & Budget
-            </h3>
-
-            <div style={{ 
-              display: 'grid', 
-              gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr',
-              gap: '1rem'
-            }}>
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Startdatum *
-                </label>
-                <input
-                  type="date"
-                  {...register('startDate', { required: 'Startdatum ist erforderlich' })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: `1px solid ${errors.startDate ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                />
-                {errors.startDate && (
-                  <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
-                    {errors.startDate.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Enddatum *
-                </label>
-                <input
-                  type="date"
-                  {...register('endDate', { 
-                    required: 'Enddatum ist erforderlich',
-                    validate: (value) => {
-                      if (startDate && value < startDate) {
-                        return 'Enddatum muss nach dem Startdatum liegen';
-                      }
-                      return true;
-                    }
-                  })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: `1px solid ${errors.endDate ? '#ef4444' : '#d1d5db'}`,
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                />
-                {errors.endDate && (
-                  <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
-                    {errors.endDate.message}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#374151',
-                  marginBottom: '0.5rem'
-                }}>
-                  Budget (€)
-                </label>
-                <input
-                  type="number"
-                  step="0.01"
-                  {...register('budget', { valueAsNumber: true })}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Participants */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              margin: '0 0 1rem 0',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <Users size={18} />
-              Reisende
-            </h3>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  value={newParticipant}
-                  onChange={(e) => setNewParticipant(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                  placeholder="Name des Reisenden..."
-                />
-                <button
-                  type="button"
-                  onClick={addParticipant}
-                  style={{
-                    background: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Hinzufügen
-                </button>
-              </div>
-            </div>
-
-            {participants.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {participants.map((participant) => (
-                  <span
-                    key={participant}
-                    style={{
-                      background: '#f3f4f6',
-                      color: '#374151',
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '16px',
-                      fontSize: '0.875rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                  >
-                    👤 {participant}
-                    <button
-                      type="button"
-                      onClick={() => removeParticipant(participant)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#6b7280',
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Vehicle Configuration */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              margin: '0 0 1rem 0',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <Car size={18} />
-              Fahrzeug & Spritkosten
-            </h3>
             
-            <VehicleConfigPanel
-              vehicleConfig={vehicleConfig}
-              onChange={setVehicleConfig}
-              tripCoordinates={tripCoordinates}
-            />
-          </div>
-
-          {/* Tags */}
-          <div style={{ marginBottom: '2rem' }}>
-            <h3 style={{
-              margin: '0 0 1rem 0',
-              fontSize: '1.125rem',
-              fontWeight: '600',
-              color: '#374151',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}>
-              <Tag size={18} />
-              Tags
-            </h3>
-
-            <div style={{ marginBottom: '1rem' }}>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
-                  style={{
-                    flex: 1,
-                    padding: '0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    outline: 'none'
-                  }}
-                  placeholder="Tag hinzufügen..."
-                />
-                <button
-                  type="button"
-                  onClick={addTag}
-                  style={{
-                    background: '#3b82f6',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '8px',
-                    padding: '0.75rem 1rem',
-                    cursor: 'pointer',
-                    fontSize: '0.875rem'
-                  }}
-                >
-                  Hinzufügen
-                </button>
-              </div>
-            </div>
-
-            {tags.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    style={{
-                      background: '#e0f2fe',
-                      color: '#0891b2',
-                      padding: '0.25rem 0.75rem',
-                      borderRadius: '16px',
-                      fontSize: '0.875rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.5rem'
-                    }}
-                  >
-                    #{tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        cursor: 'pointer',
-                        color: '#0891b2',
-                        padding: 0,
-                        display: 'flex',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Form Actions */}
-          <div style={{
-            display: 'flex',
-            gap: '1rem',
-            justifyContent: 'flex-end',
-            paddingTop: '1rem',
-            borderTop: '1px solid #e5e7eb'
-          }}>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={onClose}
               style={{
-                background: 'white',
-                border: '1px solid #d1d5db',
-                borderRadius: '8px',
-                padding: '0.75rem 1.5rem',
-                cursor: 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500',
-                color: '#374151'
+                background: 'rgba(255, 255, 255, 0.1)',
+                color: 'white',
+                minWidth: 'auto',
+                padding: 'var(--space-sm)'
               }}
+            >
+              <X size={20} />
+            </Button>
+          </div>
+        </div>
+
+        {/* Form Content */}
+        <form onSubmit={handleSubmit(onSubmit as any)} style={{ padding: 'var(--space-xl)' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+            {/* Basic Info Section */}
+            <Card padding="md" style={{ background: 'var(--color-neutral-mist)' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <Coffee size={18} style={{ color: 'var(--color-primary-sage)' }} />
+                <h3 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-base)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  margin: 0,
+                  color: 'var(--color-text-primary)'
+                }}>
+                  Grundinformationen
+                </h3>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+                {/* Trip Name */}
+                <div>
+                  <label style={{
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    color: 'var(--color-text-primary)',
+                    marginBottom: 'var(--space-sm)',
+                    display: 'block'
+                  }}>
+                    Reisename *
+                  </label>
+                  <input
+                    {...register('name')}
+                    className="input"
+                    placeholder="z.B. Portugal Roadtrip 2024"
+                    style={{
+                      width: '100%',
+                      fontSize: 'var(--text-base)'
+                    }}
+                  />
+                  {errors.name && (
+                    <p style={{
+                      fontSize: 'var(--text-sm)',
+                      color: 'var(--color-error)',
+                      margin: 'var(--space-xs) 0 0 0'
+                    }}>
+                      {errors.name.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label style={{
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    color: 'var(--color-text-primary)',
+                    marginBottom: 'var(--space-sm)',
+                    display: 'block'
+                  }}>
+                    Beschreibung
+                  </label>
+                  <textarea
+                    {...register('description')}
+                    className="textarea"
+                    placeholder="Erzähl uns von deinem geplanten Abenteuer..."
+                    rows={3}
+                    style={{
+                      width: '100%',
+                      resize: 'vertical',
+                      minHeight: '80px'
+                    }}
+                  />
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)',
+                      marginBottom: 'var(--space-sm)',
+                      display: 'block'
+                    }}>
+                      Startdatum *
+                    </label>
+                    <input
+                      {...register('startDate')}
+                      type="date"
+                      className="input"
+                      style={{ width: '100%' }}
+                    />
+                    {errors.startDate && (
+                      <p style={{
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--color-error)',
+                        margin: 'var(--space-xs) 0 0 0'
+                      }}>
+                        {errors.startDate.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)',
+                      marginBottom: 'var(--space-sm)',
+                      display: 'block'
+                    }}>
+                      Enddatum *
+                    </label>
+                    <input
+                      {...register('endDate')}
+                      type="date"
+                      className="input"
+                      style={{ width: '100%' }}
+                    />
+                    {errors.endDate && (
+                      <p style={{
+                        fontSize: 'var(--text-sm)',
+                        color: 'var(--color-error)',
+                        margin: 'var(--space-xs) 0 0 0'
+                      }}>
+                        {errors.endDate.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Budget */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)',
+                      marginBottom: 'var(--space-sm)',
+                      display: 'block'
+                    }}>
+                      Budget
+                    </label>
+                    <input
+                      {...register('budget', { valueAsNumber: true })}
+                      type="number"
+                      className="input"
+                      placeholder="1000"
+                      min="0"
+                      step="50"
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)',
+                      marginBottom: 'var(--space-sm)',
+                      display: 'block'
+                    }}>
+                      Währung
+                    </label>
+                    <select
+                      className="select"
+                      style={{ width: '100%' }}
+                      defaultValue="EUR"
+                      disabled
+                    >
+                      <option value="EUR">EUR (€)</option>
+                      <option value="USD">USD ($)</option>
+                      <option value="GBP">GBP (£)</option>
+                      <option value="CHF">CHF</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
+            {/* Participants Section */}
+            <Card padding="md">
+              <div className="flex items-center gap-2 mb-4">
+                <Users size={18} style={{ color: 'var(--color-primary-ocean)' }} />
+                <h3 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-base)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  margin: 0,
+                  color: 'var(--color-text-primary)'
+                }}>
+                  Reisebegleiter
+                </h3>
+              </div>
+
+              <div style={{ marginBottom: 'var(--space-md)' }}>
+                <div className="flex gap-2">
+                  <input
+                    value={newParticipant}
+                    onChange={(e) => setNewParticipant(e.target.value)}
+                    className="input"
+                    placeholder="Name oder E-Mail"
+                    style={{ flex: 1 }}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addParticipant())}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={addParticipant}
+                    disabled={!newParticipant.trim()}
+                  >
+                    Hinzufügen
+                  </Button>
+                </div>
+              </div>
+
+              {participants.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                  {participants.map((participant, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        background: 'var(--color-primary-ocean)',
+                        color: 'white',
+                        padding: 'var(--space-xs) var(--space-sm)',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: 'var(--text-sm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-xs)'
+                      }}
+                    >
+                      {participant}
+                      <button
+                        type="button"
+                        onClick={() => removeParticipant(index)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'white',
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            {/* Tags Section */}
+            <Card padding="md">
+              <div className="flex items-center gap-2 mb-4">
+                <Tag size={18} style={{ color: 'var(--color-secondary-sunset)' }} />
+                <h3 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-base)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  margin: 0,
+                  color: 'var(--color-text-primary)'
+                }}>
+                  Tags & Kategorien
+                </h3>
+              </div>
+
+              <div style={{ marginBottom: 'var(--space-md)' }}>
+                <div className="flex gap-2">
+                  <input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    className="input"
+                    placeholder="z.B. Camping, Surfen, Roadtrip"
+                    style={{ flex: 1 }}
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={addTag}
+                    disabled={!newTag.trim()}
+                  >
+                    Hinzufügen
+                  </Button>
+                </div>
+              </div>
+
+              {tags.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                  {tags.map((tag, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        background: 'var(--color-secondary-sunset)',
+                        color: 'white',
+                        padding: 'var(--space-xs) var(--space-sm)',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: 'var(--text-sm)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 'var(--space-xs)'
+                      }}
+                    >
+                      #{tag}
+                      <button
+                        type="button"
+                        onClick={() => removeTag(index)}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: 'white',
+                          cursor: 'pointer',
+                          padding: 0,
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <X size={14} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+
+            {/* Vehicle Config Toggle */}
+            <Card padding="md">
+              <div 
+                className="flex items-center justify-between cursor-pointer"
+                onClick={() => setShowVehicleConfig(!showVehicleConfig)}
+                style={{
+                  padding: 'var(--space-sm)',
+                  margin: '-var(--space-sm)',
+                  borderRadius: 'var(--radius-md)',
+                  transition: 'background-color var(--transition-fast)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
+                <div className="flex items-center gap-2">
+                  <Car size={18} style={{ color: 'var(--color-accent-campfire)' }} />
+                  <h3 style={{
+                    fontFamily: 'var(--font-heading)',
+                    fontSize: 'var(--text-base)',
+                    fontWeight: 'var(--font-weight-semibold)',
+                    margin: 0,
+                    color: 'var(--color-text-primary)'
+                  }}>
+                    Fahrzeug-Konfiguration
+                  </h3>
+                </div>
+                <span style={{
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-text-secondary)'
+                }}>
+                  {showVehicleConfig ? 'Weniger' : 'Mehr'}
+                </span>
+              </div>
+
+              {showVehicleConfig && (
+                <div style={{ marginTop: 'var(--space-md)' }}>
+                  <VehicleConfigPanel
+                    vehicleConfig={vehicleConfig}
+                    onChange={setVehicleConfig}
+                  />
+                </div>
+              )}
+            </Card>
+          </div>
+
+          {/* Footer Actions */}
+          <div style={{
+            marginTop: 'var(--space-xl)',
+            padding: 'var(--space-lg) 0 0 0',
+            borderTop: '1px solid var(--color-border)',
+            display: 'flex',
+            gap: 'var(--space-md)',
+            justifyContent: 'flex-end'
+          }}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={onClose}
+              disabled={isSubmitting}
             >
               Abbrechen
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
-              disabled={isSubmitting}
-              style={{
-                background: isSubmitting ? '#9ca3af' : '#3b82f6',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '0.75rem 1.5rem',
-                cursor: isSubmitting ? 'not-allowed' : 'pointer',
-                fontSize: '0.875rem',
-                fontWeight: '500'
-              }}
+              variant="primary"
+              loading={isSubmitting}
+              leftIcon={trip ? <Mountain size={18} /> : <Plane size={18} />}
             >
-              {isSubmitting ? 'Speichern...' : trip ? 'Aktualisieren' : 'Erstellen'}
-            </button>
+              {trip ? 'Reise aktualisieren' : 'Reise erstellen'}
+            </Button>
           </div>
         </form>
       </div>

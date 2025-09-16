@@ -30,7 +30,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       display: 'flex',
       flexDirection: isMobile ? 'column' : 'row',
       overflow: 'hidden',
-      position: 'relative'
+      position: 'relative',
+      backgroundColor: 'var(--color-background)',
+      color: 'var(--color-text-primary)'
     }}>
       {/* Mobile Header */}
       {isMobile && <Header onMenuClick={() => setSidebarOpen(true)} />}
@@ -48,7 +50,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        background: '#ffffff',
+        backgroundColor: 'var(--color-background)',
+        color: 'var(--color-text-primary)',
         ...(isMobile && { marginTop: 0 })
       }}>
         {/* Desktop Header */}
@@ -57,7 +60,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         <div style={{
           flex: 1,
           overflow: 'auto',
-          padding: isMobile ? '0.5rem' : '1rem'
+          padding: isMobile ? '0.5rem' : '1rem',
+          backgroundColor: 'var(--color-background)',
+          color: 'var(--color-text-primary)'
         }}>
           {children}
         </div>

@@ -2,7 +2,7 @@ import { Coordinates, FuelPrice, FuelType } from '../types';
 
 // Tankerkoenig API configuration
 const TANKERKOENIG_BASE_URL = 'https://creativecommons.tankerkoenig.de/json';
-const API_KEY = process.env.REACT_APP_TANKERKOENIG_API_KEY || 'DEMO_KEY'; // User needs to provide their own key
+const API_KEY = process.env.REACT_APP_TANKERKOENIG_API_KEY || '00000000-0000-0000-0000-000000000002'; // Demo key for testing
 
 interface TankerkoenigStation {
   id: string;
@@ -268,10 +268,30 @@ export class FuelPriceService {
   }
 
   /**
-   * Check if API key is configured
+   * Check if API key is configured (not using demo key)
    */
   isConfigured(): boolean {
-    return API_KEY !== 'DEMO_KEY' && API_KEY.length > 0;
+    return API_KEY !== '00000000-0000-0000-0000-000000000002' && API_KEY.length > 0;
+  }
+
+  /**
+   * Check if using demo key
+   */
+  isUsingDemoKey(): boolean {
+    return API_KEY === '00000000-0000-0000-0000-000000000002';
+  }
+
+  /**
+   * Get API configuration status message
+   */
+  getConfigurationStatus(): string {
+    if (this.isConfigured()) {
+      return 'Tankerkönig API ist konfiguriert - aktuelle Spritpreise verfügbar';
+    } else if (this.isUsingDemoKey()) {
+      return 'Tankerkönig API nicht konfiguriert - Demo-Modus mit Durchschnittspreisen';
+    } else {
+      return 'Tankerkönig API nicht konfiguriert - Durchschnittspreise werden verwendet';
+    }
   }
 
   /**
