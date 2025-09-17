@@ -81,13 +81,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const getRedirectUrl = () => {
     // Get current origin dynamically
     const origin = window.location.origin;
+    const hostname = window.location.hostname;
     
-    // For production deployments, ensure we're using the correct domain
     console.log('🔗 Auth: Current origin:', origin);
-    console.log('🔗 Auth: Current hostname:', window.location.hostname);
+    console.log('🔗 Auth: Current hostname:', hostname);
     console.log('🔗 Auth: Current protocol:', window.location.protocol);
+    console.log('🌍 Auth: Environment:', process.env.NODE_ENV);
     
-    return `${origin}/dashboard`;
+    // Check for Vercel deployment
+    const isVercel = hostname.includes('.vercel.app') || process.env.REACT_APP_VERCEL_URL;
+    
+    // Check for custom production domain
+    const productionUrl = process.env.REACT_APP_PRODUCTION_URL;
+    
+    // Priority: Custom production URL > Current origin (should work in most cases)
+    let redirectUrl = origin;
+    
+    if (process.env.NODE_ENV === 'production' && productionUrl) {
+      redirectUrl = productionUrl;
+      console.log('🌐 Auth: Using custom production URL:', productionUrl);
+    } else if (isVercel) {
+      console.log('☁️ Auth: Detected Vercel deployment, using current origin');
+    } else if (hostname === 'localhost' && process.env.NODE_ENV === 'production') {
+      console.error('❌ Auth: Localhost detected in production! This will cause OAuth to fail.');
+      console.log('💡 Auth: Set REACT_APP_PRODUCTION_URL in your deployment environment');
+    }
+    
+    const finalUrl = `${redirectUrl}/dashboard`;
+    console.log('🎯 Auth: Final redirect URL:', finalUrl);
+    
+    return finalUrl;
   };
 
   const signInWithGoogle = async () => {

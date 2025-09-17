@@ -72,7 +72,13 @@ Stelle sicher, dass die Produktionsumgebung die korrekten Supabase-Credentials h
 ```env
 REACT_APP_SUPABASE_URL=https://kyzbtkkprvegzgzrlhez.supabase.co
 REACT_APP_SUPABASE_ANON_KEY=dein_anon_key
+REACT_APP_PRODUCTION_URL=https://deine-domain.com
 ```
+
+**Wichtig für Vercel-Deployments:**
+- Setze `REACT_APP_PRODUCTION_URL` auf deine echte Domain (nicht .vercel.app)
+- Die App erkennt automatisch Vercel-Umgebungen
+- Für lokale Entwicklung ist diese Variable nicht nötig
 
 ### 5. Deployment-Checkliste
 
