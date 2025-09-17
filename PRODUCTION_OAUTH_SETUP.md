@@ -1,5 +1,7 @@
 # Production OAuth Setup für Supabase
 
+> **Status:** OAuth Redirect-Fix implementiert - Deployment erforderlich
+
 ## Problem
 Das Google SSO funktioniert nur auf localhost:3000, aber nicht auf anderen Domains/IPs in der Produktion.
 
