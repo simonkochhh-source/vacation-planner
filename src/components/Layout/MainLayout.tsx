@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface MainLayoutProps {
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { uiState } = useSupabaseApp();
 
   useEffect(() => {
     const checkMobile = () => {
@@ -35,7 +37,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       color: 'var(--color-text-primary)'
     }}>
       {/* Mobile Header */}
-      {isMobile && <Header onMenuClick={() => setSidebarOpen(true)} />}
+      {isMobile && !uiState.hideHeader && <Header onMenuClick={() => setSidebarOpen(true)} />}
       
       {/* Sidebar */}
       <Sidebar 
@@ -55,7 +57,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         ...(isMobile && { marginTop: 0 })
       }}>
         {/* Desktop Header */}
-        {!isMobile && <Header />}
+        {!isMobile && !uiState.hideHeader && <Header />}
         
         <div style={{
           flex: 1,

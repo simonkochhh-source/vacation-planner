@@ -10,6 +10,7 @@ import TimelineView from './components/Views/TimelineView';
 import BudgetView from './components/Views/BudgetView';
 import SettingsView from './components/Views/SettingsView';
 import DiscoveryView from './components/Views/DiscoveryView';
+import SearchPage from './components/Search/SearchPage';
 import { useTheme } from './hooks/useTheme';
 import { Destination } from './types';
 import './App.css';
@@ -50,6 +51,8 @@ const AppContent: React.FC = () => {
         return <SettingsView />;
       case 'discovery':
         return <DiscoveryView />;
+      case 'search':
+        return <SearchPage />;
       case 'list':
       default:
         return (

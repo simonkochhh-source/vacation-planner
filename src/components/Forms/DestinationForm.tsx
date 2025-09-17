@@ -283,7 +283,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 {destination ? 'Aktualisiere deine Destination' : 'Plane dein nächstes Abenteuer'}
               </p>
             </div>
-          </Card>
+          </div>
           <Button
             variant="ghost"
             size="sm"
@@ -449,7 +449,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 )}
               </div>
             </div>
-          </Card>
+          </div>
 
           {/* Date Range */}
           <div style={{ marginBottom: '2rem' }}>
@@ -531,7 +531,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 </div>
               )}
             </div>
-          </Card>
+          </div>
 
           {/* Budget & Status */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
@@ -686,7 +686,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 />
               ))}
             </div>
-          </Card>
+          </div>
 
           {/* Tags */}
           <Card className="mb-6">
@@ -782,7 +782,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 ))}
               </div>
             )}
-          </div>
+          </Card>
 
           {/* Notes */}
           <Card className="mb-6">

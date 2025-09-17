@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useState, useCallback, ReactNode } from 'react';
 import { SupabaseService, getCurrentUserId } from '../services/supabaseService';
 import { isUsingPlaceholderCredentials, supabase } from '../lib/supabase';
 import { CrossAppSyncService } from '../services/CrossAppSyncService';
@@ -30,6 +30,7 @@ import {
 // Action Types
 type AppAction = 
   | { type: 'SET_TRIPS'; payload: Trip[] }
+  | { type: 'SET_PUBLIC_TRIPS'; payload: Trip[] }
   | { type: 'ADD_TRIP'; payload: Trip }
   | { type: 'UPDATE_TRIP'; payload: { id: UUID; data: Partial<Trip> } }
   | { type: 'DELETE_TRIP'; payload: UUID }
@@ -60,8 +61,11 @@ const initialUIState: UIState = {
   isLoading: false,
   searchQuery: '',
   sidebarOpen: true,
+  hideHeader: false,
   mapCenter: undefined,
-  mapZoom: 10
+  mapZoom: 10,
+  selectedTripId: undefined,
+  showTripDetails: false
 };
 
 // Initial Settings
@@ -92,6 +96,7 @@ const initialSettings: AppSettings = {
 // App State Interface
 interface AppState {
   trips: Trip[];
+  publicTrips: Trip[];
   destinations: Destination[];
   currentTrip?: Trip;
   uiState: UIState;
@@ -101,6 +106,7 @@ interface AppState {
 // Initial State
 const initialState: AppState = {
   trips: [],
+  publicTrips: [],
   destinations: [],
   currentTrip: undefined,
   uiState: initialUIState,
@@ -112,6 +118,9 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
     case 'SET_TRIPS':
       return { ...state, trips: Array.isArray(action.payload) ? action.payload : [] };
+    
+    case 'SET_PUBLIC_TRIPS':
+      return { ...state, publicTrips: Array.isArray(action.payload) ? action.payload : [] };
     
     case 'ADD_TRIP':
       return { ...state, trips: [...(Array.isArray(state.trips) ? state.trips : []), action.payload] };
@@ -129,15 +138,21 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
           : state.currentTrip
       };
     
-    case 'DELETE_TRIP':
+    case 'DELETE_TRIP': {
+      // Find the trip to get its destinations before deleting
+      const tripToDelete = (Array.isArray(state.trips) ? state.trips : []).find(trip => trip.id === action.payload);
+      const tripDestinationIds = tripToDelete?.destinations || [];
+      
       return {
         ...state,
         trips: (Array.isArray(state.trips) ? state.trips : []).filter(trip => trip.id !== action.payload),
         currentTrip: state.currentTrip?.id === action.payload ? undefined : state.currentTrip,
+        // Remove all destinations that belong to the deleted trip
         destinations: (Array.isArray(state.destinations) ? state.destinations : []).filter(dest => 
-          !(Array.isArray(state.trips) ? state.trips : []).find(trip => trip.id === action.payload)?.destinations?.includes(dest.id)
+          !tripDestinationIds.includes(dest.id)
         )
       };
+    }
     
     case 'SET_DESTINATIONS':
       return { ...state, destinations: Array.isArray(action.payload) ? action.payload : [] };
@@ -477,7 +492,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
   const updateTrip = async (id: UUID, data: Partial<Trip>): Promise<Trip> => {
     try {
       const updatedTrip = await SupabaseService.updateTrip(id, data);
-      dispatch({ type: 'UPDATE_TRIP', payload: { id, data } });
+      dispatch({ type: 'UPDATE_TRIP', payload: { id, data: updatedTrip } });
       return updatedTrip;
     } catch (error) {
       console.error('Error updating trip:', error);
@@ -489,6 +504,12 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
     try {
       await SupabaseService.deleteTrip(id);
       dispatch({ type: 'DELETE_TRIP', payload: id });
+      
+      // Reload destinations to ensure consistency
+      const updatedDestinations = await SupabaseService.getDestinations();
+      dispatch({ type: 'SET_DESTINATIONS', payload: updatedDestinations });
+      
+      console.log('✅ Trip deleted and state updated successfully');
     } catch (error) {
       console.error('Error deleting trip:', error);
       throw error;
@@ -496,6 +517,51 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
   };
 
   // Destination Actions
+  const createDestinationForTrip = async (data: CreateDestinationData, tripId: string): Promise<Destination> => {
+    try {
+      console.log('🎯 Creating destination for specific trip:', tripId);
+      console.log('🎯 Destination data:', data);
+      
+      const destinationData = {
+        ...data,
+        status: data.status || 'planned' as any,
+        photos: [],
+        createdAt: getCurrentDateString(),
+        updatedAt: getCurrentDateString(),
+      };
+      
+      const newDestination = await SupabaseService.createDestination(destinationData, tripId);
+      console.log('✅ Destination created in Supabase:', newDestination);
+      
+      dispatch({ type: 'ADD_DESTINATION', payload: newDestination });
+      
+      
+      // Reload trips and destinations to ensure data consistency
+      console.log('🔄 Reloading trips and destinations after creation...');
+      const [updatedTrips, updatedDestinations] = await Promise.all([
+        SupabaseService.getTrips(),
+        SupabaseService.getDestinations()
+      ]);
+      
+      dispatch({ type: 'SET_TRIPS', payload: updatedTrips });
+      dispatch({ type: 'SET_DESTINATIONS', payload: updatedDestinations });
+      
+      // Update current trip if needed
+      if (state.currentTrip?.id === tripId) {
+        const updatedCurrentTrip = updatedTrips.find(t => t.id === tripId);
+        if (updatedCurrentTrip) {
+          dispatch({ type: 'SET_CURRENT_TRIP', payload: updatedCurrentTrip.id });
+        }
+      }
+      
+      console.log('✅ Data reloaded successfully');
+      return newDestination;
+    } catch (error) {
+      console.error('❌ Error creating destination for trip:', error);
+      throw error;
+    }
+  };
+
   const createDestination = async (data: CreateDestinationData): Promise<Destination> => {
     try {
       // Debug current state
@@ -532,6 +598,27 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           console.log('✅ Destination created in Supabase:', newDestination);
           
           dispatch({ type: 'ADD_DESTINATION', payload: newDestination });
+          
+          // Add a small delay to ensure database consistency
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+          // Reload trips and destinations to ensure data consistency
+          console.log('🔄 Reloading trips and destinations after creation (fallback)...');
+          const [updatedTrips, updatedDestinations] = await Promise.all([
+            SupabaseService.getTrips(),
+            SupabaseService.getDestinations()
+          ]);
+          
+          dispatch({ type: 'SET_TRIPS', payload: updatedTrips });
+          dispatch({ type: 'SET_DESTINATIONS', payload: updatedDestinations });
+          
+          // Update current trip if needed
+          const updatedCurrentTrip = updatedTrips.find(t => t.id === fallbackTripId);
+          if (updatedCurrentTrip) {
+            dispatch({ type: 'SET_CURRENT_TRIP', payload: updatedCurrentTrip.id });
+          }
+          
+          console.log('✅ Data reloaded successfully (fallback)');
           return newDestination;
         } else {
           throw new Error('No active trip selected. Please select a trip before creating destinations.');
@@ -554,6 +641,27 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
       console.log('✅ Destination created in Supabase:', newDestination);
       
       dispatch({ type: 'ADD_DESTINATION', payload: newDestination });
+      
+      
+      // Reload trips and destinations to ensure data consistency
+      console.log('🔄 Reloading trips and destinations after creation...');
+      const [updatedTrips, updatedDestinations] = await Promise.all([
+        SupabaseService.getTrips(),
+        SupabaseService.getDestinations()
+      ]);
+      
+      dispatch({ type: 'SET_TRIPS', payload: updatedTrips });
+      dispatch({ type: 'SET_DESTINATIONS', payload: updatedDestinations });
+      
+      // Update current trip if needed
+      if (state.currentTrip?.id === activeTripId) {
+        const updatedCurrentTrip = updatedTrips.find(t => t.id === activeTripId);
+        if (updatedCurrentTrip) {
+          dispatch({ type: 'SET_CURRENT_TRIP', payload: updatedCurrentTrip.id });
+        }
+      }
+      
+      console.log('✅ Data reloaded successfully');
       return newDestination;
     } catch (error) {
       console.error('❌ Error creating destination:', error);
@@ -637,8 +745,20 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
     }
   };
 
+  const loadPublicTrips = useCallback(async (): Promise<void> => {
+    try {
+      console.log('🌍 Loading public trips...');
+      const publicTrips = await SupabaseService.getPublicTrips();
+      console.log(`📊 Loaded ${publicTrips.length} public trips`);
+      dispatch({ type: 'SET_PUBLIC_TRIPS', payload: publicTrips });
+    } catch (error) {
+      console.error('❌ Failed to load public trips:', error);
+    }
+  }, []);
+
   const contextValue: AppContextType = {
     trips: state.trips,
+    publicTrips: state.publicTrips,
     destinations: state.destinations,
     currentTrip: state.currentTrip,
     uiState: state.uiState,
@@ -647,13 +767,15 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
     updateTrip,
     deleteTrip,
     createDestination,
+    createDestinationForTrip,
     updateDestination,
     deleteDestination,
     reorderDestinations,
     setCurrentTrip,
     updateUIState,
     updateSettings,
-    exportTrip
+    exportTrip,
+    loadPublicTrips
   };
 
   // Expose functions globally for development debugging

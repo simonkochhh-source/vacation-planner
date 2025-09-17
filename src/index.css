@@ -1,4 +1,4 @@
-/* 🏕️ Freedom Trail Design System */
+/* 🏕️ Trailkeeper Design System */
 @import './styles/design-tokens.css';
 
 /* Import Google Fonts */
@@ -7,7 +7,7 @@
 /* Import Leaflet CSS */
 @import 'leaflet/dist/leaflet.css';
 
-/* Custom styles with Freedom Trail theme */
+/* Custom styles with Trailkeeper theme */
 .bg-gradient-primary {
   background: linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%);
 }

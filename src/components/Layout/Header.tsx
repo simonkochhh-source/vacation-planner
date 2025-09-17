@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { MapPin, Calendar, Settings, Search, DollarSign, Menu, Compass, Mountain } from 'lucide-react';
+import { MapPin, Calendar, Settings, DollarSign, Menu, Mountain } from 'lucide-react';
 import Button from '../Common/Button';
+import IntelligentSearch from '../Search/IntelligentSearch';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -21,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'budget') => {
+  const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'budget' | 'search') => {
     updateUIState({ currentView: view, activeView: view });
   };
 
@@ -29,8 +30,32 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     updateUIState({ currentView: 'settings' });
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    updateUIState({ searchQuery: e.target.value });
+  const handleNavigateToItem = (type: 'destination' | 'trip', id: string) => {
+    if (type === 'destination') {
+      // Navigate to timeline view with destination focus
+      updateUIState({ 
+        currentView: 'timeline',
+        activeView: 'timeline',
+        activeDestination: id
+      });
+    } else if (type === 'trip') {
+      // Navigate to search page with trip details opened
+      updateUIState({ 
+        currentView: 'search',
+        activeView: 'search',
+        selectedTripId: id,
+        showTripDetails: true,
+        searchQuery: '' // Clear search query to show trip details
+      });
+    }
+  };
+
+  const handleShowSearchPage = (query: string) => {
+    updateUIState({ 
+      currentView: 'search',
+      activeView: 'search',
+      searchQuery: query 
+    });
   };
 
   return (
@@ -83,7 +108,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   margin: 0,
                   lineHeight: 1.2
                 }}>
-                  {isLargeScreen ? 'Freedom Trail' : 'Trail'}
+                  {isLargeScreen ? 'Trailkeeper' : 'Keeper'}
                 </h1>
                 {isLargeScreen && (
                   <p style={{ 
@@ -98,24 +123,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               </div>
             </div>
 
-            {/* Current Trip Badge */}
-            {currentTrip && isLargeScreen && (
-              <div style={{
-                background: 'var(--color-secondary-sunset)',
-                color: 'white',
-                padding: 'var(--space-sm) var(--space-md)',
-                borderRadius: 'var(--radius-full)',
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 'var(--space-sm)',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
-              }}>
-                <Compass size={16} />
-                {currentTrip.name}
-              </div>
-            )}
           </div>
 
           {/* Center Section - Search (Desktop only) */}
@@ -126,34 +133,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               margin: '0 var(--space-2xl)',
               position: 'relative'
             }}>
-              <div style={{ position: 'relative' }}>
-                <Search 
-                  size={18} 
-                  style={{
-                    position: 'absolute',
-                    left: 'var(--space-md)',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: 'var(--color-text-secondary)'
-                  }}
-                />
-                <input
-                  type="text"
-                  placeholder="Orte, Sehenswürdigkeiten suchen..."
-                  value={uiState.searchQuery}
-                  onChange={handleSearchChange}
-                  className="input"
-                  style={{
-                    width: '100%',
-                    paddingLeft: '3rem',
-                    borderRadius: 'var(--radius-full)',
-                    border: 'none',
-                    background: 'rgba(255, 255, 255, 0.95)',
-                    fontSize: 'var(--text-sm)',
-                    fontWeight: 'var(--font-weight-normal)'
-                  }}
-                />
-              </div>
+              <IntelligentSearch
+                value={uiState.searchQuery}
+                onChange={(value) => updateUIState({ searchQuery: value })}
+                onNavigate={handleNavigateToItem}
+                onShowSearchPage={handleShowSearchPage}
+                placeholder="Ziele, Reisen suchen..."
+                className="input"
+                style={{
+                  width: '100%',
+                  borderRadius: 'var(--radius-full)',
+                  border: 'none',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-normal)'
+                }}
+              />
             </div>
           )}
 
@@ -212,6 +207,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 <DollarSign size={18} />
                 {isLargeScreen && <span style={{ fontSize: 'var(--text-sm)' }}>Budget</span>}
               </Button>
+              
             </div>
 
             {/* Settings */}
@@ -238,51 +234,25 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             marginTop: 'var(--space-md)',
             position: 'relative'
           }}>
-            <Search 
-              size={16} 
-              style={{
-                position: 'absolute',
-                left: 'var(--space-md)',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: 'var(--color-text-secondary)'
-              }}
-            />
-            <input
-              type="text"
-              placeholder="Suchen..."
+            <IntelligentSearch
               value={uiState.searchQuery}
-              onChange={handleSearchChange}
+              onChange={(value) => updateUIState({ searchQuery: value })}
+              onNavigate={handleNavigateToItem}
+              onShowSearchPage={handleShowSearchPage}
+              placeholder="Ziele, Reisen suchen..."
               className="input"
               style={{
                 width: '100%',
-                paddingLeft: '2.5rem',
                 borderRadius: 'var(--radius-full)',
                 border: 'none',
                 background: 'rgba(255, 255, 255, 0.95)',
                 fontSize: 'var(--text-sm)'
               }}
+              isMobile={true}
             />
           </div>
         )}
         
-        {/* Mobile Current Trip */}
-        {currentTrip && !isLargeScreen && (
-          <div style={{
-            marginTop: 'var(--space-sm)',
-            background: 'rgba(255, 255, 255, 0.15)',
-            padding: 'var(--space-sm) var(--space-md)',
-            borderRadius: 'var(--radius-md)',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 'var(--font-weight-medium)',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 'var(--space-sm)'
-          }}>
-            <Compass size={14} />
-            Aktuelle Reise: {currentTrip.name}
-          </div>
-        )}
       </div>
     </header>
   );

@@ -27,6 +27,7 @@ import {
 // Action Types
 type AppAction = 
   | { type: 'SET_TRIPS'; payload: Trip[] }
+  | { type: 'SET_PUBLIC_TRIPS'; payload: Trip[] }
   | { type: 'ADD_TRIP'; payload: Trip }
   | { type: 'UPDATE_TRIP'; payload: { id: UUID; data: Partial<Trip> } }
   | { type: 'DELETE_TRIP'; payload: UUID }
@@ -57,6 +58,7 @@ const initialUIState: UIState = {
   isLoading: false,
   searchQuery: '',
   sidebarOpen: true,
+  hideHeader: false,
   mapCenter: undefined,
   mapZoom: 10
 };
@@ -102,6 +104,7 @@ const initialSettings: AppSettings = {
 // App State Interface
 interface AppState {
   trips: Trip[];
+  publicTrips: Trip[];
   destinations: Destination[];
   currentTrip?: Trip;
   uiState: UIState;
@@ -111,6 +114,7 @@ interface AppState {
 // Initial State
 const initialState: AppState = {
   trips: [],
+  publicTrips: [],
   destinations: [],
   currentTrip: undefined,
   uiState: initialUIState,
@@ -122,6 +126,9 @@ const appReducer = (state: AppState, action: AppAction): AppState => {
   switch (action.type) {
     case 'SET_TRIPS':
       return { ...state, trips: action.payload };
+    
+    case 'SET_PUBLIC_TRIPS':
+      return { ...state, publicTrips: action.payload };
     
     case 'ADD_TRIP':
       return { ...state, trips: [...state.trips, action.payload] };
@@ -352,6 +359,39 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   };
 
   // Destination Actions
+  const createDestinationForTrip = async (data: CreateDestinationData, tripId: string): Promise<Destination> => {
+    console.log('Creating destination with data for trip:', tripId, data);
+    
+    const trip = state.trips.find(trip => trip.id === tripId);
+    console.log('Target trip:', trip);
+    
+    const newDestination: Destination = {
+      id: generateUUID(),
+      ...data,
+      status: data.status || DestinationStatus.PLANNED,
+      actualCost: undefined,
+      photos: [],
+      createdAt: getCurrentDateString(),
+      updatedAt: getCurrentDateString()
+    };
+
+    // Update trip with new destination
+    if (trip) {
+      dispatch({ 
+        type: 'UPDATE_TRIP', 
+        payload: { 
+          id: tripId, 
+          data: { 
+            destinations: [...trip.destinations, newDestination.id] 
+          } 
+        } 
+      });
+    }
+
+    dispatch({ type: 'ADD_DESTINATION', payload: newDestination });
+    return newDestination;
+  };
+
   const createDestination = async (data: CreateDestinationData): Promise<Destination> => {
     console.log('Creating destination with data:', data);
     
@@ -471,8 +511,22 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
   };
 
+  // Load public trips function (for compatibility with SupabaseAppContext)
+  const loadPublicTrips = async (): Promise<void> => {
+    try {
+      console.log('🌍 Loading public trips from local storage...');
+      // For local storage implementation, we'll return empty array
+      // In a real app, this would fetch from an API
+      dispatch({ type: 'SET_PUBLIC_TRIPS', payload: [] });
+      console.log('📊 Loaded 0 public trips (local storage)');
+    } catch (error) {
+      console.error('❌ Failed to load public trips:', error);
+    }
+  };
+
   const contextValue: AppContextType = {
     trips: state.trips,
+    publicTrips: state.publicTrips,
     destinations: state.destinations,
     currentTrip: state.currentTrip,
     uiState: state.uiState,
@@ -481,13 +535,15 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     updateTrip,
     deleteTrip,
     createDestination,
+    createDestinationForTrip,
     updateDestination,
     deleteDestination,
     reorderDestinations,
     setCurrentTrip,
     updateUIState,
     updateSettings,
-    exportTrip
+    exportTrip,
+    loadPublicTrips
   };
 
   return (

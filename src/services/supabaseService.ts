@@ -1,6 +1,6 @@
 import { supabase, isUsingPlaceholderCredentials } from '../lib/supabase';
 import { Database, Tables } from '../types/supabase';
-import { Destination, Trip } from '../types';
+import { Destination, Trip, TripPrivacy } from '../types';
 
 // Type aliases for better readability
 type SupabaseDestination = Tables<'destinations'>;
@@ -55,8 +55,8 @@ const convertSupabaseToDestination = (dest: SupabaseDestination): Destination =>
   updatedAt: dest.updated_at || '',
 });
 
-const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId?: string): Promise<Database['public']['Tables']['destinations']['Insert']> => {
-  if (!tripId) {
+const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: string): Promise<Database['public']['Tables']['destinations']['Insert']> => {
+  if (!tripId || tripId.trim() === '') {
     throw new Error('tripId is required when converting destination for Supabase');
   }
   
@@ -176,6 +176,54 @@ export class SupabaseService {
     }
   }
 
+  static async getPublicTrips(): Promise<Trip[]> {
+    try {
+      console.log('🌍 Fetching public trips...');
+      
+      const { data, error } = await supabase
+        .from('trips')
+        .select('*')
+        .eq('privacy', 'public')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Supabase getPublicTrips error:', error);
+        return [];
+      }
+      
+      if (!data) {
+        console.warn('No public trips data returned from Supabase');
+        return [];
+      }
+
+      console.log(`📊 Found ${data.length} public trips`);
+
+      // Get all destinations to populate trip.destinations arrays
+      const tripsWithDestinations = [];
+      for (const trip of data) {
+        // Get destination IDs for this trip
+        const { data: rawDestinations } = await supabase
+          .from('destinations')
+          .select('id, trip_id')
+          .eq('trip_id', trip.id);
+        
+        const tripDestinations = rawDestinations?.map(dest => dest.id) || [];
+        
+        console.log(`🎯 Public trip "${trip.name}" has ${tripDestinations.length} destinations`);
+        
+        tripsWithDestinations.push({
+          ...convertSupabaseToTrip(trip),
+          destinations: tripDestinations
+        });
+      }
+      
+      return tripsWithDestinations;
+    } catch (error) {
+      console.error('Failed to fetch public trips:', error);
+      return [];
+    }
+  }
+
   static async getTripById(id: string): Promise<Trip | null> {
     try {
       const { data, error } = await supabase
@@ -217,6 +265,10 @@ export class SupabaseService {
           budget: trip.budget || null,
           participants: trip.participants || null,
           status: trip.status as any || 'planned',
+          tags: trip.tags || null,
+          privacy: trip.privacy as any || 'private',
+          owner_id: userId, // Set current user as owner
+          tagged_users: trip.taggedUsers || null,
         })
         .select()
         .single();
@@ -247,6 +299,10 @@ export class SupabaseService {
     if (updates.budget !== undefined) updateData.budget = updates.budget || null;
     if (updates.participants) updateData.participants = updates.participants;
     if (updates.status) updateData.status = updates.status as any;
+    if (updates.tags) updateData.tags = updates.tags;
+    if (updates.privacy !== undefined) updateData.privacy = updates.privacy as any;
+    if (updates.ownerId !== undefined) updateData.owner_id = updates.ownerId;
+    if (updates.taggedUsers !== undefined) updateData.tagged_users = updates.taggedUsers;
 
     const { data, error } = await supabase
       .from('trips')
@@ -255,17 +311,83 @@ export class SupabaseService {
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      // Handle schema migration issues gracefully
+      if (error.code === 'PGRST204' && error.message.includes('privacy')) {
+        console.warn('⚠️ Database migration required: privacy column missing');
+        console.warn('Please run the database migration script in SUPABASE_MIGRATION_GUIDE.md');
+        
+        // Try update without privacy fields as fallback
+        const fallbackData = { ...updateData };
+        delete fallbackData.privacy;
+        delete fallbackData.owner_id;
+        delete fallbackData.tagged_users;
+        delete fallbackData.tags;
+        
+        const { data: fallbackResult, error: fallbackError } = await supabase
+          .from('trips')
+          .update(fallbackData)
+          .eq('id', id)
+          .select()
+          .single();
+          
+        if (fallbackError) throw fallbackError;
+        
+        // Return result with privacy fields from original updates
+        return {
+          ...convertSupabaseToTrip(fallbackResult),
+          privacy: updates.privacy || TripPrivacy.PRIVATE,
+          ownerId: updates.ownerId || fallbackResult.user_id,
+          taggedUsers: updates.taggedUsers || [],
+          tags: updates.tags || []
+        };
+      }
+      throw error;
+    }
     return convertSupabaseToTrip(data);
   }
 
   static async deleteTrip(id: string): Promise<void> {
-    const { error } = await supabase
-      .from('trips')
-      .delete()
-      .eq('id', id);
+    try {
+      console.log('🗑️ Deleting trip and associated destinations:', id);
+      
+      // Count destinations to delete for logging
+      const { count } = await supabase
+        .from('destinations')
+        .select('*', { count: 'exact', head: true })
+        .eq('trip_id', id);
 
-    if (error) throw error;
+      console.log(`📊 Found ${count || 0} destinations to delete`);
+      
+      // First, delete all destinations associated with this trip
+      const { error: destinationsError } = await supabase
+        .from('destinations')
+        .delete()
+        .eq('trip_id', id);
+
+      if (destinationsError) {
+        console.error('❌ Error deleting destinations:', destinationsError);
+        throw new Error(`Failed to delete destinations: ${destinationsError.message}`);
+      }
+
+      console.log(`✅ ${count || 0} destinations deleted successfully`);
+
+      // Then delete the trip itself
+      const { error: tripError } = await supabase
+        .from('trips')
+        .delete()
+        .eq('id', id);
+
+      if (tripError) {
+        console.error('❌ Error deleting trip:', tripError);
+        throw new Error(`Failed to delete trip: ${tripError.message}`);
+      }
+
+      console.log('✅ Trip deleted successfully');
+    } catch (error) {
+      console.error('❌ deleteTrip failed:', error);
+      throw error;
+    }
   }
 
   // Destination operations
@@ -341,8 +463,8 @@ export class SupabaseService {
     return convertSupabaseToDestination(data);
   }
 
-  static async createDestination(destination: Omit<Destination, 'id'>, tripId?: string): Promise<Destination> {
-    if (!tripId) {
+  static async createDestination(destination: Omit<Destination, 'id'>, tripId: string): Promise<Destination> {
+    if (!tripId || tripId.trim() === '') {
       throw new Error('tripId is required for creating destinations');
     }
     

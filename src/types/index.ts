@@ -195,8 +195,8 @@ export interface SortOptions {
 
 // UI State types
 export interface UIState {
-  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery';
-  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery';
+  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search';
+  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search';
   activeDestination?: UUID;
   activeTripId?: UUID;
   filters: DestinationFilters;
@@ -204,8 +204,12 @@ export interface UIState {
   isLoading: boolean;
   searchQuery: string;
   sidebarOpen: boolean;
+  hideHeader?: boolean; // Optional flag to hide header during trip editing/creation
   mapCenter?: Coordinates;
   mapZoom?: number;
+  // Search navigation states
+  selectedTripId?: UUID; // For opening specific trip details in search
+  showTripDetails?: boolean; // Flag to show trip details view
 }
 
 // Settings types
@@ -336,9 +340,25 @@ export interface TripPermissions {
 
 // Utility functions for trip permissions
 export const getTripPermissions = (trip: Trip, currentUserId: UUID): TripPermissions => {
-  const isOwner = trip.ownerId === currentUserId;
-  const isTagged = trip.taggedUsers.includes(currentUserId);
-  const isPublic = trip.privacy === TripPrivacy.PUBLIC;
+  // Null checks to prevent runtime errors
+  if (!trip || !currentUserId) {
+    return {
+      canEdit: false,
+      canView: false,
+      canDelete: false,
+      isOwner: false,
+      isTagged: false
+    };
+  }
+  
+  // Ensure trip properties exist with fallbacks
+  const ownerId = trip.ownerId || '';
+  const taggedUsers = trip.taggedUsers || [];
+  const privacy = trip.privacy || TripPrivacy.PRIVATE;
+  
+  const isOwner = ownerId === currentUserId;
+  const isTagged = taggedUsers.includes(currentUserId);
+  const isPublic = privacy === TripPrivacy.PUBLIC;
   
   return {
     canEdit: isOwner || isTagged,
@@ -362,6 +382,7 @@ export const canUserEditTrip = (trip: Trip, currentUserId: UUID): boolean => {
 // Context types
 export interface AppContextType {
   trips: Trip[];
+  publicTrips: Trip[];
   destinations: Destination[];
   currentTrip?: Trip;
   uiState: UIState;
@@ -373,6 +394,7 @@ export interface AppContextType {
   deleteTrip: (id: UUID) => Promise<void>;
   
   createDestination: (data: CreateDestinationData) => Promise<Destination>;
+  createDestinationForTrip: (data: CreateDestinationData, tripId: UUID) => Promise<Destination>;
   updateDestination: (id: UUID, data: Partial<Destination>) => Promise<Destination>;
   deleteDestination: (id: UUID) => Promise<void>;
   reorderDestinations: (tripId: UUID, destinationIds: UUID[]) => Promise<void>;
@@ -381,4 +403,5 @@ export interface AppContextType {
   updateUIState: (state: Partial<UIState>) => void;
   updateSettings: (settings: Partial<AppSettings>) => void;
   exportTrip: (tripId: UUID, options: ExportOptions) => Promise<string>;
+  loadPublicTrips: () => Promise<void>;
 }

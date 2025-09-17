@@ -11,6 +11,7 @@ interface OpenStreetMapAutocompleteProps {
   searchRadius?: number;
   className?: string;
   disabled?: boolean;
+  readOnly?: boolean;
   style?: React.CSSProperties;
 }
 
@@ -23,6 +24,7 @@ const OpenStreetMapAutocomplete: React.FC<OpenStreetMapAutocompleteProps> = ({
   searchRadius = 50000, // 50km default
   className = "",
   disabled = false,
+  readOnly = false,
   style
 }) => {
   const [predictions, setPredictions] = useState<PlacePrediction[]>([]);
@@ -113,6 +115,8 @@ const OpenStreetMapAutocomplete: React.FC<OpenStreetMapAutocompleteProps> = ({
 
   // Handle input change
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (readOnly) return;
+    
     const newValue = e.target.value;
     onChange(newValue);
     setHighlightedIndex(-1);
@@ -126,7 +130,7 @@ const OpenStreetMapAutocomplete: React.FC<OpenStreetMapAutocompleteProps> = ({
     debounceRef.current = setTimeout(() => {
       debouncedSearch(newValue);
     }, 300);
-  }, [onChange, debouncedSearch]);
+  }, [onChange, debouncedSearch, readOnly]);
 
   // Handle place selection
   const handlePlaceSelect = useCallback((place: PlacePrediction) => {
@@ -176,13 +180,15 @@ const OpenStreetMapAutocomplete: React.FC<OpenStreetMapAutocompleteProps> = ({
 
   // Handle focus
   const handleFocus = useCallback(() => {
+    if (readOnly) return;
+    
     setIsOpen(true);
     if (!value.trim() && recentSearches.length > 0) {
       setPredictions(recentSearches);
     } else if (value.trim()) {
       debouncedSearch(value);
     }
-  }, [value, recentSearches, debouncedSearch]);
+  }, [value, recentSearches, debouncedSearch, readOnly]);
 
   // Handle blur
   const handleBlur = useCallback((e: React.FocusEvent) => {
@@ -219,9 +225,10 @@ const OpenStreetMapAutocomplete: React.FC<OpenStreetMapAutocompleteProps> = ({
         onKeyDown={handleKeyDown}
         placeholder={placeholder}
         disabled={disabled}
+        readOnly={readOnly}
         className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
           disabled ? 'bg-gray-100 cursor-not-allowed' : ''
-        } ${className}`}
+        } ${readOnly ? 'bg-gray-50 cursor-default' : ''} ${className}`}
         style={style}
       />
       

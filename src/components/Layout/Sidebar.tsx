@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import TripForm from '../Forms/TripForm';
 import Button from '../Common/Button';
@@ -13,7 +13,9 @@ import {
   Calendar,
   DollarSign,
   MapPin,
-  Compass
+  Compass,
+  Trash2,
+  Menu
 } from 'lucide-react';
 import { DestinationStatus } from '../../types';
 import { formatCurrency, calculateTravelCosts } from '../../utils';
@@ -30,12 +32,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
     destinations, 
     trips, 
     setCurrentTrip,
-    settings 
+    deleteTrip,
+    settings,
+    updateUIState 
   } = useSupabaseApp();
 
   const [showTrips, setShowTrips] = useState(true);
   const [showTripForm, setShowTripForm] = useState(false);
   const [showEditTripForm, setShowEditTripForm] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [tripToDelete, setTripToDelete] = useState<string | null>(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveDropdown(null);
+    };
+
+    if (activeDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [activeDropdown]);
 
   // Get current trip destinations
   const currentDestinations = currentTrip && destinations && Array.isArray(destinations)
@@ -55,6 +73,52 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
     completedDestinations: currentDestinations.filter(d => d.status === DestinationStatus.VISITED).length,
     totalCost: destinationCosts + travelCosts,
     plannedCost: currentDestinations.reduce((sum, d) => sum + (d.budget || 0), 0) + travelCosts
+  };
+
+  // Enhanced functions to handle header visibility
+  const handleShowTripForm = () => {
+    setShowTripForm(true);
+    updateUIState({ hideHeader: true });
+  };
+
+  const handleCloseTripForm = () => {
+    setShowTripForm(false);
+    updateUIState({ hideHeader: false });
+  };
+
+  const handleShowEditTripForm = () => {
+    setShowEditTripForm(true);
+    updateUIState({ hideHeader: true });
+  };
+
+  const handleCloseEditTripForm = () => {
+    setShowEditTripForm(false);
+    updateUIState({ hideHeader: false });
+  };
+
+  const handleDeleteTrip = async (tripId: string) => {
+    try {
+      await deleteTrip(tripId);
+      setTripToDelete(null);
+      setActiveDropdown(null);
+      
+      // If the deleted trip was the current trip, clear it
+      if (currentTrip?.id === tripId) {
+        // Set to the first available trip or null
+        if (trips.length > 1) {
+          const remainingTrips = trips.filter(t => t.id !== tripId);
+          setCurrentTrip(remainingTrips[0].id);
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Löschen der Reise:', error);
+      alert('Fehler beim Löschen der Reise. Bitte versuchen Sie es erneut.');
+    }
+  };
+
+  const handleTripMenuClick = (tripId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent trip selection
+    setActiveDropdown(activeDropdown === tripId ? null : tripId);
   };
 
   // Calculate budget progress (actual costs vs trip budget)
@@ -95,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             margin: 0,
             color: 'var(--color-text-primary)'
           }}>
-            🏕️ Freedom Trail
+            🏕️ Trailkeeper
           </h2>
           <Button variant="ghost" size="sm" onClick={onClose}>
             <X size={20} />
@@ -142,7 +206,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setShowEditTripForm(true)}
+              onClick={handleShowEditTripForm}
               title="Reise bearbeiten"
             >
               <Edit3 size={16} />
@@ -344,7 +408,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             <Button 
               variant="primary" 
               size="sm"
-              onClick={() => setShowTripForm(true)}
+              onClick={handleShowTripForm}
               leftIcon={<Plus size={16} />}
             >
               Neue Reise planen
@@ -385,7 +449,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => setShowTripForm(true)}
+              onClick={handleShowTripForm}
               leftIcon={<Plus size={16} />}
               style={{ 
                 width: '100%',
@@ -465,6 +529,85 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
                         }) : 'Datum offen'}
                       </div>
                     </div>
+
+                    {/* Trip Actions Menu */}
+                    <div style={{ position: 'relative' }}>
+                      <button
+                        onClick={(e) => handleTripMenuClick(trip.id, e)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 'var(--space-xs)',
+                          borderRadius: 'var(--radius-sm)',
+                          color: currentTrip?.id === trip.id ? 'white' : 'var(--color-text-secondary)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          width: '28px',
+                          height: '28px',
+                          transition: 'background-color var(--transition-fast)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = currentTrip?.id === trip.id 
+                            ? 'rgba(255,255,255,0.2)' 
+                            : 'var(--color-neutral-mist)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                        }}
+                      >
+                        <Menu size={14} />
+                      </button>
+
+                      {/* Dropdown Menu */}
+                      {activeDropdown === trip.id && (
+                        <div style={{
+                          position: 'absolute',
+                          top: '100%',
+                          right: 0,
+                          background: 'var(--color-surface)',
+                          border: '1px solid var(--color-border)',
+                          borderRadius: 'var(--radius-md)',
+                          boxShadow: 'var(--shadow-md)',
+                          zIndex: 1000,
+                          minWidth: '160px',
+                          marginTop: '4px'
+                        }}>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdown(null);
+                              setTripToDelete(trip.id);
+                            }}
+                            style={{
+                              width: '100%',
+                              padding: 'var(--space-sm) var(--space-md)',
+                              border: 'none',
+                              background: 'transparent',
+                              color: 'var(--color-error)',
+                              fontSize: 'var(--text-sm)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 'var(--space-sm)',
+                              borderRadius: 'var(--radius-sm)',
+                              margin: 'var(--space-xs)',
+                              transition: 'background-color var(--transition-fast)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-error-light)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                          >
+                            <Trash2 size={14} />
+                            Reise löschen
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -497,7 +640,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             overflowY: 'auto',
             boxShadow: 'var(--shadow-lg)'
           }}>
-            <TripForm isOpen={true} onClose={() => setShowTripForm(false)} />
+            <TripForm isOpen={true} onClose={handleCloseTripForm} />
           </div>
         </div>
       )}
@@ -529,8 +672,102 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             <TripForm 
               isOpen={true}
               trip={currentTrip}
-              onClose={() => setShowEditTripForm(false)} 
+              onClose={handleCloseEditTripForm} 
             />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {tripToDelete && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          zIndex: 1001,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'var(--space-lg)'
+        }}>
+          <div style={{
+            background: 'var(--color-surface)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-xl)',
+            maxWidth: '400px',
+            width: '100%',
+            boxShadow: 'var(--shadow-lg)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-md)',
+              marginBottom: 'var(--space-lg)'
+            }}>
+              <div style={{
+                background: 'var(--color-error-light)',
+                padding: 'var(--space-md)',
+                borderRadius: 'var(--radius-full)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Trash2 size={24} style={{ color: 'var(--color-error)' }} />
+              </div>
+              <div>
+                <h3 style={{
+                  fontSize: 'var(--text-lg)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  margin: 0,
+                  marginBottom: '4px',
+                  color: 'var(--color-text-primary)'
+                }}>
+                  Reise löschen
+                </h3>
+                <p style={{
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-text-secondary)',
+                  margin: 0
+                }}>
+                  Diese Aktion kann nicht rückgängig gemacht werden.
+                </p>
+              </div>
+            </div>
+
+            <p style={{
+              fontSize: 'var(--text-sm)',
+              color: 'var(--color-text-primary)',
+              marginBottom: 'var(--space-lg)',
+              lineHeight: 1.5
+            }}>
+              Sind Sie sicher, dass Sie die Reise <strong>"{trips.find(t => t.id === tripToDelete)?.name}"</strong> und alle zugehörigen Ziele löschen möchten?
+            </p>
+
+            <div style={{
+              display: 'flex',
+              gap: 'var(--space-md)',
+              justifyContent: 'flex-end'
+            }}>
+              <Button
+                variant="secondary"
+                onClick={() => setTripToDelete(null)}
+              >
+                Abbrechen
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => handleDeleteTrip(tripToDelete)}
+                style={{
+                  backgroundColor: 'var(--color-error)',
+                  borderColor: 'var(--color-error)'
+                }}
+              >
+                Löschen
+              </Button>
+            </div>
           </div>
         </div>
       )}

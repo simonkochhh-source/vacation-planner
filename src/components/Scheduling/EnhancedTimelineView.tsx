@@ -16,7 +16,7 @@ import {
   Plus,
   X,
   Check,
-  Search,
+  FileText,
   Car,
   Mountain,
   Bike,
@@ -82,11 +82,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   onEditDestination,
   onReorderDestinations
 }) => {
-  const { currentTrip, destinations, createDestination, updateDestination, deleteDestination, settings } = useSupabaseApp();
+  const { currentTrip, destinations, createDestination, createDestinationForTrip, updateDestination, deleteDestination, settings } = useSupabaseApp();
   
   // Permission system - check if current user can edit this trip
   const currentUserId = 'user-1'; // TODO: Get from auth context
-  const tripPermissions = currentTrip ? getTripPermissions(currentTrip, currentUserId) : { canEdit: true, canView: true, canDelete: false, isOwner: true, isTagged: false };
+  const tripPermissions = (currentTrip && currentTrip.id) ? getTripPermissions(currentTrip, currentUserId) : { canEdit: true, canView: true, canDelete: false, isOwner: true, isTagged: false };
   const isReadOnly = !tripPermissions.canEdit;
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dragState, setDragState] = useState<DragState>({
@@ -378,7 +378,15 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     const grouped = new Map<string, TimelineDestination[]>();
     
     // Group destinations by day
-    currentDestinations.forEach(dest => {
+    currentDestinations.forEach((dest, index) => {
+      console.log(`🎯 Processing destination ${index + 1}/${currentDestinations.length}:`, {
+        id: dest.id,
+        name: dest.name,
+        startDate: dest.startDate,
+        endDate: dest.endDate,
+        category: dest.category
+      });
+      
       const enhancedDest: TimelineDestination = {
         ...dest
       };
@@ -388,21 +396,48 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         const startDate = new Date(dest.startDate);
         const endDate = new Date(dest.endDate);
         
-        for (let current = new Date(startDate); current <= endDate; current.setDate(current.getDate() + 1)) {
-          const dateKey = current.toISOString().split('T')[0];
+        console.log(`🏨 Hotel multi-day logic for "${dest.name}": startDate=${startDate.toISOString()}, endDate=${endDate.toISOString()}`);
+        
+        // Handle invalid date ranges (endDate before startDate)
+        if (startDate > endDate) {
+          console.warn(`⚠️ Invalid date range for hotel "${dest.name}": endDate (${dest.endDate}) is before startDate (${dest.startDate}). Using startDate only.`);
+          const dateKey = dest.startDate;
           if (!grouped.has(dateKey)) grouped.set(dateKey, []);
-          
-          const exists = grouped.get(dateKey)!.some(existing => existing.id === dest.id);
-          if (!exists) {
-            grouped.get(dateKey)!.push(enhancedDest);
+          grouped.get(dateKey)!.push(enhancedDest);
+          console.log(`📅 Hotel "${dest.name}" added to single date: "${dateKey}"`);
+        } else {
+          for (let current = new Date(startDate); current <= endDate; current.setDate(current.getDate() + 1)) {
+            const dateKey = current.toISOString().split('T')[0];
+            console.log(`🏨 Adding hotel "${dest.name}" to date: "${dateKey}"`);
+            if (!grouped.has(dateKey)) grouped.set(dateKey, []);
+            
+            const exists = grouped.get(dateKey)!.some(existing => existing.id === dest.id);
+            if (!exists) {
+              grouped.get(dateKey)!.push(enhancedDest);
+            }
           }
         }
       } else {
         const dateKey = dest.startDate;
-        if (!grouped.has(dateKey)) grouped.set(dateKey, []);
+        console.log(`📅 Adding destination "${dest.name}" to date key: "${dateKey}"`);
+        
+        // Handle empty startDate
+        if (!dateKey || dateKey.trim() === '') {
+          console.warn(`⚠️ Destination "${dest.name}" has empty startDate. Skipping from timeline view.`);
+          return; // Skip destinations with empty dates
+        }
+        
+        if (!grouped.has(dateKey)) {
+          console.log(`📅 Creating new group for date: "${dateKey}"`);
+          grouped.set(dateKey, []);
+        }
         grouped.get(dateKey)!.push(enhancedDest);
+        console.log(`📅 Group for "${dateKey}" now has ${grouped.get(dateKey)!.length} destinations`);
       }
     });
+
+    console.log('🗓️ Grouped by date:', grouped);
+    console.log('🗓️ Grouped entries:', Array.from(grouped.entries()));
 
     // Process each day
     return Array.from(grouped.entries())
@@ -1516,7 +1551,18 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 color: returnDestination.color
               };
 
-              const clonedDestination = await createDestination(clonedDestinationData);
+              // Ensure we have a current trip before creating destination
+              if (!currentTrip?.id) {
+                console.error('❌ Cannot create return destination: No current trip ID available');
+                console.error('❌ Current trip state:', { currentTrip, hasDestinations: destinations.length });
+                throw new Error('No current trip available for creating return destination');
+              }
+              
+              console.log('🎯 Creating return destination for trip:', currentTrip.id);
+              console.log('🎯 Cloned destination data:', clonedDestinationData);
+              
+              // Use the createDestinationForTrip function with explicit tripId
+              const clonedDestination = await createDestinationForTrip(clonedDestinationData, currentTrip.id);
               
               // Set the transport mode of the cloned destination to match the original destination's transport mode
               if (clonedDestination) {
@@ -2661,10 +2707,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             borderRadius: '6px',
                             padding: '0.5rem'
                           }}>
-                            <Search size={16} style={{ color: 'var(--color-text-secondary)', marginRight: '0.5rem' }} />
+                            <FileText size={16} style={{ color: 'var(--color-text-secondary)', marginRight: '0.5rem' }} />
                             <input
                               type="text"
-                              placeholder="Ziel suchen..."
+                              placeholder="Ziel-Name eingeben..."
                               value={newDestinationForm.name}
                               onChange={(e) => setNewDestinationForm(prev => ({ ...prev, name: e.target.value }))}
                               style={{
@@ -2752,16 +2798,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           gridTemplateColumns: '1fr 1fr',
                           marginBottom: '0.75rem'
                         }}>
-                          <OpenStreetMapAutocomplete
-                            value={newDestinationForm.name}
-                            onChange={(value) => setNewDestinationForm(prev => ({ ...prev, name: value }))}
-                            onPlaceSelect={handlePlaceSelect}
-                            placeholder="Ziel suchen (z.B. 'Brandenburger Tor')"
-                            style={{
-                              gridColumn: '1 / -1',
-                              marginBottom: '0.75rem'
-                            }}
-                          />
 
                           {/* Location/Address Field with Map Picker */}
                           <div style={{ 
@@ -2769,11 +2805,26 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             gridColumn: '1 / -1',
                             marginBottom: '0.75rem'
                           }}>
-                            <input
-                              type="text"
-                              placeholder="Ort/Adresse (optional - aus Suche übernommen oder Karte nutzen)"
+                            <OpenStreetMapAutocomplete
                               value={newDestinationForm.location}
-                              onChange={(e) => setNewDestinationForm(prev => ({ ...prev, location: e.target.value }))}
+                              onChange={(value) => {
+                                setNewDestinationForm(prev => ({ 
+                                  ...prev, 
+                                  location: value,
+                                  // Set name to the first part of location if no name is set yet
+                                  name: prev.name || value.split(',')[0]
+                                }));
+                              }}
+                              onPlaceSelect={(place) => {
+                                const placeName = place.display_name.split(',')[0]; // Take first part as name
+                                setNewDestinationForm(prev => ({ 
+                                  ...prev, 
+                                  name: prev.name || placeName,
+                                  location: place.display_name,
+                                  coordinates: place.coordinates
+                                }));
+                              }}
+                              placeholder="Ziel & Ort eingeben (z.B. 'Brandenburger Tor, Berlin')"
                               style={{
                                 width: '100%',
                                 padding: settings.homePoint ? '0.75rem 5.5rem 0.75rem 0.75rem' : '0.75rem 3rem 0.75rem 0.75rem', // Extra space for home button when available
@@ -3919,10 +3970,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             borderRadius: '6px',
                             padding: '0.5rem'
                           }}>
-                            <Search size={16} style={{ color: 'var(--color-text-secondary)', marginRight: '0.5rem' }} />
+                            <FileText size={16} style={{ color: 'var(--color-text-secondary)', marginRight: '0.5rem' }} />
                             <input
                               type="text"
-                              placeholder="Ziel suchen..."
+                              placeholder="Ziel-Name eingeben..."
                               value={newDestinationForm.name}
                               onChange={(e) => setNewDestinationForm(prev => ({ ...prev, name: e.target.value }))}
                               style={{
@@ -4010,16 +4061,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           gridTemplateColumns: '1fr 1fr',
                           marginBottom: '0.75rem'
                         }}>
-                          <OpenStreetMapAutocomplete
-                            value={newDestinationForm.name}
-                            onChange={(value) => setNewDestinationForm(prev => ({ ...prev, name: value }))}
-                            onPlaceSelect={handlePlaceSelect}
-                            placeholder="Ziel suchen (z.B. 'Brandenburger Tor')"
-                            style={{
-                              gridColumn: '1 / -1',
-                              marginBottom: '0.75rem'
-                            }}
-                          />
 
                           {/* Location/Address Field with Map Picker */}
                           <div style={{ 
@@ -4027,11 +4068,26 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             gridColumn: '1 / -1',
                             marginBottom: '0.75rem'
                           }}>
-                            <input
-                              type="text"
-                              placeholder="Ort/Adresse (optional - aus Suche übernommen oder Karte nutzen)"
+                            <OpenStreetMapAutocomplete
                               value={newDestinationForm.location}
-                              onChange={(e) => setNewDestinationForm(prev => ({ ...prev, location: e.target.value }))}
+                              onChange={(value) => {
+                                setNewDestinationForm(prev => ({ 
+                                  ...prev, 
+                                  location: value,
+                                  // Set name to the first part of location if no name is set yet
+                                  name: prev.name || value.split(',')[0]
+                                }));
+                              }}
+                              onPlaceSelect={(place) => {
+                                const placeName = place.display_name.split(',')[0]; // Take first part as name
+                                setNewDestinationForm(prev => ({ 
+                                  ...prev, 
+                                  name: prev.name || placeName,
+                                  location: place.display_name,
+                                  coordinates: place.coordinates
+                                }));
+                              }}
+                              placeholder="Ziel & Ort eingeben (z.B. 'Brandenburger Tor, Berlin')"
                               style={{
                                 width: '100%',
                                 padding: settings.homePoint ? '0.75rem 5.5rem 0.75rem 0.75rem' : '0.75rem 3rem 0.75rem 0.75rem', // Extra space for home button when available

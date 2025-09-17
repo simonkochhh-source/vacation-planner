@@ -22,7 +22,19 @@ if (isPlaceholder) {
 const clientUrl = isPlaceholder ? 'https://placeholder.supabase.co' : supabaseUrl;
 const clientKey = isPlaceholder ? 'placeholder-key' : supabaseAnonKey;
 
-export const supabase = createClient(clientUrl, clientKey);
+// Configure Auth options to handle dynamic redirect URLs
+const authOptions = {
+  auth: {
+    flowType: 'pkce' as const,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    // Dynamic redirect URL based on current environment
+    redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined
+  }
+};
+
+export const supabase = createClient(clientUrl, clientKey, authOptions);
 
 // Export flag to check if using placeholder credentials
 export const isUsingPlaceholderCredentials = isPlaceholder;

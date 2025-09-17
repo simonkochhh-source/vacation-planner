@@ -16,7 +16,7 @@ const DesignSystemDemo: React.FC = () => {
             color: 'var(--color-text-primary)',
             marginBottom: 'var(--space-md)'
           }}>
-            🏕️ Freedom Trail Design System
+            🏕️ Trailkeeper Design System
           </h1>
           <p style={{ 
             fontSize: 'var(--text-lg)', 

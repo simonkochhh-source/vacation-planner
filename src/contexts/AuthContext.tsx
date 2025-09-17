@@ -78,6 +78,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     };
   }, []);
 
+  const getRedirectUrl = () => {
+    // Get current origin dynamically
+    const origin = window.location.origin;
+    
+    // For production deployments, ensure we're using the correct domain
+    console.log('🔗 Auth: Current origin:', origin);
+    console.log('🔗 Auth: Current hostname:', window.location.hostname);
+    console.log('🔗 Auth: Current protocol:', window.location.protocol);
+    
+    return `${origin}/dashboard`;
+  };
+
   const signInWithGoogle = async () => {
     if (isUsingPlaceholderCredentials) {
       console.log('⚠️ Auth: Cannot sign in with placeholder credentials');
@@ -85,13 +97,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     try {
+      const redirectUrl = getRedirectUrl();
       console.log('🔑 Auth: Attempting Google sign in...');
-      console.log('🔗 Auth: Redirect URL:', `${window.location.origin}/dashboard`);
+      console.log('🔗 Auth: Redirect URL:', redirectUrl);
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: redirectUrl,
         },
       });
 
@@ -124,11 +137,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     try {
+      const redirectUrl = getRedirectUrl();
       console.log('🍎 Auth: Attempting Apple sign in...');
+      console.log('🔗 Auth: Redirect URL:', redirectUrl);
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
-          redirectTo: `${window.location.origin}/dashboard`,
+          redirectTo: redirectUrl,
         },
       });
 
