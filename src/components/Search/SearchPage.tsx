@@ -378,7 +378,7 @@ const SearchPage: React.FC = () => {
   }
 
   // Show public trip search if in trips mode
-  if (searchMode === 'trips') {
+  if ((searchMode as string) === 'trips') {
     return (
       <PublicTripSearch 
         onTripSelect={handleTripSelect} 
@@ -414,7 +414,7 @@ const SearchPage: React.FC = () => {
               fontSize: 'var(--text-base)',
               color: 'var(--color-text-secondary)'
             }}>
-              {searchMode === 'destinations' 
+              {(searchMode as string) === 'destinations' 
                 ? 'Durchsuche deine Reiseziele und finde genau was du suchst'
                 : 'Entdecke öffentliche Reisen von anderen Nutzern'
               }
@@ -433,8 +433,8 @@ const SearchPage: React.FC = () => {
             <button
               onClick={() => setSearchMode('destinations')}
               style={{
-                background: searchMode === 'destinations' ? 'var(--color-primary-ocean)' : 'transparent',
-                color: searchMode === 'destinations' ? 'white' : 'var(--color-text-secondary)',
+                background: (searchMode as string) === 'destinations' ? 'var(--color-primary-ocean)' : 'transparent',
+                color: (searchMode as string) === 'destinations' ? 'white' : 'var(--color-text-secondary)',
                 border: 'none',
                 borderRadius: 'var(--radius-sm)',
                 padding: 'var(--space-sm) var(--space-md)',
@@ -449,8 +449,8 @@ const SearchPage: React.FC = () => {
             <button
               onClick={() => setSearchMode('trips')}
               style={{
-                background: searchMode === 'trips' ? 'var(--color-primary-ocean)' : 'transparent',
-                color: searchMode === 'trips' ? 'white' : 'var(--color-text-secondary)',
+                background: (searchMode as string) === 'trips' ? 'var(--color-primary-ocean)' : 'transparent',
+                color: (searchMode as string) === 'trips' ? 'white' : 'var(--color-text-secondary)',
                 border: 'none',
                 borderRadius: 'var(--radius-sm)',
                 padding: 'var(--space-sm) var(--space-md)',
