@@ -63,7 +63,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
       }}>
         {/* Zoom Controls */}
         <div style={{
-          background: 'white',
+          background: 'var(--color-neutral-cream)',
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           overflow: 'hidden'
@@ -71,7 +71,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           <button
             onClick={onZoomIn}
             style={{
-              background: 'white',
+              background: 'var(--color-neutral-cream)',
               border: 'none',
               padding: '0.75rem',
               cursor: 'pointer',
@@ -87,7 +87,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           <button
             onClick={onZoomOut}
             style={{
-              background: 'white',
+              background: 'var(--color-neutral-cream)',
               border: 'none',
               padding: '0.75rem',
               cursor: 'pointer',
@@ -103,7 +103,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
 
         {/* Navigation Controls */}
         <div style={{
-          background: 'white',
+          background: 'var(--color-neutral-cream)',
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           overflow: 'hidden'
@@ -111,7 +111,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           <button
             onClick={onLocate}
             style={{
-              background: 'white',
+              background: 'var(--color-neutral-cream)',
               border: 'none',
               padding: '0.75rem',
               cursor: 'pointer',
@@ -127,7 +127,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           <button
             onClick={onReset}
             style={{
-              background: 'white',
+              background: 'var(--color-neutral-cream)',
               border: 'none',
               padding: '0.75rem',
               cursor: 'pointer',
@@ -143,7 +143,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
 
         {/* Feature Controls */}
         <div style={{
-          background: 'white',
+          background: 'var(--color-neutral-cream)',
           borderRadius: '8px',
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
           overflow: 'hidden'
@@ -155,7 +155,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
               console.log('🖱️ DESKTOP onToggleRouting called');
             }}
             style={{
-              background: showRouting ? '#3b82f6' : 'white',
+              background: showRouting ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
               color: showRouting ? 'white' : '#374151',
               border: 'none',
               padding: '0.75rem',
@@ -172,7 +172,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           <button
             onClick={onToggleTimeline}
             style={{
-              background: showTimeline ? '#3b82f6' : 'white',
+              background: showTimeline ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
               color: showTimeline ? 'white' : '#374151',
               border: 'none',
               padding: '0.75rem',
@@ -189,7 +189,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           <button
             onClick={onToggleMeasurement}
             style={{
-              background: showMeasurement ? '#3b82f6' : 'white',
+              background: showMeasurement ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
               color: showMeasurement ? 'white' : '#374151',
               border: 'none',
               padding: '0.75rem',
@@ -206,7 +206,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           <button
             onClick={onToggleClustering}
             style={{
-              background: showClustering ? '#3b82f6' : 'white',
+              background: showClustering ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
               color: showClustering ? 'white' : '#374151',
               border: 'none',
               padding: '0.75rem',
@@ -241,7 +241,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
         <button
           onClick={onZoomIn}
           style={{
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             border: 'none',
             borderRadius: '50%',
             width: '48px',
@@ -260,7 +260,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
         <button
           onClick={onZoomOut}
           style={{
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             border: 'none',
             borderRadius: '50%',
             width: '48px',
@@ -288,7 +288,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
         <button
           onClick={() => setIsControlsExpanded(!isControlsExpanded)}
           style={{
-            background: isControlsExpanded ? '#3b82f6' : 'white',
+            background: isControlsExpanded ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
             color: isControlsExpanded ? 'white' : '#374151',
             border: 'none',
             borderRadius: '50%',
@@ -314,7 +314,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           bottom: '0',
           left: '0',
           right: '0',
-          background: 'white',
+          background: 'var(--color-neutral-cream)',
           borderTopLeftRadius: '16px',
           borderTopRightRadius: '16px',
           boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',

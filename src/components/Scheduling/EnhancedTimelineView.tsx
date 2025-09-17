@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates } from '../../types';
+import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates, getTripPermissions, canUserEditTrip } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
 import LeafletMapOnly from '../Maps/LeafletMapOnly';
@@ -83,6 +83,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   onReorderDestinations
 }) => {
   const { currentTrip, destinations, createDestination, updateDestination, deleteDestination, settings } = useSupabaseApp();
+  
+  // Permission system - check if current user can edit this trip
+  const currentUserId = 'user-1'; // TODO: Get from auth context
+  const tripPermissions = currentTrip ? getTripPermissions(currentTrip, currentUserId) : { canEdit: true, canView: true, canDelete: false, isOwner: true, isTagged: false };
+  const isReadOnly = !tripPermissions.canEdit;
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
@@ -155,19 +160,19 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     },
     active: {
       height: '12px',
-      background: 'linear-gradient(45deg, #3b82f6, #60a5fa)',
+      background: 'linear-gradient(45deg, var(--color-primary-ocean), var(--color-secondary-sky))',
       borderRadius: '6px',
       margin: '6px 0',
       cursor: 'copy',
       position: 'relative' as const,
       boxShadow: '0 4px 12px rgba(59, 130, 246, 0.4)',
-      border: '2px solid #1d4ed8',
+      border: '2px solid var(--color-secondary-forest)',
       transform: 'scale(1.05)'
     },
     inactive: {
       height: '6px',
       background: 'transparent',
-      border: '1px dashed #d1d5db',
+      border: '1px dashed var(--color-border)',
       borderRadius: '3px',
       margin: '3px 0',
       cursor: 'copy',
@@ -176,19 +181,19 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     },
     lastActive: {
       height: '16px',
-      background: 'linear-gradient(45deg, #10b981, #34d399)',
+      background: 'linear-gradient(45deg, var(--color-success), var(--color-accent-moss))',
       borderRadius: '8px',
       margin: '10px 0',
       cursor: 'copy',
       position: 'relative' as const,
       boxShadow: '0 6px 16px rgba(16, 185, 129, 0.4)',
-      border: '2px solid #047857',
+      border: '2px solid var(--color-secondary-forest)',
       transform: 'scale(1.1)'
     },
     lastInactive: {
       height: '10px',
       background: 'transparent',
-      border: '2px dashed #d1d5db',
+      border: '2px dashed var(--color-border)',
       borderRadius: '5px',
       margin: '6px 0',
       cursor: 'copy',
@@ -524,8 +529,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
       dragImage.style.transform = 'rotate(2deg)';
       dragImage.style.boxShadow = '0 10px 25px rgba(0,0,0,0.3)';
       dragImage.style.borderRadius = '12px';
-      dragImage.style.border = '2px solid #3b82f6';
-      dragImage.style.background = '#ffffff';
+      dragImage.style.border = '2px solid var(--color-primary-ocean)';
+      dragImage.style.background = 'var(--color-neutral-cream)';
       dragImage.style.minWidth = '200px';
       document.body.appendChild(dragImage);
       
@@ -1690,7 +1695,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         flexDirection: 'column',
         gap: '1rem',
         padding: '3rem',
-        color: '#6b7280'
+        color: 'var(--color-text-secondary)'
       }}>
         <Calendar size={48} style={{ opacity: 0.5 }} />
         <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Keine Reise ausgewählt</h2>
@@ -1716,13 +1721,13 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
             margin: '0 0 0.5rem 0',
             fontSize: '2rem',
             fontWeight: 'bold',
-            color: '#1f2937'
+            color: 'var(--color-text-primary)'
           }}>
             📅 Erweiterte Timeline
           </h1>
           <p style={{
             margin: 0,
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             fontSize: '1rem'
           }}>
             {currentTrip.name} • {formatDate(currentTrip.startDate)} - {formatDate(currentTrip.endDate)}
@@ -1742,8 +1747,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
         {/* Übergeordnete Gesamtreisestrecke-Kachel */}
         <div style={{
-          background: '#f0f9ff',
-          border: '1px solid #7dd3fc',
+          background: 'rgba(74, 144, 164, 0.1)',
+          border: '1px solid var(--color-primary-ocean)',
           borderRadius: '12px',
           padding: '1.5rem',
           gridColumn: '1 / -1' // Spannt über alle Spalten
@@ -1755,8 +1760,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
             gap: '0.5rem',
             marginBottom: '1rem'
           }}>
-            <Route size={20} style={{ color: '#0284c7' }} />
-            <span style={{ fontSize: '1.125rem', color: '#0284c7', fontWeight: '700' }}>
+            <Route size={20} style={{ color: 'var(--color-primary-ocean)' }} />
+            <span style={{ fontSize: '1.125rem', color: 'var(--color-primary-ocean)', fontWeight: '700' }}>
               Gesamtstrecke
             </span>
           </div>
@@ -1765,7 +1770,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           <div style={{ 
             fontSize: '2.5rem', 
             fontWeight: 'bold', 
-            color: '#0c4a6e',
+            color: 'var(--color-secondary-forest)',
             marginBottom: '1.5rem',
             textAlign: 'center'
           }}>
@@ -1782,7 +1787,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
             {overallStats.drivingDistance > 0 && (
               <div style={{
                 background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid #bfdbfe',
+                border: '1px solid var(--color-primary-ocean)',
                 borderRadius: '8px',
                 padding: '1rem',
                 textAlign: 'center'
@@ -1794,12 +1799,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   gap: '0.5rem',
                   marginBottom: '0.5rem'
                 }}>
-                  <Car size={16} style={{ color: '#0284c7' }} />
-                  <span style={{ fontSize: '0.875rem', color: '#0284c7', fontWeight: '600' }}>
+                  <Car size={16} style={{ color: 'var(--color-primary-ocean)' }} />
+                  <span style={{ fontSize: '0.875rem', color: 'var(--color-primary-ocean)', fontWeight: '600' }}>
                     Auto
                   </span>
                 </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#0284c7' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary-ocean)' }}>
                   {Math.round(overallStats.drivingDistance)}km
                 </div>
               </div>
@@ -1809,7 +1814,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
             {overallStats.walkingDistance > 0 && (
               <div style={{
                 background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid #bbf7d0',
+                border: '1px solid var(--color-success)',
                 borderRadius: '8px',
                 padding: '1rem',
                 textAlign: 'center'
@@ -1821,12 +1826,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   gap: '0.5rem',
                   marginBottom: '0.5rem'
                 }}>
-                  <Mountain size={16} style={{ color: '#059669' }} />
-                  <span style={{ fontSize: '0.875rem', color: '#059669', fontWeight: '600' }}>
+                  <Mountain size={16} style={{ color: 'var(--color-success)' }} />
+                  <span style={{ fontSize: '0.875rem', color: 'var(--color-success)', fontWeight: '600' }}>
                     Wandern
                   </span>
                 </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#059669' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-success)' }}>
                   {Math.round(overallStats.walkingDistance)}km
                 </div>
               </div>
@@ -1836,7 +1841,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
             {overallStats.bikingDistance > 0 && (
               <div style={{
                 background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid #fecaca',
+                border: '1px solid rgba(220, 38, 38, 0.2)',
                 borderRadius: '8px',
                 padding: '1rem',
                 textAlign: 'center'
@@ -1848,12 +1853,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   gap: '0.5rem',
                   marginBottom: '0.5rem'
                 }}>
-                  <Bike size={16} style={{ color: '#dc2626' }} />
-                  <span style={{ fontSize: '0.875rem', color: '#dc2626', fontWeight: '600' }}>
+                  <Bike size={16} style={{ color: 'var(--color-error)' }} />
+                  <span style={{ fontSize: '0.875rem', color: 'var(--color-error)', fontWeight: '600' }}>
                     Fahrrad
                   </span>
                 </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#dc2626' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-error)' }}>
                   {Math.round(overallStats.bikingDistance)}km
                 </div>
               </div>
@@ -1866,16 +1871,16 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
       {/* Timeline Content */}
       <div style={{
-        background: 'white',
+        background: 'var(--color-neutral-cream)',
         borderRadius: '12px',
-        border: '1px solid #e5e7eb',
+        border: '1px solid var(--color-neutral-mist)',
         overflow: 'hidden'
       }}>
         {enhancedTimelineData.length === 0 ? (
           <div style={{
             padding: '3rem',
             textAlign: 'center',
-            color: '#6b7280'
+            color: 'var(--color-text-secondary)'
           }}>
             <Calendar size={48} style={{ opacity: 0.5, marginBottom: '1rem' }} />
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>
@@ -1890,7 +1895,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
               <button
                 onClick={() => handleStartCreation(currentTrip!.startDate, 'initial')}
                 style={{
-                  background: '#3b82f6',
+                  background: 'var(--color-primary-ocean)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
@@ -1905,11 +1910,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   transition: 'all 0.2s'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.background = '#2563eb';
+                  e.currentTarget.style.background = 'var(--color-secondary-forest)';
                   e.currentTarget.style.transform = 'translateY(-2px)';
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.background = '#3b82f6';
+                  e.currentTarget.style.background = 'var(--color-primary-ocean)';
                   e.currentTarget.style.transform = 'translateY(0)';
                 }}
               >
@@ -1918,8 +1923,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
               </button>
             ) : (
               <div style={{
-                background: '#f9fafb',
-                border: '1px solid #e5e7eb',
+                background: 'var(--color-neutral-cream)',
+                border: '1px solid var(--color-neutral-mist)',
                 borderRadius: '12px',
                 padding: '1.5rem',
                 maxWidth: '600px',
@@ -1929,7 +1934,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   margin: '0 0 1.5rem 0',
                   fontSize: '1.125rem',
                   fontWeight: '600',
-                  color: '#1f2937',
+                  color: 'var(--color-text-primary)',
                   textAlign: 'center'
                 }}>
                   Neues Ziel erstellen
@@ -1937,7 +1942,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 
                 {/* Simplified Search Description */}
                 <div style={{
-                  background: '#f0f9ff',
+                  background: 'var(--color-neutral-cream)',
                   padding: '1rem',
                   borderRadius: '8px',
                   marginBottom: '1rem',
@@ -1945,7 +1950,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 }}>
                   <p style={{
                     margin: 0,
-                    color: '#1e40af',
+                    color: 'var(--color-primary-ocean)',
                     fontSize: '0.875rem'
                   }}>
                     ✨ Verwenden Sie die erweiterte Ortssuche unten für präzise Ergebnisse und Karten-Integration
@@ -1982,11 +1987,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         width: '100%',
                         padding: '0.75rem',
                         paddingRight: settings.homePoint ? '5.5rem' : '3rem', // Extra space for home button when available
-                        border: '1px solid #e5e7eb',
+                        border: '1px solid var(--color-neutral-mist)',
                         borderRadius: '8px',
                         fontSize: '1rem',
-                        backgroundColor: newDestinationForm.coordinates ? '#f0f9ff' : 'white',
-                        borderColor: newDestinationForm.coordinates ? '#0ea5e9' : '#e5e7eb'
+                        backgroundColor: newDestinationForm.coordinates ? 'var(--color-surface)' : 'var(--color-surface)',
+                        borderColor: newDestinationForm.coordinates ? 'var(--color-primary-ocean)' : 'var(--color-border)',
+                        color: 'var(--color-text-primary)'
                       }}
                       readOnly={!!newDestinationForm.coordinates}
                     />
@@ -2000,7 +2006,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           right: '50px',
                           top: '50%',
                           transform: 'translateY(-50%)',
-                          background: '#059669',
+                          background: 'var(--color-success)',
                           color: 'white',
                           border: 'none',
                           borderRadius: '4px',
@@ -2012,10 +2018,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         }}
                         title={`Zuhause auswählen: ${settings.homePoint.name}`}
                         onMouseOver={(e) => {
-                          e.currentTarget.style.background = '#047857';
+                          e.currentTarget.style.background = 'var(--color-secondary-forest)';
                         }}
                         onMouseOut={(e) => {
-                          e.currentTarget.style.background = '#059669';
+                          e.currentTarget.style.background = 'var(--color-success)';
                         }}
                       >
                         <Home size={16} />
@@ -2031,7 +2037,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         right: '8px',
                         top: '50%',
                         transform: 'translateY(-50%)',
-                        background: '#3b82f6',
+                        background: 'var(--color-primary-ocean)',
                         color: 'white',
                         border: 'none',
                         borderRadius: '4px',
@@ -2043,10 +2049,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       }}
                       title="Ort auf Karte auswählen"
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#2563eb';
+                        e.currentTarget.style.background = 'var(--color-primary-ocean)';
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.background = '#3b82f6';
+                        e.currentTarget.style.background = 'var(--color-primary-ocean)';
                       }}
                     >
                       <MapPin size={16} />
@@ -2056,8 +2062,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                 {/* Date Options */}
                 <div style={{
-                  background: 'white',
-                  border: '1px solid #e5e7eb',
+                  background: 'var(--color-neutral-cream)',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
                   padding: '1rem',
                   marginBottom: '1rem'
@@ -2069,7 +2075,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         display: 'block',
                         fontSize: '0.875rem',
                         fontWeight: '500',
-                        color: '#374151',
+                        color: 'var(--color-text-primary)',
                         marginBottom: '0.75rem'
                       }}>
                         Abreisedatum *
@@ -2081,7 +2087,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         style={{
                           width: '100%',
                           padding: '0.75rem',
-                          border: '1px solid #e5e7eb',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           fontSize: '0.875rem'
                         }}
@@ -2092,7 +2098,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     // Non-hotel mode: End date is hidden but automatically set
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#6b7280',
+                      color: 'var(--color-text-secondary)',
                       fontStyle: 'italic',
                       marginBottom: '0.5rem'
                     }}>
@@ -2103,8 +2109,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                 {/* Transport Mode */}
                 <div style={{
-                  background: 'white',
-                  border: '1px solid #e5e7eb',
+                  background: 'var(--color-neutral-cream)',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
                   padding: '1rem',
                   marginBottom: '1rem'
@@ -2113,7 +2119,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '500',
-                    color: '#374151',
+                    color: 'var(--color-text-primary)',
                     marginBottom: '0.75rem'
                   }}>
                     Transportmodus
@@ -2134,8 +2140,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         key={mode}
                         onClick={() => setNewDestinationForm(prev => ({ ...prev, transportMode: mode }))}
                         style={{
-                          background: newDestinationForm.transportMode === mode ? '#eff6ff' : 'white',
-                          border: newDestinationForm.transportMode === mode ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                          background: newDestinationForm.transportMode === mode ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                          border: newDestinationForm.transportMode === mode ? '2px solid var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
                           borderRadius: '8px',
                           padding: '0.75rem',
                           cursor: 'pointer',
@@ -2144,7 +2150,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           gap: '0.5rem',
                           fontSize: '0.875rem',
                           fontWeight: '500',
-                          color: newDestinationForm.transportMode === mode ? '#1e40af' : '#374151',
+                          color: newDestinationForm.transportMode === mode ? 'white' : 'var(--color-text-primary)',
                           transition: 'all 0.2s'
                         }}
                       >
@@ -2158,8 +2164,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 {/* Return Destination Selection (only for walking/biking) */}
                 {(newDestinationForm.transportMode === TransportMode.WALKING || newDestinationForm.transportMode === TransportMode.BICYCLE) && (
                   <div style={{
-                    background: 'white',
-                    border: '1px solid #e5e7eb',
+                    background: 'var(--color-neutral-cream)',
+                    border: '1px solid var(--color-neutral-mist)',
                     borderRadius: '8px',
                     padding: '1rem',
                     marginBottom: '1rem'
@@ -2168,7 +2174,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       display: 'block',
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151',
+                      color: 'var(--color-text-primary)',
                       marginBottom: '0.75rem'
                     }}>
                       Rückweg zu (optional)
@@ -2186,10 +2192,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         style={{
                           width: '100%',
                           padding: '0.75rem',
-                          border: '1px solid #e5e7eb',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '8px',
                           fontSize: '0.875rem',
-                          background: 'white'
+                          background: 'var(--color-neutral-cream)'
                         }}
                       >
                         <option value="">Kein Rückweg</option>
@@ -2210,11 +2216,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       <div style={{
                         marginTop: '0.5rem',
                         padding: '0.5rem',
-                        background: '#f0f9ff',
-                        border: '1px solid #bae6fd',
+                        background: 'var(--color-neutral-cream)',
+                        border: '1px solid var(--color-neutral-mist)',
                         borderRadius: '6px',
                         fontSize: '0.75rem',
-                        color: '#0369a1'
+                        color: 'var(--color-primary-ocean)'
                       }}>
                         💡 Ein Rückweg-Ziel wird automatisch nach diesem Ziel erstellt
                       </div>
@@ -2224,8 +2230,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                 {/* Category Selection */}
                 <div style={{
-                  background: 'white',
-                  border: '1px solid #e5e7eb',
+                  background: 'var(--color-neutral-cream)',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
                   padding: '1rem',
                   marginBottom: '1rem'
@@ -2234,7 +2240,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '500',
-                    color: '#374151',
+                    color: 'var(--color-text-primary)',
                     marginBottom: '0.75rem'
                   }}>
                     Kategorie
@@ -2259,8 +2265,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           }));
                         }}
                         style={{
-                          background: newDestinationForm.category === category ? '#dbeafe' : 'white',
-                          border: newDestinationForm.category === category ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                          background: newDestinationForm.category === category ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                          border: newDestinationForm.category === category ? '2px solid var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
                           borderRadius: '8px',
                           padding: '0.75rem 0.5rem',
                           cursor: 'pointer',
@@ -2270,18 +2276,18 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           gap: '0.25rem',
                           fontSize: '0.75rem',
                           fontWeight: '500',
-                          color: newDestinationForm.category === category ? '#1e40af' : '#374151',
+                          color: newDestinationForm.category === category ? 'white' : 'var(--color-text-primary)',
                           transition: 'all 0.2s',
                           minHeight: '70px'
                         }}
                         onMouseOver={(e) => {
                           if (newDestinationForm.category !== category) {
-                            e.currentTarget.style.background = '#f3f4f6';
+                            e.currentTarget.style.background = 'var(--color-neutral-mist)';
                           }
                         }}
                         onMouseOut={(e) => {
                           if (newDestinationForm.category !== category) {
-                            e.currentTarget.style.background = 'white';
+                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
                           }
                         }}
                       >
@@ -2299,11 +2305,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     <div style={{
                       marginTop: '0.75rem',
                       padding: '0.75rem',
-                      background: '#f0f9ff',
-                      border: '1px solid #bae6fd',
+                      background: 'var(--color-neutral-cream)',
+                      border: '1px solid var(--color-neutral-mist)',
                       borderRadius: '8px',
                       fontSize: '0.875rem',
-                      color: '#0891b2'
+                      color: 'var(--color-primary-ocean)'
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                         <span>🏨</span>
@@ -2315,8 +2321,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                 {/* Kosten & Bezahlt-Status */}
                 <div style={{
-                  background: 'white',
-                  border: '1px solid #e5e7eb',
+                  background: 'var(--color-neutral-cream)',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
                   padding: '1rem',
                   marginBottom: '1rem'
@@ -2325,7 +2331,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     display: 'block',
                     fontSize: '0.875rem',
                     fontWeight: '500',
-                    color: '#374151',
+                    color: 'var(--color-text-primary)',
                     marginBottom: '0.75rem'
                   }}>
                     Kosten & Bezahlung
@@ -2337,7 +2343,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     <label style={{
                       display: 'block',
                       fontSize: '0.75rem',
-                      color: '#6b7280',
+                      color: 'var(--color-text-secondary)',
                       marginBottom: '0.25rem'
                     }}>
                       Kosten (€)
@@ -2353,7 +2359,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       style={{
                         width: '100%',
                         padding: '0.75rem',
-                        border: '1px solid #e5e7eb',
+                        border: '1px solid var(--color-neutral-mist)',
                         borderRadius: '8px',
                         fontSize: '1rem'
                       }}
@@ -2383,14 +2389,14 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     <label htmlFor="isPaid-main" style={{
                       fontSize: '0.875rem',
                       fontWeight: '500',
-                      color: '#374151'
+                      color: 'var(--color-text-primary)'
                     }}>
                       Bereits bezahlt
                     </label>
                     {newDestinationForm.isPaid && (
                       <span style={{
                         fontSize: '0.75rem',
-                        color: '#059669',
+                        color: 'var(--color-success)',
                         fontWeight: '500'
                       }}>
                         ✓ Bezahlt
@@ -2417,7 +2423,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         !newDestinationForm.name || 
                         !newDestinationForm.location ||
                         (newDestinationForm.category === DestinationCategory.HOTEL && !newDestinationForm.endDate)
-                      ) ? '#9ca3af' : '#16a34a',
+                      ) ? 'var(--color-neutral-stone)' : 'var(--color-success)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
@@ -2441,7 +2447,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   <button
                     onClick={handleCancelCreation}
                     style={{
-                      background: '#6b7280',
+                      background: 'var(--color-neutral-stone)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
@@ -2464,13 +2470,13 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         ) : (
           enhancedTimelineData.map((day, dayIndex) => (
             <div key={day.date} style={{
-              borderBottom: dayIndex < enhancedTimelineData.length - 1 ? '1px solid #e5e7eb' : 'none'
+              borderBottom: dayIndex < enhancedTimelineData.length - 1 ? '1px solid var(--color-neutral-mist)' : 'none'
             }}>
               {/* Day Header */}
               <div style={{
-                background: '#f8fafc',
+                background: 'var(--color-neutral-cream)',
                 padding: '1rem 1.5rem',
-                borderBottom: '1px solid #e5e7eb',
+                borderBottom: '1px solid var(--color-neutral-mist)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between'
@@ -2484,13 +2490,13 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     margin: 0,
                     fontSize: '1.125rem',
                     fontWeight: '600',
-                    color: '#1f2937'
+                    color: 'var(--color-text-primary)'
                   }}>
                     📅 {formatDate(day.date)}
                   </h3>
                   <span style={{
                     fontSize: '0.875rem',
-                    color: '#6b7280'
+                    color: 'var(--color-text-secondary)'
                   }}>
                     {day.destinations.length} Ziele
                   </span>
@@ -2502,7 +2508,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   alignItems: 'center',
                   gap: '1rem',
                   fontSize: '0.875rem',
-                  color: '#6b7280'
+                  color: 'var(--color-text-secondary)'
                 }}>
                   <span>
                     <Route size={14} style={{ display: 'inline', marginRight: '0.25rem' }} />
@@ -2523,9 +2529,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     <button
                       onClick={() => handleStartCreation(day.date, 'before', 0)}
                       style={{
-                        background: 'white',
-                        color: '#3b82f6',
-                        border: '1px dashed #3b82f6',
+                        background: 'var(--color-neutral-cream)',
+                        color: 'var(--color-primary-ocean)',
+                        border: '1px dashed var(--color-primary-ocean)',
                         borderRadius: '20px',
                         padding: '0.5rem 1rem',
                         fontSize: '0.875rem',
@@ -2537,11 +2543,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         transition: 'all 0.2s'
                       }}
                       onMouseOver={(e) => {
-                        e.currentTarget.style.background = '#eff6ff';
+                        e.currentTarget.style.background = 'var(--color-neutral-cream)';
                         e.currentTarget.style.transform = 'scale(1.02)';
                       }}
                       onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'white';
+                        e.currentTarget.style.background = 'var(--color-neutral-cream)';
                         e.currentTarget.style.transform = 'scale(1)';
                       }}
                     >
@@ -2569,7 +2575,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             top: '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
-                            background: '#3b82f6',
+                            background: 'var(--color-primary-ocean)',
                             color: 'white',
                             fontSize: '0.75rem',
                             padding: '2px 8px',
@@ -2593,9 +2599,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         <button
                           onClick={() => handleStartCreation(day.date, 'before', destIndex)}
                           style={{
-                            background: 'white',
-                            color: '#3b82f6',
-                            border: '1px dashed #3b82f6',
+                            background: 'var(--color-neutral-cream)',
+                            color: 'var(--color-primary-ocean)',
+                            border: '1px dashed var(--color-primary-ocean)',
                             borderRadius: '20px',
                             padding: '0.5rem 1rem',
                             fontSize: '0.875rem',
@@ -2607,11 +2613,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             transition: 'all 0.2s'
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.background = '#eff6ff';
+                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
                             e.currentTarget.style.transform = 'scale(1.02)';
                           }}
                           onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'white';
+                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
                             e.currentTarget.style.transform = 'scale(1)';
                           }}
                         >
@@ -2626,8 +2632,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                      creatingDestination?.position === 'before' && 
                      creatingDestination?.destinationIndex === destIndex && (
                       <div style={{
-                        background: '#f0f9ff',
-                        border: '1px solid #3b82f6',
+                        background: 'var(--color-neutral-cream)',
+                        border: '1px solid var(--color-primary-ocean)',
                         borderRadius: '12px',
                         padding: '1rem',
                         marginBottom: '1rem'
@@ -2636,12 +2642,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           margin: '0 0 1rem 0',
                           fontSize: '1rem',
                           fontWeight: '600',
-                          color: '#1f2937',
+                          color: 'var(--color-text-primary)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem'
                         }}>
-                          <Plus size={16} style={{ color: '#3b82f6' }} />
+                          <Plus size={16} style={{ color: 'var(--color-primary-ocean)' }} />
                           Neues Ziel vor "{dest.name}"
                         </h4>
                         
@@ -2650,12 +2656,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            background: 'white',
-                            border: '1px solid #e5e7eb',
+                            background: 'var(--color-neutral-cream)',
+                            border: '1px solid var(--color-neutral-mist)',
                             borderRadius: '6px',
                             padding: '0.5rem'
                           }}>
-                            <Search size={16} style={{ color: '#6b7280', marginRight: '0.5rem' }} />
+                            <Search size={16} style={{ color: 'var(--color-text-secondary)', marginRight: '0.5rem' }} />
                             <input
                               type="text"
                               placeholder="Ziel suchen..."
@@ -2665,7 +2671,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 border: 'none',
                                 outline: 'none',
                                 flex: 1,
-                                fontSize: '0.875rem',
+                                fontSize: 'var(--text-base)',
+                                fontFamily: 'var(--font-body)',
                                 background: 'transparent'
                               }}
                               autoFocus
@@ -2679,8 +2686,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               top: '100%',
                               left: 0,
                               right: 0,
-                              background: 'white',
-                              border: '1px solid #e5e7eb',
+                              background: 'var(--color-neutral-cream)',
+                              border: '1px solid var(--color-neutral-mist)',
                               borderTop: 'none',
                               borderRadius: '0 0 6px 6px',
                               maxHeight: '150px',
@@ -2703,7 +2710,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                     fontSize: '0.75rem'
                                   }}
                                   onMouseOver={(e) => {
-                                    e.currentTarget.style.background = '#f9fafb';
+                                    e.currentTarget.style.background = 'var(--color-neutral-cream)';
                                   }}
                                   onMouseOut={(e) => {
                                     e.currentTarget.style.background = 'transparent';
@@ -2720,12 +2727,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                     <div>
                                       <div style={{
                                         fontWeight: '500',
-                                        color: '#1f2937'
+                                        color: 'var(--color-text-primary)'
                                       }}>
                                         {'Placeholder'}
                                       </div>
                                       <div style={{
-                                        color: '#6b7280',
+                                        color: 'var(--color-text-secondary)',
                                         fontSize: '0.7rem'
                                       }}>
                                         {'Not used'}
@@ -2770,11 +2777,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               style={{
                                 width: '100%',
                                 padding: settings.homePoint ? '0.75rem 5.5rem 0.75rem 0.75rem' : '0.75rem 3rem 0.75rem 0.75rem', // Extra space for home button when available
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '6px',
-                                fontSize: '0.875rem',
-                                backgroundColor: newDestinationForm.coordinates ? '#f0f9ff' : 'white',
-                                borderColor: newDestinationForm.coordinates ? '#0ea5e9' : '#e5e7eb'
+                                fontSize: 'var(--text-base)',
+                                fontFamily: 'var(--font-body)',
+                                backgroundColor: newDestinationForm.coordinates ? 'var(--color-neutral-cream)' : 'var(--color-neutral-cream)',
+                                borderColor: newDestinationForm.coordinates ? 'var(--color-secondary-sky)' : 'var(--color-neutral-mist)'
                               }}
                               readOnly={!!newDestinationForm.coordinates}
                             />
@@ -2788,7 +2796,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   right: '40px',
                                   top: '50%',
                                   transform: 'translateY(-50%)',
-                                  background: '#059669',
+                                  background: 'var(--color-success)',
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: '4px',
@@ -2802,10 +2810,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 }}
                                 title={`Zuhause auswählen: ${settings.homePoint.name}`}
                                 onMouseOver={(e) => {
-                                  e.currentTarget.style.background = '#047857';
+                                  e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}
                                 onMouseOut={(e) => {
-                                  e.currentTarget.style.background = '#059669';
+                                  e.currentTarget.style.background = 'var(--color-success)';
                                 }}
                               >
                                 <Home size={14} />
@@ -2821,7 +2829,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 right: '8px',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                background: '#3b82f6',
+                                background: 'var(--color-primary-ocean)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
@@ -2842,8 +2850,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Date Options */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '0.75rem'
@@ -2852,8 +2860,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <div style={{ marginBottom: '0.5rem' }}>
                               <label style={{
                                 display: 'block',
-                                fontSize: '0.7rem',
-                                color: '#6b7280',
+                                fontSize: 'var(--text-sm)',
+                                fontFamily: 'var(--font-body)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                color: 'var(--color-text-primary)',
                                 marginBottom: '0.25rem'
                               }}>
                                 Abreisedatum
@@ -2865,7 +2875,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 style={{
                                   width: '100%',
                                   padding: '0.5rem',
-                                  border: '1px solid #e5e7eb',
+                                  border: '1px solid var(--color-neutral-mist)',
                                   borderRadius: '4px',
                                   fontSize: '0.75rem'
                                 }}
@@ -2876,17 +2886,18 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Transport Mode */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '0.75rem'
                         }}>
                           <label style={{
                             display: 'block',
-                            fontSize: '0.75rem',
-                            fontWeight: '500',
-                            color: '#374151',
+                            fontSize: 'var(--text-base)',
+                            fontFamily: 'var(--font-body)',
+                            fontWeight: 'var(--font-weight-semibold)',
+                            color: 'var(--color-text-primary)',
                             marginBottom: '0.5rem'
                           }}>
                             Transportmodus
@@ -2907,17 +2918,18 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 key={mode}
                                 onClick={() => setNewDestinationForm(prev => ({ ...prev, transportMode: mode }))}
                                 style={{
-                                  background: newDestinationForm.transportMode === mode ? '#eff6ff' : 'white',
-                                  border: newDestinationForm.transportMode === mode ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                                  background: newDestinationForm.transportMode === mode ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                                  border: newDestinationForm.transportMode === mode ? '2px solid var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
                                   borderRadius: '6px',
                                   padding: '0.5rem',
                                   cursor: 'pointer',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '0.25rem',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '500',
-                                  color: newDestinationForm.transportMode === mode ? '#1e40af' : '#374151',
+                                  fontSize: 'var(--text-sm)',
+                                  fontFamily: 'var(--font-body)',
+                                  fontWeight: 'var(--font-weight-semibold)',
+                                  color: newDestinationForm.transportMode === mode ? 'white' : 'var(--color-text-primary)',
                                   transition: 'all 0.2s'
                                 }}
                               >
@@ -2930,17 +2942,18 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Category Selection */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '0.75rem'
                         }}>
                           <label style={{
                             display: 'block',
-                            fontSize: '0.75rem',
-                            fontWeight: '500',
-                            color: '#374151',
+                            fontSize: 'var(--text-base)',
+                            fontFamily: 'var(--font-body)',
+                            fontWeight: 'var(--font-weight-semibold)',
+                            color: 'var(--color-text-primary)',
                             marginBottom: '0.5rem'
                           }}>
                             Kategorie
@@ -2965,8 +2978,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   }));
                                 }}
                                 style={{
-                                  background: newDestinationForm.category === category ? '#dbeafe' : 'white',
-                                  border: newDestinationForm.category === category ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                                  background: newDestinationForm.category === category ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                                  border: newDestinationForm.category === category ? '2px solid var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
                                   borderRadius: '6px',
                                   padding: '0.5rem 0.25rem',
                                   cursor: 'pointer',
@@ -2974,20 +2987,21 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   flexDirection: 'column',
                                   alignItems: 'center',
                                   gap: '0.2rem',
-                                  fontSize: '0.7rem',
-                                  fontWeight: '500',
-                                  color: newDestinationForm.category === category ? '#1e40af' : '#374151',
+                                  fontSize: 'var(--text-sm)',
+                                  fontFamily: 'var(--font-body)',
+                                  fontWeight: 'var(--font-weight-semibold)',
+                                  color: newDestinationForm.category === category ? 'white' : 'var(--color-text-primary)',
                                   transition: 'all 0.2s',
                                   minHeight: '60px'
                                 }}
                                 onMouseOver={(e) => {
                                   if (newDestinationForm.category !== category) {
-                                    e.currentTarget.style.background = '#f3f4f6';
+                                    e.currentTarget.style.background = 'var(--color-neutral-mist)';
                                   }
                                 }}
                                 onMouseOut={(e) => {
                                   if (newDestinationForm.category !== category) {
-                                    e.currentTarget.style.background = 'white';
+                                    e.currentTarget.style.background = 'var(--color-neutral-cream)';
                                   }
                                 }}
                               >
@@ -3003,11 +3017,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <div style={{
                               marginTop: '0.5rem',
                               padding: '0.5rem',
-                              background: '#f0f9ff',
-                              border: '1px solid #bae6fd',
+                              background: 'var(--color-neutral-cream)',
+                              border: '1px solid var(--color-neutral-mist)',
                               borderRadius: '4px',
-                              fontSize: '0.7rem',
-                              color: '#0c4a6e'
+                              fontSize: 'var(--text-sm)',
+                              fontFamily: 'var(--font-body)',
+                              color: 'var(--color-primary-ocean)'
                             }}>
                               ℹ️ Hotels benötigen ein Abreisedatum
                             </div>
@@ -3016,8 +3031,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Kosten und Bezahlt-Status */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '0.75rem'
@@ -3026,7 +3041,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             display: 'block',
                             fontSize: '0.75rem',
                             fontWeight: '500',
-                            color: '#374151',
+                            color: 'var(--color-text-primary)',
                             marginBottom: '0.5rem'
                           }}>
                             Kosten & Bezahlung
@@ -3038,7 +3053,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <label style={{
                               display: 'block',
                               fontSize: '0.7rem',
-                              color: '#6b7280',
+                              color: 'var(--color-text-secondary)',
                               marginBottom: '0.25rem'
                             }}>
                               Kosten (€)
@@ -3054,7 +3069,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               style={{
                                 width: '100%',
                                 padding: '0.5rem',
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '4px',
                                 fontSize: '0.75rem'
                               }}
@@ -3085,14 +3100,14 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <label htmlFor="isPaid-before" style={{
                               fontSize: '0.75rem',
                               fontWeight: '500',
-                              color: '#374151'
+                              color: 'var(--color-text-primary)'
                             }}>
                               Bereits bezahlt
                             </label>
                             {newDestinationForm.isPaid && (
                               <span style={{
                                 fontSize: '0.7rem',
-                                color: '#059669',
+                                color: 'var(--color-success)',
                                 fontWeight: '500'
                               }}>
                                 ✓
@@ -3119,7 +3134,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 !newDestinationForm.name || 
                                 !newDestinationForm.location ||
                                 (newDestinationForm.category === DestinationCategory.HOTEL && !newDestinationForm.endDate)
-                              ) ? '#9ca3af' : '#16a34a',
+                              ) ? 'var(--color-neutral-stone)' : 'var(--color-success)',
                               color: 'white',
                               border: 'none',
                               borderRadius: '6px',
@@ -3143,7 +3158,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           <button
                             onClick={handleCancelCreation}
                             style={{
-                              background: '#6b7280',
+                              background: 'var(--color-neutral-stone)',
                               color: 'white',
                               border: 'none',
                               borderRadius: '6px',
@@ -3176,12 +3191,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         alignItems: 'center',
                         padding: '1rem',
                         background: dragState.dragOverDay === day.date && dragState.dragOverIndex === destIndex 
-                          ? '#f0f9ff' : '#fafafa',
+                          ? 'var(--color-neutral-cream)' : 'var(--color-neutral-cream)',
                         borderRadius: '8px',
                         opacity: isProcessingDrop ? 0.6 : 1,
                         cursor: isProcessingDrop ? 'wait' : (dragState.isDragging ? 'move' : 'grab'),
                         marginBottom: '0.5rem',
-                        border: dragState.draggedItem?.id === dest.id ? '2px dashed #3b82f6' : '1px solid #e5e7eb',
+                        border: dragState.draggedItem?.id === dest.id ? '2px dashed var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
                         transition: 'all 0.2s'
                       }}
                       onClick={() => onDestinationClick?.(dest)}
@@ -3189,7 +3204,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       {/* Drag Handle */}
                       <div style={{
                         marginRight: '1rem',
-                        color: '#9ca3af'
+                        color: 'var(--color-text-secondary)'
                       }}>
                         <GripVertical size={16} />
                       </div>
@@ -3209,7 +3224,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           margin: '0 0 0.25rem 0',
                           fontSize: '1rem',
                           fontWeight: '600',
-                          color: '#1f2937',
+                          color: 'var(--color-text-primary)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem'
@@ -3227,7 +3242,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               <RotateCcw 
                                 size={16} 
                                 style={{ 
-                                  color: '#f97316',
+                                  color: 'var(--color-secondary-sunset)',
                                   opacity: 0.8
                                 }}
                               />
@@ -3236,7 +3251,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         </h4>
                         <div style={{
                           fontSize: '0.875rem',
-                          color: '#6b7280',
+                          color: 'var(--color-text-secondary)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '1rem'
@@ -3256,9 +3271,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               handleStartEdit(dest);
                             }}
                           style={{
-                            background: 'white',
-                            color: '#3b82f6',
-                            border: '1px solid #3b82f6',
+                            background: 'var(--color-neutral-cream)',
+                            color: 'var(--color-primary-ocean)',
+                            border: '1px solid var(--color-primary-ocean)',
                             borderRadius: '6px',
                             padding: '0.5rem',
                             cursor: 'pointer',
@@ -3268,12 +3283,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             transition: 'all 0.2s'
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.background = '#3b82f6';
+                            e.currentTarget.style.background = 'var(--color-primary-ocean)';
                             e.currentTarget.style.color = 'white';
                           }}
                           onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'white';
-                            e.currentTarget.style.color = '#3b82f6';
+                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
+                            e.currentTarget.style.color = 'var(--color-primary-ocean)';
                           }}
                         >
                           <Edit size={14} />
@@ -3286,9 +3301,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               handleDeleteDestination(dest.id);
                             }}
                           style={{
-                            background: 'white',
-                            color: '#dc2626',
-                            border: '1px solid #dc2626',
+                            background: 'var(--color-neutral-cream)',
+                            color: 'var(--color-error)',
+                            border: '1px solid var(--color-error)',
                             borderRadius: '6px',
                             padding: '0.5rem',
                             cursor: 'pointer',
@@ -3298,12 +3313,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             transition: 'all 0.2s'
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.background = '#dc2626';
+                            e.currentTarget.style.background = 'var(--color-error)';
                             e.currentTarget.style.color = 'white';
                           }}
                           onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'white';
-                            e.currentTarget.style.color = '#dc2626';
+                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
+                            e.currentTarget.style.color = 'var(--color-error)';
                           }}
                         >
                           <Trash2 size={14} />
@@ -3320,17 +3335,17 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         alignItems: 'center',
                         justifyContent: 'center',
                         margin: '0.5rem 0',
-                        color: '#6b7280',
+                        color: 'var(--color-text-secondary)',
                         fontSize: '0.875rem'
                       }}>
                         <div style={{
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem',
-                          background: '#f9fafb',
+                          background: 'var(--color-neutral-cream)',
                           padding: '0.5rem 1rem',
                           borderRadius: '20px',
-                          border: '1px solid #e5e7eb'
+                          border: '1px solid var(--color-neutral-mist)'
                         }}>
                           <ArrowRight size={14} />
                           {(() => {
@@ -3392,8 +3407,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                     {/* Inline Edit Form */}
                     {editingDestination === dest.id && (
                       <div style={{
-                        background: '#f0f9ff',
-                        border: '2px solid #3b82f6',
+                        background: 'var(--color-neutral-cream)',
+                        border: '2px solid var(--color-primary-ocean)',
                         borderRadius: '12px',
                         padding: '1.5rem',
                         margin: '1rem 0',
@@ -3403,12 +3418,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           margin: '0 0 1rem 0',
                           fontSize: '1rem',
                           fontWeight: '600',
-                          color: '#1f2937',
+                          color: 'var(--color-text-primary)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem'
                         }}>
-                          <Edit size={16} style={{ color: '#3b82f6' }} />
+                          <Edit size={16} style={{ color: 'var(--color-primary-ocean)' }} />
                           {dest.name} bearbeiten
                         </h4>
 
@@ -3437,11 +3452,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 width: '100%',
                                 padding: '0.75rem',
                                 paddingRight: settings.homePoint ? '5.5rem' : '3rem', // Extra space for home button when available
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '6px',
-                                fontSize: '0.875rem',
-                                backgroundColor: editForm.coordinates ? '#f0f9ff' : 'white',
-                                borderColor: editForm.coordinates ? '#0ea5e9' : '#e5e7eb'
+                                fontSize: 'var(--text-base)',
+                                fontFamily: 'var(--font-body)',
+                                backgroundColor: editForm.coordinates ? 'var(--color-neutral-cream)' : 'var(--color-neutral-cream)',
+                                borderColor: editForm.coordinates ? 'var(--color-secondary-sky)' : 'var(--color-neutral-mist)'
                               }}
                               readOnly={!!editForm.coordinates}
                             />
@@ -3455,7 +3471,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   right: '50px',
                                   top: '50%',
                                   transform: 'translateY(-50%)',
-                                  background: '#059669',
+                                  background: 'var(--color-success)',
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: '4px',
@@ -3467,10 +3483,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 }}
                                 title={`Zuhause auswählen: ${settings.homePoint.name}`}
                                 onMouseOver={(e) => {
-                                  e.currentTarget.style.background = '#047857';
+                                  e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}
                                 onMouseOut={(e) => {
-                                  e.currentTarget.style.background = '#059669';
+                                  e.currentTarget.style.background = 'var(--color-success)';
                                 }}
                               >
                                 <Home size={14} />
@@ -3486,7 +3502,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 right: '8px',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                background: '#3b82f6',
+                                background: 'var(--color-primary-ocean)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
@@ -3498,10 +3514,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               }}
                               title="Ort auf Karte auswählen"
                               onMouseOver={(e) => {
-                                e.currentTarget.style.background = '#2563eb';
+                                e.currentTarget.style.background = 'var(--color-primary-ocean)';
                               }}
                               onMouseOut={(e) => {
-                                e.currentTarget.style.background = '#3b82f6';
+                                e.currentTarget.style.background = 'var(--color-primary-ocean)';
                               }}
                             >
                               <MapPin size={14} />
@@ -3521,7 +3537,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <label style={{
                               display: 'block',
                               fontSize: '0.75rem',
-                              color: '#6b7280',
+                              color: 'var(--color-text-secondary)',
                               marginBottom: '0.25rem'
                             }}>
                               Kategorie
@@ -3531,10 +3547,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               onChange={(e) => setEditForm(prev => ({ ...prev, category: e.target.value as DestinationCategory }))}
                               style={{
                                 padding: '0.75rem',
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '6px',
-                                fontSize: '0.875rem',
-                                background: 'white'
+                                fontSize: 'var(--text-base)',
+                                fontFamily: 'var(--font-body)',
+                                background: 'var(--color-neutral-cream)'
                               }}
                             >
                               <option value={DestinationCategory.ATTRACTION}>Sehenswürdigkeit</option>
@@ -3549,8 +3566,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Transport Mode */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '1rem'
@@ -3558,7 +3575,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           <label style={{
                             display: 'block',
                             fontSize: '0.75rem',
-                            color: '#6b7280',
+                            color: 'var(--color-text-secondary)',
                             marginBottom: '0.5rem'
                           }}>
                             Transportmodus zum nächsten Ziel
@@ -3584,9 +3601,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   gap: '0.25rem',
                                   padding: '0.5rem 0.75rem',
                                   borderRadius: '6px',
-                                  border: '1px solid #e5e7eb',
-                                  background: editForm.transportMode === mode ? '#3b82f6' : 'white',
-                                  color: editForm.transportMode === mode ? 'white' : '#6b7280',
+                                  border: '1px solid var(--color-neutral-mist)',
+                                  background: editForm.transportMode === mode ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                                  color: editForm.transportMode === mode ? 'white' : 'var(--color-text-primary)',
                                   cursor: 'pointer',
                                   fontSize: '0.75rem'
                                 }}
@@ -3601,8 +3618,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         {/* Return Destination Selection (only for walking/biking) */}
                         {(editForm.transportMode === TransportMode.WALKING || editForm.transportMode === TransportMode.BICYCLE) && (
                           <div style={{
-                            background: 'white',
-                            border: '1px solid #e5e7eb',
+                            background: 'var(--color-neutral-cream)',
+                            border: '1px solid var(--color-neutral-mist)',
                             borderRadius: '6px',
                             padding: '0.75rem',
                             marginBottom: '1rem'
@@ -3610,7 +3627,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <label style={{
                               display: 'block',
                               fontSize: '0.75rem',
-                              color: '#6b7280',
+                              color: 'var(--color-text-secondary)',
                               marginBottom: '0.5rem'
                             }}>
                               Rückweg zu (optional)
@@ -3625,10 +3642,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               style={{
                                 width: '100%',
                                 padding: '0.5rem',
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '6px',
                                 fontSize: '0.75rem',
-                                background: 'white'
+                                background: 'var(--color-neutral-cream)'
                               }}
                             >
                               <option value="">Kein Rückweg</option>
@@ -3648,11 +3665,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               <div style={{
                                 marginTop: '0.5rem',
                                 padding: '0.5rem',
-                                background: '#f0f9ff',
-                                border: '1px solid #bae6fd',
+                                background: 'var(--color-neutral-cream)',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '4px',
                                 fontSize: '0.7rem',
-                                color: '#0369a1'
+                                color: 'var(--color-primary-ocean)'
                               }}>
                                 💡 Rückweg-Ziel wird automatisch aktualisiert
                               </div>
@@ -3662,8 +3679,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Kosten und Bezahlt-Status */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '1rem'
@@ -3671,7 +3688,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           <label style={{
                             display: 'block',
                             fontSize: '0.75rem',
-                            color: '#6b7280',
+                            color: 'var(--color-text-secondary)',
                             marginBottom: '0.5rem'
                           }}>
                             Kosten & Bezahlung
@@ -3683,7 +3700,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <label style={{
                               display: 'block',
                               fontSize: '0.7rem',
-                              color: '#6b7280',
+                              color: 'var(--color-text-secondary)',
                               marginBottom: '0.25rem'
                             }}>
                               Kosten (€)
@@ -3699,7 +3716,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               style={{
                                 width: '100%',
                                 padding: '0.75rem',
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '6px',
                                 fontSize: '0.875rem'
                               }}
@@ -3730,14 +3747,14 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <label htmlFor="isPaid-edit" style={{
                               fontSize: '0.875rem',
                               fontWeight: '500',
-                              color: '#374151'
+                              color: 'var(--color-text-primary)'
                             }}>
                               Bereits bezahlt
                             </label>
                             {editForm.isPaid && (
                               <span style={{
                                 fontSize: '0.75rem',
-                                color: '#059669',
+                                color: 'var(--color-success)',
                                 fontWeight: '500'
                               }}>
                                 ✓ Bezahlt
@@ -3755,9 +3772,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           <button
                             onClick={handleCancelEdit}
                             style={{
-                              background: '#f3f4f6',
-                              color: '#6b7280',
-                              border: '1px solid #e5e7eb',
+                              background: 'var(--color-neutral-mist)',
+                              color: 'var(--color-text-secondary)',
+                              border: '1px solid var(--color-neutral-mist)',
                               borderRadius: '6px',
                               padding: '0.5rem 1rem',
                               fontSize: '0.875rem',
@@ -3774,9 +3791,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           <button
                             onClick={handleSaveEdit}
                             style={{
-                              background: '#10b981',
+                              background: 'var(--color-success)',
                               color: 'white',
-                              border: '1px solid #10b981',
+                              border: '1px solid var(--color-success)',
                               borderRadius: '6px',
                               padding: '0.5rem 1rem',
                               fontSize: '0.875rem',
@@ -3787,10 +3804,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               gap: '0.25rem'
                             }}
                             onMouseOver={(e) => {
-                              e.currentTarget.style.background = '#059669';
+                              e.currentTarget.style.background = 'var(--color-success)';
                             }}
                             onMouseOut={(e) => {
-                              e.currentTarget.style.background = '#10b981';
+                              e.currentTarget.style.background = 'var(--color-success)';
                             }}
                           >
                             <Save size={14} />
@@ -3816,7 +3833,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             top: '50%',
                             left: '50%',
                             transform: 'translate(-50%, -50%)',
-                            background: '#3b82f6',
+                            background: 'var(--color-primary-ocean)',
                             color: 'white',
                             fontSize: '0.75rem',
                             padding: '4px 12px',
@@ -3840,9 +3857,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         <button
                           onClick={() => handleStartCreation(day.date, 'after', destIndex)}
                           style={{
-                            background: 'white',
-                            color: '#3b82f6',
-                            border: '1px dashed #3b82f6',
+                            background: 'var(--color-neutral-cream)',
+                            color: 'var(--color-primary-ocean)',
+                            border: '1px dashed var(--color-primary-ocean)',
                             borderRadius: '20px',
                             padding: '0.5rem 1rem',
                             fontSize: '0.875rem',
@@ -3854,11 +3871,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             transition: 'all 0.2s'
                           }}
                           onMouseOver={(e) => {
-                            e.currentTarget.style.background = '#eff6ff';
+                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
                             e.currentTarget.style.transform = 'scale(1.02)';
                           }}
                           onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'white';
+                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
                             e.currentTarget.style.transform = 'scale(1)';
                           }}
                         >
@@ -3873,8 +3890,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                      creatingDestination?.position === 'after' && 
                      creatingDestination?.destinationIndex === destIndex && (
                       <div style={{
-                        background: '#f0f9ff',
-                        border: '1px solid #3b82f6',
+                        background: 'var(--color-neutral-cream)',
+                        border: '1px solid var(--color-primary-ocean)',
                         borderRadius: '12px',
                         padding: '1rem',
                         margin: '1rem 0'
@@ -3883,12 +3900,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           margin: '0 0 1rem 0',
                           fontSize: '1rem',
                           fontWeight: '600',
-                          color: '#1f2937',
+                          color: 'var(--color-text-primary)',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.5rem'
                         }}>
-                          <Plus size={16} style={{ color: '#3b82f6' }} />
+                          <Plus size={16} style={{ color: 'var(--color-primary-ocean)' }} />
                           Neues Ziel nach "{dest.name}"
                         </h4>
                         
@@ -3897,12 +3914,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
-                            background: 'white',
-                            border: '1px solid #e5e7eb',
+                            background: 'var(--color-neutral-cream)',
+                            border: '1px solid var(--color-neutral-mist)',
                             borderRadius: '6px',
                             padding: '0.5rem'
                           }}>
-                            <Search size={16} style={{ color: '#6b7280', marginRight: '0.5rem' }} />
+                            <Search size={16} style={{ color: 'var(--color-text-secondary)', marginRight: '0.5rem' }} />
                             <input
                               type="text"
                               placeholder="Ziel suchen..."
@@ -3912,7 +3929,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 border: 'none',
                                 outline: 'none',
                                 flex: 1,
-                                fontSize: '0.875rem',
+                                fontSize: 'var(--text-base)',
+                                fontFamily: 'var(--font-body)',
                                 background: 'transparent'
                               }}
                               autoFocus
@@ -3926,8 +3944,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               top: '100%',
                               left: 0,
                               right: 0,
-                              background: 'white',
-                              border: '1px solid #e5e7eb',
+                              background: 'var(--color-neutral-cream)',
+                              border: '1px solid var(--color-neutral-mist)',
                               borderTop: 'none',
                               borderRadius: '0 0 6px 6px',
                               maxHeight: '150px',
@@ -3950,7 +3968,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                     fontSize: '0.75rem'
                                   }}
                                   onMouseOver={(e) => {
-                                    e.currentTarget.style.background = '#f9fafb';
+                                    e.currentTarget.style.background = 'var(--color-neutral-cream)';
                                   }}
                                   onMouseOut={(e) => {
                                     e.currentTarget.style.background = 'transparent';
@@ -3967,12 +3985,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                     <div>
                                       <div style={{
                                         fontWeight: '500',
-                                        color: '#1f2937'
+                                        color: 'var(--color-text-primary)'
                                       }}>
                                         {'Placeholder'}
                                       </div>
                                       <div style={{
-                                        color: '#6b7280',
+                                        color: 'var(--color-text-secondary)',
                                         fontSize: '0.7rem'
                                       }}>
                                         {'Not used'}
@@ -4017,11 +4035,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               style={{
                                 width: '100%',
                                 padding: settings.homePoint ? '0.75rem 5.5rem 0.75rem 0.75rem' : '0.75rem 3rem 0.75rem 0.75rem', // Extra space for home button when available
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '6px',
-                                fontSize: '0.875rem',
-                                backgroundColor: newDestinationForm.coordinates ? '#f0f9ff' : 'white',
-                                borderColor: newDestinationForm.coordinates ? '#0ea5e9' : '#e5e7eb'
+                                fontSize: 'var(--text-base)',
+                                fontFamily: 'var(--font-body)',
+                                backgroundColor: newDestinationForm.coordinates ? 'var(--color-neutral-cream)' : 'var(--color-neutral-cream)',
+                                borderColor: newDestinationForm.coordinates ? 'var(--color-secondary-sky)' : 'var(--color-neutral-mist)'
                               }}
                               readOnly={!!newDestinationForm.coordinates}
                             />
@@ -4035,7 +4054,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   right: '40px',
                                   top: '50%',
                                   transform: 'translateY(-50%)',
-                                  background: '#059669',
+                                  background: 'var(--color-success)',
                                   color: 'white',
                                   border: 'none',
                                   borderRadius: '4px',
@@ -4049,10 +4068,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 }}
                                 title={`Zuhause auswählen: ${settings.homePoint.name}`}
                                 onMouseOver={(e) => {
-                                  e.currentTarget.style.background = '#047857';
+                                  e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}
                                 onMouseOut={(e) => {
-                                  e.currentTarget.style.background = '#059669';
+                                  e.currentTarget.style.background = 'var(--color-success)';
                                 }}
                               >
                                 <Home size={14} />
@@ -4068,7 +4087,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 right: '8px',
                                 top: '50%',
                                 transform: 'translateY(-50%)',
-                                background: '#3b82f6',
+                                background: 'var(--color-primary-ocean)',
                                 color: 'white',
                                 border: 'none',
                                 borderRadius: '4px',
@@ -4089,8 +4108,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Date Options */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '0.75rem'
@@ -4099,8 +4118,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <div style={{ marginBottom: '0.5rem' }}>
                               <label style={{
                                 display: 'block',
-                                fontSize: '0.7rem',
-                                color: '#6b7280',
+                                fontSize: 'var(--text-sm)',
+                                fontFamily: 'var(--font-body)',
+                                fontWeight: 'var(--font-weight-medium)',
+                                color: 'var(--color-text-primary)',
                                 marginBottom: '0.25rem'
                               }}>
                                 Abreisedatum
@@ -4112,7 +4133,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 style={{
                                   width: '100%',
                                   padding: '0.5rem',
-                                  border: '1px solid #e5e7eb',
+                                  border: '1px solid var(--color-neutral-mist)',
                                   borderRadius: '4px',
                                   fontSize: '0.75rem'
                                 }}
@@ -4123,17 +4144,18 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Transport Mode */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '0.75rem'
                         }}>
                           <label style={{
                             display: 'block',
-                            fontSize: '0.75rem',
-                            fontWeight: '500',
-                            color: '#374151',
+                            fontSize: 'var(--text-base)',
+                            fontFamily: 'var(--font-body)',
+                            fontWeight: 'var(--font-weight-semibold)',
+                            color: 'var(--color-text-primary)',
                             marginBottom: '0.5rem'
                           }}>
                             Transportmodus
@@ -4154,17 +4176,18 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 key={mode}
                                 onClick={() => setNewDestinationForm(prev => ({ ...prev, transportMode: mode }))}
                                 style={{
-                                  background: newDestinationForm.transportMode === mode ? '#eff6ff' : 'white',
-                                  border: newDestinationForm.transportMode === mode ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                                  background: newDestinationForm.transportMode === mode ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                                  border: newDestinationForm.transportMode === mode ? '2px solid var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
                                   borderRadius: '6px',
                                   padding: '0.5rem',
                                   cursor: 'pointer',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: '0.25rem',
-                                  fontSize: '0.75rem',
-                                  fontWeight: '500',
-                                  color: newDestinationForm.transportMode === mode ? '#1e40af' : '#374151',
+                                  fontSize: 'var(--text-sm)',
+                                  fontFamily: 'var(--font-body)',
+                                  fontWeight: 'var(--font-weight-semibold)',
+                                  color: newDestinationForm.transportMode === mode ? 'white' : 'var(--color-text-primary)',
                                   transition: 'all 0.2s'
                                 }}
                               >
@@ -4177,17 +4200,18 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Category Selection */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '0.75rem'
                         }}>
                           <label style={{
                             display: 'block',
-                            fontSize: '0.75rem',
-                            fontWeight: '500',
-                            color: '#374151',
+                            fontSize: 'var(--text-base)',
+                            fontFamily: 'var(--font-body)',
+                            fontWeight: 'var(--font-weight-semibold)',
+                            color: 'var(--color-text-primary)',
                             marginBottom: '0.5rem'
                           }}>
                             Kategorie
@@ -4212,8 +4236,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   }));
                                 }}
                                 style={{
-                                  background: newDestinationForm.category === category ? '#dbeafe' : 'white',
-                                  border: newDestinationForm.category === category ? '2px solid #3b82f6' : '1px solid #e5e7eb',
+                                  background: newDestinationForm.category === category ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                                  border: newDestinationForm.category === category ? '2px solid var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
                                   borderRadius: '6px',
                                   padding: '0.5rem 0.25rem',
                                   cursor: 'pointer',
@@ -4221,20 +4245,21 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   flexDirection: 'column',
                                   alignItems: 'center',
                                   gap: '0.2rem',
-                                  fontSize: '0.7rem',
-                                  fontWeight: '500',
-                                  color: newDestinationForm.category === category ? '#1e40af' : '#374151',
+                                  fontSize: 'var(--text-sm)',
+                                  fontFamily: 'var(--font-body)',
+                                  fontWeight: 'var(--font-weight-semibold)',
+                                  color: newDestinationForm.category === category ? 'white' : 'var(--color-text-primary)',
                                   transition: 'all 0.2s',
                                   minHeight: '60px'
                                 }}
                                 onMouseOver={(e) => {
                                   if (newDestinationForm.category !== category) {
-                                    e.currentTarget.style.background = '#f3f4f6';
+                                    e.currentTarget.style.background = 'var(--color-neutral-mist)';
                                   }
                                 }}
                                 onMouseOut={(e) => {
                                   if (newDestinationForm.category !== category) {
-                                    e.currentTarget.style.background = 'white';
+                                    e.currentTarget.style.background = 'var(--color-neutral-cream)';
                                   }
                                 }}
                               >
@@ -4250,11 +4275,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <div style={{
                               marginTop: '0.5rem',
                               padding: '0.5rem',
-                              background: '#f0f9ff',
-                              border: '1px solid #bae6fd',
+                              background: 'var(--color-neutral-cream)',
+                              border: '1px solid var(--color-neutral-mist)',
                               borderRadius: '4px',
-                              fontSize: '0.7rem',
-                              color: '#0c4a6e'
+                              fontSize: 'var(--text-sm)',
+                              fontFamily: 'var(--font-body)',
+                              color: 'var(--color-primary-ocean)'
                             }}>
                               ℹ️ Hotels benötigen ein Abreisedatum
                             </div>
@@ -4263,8 +4289,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                         {/* Kosten und Bezahlt-Status */}
                         <div style={{
-                          background: 'white',
-                          border: '1px solid #e5e7eb',
+                          background: 'var(--color-neutral-cream)',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '6px',
                           padding: '0.75rem',
                           marginBottom: '0.75rem'
@@ -4273,7 +4299,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             display: 'block',
                             fontSize: '0.75rem',
                             fontWeight: '500',
-                            color: '#374151',
+                            color: 'var(--color-text-primary)',
                             marginBottom: '0.5rem'
                           }}>
                             Kosten & Bezahlung
@@ -4285,7 +4311,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <label style={{
                               display: 'block',
                               fontSize: '0.7rem',
-                              color: '#6b7280',
+                              color: 'var(--color-text-secondary)',
                               marginBottom: '0.25rem'
                             }}>
                               Kosten (€)
@@ -4301,7 +4327,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               style={{
                                 width: '100%',
                                 padding: '0.5rem',
-                                border: '1px solid #e5e7eb',
+                                border: '1px solid var(--color-neutral-mist)',
                                 borderRadius: '4px',
                                 fontSize: '0.75rem'
                               }}
@@ -4332,14 +4358,14 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             <label htmlFor="isPaid-after" style={{
                               fontSize: '0.75rem',
                               fontWeight: '500',
-                              color: '#374151'
+                              color: 'var(--color-text-primary)'
                             }}>
                               Bereits bezahlt
                             </label>
                             {newDestinationForm.isPaid && (
                               <span style={{
                                 fontSize: '0.7rem',
-                                color: '#059669',
+                                color: 'var(--color-success)',
                                 fontWeight: '500'
                               }}>
                                 ✓
@@ -4366,7 +4392,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 !newDestinationForm.name || 
                                 !newDestinationForm.location ||
                                 (newDestinationForm.category === DestinationCategory.HOTEL && !newDestinationForm.endDate)
-                              ) ? '#9ca3af' : '#16a34a',
+                              ) ? 'var(--color-neutral-stone)' : 'var(--color-success)',
                               color: 'white',
                               border: 'none',
                               borderRadius: '6px',
@@ -4390,7 +4416,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           <button
                             onClick={handleCancelCreation}
                             style={{
-                              background: '#6b7280',
+                              background: 'var(--color-neutral-stone)',
                               color: 'white',
                               border: 'none',
                               borderRadius: '6px',
@@ -4425,16 +4451,16 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         gap: '1rem',
         marginTop: '2rem',
         padding: '1rem',
-        background: 'white',
+        background: 'var(--color-neutral-cream)',
         borderRadius: '12px',
-        border: '1px solid #e5e7eb'
+        border: '1px solid var(--color-neutral-mist)'
       }}>
         <button
           onClick={() => navigateDay('prev')}
           disabled={currentDayIndex <= 0}
           style={{
-            background: currentDayIndex <= 0 ? '#f3f4f6' : '#3b82f6',
-            color: currentDayIndex <= 0 ? '#9ca3af' : 'white',
+            background: currentDayIndex <= 0 ? 'var(--color-neutral-mist)' : 'var(--color-primary-ocean)',
+            color: currentDayIndex <= 0 ? 'var(--color-neutral-stone)' : 'white',
             border: 'none',
             borderRadius: '8px',
             padding: '0.75rem',
@@ -4450,7 +4476,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
         <span style={{
           fontSize: '0.875rem',
-          color: '#6b7280',
+          color: 'var(--color-text-secondary)',
           fontWeight: '500'
         }}>
           {currentDayIndex + 1} von {enhancedTimelineData.length}
@@ -4460,8 +4486,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           onClick={() => navigateDay('next')}
           disabled={currentDayIndex >= enhancedTimelineData.length - 1}
           style={{
-            background: currentDayIndex >= enhancedTimelineData.length - 1 ? '#f3f4f6' : '#3b82f6',
-            color: currentDayIndex >= enhancedTimelineData.length - 1 ? '#9ca3af' : 'white',
+            background: currentDayIndex >= enhancedTimelineData.length - 1 ? 'var(--color-neutral-mist)' : 'var(--color-primary-ocean)',
+            color: currentDayIndex >= enhancedTimelineData.length - 1 ? 'var(--color-neutral-stone)' : 'white',
             border: 'none',
             borderRadius: '8px',
             padding: '0.75rem',
@@ -4482,14 +4508,14 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
       <div style={{ 
         position: 'fixed', 
         inset: 0, 
-        backgroundColor: 'rgba(0, 0, 0, 0.5)', 
+        backgroundColor: 'rgba(0, 0, 0, 0.7)', 
         display: 'flex', 
         alignItems: 'center', 
         justifyContent: 'center', 
         zIndex: 9999
       }}>
         <div style={{ 
-          backgroundColor: 'white', 
+          backgroundColor: 'var(--color-neutral-cream)', 
           borderRadius: '8px', 
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', 
           width: '90vw', 
@@ -4501,17 +4527,17 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           {/* Header */}
           <div style={{ 
             padding: '1.5rem', 
-            borderBottom: '1px solid #e5e7eb', 
+            borderBottom: '1px solid var(--color-neutral-mist)', 
             display: 'flex', 
             justifyContent: 'space-between', 
             alignItems: 'center',
-            backgroundColor: '#f8fafc'
+            backgroundColor: 'var(--color-neutral-cream)'
           }}>
             <div>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: '#111827', margin: 0 }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-text-primary)', margin: 0 }}>
                 📍 Standort auswählen
               </h3>
-              <p style={{ fontSize: '0.875rem', color: '#6b7280', margin: '0.5rem 0 0 0' }}>
+              <p style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', margin: '0.5rem 0 0 0' }}>
                 Klicken Sie auf die Karte, um einen genauen Standort auszuwählen
               </p>
             </div>
@@ -4520,7 +4546,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
               style={{ 
                 background: 'none', 
                 border: 'none', 
-                color: '#6b7280', 
+                color: 'var(--color-text-secondary)', 
                 fontSize: '1.5rem', 
                 fontWeight: 'bold', 
                 cursor: 'pointer',
@@ -4529,12 +4555,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 transition: 'all 0.2s'
               }}
               onMouseOver={(e) => {
-                e.currentTarget.style.backgroundColor = '#f3f4f6';
-                e.currentTarget.style.color = '#374151';
+                e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+                e.currentTarget.style.color = 'var(--color-text-primary)';
               }}
               onMouseOut={(e) => {
                 e.currentTarget.style.backgroundColor = 'transparent';
-                e.currentTarget.style.color = '#6b7280';
+                e.currentTarget.style.color = 'var(--color-text-secondary)';
               }}
             >
               ✕
@@ -4564,17 +4590,17 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           {/* Footer */}
           <div style={{ 
             padding: '1.5rem', 
-            borderTop: '1px solid #e5e7eb',
+            borderTop: '1px solid var(--color-neutral-mist)',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            backgroundColor: '#f8fafc'
+            backgroundColor: 'var(--color-neutral-cream)'
           }}>
             <div style={{ flex: 1 }}>
-              <p style={{ fontSize: '0.875rem', fontWeight: '600', color: '#059669', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <p style={{ fontSize: '0.875rem', fontWeight: '600', color: 'var(--color-success)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 🗺️ OpenStreetMap Integration
               </p>
-              <p style={{ fontSize: '0.75rem', color: '#6b7280', margin: '0.25rem 0 0 0' }}>
+              <p style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', margin: '0.25rem 0 0 0' }}>
                 Kostenlos, datenschutzfreundlich und Open Source
               </p>
             </div>
@@ -4584,22 +4610,22 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 onClick={handleCloseMapPicker}
                 style={{
                   padding: '0.75rem 1.5rem',
-                  border: '1px solid #d1d5db',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '6px',
                   fontSize: '0.875rem',
                   fontWeight: '500',
-                  color: '#374151',
-                  backgroundColor: 'white',
+                  color: 'var(--color-text-primary)',
+                  backgroundColor: 'var(--color-neutral-cream)',
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
                 onMouseOver={(e) => {
-                  e.currentTarget.style.backgroundColor = '#f9fafb';
-                  e.currentTarget.style.borderColor = '#9ca3af';
+                  e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)';
+                  e.currentTarget.style.borderColor = 'var(--color-neutral-stone)';
                 }}
                 onMouseOut={(e) => {
-                  e.currentTarget.style.backgroundColor = 'white';
-                  e.currentTarget.style.borderColor = '#d1d5db';
+                  e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)';
+                  e.currentTarget.style.borderColor = 'var(--color-neutral-mist)';
                 }}
               >
                 Abbrechen

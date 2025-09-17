@@ -121,6 +121,9 @@ export interface Database {
           participants: string[] | null
           status: 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' | null
           tags: string[] | null
+          privacy: 'private' | 'public' | null
+          owner_id: string | null
+          tagged_users: string[] | null
           created_at: string | null
           updated_at: string | null
         }
@@ -135,6 +138,9 @@ export interface Database {
           participants?: string[] | null
           status?: 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' | null
           tags?: string[] | null
+          privacy?: 'private' | 'public' | null
+          owner_id?: string | null
+          tagged_users?: string[] | null
           created_at?: string | null
           updated_at?: string | null
         }
@@ -148,6 +154,9 @@ export interface Database {
           participants?: string[] | null
           status?: 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' | null
           tags?: string[] | null
+          privacy?: 'private' | 'public' | null
+          owner_id?: string | null
+          tagged_users?: string[] | null
           created_at?: string | null
           updated_at?: string | null
         }

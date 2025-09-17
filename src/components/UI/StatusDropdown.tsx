@@ -119,7 +119,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
         <ChevronDown 
           size={sizeConfig.iconSize} 
           style={{ 
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)',
             transition: 'transform 0.2s ease'
           }} 
@@ -146,10 +146,10 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
               top: '100%',
               left: 0,
               marginTop: '0.25rem',
-              background: 'white',
+              background: 'var(--color-neutral-cream)',
               borderRadius: '0.75rem',
               boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-              border: '1px solid #e5e7eb',
+              border: '1px solid var(--color-neutral-mist)',
               padding: sizeConfig.dropdownPadding,
               minWidth: '200px',
               zIndex: 20,
@@ -159,7 +159,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
             <div style={{ 
               fontSize: '0.75rem', 
               fontWeight: '600', 
-              color: '#6b7280', 
+              color: 'var(--color-text-secondary)', 
               marginBottom: '0.5rem',
               textTransform: 'uppercase',
               letterSpacing: '0.05em'
@@ -182,7 +182,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                     padding: '0.75rem',
                     border: 'none',
                     borderRadius: '0.5rem',
-                    background: isSelected ? '#f3f4f6' : 'transparent',
+                    background: isSelected ? 'var(--color-neutral-mist)' : 'transparent',
                     cursor: 'pointer',
                     textAlign: 'left',
                     transition: 'background-color 0.2s ease',
@@ -190,7 +190,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                   }}
                   onMouseOver={(e) => {
                     if (!isSelected) {
-                      e.currentTarget.style.backgroundColor = '#f9fafb';
+                      e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)';
                     }
                   }}
                   onMouseOut={(e) => {
@@ -205,14 +205,14 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                     <div style={{ 
                       fontSize: '0.875rem', 
                       fontWeight: '500', 
-                      color: '#374151',
+                      color: 'var(--color-text-primary)',
                       marginBottom: '0.125rem'
                     }}>
                       {option.label}
                     </div>
                     <div style={{ 
                       fontSize: '0.75rem', 
-                      color: '#6b7280', 
+                      color: 'var(--color-text-secondary)', 
                       lineHeight: '1.4'
                     }}>
                       {option.description}
@@ -220,7 +220,7 @@ const StatusDropdown: React.FC<StatusDropdownProps> = ({
                   </div>
 
                   {isSelected && (
-                    <Check size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                    <Check size={16} style={{ color: 'var(--color-success)', flexShrink: 0 }} />
                   )}
                 </button>
               );

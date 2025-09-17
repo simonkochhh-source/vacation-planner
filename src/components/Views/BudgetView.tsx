@@ -89,11 +89,14 @@ const BudgetView: React.FC = () => {
   }
 
   return (
-    <div className="main-content">
+    <div className="main-content" style={{
+      background: 'var(--color-neutral-cream)',
+      minHeight: '100vh'
+    }}>
       {/* Header with Tabs */}
       <div style={{
-        background: 'white',
-        borderBottom: '1px solid #e5e7eb',
+        background: 'var(--color-neutral-cream)',
+        borderBottom: '1px solid var(--color-neutral-mist)',
         padding: '0 1.5rem'
       }}>
         <div style={{
@@ -104,10 +107,19 @@ const BudgetView: React.FC = () => {
           marginBottom: '1rem'
         }}>
           <div>
-            <h1 className="header-title">
+            <h1 style={{
+              margin: '0 0 0.5rem 0',
+              fontSize: '1.875rem',
+              fontWeight: '700',
+              color: 'var(--color-text-primary)'
+            }}>
               Budget-Verwaltung
             </h1>
-            <p className="header-subtitle">
+            <p style={{
+              margin: 0,
+              fontSize: '1rem',
+              color: 'var(--color-text-primary)'
+            }}>
               {currentTrip.name} • Vollständige Kontrolle über Ihre Reisefinanzen
             </p>
           </div>
@@ -120,8 +132,8 @@ const BudgetView: React.FC = () => {
               alignItems: 'center'
             }}>
               <div style={{
-                background: quickStats.isOverBudget ? '#fef2f2' : '#f0fdf4',
-                border: `1px solid ${quickStats.isOverBudget ? '#fca5a5' : '#bbf7d0'}`,
+                background: quickStats.isOverBudget ? 'rgba(220, 38, 38, 0.1)' : 'rgba(139, 195, 143, 0.1)',
+                border: `1px solid ${quickStats.isOverBudget ? 'var(--color-error)' : 'var(--color-success)'}`,
                 borderRadius: '8px',
                 padding: '0.75rem 1rem',
                 textAlign: 'center'
@@ -129,14 +141,14 @@ const BudgetView: React.FC = () => {
                 <div style={{
                   fontSize: '1.25rem',
                   fontWeight: 'bold',
-                  color: quickStats.isOverBudget ? '#dc2626' : '#16a34a',
+                  color: quickStats.isOverBudget ? 'var(--color-error)' : 'var(--color-success)',
                   marginBottom: '0.25rem'
                 }}>
                   {quickStats.percentageUsed.toFixed(0)}%
                 </div>
                 <div style={{
                   fontSize: '0.75rem',
-                  color: '#6b7280'
+                  color: 'var(--color-text-primary)'
                 }}>
                   Budget genutzt
                 </div>
@@ -144,26 +156,26 @@ const BudgetView: React.FC = () => {
 
               {quickStats.destinationsOverBudget > 0 && (
                 <div style={{
-                  background: '#fef3c7',
-                  border: '1px solid #fcd34d',
+                  background: 'rgba(204, 139, 101, 0.1)',
+                  border: '1px solid var(--color-warning)',
                   borderRadius: '8px',
                   padding: '0.75rem 1rem',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '0.5rem'
                 }}>
-                  <AlertTriangle size={16} style={{ color: '#d97706' }} />
+                  <AlertTriangle size={16} style={{ color: 'var(--color-warning)' }} />
                   <div>
                     <div style={{
                       fontSize: '0.875rem',
                       fontWeight: '600',
-                      color: '#d97706'
+                      color: 'var(--color-warning)'
                     }}>
                       {quickStats.destinationsOverBudget} Überschreitungen
                     </div>
                     <div style={{
                       fontSize: '0.75rem',
-                      color: '#92400e'
+                      color: 'var(--color-secondary-sunset)'
                     }}>
                       Ziele über Budget
                     </div>
@@ -174,7 +186,7 @@ const BudgetView: React.FC = () => {
               <button
                 onClick={handleExportData}
                 style={{
-                  background: '#3b82f6',
+                  background: 'var(--color-primary-ocean)',
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
@@ -209,7 +221,7 @@ const BudgetView: React.FC = () => {
               style={{
                 background: 'transparent',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid #3b82f6' : '2px solid transparent',
+                borderBottom: activeTab === tab.id ? '2px solid var(--color-primary-ocean)' : '2px solid transparent',
                 cursor: 'pointer',
                 padding: '0.75rem 1rem',
                 display: 'flex',
@@ -217,7 +229,7 @@ const BudgetView: React.FC = () => {
                 gap: '0.5rem',
                 fontSize: '0.875rem',
                 fontWeight: activeTab === tab.id ? '600' : '500',
-                color: activeTab === tab.id ? '#3b82f6' : '#6b7280',
+                color: activeTab === tab.id ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
                 transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
                 minWidth: 'fit-content'
@@ -225,12 +237,12 @@ const BudgetView: React.FC = () => {
               title={tab.description}
               onMouseOver={(e) => {
                 if (activeTab !== tab.id) {
-                  e.currentTarget.style.color = '#374151';
+                  e.currentTarget.style.color = 'var(--color-text-primary)';
                 }
               }}
               onMouseOut={(e) => {
                 if (activeTab !== tab.id) {
-                  e.currentTarget.style.color = '#6b7280';
+                  e.currentTarget.style.color = 'var(--color-text-secondary)';
                 }
               }}
             >
@@ -245,7 +257,7 @@ const BudgetView: React.FC = () => {
       <div style={{
         flex: 1,
         overflow: 'auto',
-        background: '#f9fafb'
+        background: 'var(--color-neutral-cream)'
       }}>
         {activeTab === 'overview' && (
           <BudgetOverview 
@@ -272,11 +284,11 @@ const BudgetView: React.FC = () => {
 
       {/* Footer Info */}
       <div style={{
-        background: 'white',
-        borderTop: '1px solid #e5e7eb',
+        background: 'var(--color-neutral-cream)',
+        borderTop: '1px solid var(--color-neutral-mist)',
         padding: '1rem 1.5rem',
         fontSize: '0.875rem',
-        color: '#6b7280',
+        color: 'var(--color-text-primary)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between'
@@ -299,7 +311,7 @@ const BudgetView: React.FC = () => {
                 gap: '0.5rem'
               }}>
                 <span>Budget:</span>
-                <span style={{ fontWeight: '500', color: '#374151' }}>
+                <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>
                   {((quickStats.totalActual / Math.max(quickStats.totalPlanned, 1)) * 100).toFixed(1)}% genutzt
                 </span>
               </div>
@@ -312,7 +324,7 @@ const BudgetView: React.FC = () => {
                 <span>Verbleibend:</span>
                 <span style={{ 
                   fontWeight: '500', 
-                  color: quickStats.remaining >= 0 ? '#16a34a' : '#dc2626' 
+                  color: quickStats.remaining >= 0 ? 'var(--color-success)' : 'var(--color-error)' 
                 }}>
                   {((quickStats.remaining / Math.max(quickStats.totalPlanned, 1)) * 100).toFixed(1)}%
                 </span>
@@ -326,7 +338,7 @@ const BudgetView: React.FC = () => {
             gap: '0.5rem'
           }}>
             <span>Reise:</span>
-            <span style={{ fontWeight: '500', color: '#374151' }}>
+            <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>
               {currentTrip.name}
             </span>
           </div>
@@ -349,7 +361,7 @@ const BudgetView: React.FC = () => {
           padding: '1rem'
         }}>
           <div style={{
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             borderRadius: '12px',
             padding: '2rem',
             maxWidth: '500px',
@@ -365,7 +377,7 @@ const BudgetView: React.FC = () => {
                 margin: 0,
                 fontSize: '1.5rem',
                 fontWeight: '600',
-                color: '#1f2937'
+                color: 'var(--color-text-primary)'
               }}>
                 Budget bearbeiten
               </h2>
@@ -375,7 +387,7 @@ const BudgetView: React.FC = () => {
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: '#6b7280',
+                  color: 'var(--color-text-primary)',
                   fontSize: '1.5rem',
                   padding: '0.5rem'
                 }}
@@ -389,7 +401,7 @@ const BudgetView: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               padding: '2rem',
-              color: '#9ca3af'
+              color: 'var(--color-text-primary)'
             }}>
               Budget-Formular wird hier implementiert
             </div>

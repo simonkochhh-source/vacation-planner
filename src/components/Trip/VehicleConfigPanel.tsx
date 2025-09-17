@@ -142,7 +142,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
             display: 'block',
             fontSize: '0.875rem',
             fontWeight: '500',
-            color: '#374151',
+            color: 'var(--color-text-primary)',
             marginBottom: '0.5rem'
           }}>
             <Fuel size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
@@ -158,9 +158,9 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
                 key={type}
                 onClick={() => handleFuelTypeChange(type)}
                 style={{
-                  background: config.fuelType === type ? '#3b82f6' : 'white',
-                  color: config.fuelType === type ? 'white' : '#374151',
-                  border: '1px solid #d1d5db',
+                  background: config.fuelType === type ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                  color: config.fuelType === type ? 'white' : 'var(--color-neutral-charcoal)',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '6px',
                   padding: '0.5rem 1rem',
                   fontSize: '0.875rem',
@@ -180,7 +180,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
             display: 'block',
             fontSize: '0.875rem',
             fontWeight: '500',
-            color: '#374151',
+            color: 'var(--color-text-primary)',
             marginBottom: '0.5rem'
           }}>
             <Gauge size={16} style={{ display: 'inline', marginRight: '0.5rem' }} />
@@ -205,7 +205,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
           />
           <div style={{
             fontSize: '0.75rem',
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             marginTop: '0.25rem'
           }}>
             Durchschnittlicher Kraftstoffverbrauch
@@ -220,7 +220,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
             justifyContent: 'space-between',
             fontSize: '0.875rem',
             fontWeight: '500',
-            color: '#374151',
+            color: 'var(--color-text-primary)',
             marginBottom: '0.5rem'
           }}>
             <span>
@@ -234,7 +234,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#3b82f6',
+                  color: 'var(--color-primary-ocean)',
                   cursor: isLoadingPrice ? 'wait' : 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -272,7 +272,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
           />
           <div style={{
             fontSize: '0.75rem',
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             marginTop: '0.25rem'
           }}>
             {config.lastPriceUpdate ? formatLastUpdate(config.lastPriceUpdate) : 'Manuell eingegeben'}
@@ -284,7 +284,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
               alignItems: 'center',
               gap: '0.25rem',
               fontSize: '0.75rem',
-              color: '#dc2626',
+              color: 'var(--color-error)',
               marginTop: '0.25rem'
             }}>
               <AlertCircle size={12} />
@@ -316,7 +316,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
           gap: '1rem'
         }}>
           <div>
-            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
               Pro 100km
             </div>
             <div style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1f2937' }}>
@@ -324,7 +324,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
             </div>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', color: '#6b7280', marginBottom: '0.25rem' }}>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)', marginBottom: '0.25rem' }}>
               Kraftstoffart
             </div>
             <div style={{ fontSize: '1.125rem', fontWeight: '600', color: '#1f2937' }}>
@@ -337,7 +337,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
       {/* API Configuration Info */}
       <div style={{
         background: isApiConfigured ? 'var(--color-accent-moss)' : (isUsingDemo ? 'var(--color-secondary-sky)' : 'var(--color-secondary-sunset)'),
-        color: 'white',
+        color: 'var(--color-neutral-cream)',
         border: '2px solid rgba(255, 255, 255, 0.3)',
         borderRadius: 'var(--radius-md)',
         padding: 'var(--space-lg)',
@@ -375,7 +375,7 @@ const VehicleConfigPanel: React.FC<VehicleConfigPanelProps> = ({
                 target="_blank" 
                 rel="noopener noreferrer" 
                 style={{ 
-                  color: 'white', 
+                  color: 'var(--color-neutral-cream)', 
                   textDecoration: 'underline',
                   fontWeight: 'var(--font-weight-medium)'
                 }}

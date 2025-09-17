@@ -18,10 +18,10 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
           display: 'block',
           fontSize: '0.875rem',
           fontWeight: '500',
-          color: '#374151',
+          color: 'var(--color-text-primary)',
           marginBottom: '0.5rem'
         }}>
-          {label} {required && <span style={{ color: '#ef4444' }}>*</span>}
+          {label} {required && <span style={{ color: 'var(--color-error)' }}>*</span>}
         </label>
 
         {/* Input Container */}
@@ -35,7 +35,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
               position: 'absolute',
               left: '0.75rem',
               zIndex: 1,
-              color: error ? '#ef4444' : '#6b7280',
+              color: error ? 'var(--color-error)' : 'var(--color-neutral-stone)',
               pointerEvents: 'none'
             }}>
               {icon}
@@ -47,29 +47,29 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
             style={{
               width: '100%',
               padding: icon ? '0.75rem 0.75rem 0.75rem 2.5rem' : '0.75rem',
-              border: `2px solid ${error ? '#ef4444' : '#e5e7eb'}`,
+              border: `2px solid ${error ? 'var(--color-error)' : 'var(--color-neutral-mist)'}`,
               borderRadius: '8px',
               fontSize: '0.875rem',
               outline: 'none',
               transition: 'all 0.2s ease',
-              backgroundColor: error ? '#fef2f2' : 'white',
+              backgroundColor: error ? 'rgba(220, 38, 38, 0.1)' : 'var(--color-neutral-cream)',
               ...(!error && {
                 ':focus': {
-                  borderColor: '#3b82f6',
+                  borderColor: 'var(--color-primary-ocean)',
                   boxShadow: '0 0 0 3px rgba(59, 130, 246, 0.1)'
                 }
               })
             }}
             onFocus={(e) => {
               if (!error) {
-                e.target.style.borderColor = '#3b82f6';
+                e.target.style.borderColor = 'var(--color-primary-ocean)';
                 e.target.style.boxShadow = '0 0 0 3px rgba(59, 130, 246, 0.1)';
               }
               props.onFocus?.(e);
             }}
             onBlur={(e) => {
               if (!error) {
-                e.target.style.borderColor = '#e5e7eb';
+                e.target.style.borderColor = 'var(--color-neutral-mist)';
                 e.target.style.boxShadow = 'none';
               }
               props.onBlur?.(e);
@@ -81,7 +81,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         {/* Error Message */}
         {error && (
           <p style={{
-            color: '#ef4444',
+            color: 'var(--color-error)',
             fontSize: '0.75rem',
             margin: '0.25rem 0 0 0',
             display: 'flex',
@@ -96,7 +96,7 @@ const FormInput = forwardRef<HTMLInputElement, FormInputProps>(
         {/* Help Text */}
         {helpText && !error && (
           <p style={{
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             fontSize: '0.75rem',
             margin: '0.25rem 0 0 0',
             fontStyle: 'italic'

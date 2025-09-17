@@ -130,7 +130,7 @@ const DestinationDiscovery: React.FC<DestinationDiscoveryProps> = ({
   // Render destination card
   const renderDestinationCard = useCallback((destination: WebDestination, showAddButton: boolean = true) => (
     <div key={destination.id} style={{
-      backgroundColor: 'white',
+      backgroundColor: 'var(--color-neutral-cream)',
       borderRadius: '12px',
       boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
       overflow: 'hidden',
@@ -470,8 +470,8 @@ const DestinationDiscovery: React.FC<DestinationDiscoveryProps> = ({
           <button
             onClick={() => setShowFilters(!showFilters)}
             style={{
-              backgroundColor: showFilters ? '#3b82f6' : 'white',
-              color: showFilters ? 'white' : '#6b7280',
+              backgroundColor: showFilters ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+              color: showFilters ? 'white' : 'var(--color-text-secondary)',
               border: '1px solid #e5e7eb',
               borderRadius: '8px',
               padding: '0.75rem 1rem',

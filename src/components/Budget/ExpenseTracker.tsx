@@ -272,7 +272,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
         flexDirection: 'column',
         gap: '1rem',
         padding: '3rem',
-        color: '#6b7280'
+        color: 'var(--color-text-secondary)'
       }}>
         <Receipt size={48} style={{ opacity: 0.5 }} />
         <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Keine Reise ausgewählt</h2>
@@ -297,13 +297,13 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
             margin: '0 0 0.5rem 0',
             fontSize: '2rem',
             fontWeight: 'bold',
-            color: '#1f2937'
+            color: 'var(--color-text-primary)'
           }}>
             Ausgaben-Tracker
           </h1>
           <p style={{
             margin: 0,
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             fontSize: '1rem'
           }}>
             Detaillierte Verfolgung aller Reiseausgaben
@@ -313,8 +313,8 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
         <button
           onClick={() => setShowAddForm(true)}
           style={{
-            background: '#16a34a',
-            color: 'white',
+            background: 'var(--color-success)',
+            color: 'var(--color-neutral-cream)',
             border: 'none',
             borderRadius: '8px',
             padding: '0.75rem 1.5rem',
@@ -339,8 +339,8 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
         marginBottom: '2rem'
       }}>
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '8px',
           padding: '1rem'
         }}>
@@ -350,19 +350,19 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
             gap: '0.5rem',
             marginBottom: '0.5rem'
           }}>
-            <DollarSign size={16} style={{ color: '#3b82f6' }} />
-            <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '600' }}>
+            <DollarSign size={16} style={{ color: 'var(--color-primary-ocean)' }} />
+            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '600' }}>
               Gesamtausgaben
             </span>
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
             {formatCurrency(expenseStats.total)}
           </div>
         </div>
 
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '8px',
           padding: '1rem'
         }}>
@@ -372,19 +372,19 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
             gap: '0.5rem',
             marginBottom: '0.5rem'
           }}>
-            <Receipt size={16} style={{ color: '#16a34a' }} />
-            <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '600' }}>
+            <Receipt size={16} style={{ color: 'var(--color-success)' }} />
+            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '600' }}>
               Anzahl Ausgaben
             </span>
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
             {expenseStats.count}
           </div>
         </div>
 
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '8px',
           padding: '1rem'
         }}>
@@ -395,19 +395,19 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
             marginBottom: '0.5rem'
           }}>
             <TrendingUp size={16} style={{ color: '#d97706' }} />
-            <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '600' }}>
+            <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '600' }}>
               Ø pro Ausgabe
             </span>
           </div>
-          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#1f2937' }}>
+          <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-text-primary)' }}>
             {formatCurrency(expenseStats.avgPerExpense)}
           </div>
         </div>
 
         {expenseStats.topCategory && (
           <div style={{
-            background: 'white',
-            border: '1px solid #e5e7eb',
+            background: 'var(--color-neutral-cream)',
+            border: '1px solid var(--color-neutral-mist)',
             borderRadius: '8px',
             padding: '1rem'
           }}>
@@ -418,14 +418,14 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
               marginBottom: '0.5rem'
             }}>
               <Tag size={16} style={{ color: '#7c3aed' }} />
-              <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '600' }}>
+              <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '600' }}>
                 Top Kategorie
               </span>
             </div>
-            <div style={{ fontSize: '1rem', fontWeight: '600', color: '#1f2937' }}>
+            <div style={{ fontSize: '1rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
               {getExpenseCategoryIcon(expenseStats.topCategory.category as ExpenseCategory)} {getExpenseCategoryLabel(expenseStats.topCategory.category as ExpenseCategory)}
             </div>
-            <div style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+            <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
               {formatCurrency(expenseStats.topCategory.amount)}
             </div>
           </div>
@@ -434,8 +434,8 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
 
       {/* Filters */}
       <div style={{
-        background: 'white',
-        border: '1px solid #e5e7eb',
+        background: 'var(--color-neutral-cream)',
+        border: '1px solid var(--color-neutral-mist)',
         borderRadius: '8px',
         padding: '1rem',
         marginBottom: '1.5rem'
@@ -479,7 +479,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
               border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '0.875rem',
-              background: 'white'
+              background: 'var(--color-neutral-cream)'
             }}
           >
             <option value="all">Alle Kategorien</option>
@@ -500,7 +500,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
               border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '0.875rem',
-              background: 'white'
+              background: 'var(--color-neutral-cream)'
             }}
           >
             <option value="all">Alle Ziele</option>
@@ -520,7 +520,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
               border: '1px solid #d1d5db',
               borderRadius: '6px',
               fontSize: '0.875rem',
-              background: 'white'
+              background: 'var(--color-neutral-cream)'
             }}
           >
             <option value="all">Alle Daten</option>
@@ -533,15 +533,15 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
 
       {/* Expenses List */}
       <div style={{
-        background: 'white',
-        border: '1px solid #e5e7eb',
+        background: 'var(--color-neutral-cream)',
+        border: '1px solid var(--color-neutral-mist)',
         borderRadius: '8px',
         overflow: 'hidden'
       }}>
         <div style={{
           background: '#f9fafb',
           padding: '1rem 1.5rem',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid var(--color-neutral-mist)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -550,7 +550,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
             margin: 0,
             fontSize: '1.125rem',
             fontWeight: '600',
-            color: '#1f2937'
+            color: 'var(--color-text-primary)'
           }}>
             Ausgaben ({filteredExpenses.length})
           </h3>
@@ -562,7 +562,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
               borderRadius: '6px',
               padding: '0.5rem',
               cursor: 'pointer',
-              color: '#6b7280',
+              color: 'var(--color-text-secondary)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
@@ -585,7 +585,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
               {filteredExpenses.map(expense => (
                 <div key={expense.id} style={{
                   background: '#f9fafb',
-                  border: '1px solid #e5e7eb',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
                   padding: '1rem'
                 }}>
@@ -599,7 +599,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                       width: '48px',
                       height: '48px',
                       borderRadius: '12px',
-                      background: '#e5e7eb',
+                      background: 'var(--color-neutral-mist)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
@@ -622,7 +622,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                             margin: '0 0 0.25rem 0',
                             fontSize: '1.125rem',
                             fontWeight: '600',
-                            color: '#1f2937'
+                            color: 'var(--color-text-primary)'
                           }}>
                             {expense.description}
                           </h4>
@@ -631,7 +631,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                             alignItems: 'center',
                             gap: '1rem',
                             fontSize: '0.875rem',
-                            color: '#6b7280'
+                            color: 'var(--color-text-secondary)'
                           }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                               <MapPin size={12} />
@@ -656,7 +656,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                           <div style={{
                             fontSize: '1.25rem',
                             fontWeight: 'bold',
-                            color: '#1f2937'
+                            color: 'var(--color-text-primary)'
                           }}>
                             {formatCurrency(expense.amount)}
                           </div>
@@ -673,7 +673,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                                 borderRadius: '4px',
                                 padding: '0.25rem',
                                 cursor: 'pointer',
-                                color: '#6b7280'
+                                color: 'var(--color-text-secondary)'
                               }}
                               title="Bearbeiten"
                             >
@@ -733,7 +733,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                         <p style={{
                           margin: 0,
                           fontSize: '0.875rem',
-                          color: '#6b7280',
+                          color: 'var(--color-text-secondary)',
                           fontStyle: 'italic'
                         }}>
                           {expense.notes}
@@ -782,7 +782,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
           padding: '1rem'
         }}>
           <div style={{
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             borderRadius: '12px',
             padding: '2rem',
             maxWidth: '500px',
@@ -800,7 +800,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                 margin: 0,
                 fontSize: '1.5rem',
                 fontWeight: '600',
-                color: '#1f2937'
+                color: 'var(--color-text-primary)'
               }}>
                 {editingExpense ? 'Ausgabe bearbeiten' : 'Neue Ausgabe'}
               </h2>
@@ -813,7 +813,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                   background: 'transparent',
                   border: 'none',
                   cursor: 'pointer',
-                  color: '#6b7280',
+                  color: 'var(--color-text-secondary)',
                   fontSize: '1.5rem',
                   padding: '0.5rem'
                 }}
@@ -848,7 +848,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                     border: '1px solid #d1d5db',
                     borderRadius: '6px',
                     fontSize: '0.875rem',
-                    background: 'white'
+                    background: 'var(--color-neutral-cream)'
                   }}
                 >
                   <option value="">Ziel auswählen</option>
@@ -936,7 +936,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                     border: '1px solid #d1d5db',
                     borderRadius: '6px',
                     fontSize: '0.875rem',
-                    background: 'white'
+                    background: 'var(--color-neutral-cream)'
                   }}
                 >
                   <option value="accommodation">Unterkunft</option>
@@ -1023,7 +1023,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                     border: '1px solid #d1d5db',
                     borderRadius: '6px',
                     fontSize: '0.875rem',
-                    background: 'white'
+                    background: 'var(--color-neutral-cream)'
                   }}
                 >
                   <option value="cash">Bar</option>
@@ -1100,8 +1100,8 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                   }}
                   style={{
                     flex: 1,
-                    background: 'white',
-                    color: '#6b7280',
+                    background: 'var(--color-neutral-cream)',
+                    color: 'var(--color-text-secondary)',
                     border: '1px solid #d1d5db',
                     borderRadius: '6px',
                     padding: '0.75rem',
@@ -1116,8 +1116,8 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                   type="submit"
                   style={{
                     flex: 1,
-                    background: '#16a34a',
-                    color: 'white',
+                    background: 'var(--color-success)',
+                    color: 'var(--color-neutral-cream)',
                     border: 'none',
                     borderRadius: '6px',
                     padding: '0.75rem',

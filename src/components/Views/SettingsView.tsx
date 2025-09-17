@@ -387,7 +387,7 @@ const SettingsView: React.FC = () => {
           zIndex: 1000
         }}>
           <div style={{
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             borderRadius: '12px',
             padding: '2rem',
             maxWidth: '500px',
@@ -411,7 +411,7 @@ const SettingsView: React.FC = () => {
                   padding: '0.5rem 1rem',
                   borderRadius: '6px',
                   border: '1px solid #d1d5db',
-                  background: 'white',
+                  background: 'var(--color-neutral-cream)',
                   color: 'var(--color-text-primary)',
                   cursor: 'pointer'
                 }}
@@ -471,7 +471,7 @@ const GeneralSettings: React.FC<{
             padding: '0.5rem',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             minWidth: '200px'
           }}
         >
@@ -543,7 +543,7 @@ const GeneralSettings: React.FC<{
             padding: '0.5rem',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             minWidth: '200px'
           }}
         >
@@ -575,7 +575,7 @@ const GeneralSettings: React.FC<{
             padding: '0.5rem',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             minWidth: '200px'
           }}
         >
@@ -656,7 +656,7 @@ const MapSettings: React.FC<{
             padding: '0.5rem',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             minWidth: '200px'
           }}
         >
@@ -750,7 +750,7 @@ const TravelSettings: React.FC<{
             padding: '0.5rem',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             minWidth: '200px'
           }}
         >
@@ -783,7 +783,7 @@ const TravelSettings: React.FC<{
             padding: '0.5rem',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             minWidth: '200px'
           }}
         >
@@ -817,7 +817,7 @@ const TravelSettings: React.FC<{
             padding: '0.5rem',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             minWidth: '200px'
           }}
         />
@@ -946,7 +946,7 @@ const NotificationSettings: React.FC<{
               padding: '0.5rem',
               borderRadius: '6px',
               border: '1px solid #d1d5db',
-              background: 'white',
+              background: 'var(--color-neutral-cream)',
               minWidth: '200px'
             }}
           />
@@ -984,7 +984,7 @@ const ExportSettings: React.FC<{
             padding: '0.5rem',
             borderRadius: '6px',
             border: '1px solid #d1d5db',
-            background: 'white',
+            background: 'var(--color-neutral-cream)',
             minWidth: '200px'
           }}
         >
@@ -1096,7 +1096,7 @@ const BackupSettings: React.FC<{
               padding: '0.5rem',
               borderRadius: '6px',
               border: '1px solid #d1d5db',
-              background: 'white',
+              background: 'var(--color-neutral-cream)',
               minWidth: '200px'
             }}
           />

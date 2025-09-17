@@ -31,6 +31,11 @@ export enum TripStatus {
   CANCELLED = 'cancelled'
 }
 
+export enum TripPrivacy {
+  PRIVATE = 'private',
+  PUBLIC = 'public'
+}
+
 export enum TransportMode {
   WALKING = 'walking',
   DRIVING = 'driving',
@@ -142,6 +147,11 @@ export interface Trip {
   status: TripStatus;
   coverImage?: string;
   tags: string[];
+  
+  // Privacy and sharing settings
+  privacy: TripPrivacy;
+  ownerId: UUID; // User ID of the trip owner
+  taggedUsers: UUID[]; // User IDs of users tagged in this trip
   
   // Vehicle and fuel configuration for travel cost calculations
   vehicleConfig?: VehicleConfig;
@@ -267,6 +277,8 @@ export interface CreateTripData {
   budget?: number;
   participants: string[];
   tags: string[];
+  privacy?: TripPrivacy;
+  taggedUsers?: UUID[];
   vehicleConfig?: VehicleConfig;
 }
 
@@ -312,6 +324,40 @@ export interface AppError {
   message: string;
   details?: any;
 }
+
+// Permission and access control types
+export interface TripPermissions {
+  canEdit: boolean;
+  canView: boolean;
+  canDelete: boolean;
+  isOwner: boolean;
+  isTagged: boolean;
+}
+
+// Utility functions for trip permissions
+export const getTripPermissions = (trip: Trip, currentUserId: UUID): TripPermissions => {
+  const isOwner = trip.ownerId === currentUserId;
+  const isTagged = trip.taggedUsers.includes(currentUserId);
+  const isPublic = trip.privacy === TripPrivacy.PUBLIC;
+  
+  return {
+    canEdit: isOwner || isTagged,
+    canView: isOwner || isTagged || isPublic,
+    canDelete: isOwner,
+    isOwner,
+    isTagged
+  };
+};
+
+export const canUserAccessTrip = (trip: Trip, currentUserId: UUID): boolean => {
+  const permissions = getTripPermissions(trip, currentUserId);
+  return permissions.canView;
+};
+
+export const canUserEditTrip = (trip: Trip, currentUserId: UUID): boolean => {
+  const permissions = getTripPermissions(trip, currentUserId);
+  return permissions.canEdit;
+};
 
 // Context types
 export interface AppContextType {

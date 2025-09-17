@@ -90,20 +90,20 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
   const getIconColor = (condition: string): string => {
     switch (condition?.toLowerCase()) {
       case 'clear':
-        return '#f59e0b';
+        return 'var(--color-secondary-sunset)';
       case 'clouds':
-        return '#6b7280';
+        return 'var(--color-text-secondary)';
       case 'rain':
       case 'drizzle':
-        return '#3b82f6';
+        return 'var(--color-primary-ocean)';
       case 'snow':
-        return '#e5e7eb';
+        return 'var(--color-neutral-mist)';
       case 'mist':
       case 'fog':
       case 'haze':
-        return '#9ca3af';
+        return 'var(--color-text-secondary)';
       default:
-        return '#f59e0b';
+        return 'var(--color-secondary-sunset)';
     }
   };
 
@@ -160,9 +160,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#f9fafb',
+        background: 'var(--color-neutral-cream)',
         borderRadius: '6px',
-        color: '#9ca3af'
+        color: 'var(--color-text-secondary)'
       }}>
         <span>Keine GPS-Daten</span>
       </div>
@@ -175,9 +175,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: '0.5rem',
-        background: '#fef2f2',
+        background: 'rgba(220, 38, 38, 0.1)',
         borderRadius: '6px',
-        color: '#dc2626'
+        color: 'var(--color-error)'
       }}>
         <AlertCircle size={sizeClasses.icon} />
         <span>{error}</span>
@@ -203,9 +203,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#f9fafb',
+        background: 'var(--color-neutral-cream)',
         borderRadius: '6px',
-        color: '#6b7280'
+        color: 'var(--color-text-secondary)'
       }}>
         <RefreshCw size={sizeClasses.icon} className="animate-spin" style={{ animation: 'spin 1s linear infinite' }} />
         <span style={{ marginLeft: '0.5rem' }}>Lade...</span>
@@ -219,9 +219,9 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: '#f9fafb',
+        background: 'var(--color-neutral-cream)',
         borderRadius: '6px',
-        color: '#9ca3af'
+        color: 'var(--color-text-secondary)'
       }}>
         <span>Keine Wetterdaten</span>
       </div>
@@ -230,7 +230,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
 
   return (
     <div className={`${className} ${sizeClasses.container}`} style={{
-      background: 'linear-gradient(135deg, #dbeafe 0%, #f0f9ff 100%)',
+      background: 'linear-gradient(135deg, var(--color-neutral-mist) 0%, var(--color-neutral-cream) 100%)',
       borderRadius: '8px',
       border: '1px solid #e0f2fe',
       padding: sizeClasses.padding === 'p-1' ? '0.25rem' : sizeClasses.padding === 'p-3' ? '0.75rem' : '0.5rem'
@@ -255,7 +255,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
             {size !== 'sm' && (
               <div style={{
                 fontSize: '0.75rem',
-                color: '#6b7280',
+                color: 'var(--color-text-secondary)',
                 lineHeight: '1'
               }}>
                 {WeatherService.getGermanDescription(weather.condition || '')}
@@ -274,7 +274,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
               cursor: 'pointer',
               padding: '0.25rem',
               borderRadius: '4px',
-              color: '#6b7280',
+              color: 'var(--color-text-secondary)',
               opacity: isLoading ? 0.5 : 1
             }}
             title="Wetter aktualisieren"
@@ -298,7 +298,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
             alignItems: 'center',
             gap: '0.25rem',
             fontSize: '0.75rem',
-            color: '#6b7280'
+            color: 'var(--color-text-secondary)'
           }}>
             <Thermometer size={12} />
             <span>Gefühlt {(weather as ExtendedWeatherInfo).feelsLike}°C</span>
@@ -309,7 +309,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
             alignItems: 'center',
             gap: '0.25rem',
             fontSize: '0.75rem',
-            color: '#6b7280'
+            color: 'var(--color-text-secondary)'
           }}>
             <Droplets size={12} />
             <span>{weather.humidity}%</span>
@@ -320,7 +320,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
             alignItems: 'center',
             gap: '0.25rem',
             fontSize: '0.75rem',
-            color: '#6b7280'
+            color: 'var(--color-text-secondary)'
           }}>
             <Wind size={12} />
             <span>{weather.windSpeed} km/h</span>
@@ -333,7 +333,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
                 alignItems: 'center',
                 gap: '0.25rem',
                 fontSize: '0.75rem',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 <Gauge size={12} />
                 <span>{(weather as ExtendedWeatherInfo).pressure} hPa</span>
@@ -344,7 +344,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
                 alignItems: 'center',
                 gap: '0.25rem',
                 fontSize: '0.75rem',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 <Eye size={12} />
                 <span>{(weather as ExtendedWeatherInfo).visibility} km</span>
@@ -355,7 +355,7 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
                 alignItems: 'center',
                 gap: '0.25rem',
                 fontSize: '0.75rem',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 <Sunrise size={12} />
                 <span>{(weather as ExtendedWeatherInfo).sunrise}</span>

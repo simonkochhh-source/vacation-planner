@@ -1,4 +1,4 @@
-import { Trip, Destination, DestinationCategory, DestinationStatus, TripStatus } from '../types';
+import { Trip, Destination, DestinationCategory, DestinationStatus, TripStatus, TripPrivacy } from '../types';
 
 // Mock Destinations für verschiedene Städte
 export const mockDestinations: Destination[] = [
@@ -340,6 +340,9 @@ export const mockTrips: Trip[] = [
     coverImage: undefined,
     participants: ['Max Mustermann', 'Anna Schmidt'],
     tags: ['Städtereise', 'Kultur', 'Geschichte', 'Wochenende'],
+    privacy: TripPrivacy.PUBLIC,
+    ownerId: 'user-1',
+    taggedUsers: ['user-2'],
     createdAt: '2024-08-20',
     updatedAt: '2024-08-20'
   },
@@ -356,6 +359,9 @@ export const mockTrips: Trip[] = [
     coverImage: undefined,
     participants: ['Max Mustermann'],
     tags: ['Bayern', 'Schlösser', 'Tradition', 'Alpen'],
+    privacy: TripPrivacy.PRIVATE,
+    ownerId: 'user-1',
+    taggedUsers: [],
     createdAt: '2024-08-20',
     updatedAt: '2024-08-20'
   },
@@ -372,6 +378,9 @@ export const mockTrips: Trip[] = [
     coverImage: undefined,
     participants: ['Anna Schmidt', 'Tom Weber'],
     tags: ['Maritime', 'Hafenstadt', 'UNESCO', 'Nachtleben'],
+    privacy: TripPrivacy.PUBLIC,
+    ownerId: 'user-2',
+    taggedUsers: ['user-3'],
     createdAt: '2024-08-20',
     updatedAt: '2024-08-20'
   },
@@ -388,6 +397,9 @@ export const mockTrips: Trip[] = [
     coverImage: undefined,
     participants: ['Max Mustermann', 'Lisa Müller'],
     tags: ['Kultur', 'Museen', 'Rheinland', 'Kunst'],
+    privacy: TripPrivacy.PRIVATE,
+    ownerId: 'user-1',
+    taggedUsers: ['user-4'],
     createdAt: '2024-08-20',
     updatedAt: '2024-08-20'
   },
@@ -404,6 +416,9 @@ export const mockTrips: Trip[] = [
     coverImage: undefined,
     participants: ['Anna Schmidt'],
     tags: ['Barock', 'Kunst', 'Sachsen', 'Architektur'],
+    privacy: TripPrivacy.PUBLIC,
+    ownerId: 'user-2',
+    taggedUsers: [],
     createdAt: '2024-08-20',
     updatedAt: '2024-08-20'
   }

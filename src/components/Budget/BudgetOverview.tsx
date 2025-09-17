@@ -190,7 +190,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
         flexDirection: 'column',
         gap: '1rem',
         padding: '3rem',
-        color: '#6b7280'
+        color: 'var(--color-text-primary)'
       }}>
         <Wallet size={48} style={{ opacity: 0.5 }} />
         <h2 style={{ margin: 0, fontSize: '1.5rem' }}>Keine Reise ausgewählt</h2>
@@ -202,7 +202,11 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   }
 
   return (
-    <div style={{ padding: '1.5rem' }}>
+    <div style={{ 
+      padding: '1.5rem',
+      background: 'var(--color-neutral-cream)',
+      minHeight: '100%'
+    }}>
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -215,13 +219,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             margin: '0 0 0.5rem 0',
             fontSize: '2rem',
             fontWeight: 'bold',
-            color: '#1f2937'
+            color: 'var(--color-text-secondary)'
           }}>
             Budget-Übersicht
           </h1>
           <p style={{
             margin: 0,
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             fontSize: '1rem'
           }}>
             {currentTrip.name} • Finanzielle Planung und Ausgabentracking
@@ -238,10 +242,11 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             onChange={(e) => setGroupBy(e.target.value as any)}
             style={{
               padding: '0.5rem',
-              border: '1px solid #d1d5db',
+              border: '1px solid var(--color-neutral-mist)',
               borderRadius: '6px',
               fontSize: '0.875rem',
-              background: 'white'
+              background: 'var(--color-neutral-cream)',
+              color: 'var(--color-text-secondary)'
             }}
           >
             <option value="category">Nach Kategorie</option>
@@ -254,10 +259,11 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             onChange={(e) => setSelectedTimeframe(e.target.value as any)}
             style={{
               padding: '0.5rem',
-              border: '1px solid #d1d5db',
+              border: '1px solid var(--color-neutral-mist)',
               borderRadius: '6px',
               fontSize: '0.875rem',
-              background: 'white'
+              background: 'var(--color-neutral-cream)',
+              color: 'var(--color-text-secondary)'
             }}
           >
             <option value="all">Alle Ausgaben</option>
@@ -276,12 +282,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       }}>
         {/* Total Budget */}
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '12px',
           padding: '1.5rem',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <div style={{
             position: 'absolute',
@@ -289,7 +296,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             right: 0,
             width: '100px',
             height: '100px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%)',
             borderRadius: '0 0 0 100px',
             opacity: 0.1
           }} />
@@ -305,7 +312,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               width: '48px',
               height: '48px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+              background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -318,14 +325,14 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 margin: '0 0 0.25rem 0',
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 Gesamtbudget
               </h3>
               <div style={{
                 fontSize: '2rem',
                 fontWeight: 'bold',
-                color: '#1f2937'
+                color: 'var(--color-text-secondary)'
               }}>
                 {formatCurrency(budgetStats.totalPlanned)}
               </div>
@@ -337,7 +344,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             alignItems: 'center',
             gap: '0.5rem',
             fontSize: '0.875rem',
-            color: '#6b7280'
+            color: 'var(--color-text-secondary)'
           }}>
             <Target size={14} />
             <span>Geplant für {currentDestinations.length} Ziele</span>
@@ -346,12 +353,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
         {/* Actual Spending */}
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '12px',
           padding: '1.5rem',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <div style={{
             position: 'absolute',
@@ -360,8 +368,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             width: '100px',
             height: '100px',
             background: budgetStats.isOverBudget 
-              ? 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'
-              : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
+              ? 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)'
+              : 'linear-gradient(135deg, var(--color-success) 0%, var(--color-secondary-forest) 100%)',
             borderRadius: '0 0 0 100px',
             opacity: 0.1
           }} />
@@ -378,7 +386,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               height: '48px',
               borderRadius: '12px',
               background: budgetStats.isOverBudget 
-                ? 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)'
+                ? 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)'
                 : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
               display: 'flex',
               alignItems: 'center',
@@ -392,14 +400,14 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 margin: '0 0 0.25rem 0',
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 Ausgegeben
               </h3>
               <div style={{
                 fontSize: '2rem',
                 fontWeight: 'bold',
-                color: budgetStats.isOverBudget ? '#dc2626' : '#16a34a'
+                color: budgetStats.isOverBudget ? 'var(--color-error)' : 'var(--color-success)'
               }}>
                 {formatCurrency(budgetStats.totalActual)}
               </div>
@@ -411,7 +419,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             alignItems: 'center',
             gap: '0.5rem',
             fontSize: '0.875rem',
-            color: '#6b7280'
+            color: 'var(--color-text-secondary)'
           }}>
             <BarChart3 size={14} />
             <span>{budgetStats.percentageUsed.toFixed(1)}% vom Budget</span>
@@ -420,12 +428,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
         {/* Remaining Budget */}
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '12px',
           padding: '1.5rem',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <div style={{
             position: 'absolute',
@@ -434,8 +443,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             width: '100px',
             height: '100px',
             background: budgetStats.remaining >= 0 
-              ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
-              : 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+              ? 'linear-gradient(135deg, var(--color-success) 0%, var(--color-secondary-forest) 100%)'
+              : 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)',
             borderRadius: '0 0 0 100px',
             opacity: 0.1
           }} />
@@ -453,7 +462,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               borderRadius: '12px',
               background: budgetStats.remaining >= 0 
                 ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
-                : 'linear-gradient(135deg, #dc2626 0%, #991b1b 100%)',
+                : 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -466,14 +475,14 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 margin: '0 0 0.25rem 0',
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 Verbleibendes Budget
               </h3>
               <div style={{
                 fontSize: '2rem',
                 fontWeight: 'bold',
-                color: budgetStats.remaining >= 0 ? '#16a34a' : '#dc2626'
+                color: budgetStats.remaining >= 0 ? 'var(--color-success)' : 'var(--color-error)'
               }}>
                 {formatCurrency(Math.abs(budgetStats.remaining))}
               </div>
@@ -485,7 +494,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             alignItems: 'center',
             gap: '0.5rem',
             fontSize: '0.875rem',
-            color: '#6b7280'
+            color: 'var(--color-text-secondary)'
           }}>
             {budgetStats.remaining >= 0 ? (
               <>
@@ -503,12 +512,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
         {/* Travel Costs */}
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '12px',
           padding: '1.5rem',
           position: 'relative',
-          overflow: 'hidden'
+          overflow: 'hidden',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <div style={{
             position: 'absolute',
@@ -516,7 +526,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             right: 0,
             width: '100px',
             height: '100px',
-            background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+            background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-sky) 100%)',
             borderRadius: '0 0 0 100px',
             opacity: 0.1
           }} />
@@ -532,7 +542,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               width: '48px',
               height: '48px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
+              background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-sky) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
@@ -545,14 +555,14 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 margin: '0 0 0.25rem 0',
                 fontSize: '0.875rem',
                 fontWeight: '600',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 Fahrtkosten
               </h3>
               <div style={{
                 fontSize: '2rem',
                 fontWeight: 'bold',
-                color: '#1f2937'
+                color: 'var(--color-text-secondary)'
               }}>
                 {formatCurrency(budgetStats.travelCosts)}
               </div>
@@ -564,7 +574,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             alignItems: 'center',
             gap: '0.5rem',
             fontSize: '0.875rem',
-            color: '#6b7280'
+            color: 'var(--color-text-secondary)'
           }}>
             <MapPin size={14} />
             <span>{settings.fuelConsumption}L/100km • {formatCurrency(currentFuelPrice)}/L</span>
@@ -581,16 +591,17 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       }}>
         {/* Category Breakdown */}
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '12px',
-          padding: '1.5rem'
+          padding: '1.5rem',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <h3 style={{
             margin: '0 0 1rem 0',
             fontSize: '1.125rem',
             fontWeight: '600',
-            color: '#1f2937',
+            color: 'var(--color-text-secondary)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem'
@@ -612,8 +623,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
               return (
                 <div key={index} style={{
-                  background: '#f9fafb',
-                  border: '1px solid #e5e7eb',
+                  background: 'var(--color-neutral-mist)',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
                   padding: '1rem'
                 }}>
@@ -627,7 +638,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                       margin: 0,
                       fontSize: '1rem',
                       fontWeight: '600',
-                      color: '#1f2937'
+                      color: 'var(--color-text-secondary)'
                     }}>
                       {category.category}
                     </h4>
@@ -649,15 +660,15 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                     gap: '1rem',
                     marginBottom: '0.5rem',
                     fontSize: '0.875rem',
-                    color: '#374151'
+                    color: 'var(--color-text-secondary)'
                   }}>
                     <div>
-                      <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Gesamtkosten:</span>
-                      <div style={{ fontWeight: '600', color: '#1f2937' }}>{formatCurrency(category.totalCost)}</div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)' }}>Gesamtkosten:</span>
+                      <div style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>{formatCurrency(category.totalCost)}</div>
                     </div>
                     <div>
-                      <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>Ø pro Ziel:</span>
-                      <div style={{ fontWeight: '600', color: '#1f2937' }}>{formatCurrency(category.avgCostPerDestination)}</div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)' }}>Ø pro Ziel:</span>
+                      <div style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>{formatCurrency(category.avgCostPerDestination)}</div>
                     </div>
                   </div>
 
@@ -665,7 +676,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                   <div style={{
                     width: '100%',
                     height: '6px',
-                    background: '#e5e7eb',
+                    background: 'var(--color-neutral-mist)',
                     borderRadius: '3px',
                     overflow: 'hidden',
                     marginBottom: '0.5rem'
@@ -684,7 +695,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     fontSize: '0.75rem',
-                    color: '#6b7280'
+                    color: 'var(--color-text-secondary)'
                   }}>
                     <span>{category.destinationCount} Ziele</span>
                     <span>{percentage.toFixed(1)}% der Gesamtkosten</span>
@@ -697,16 +708,17 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
         {/* Recent Expenses */}
         <div style={{
-          background: 'white',
-          border: '1px solid #e5e7eb',
+          background: 'var(--color-neutral-cream)',
+          border: '1px solid var(--color-neutral-mist)',
           borderRadius: '12px',
-          padding: '1.5rem'
+          padding: '1.5rem',
+          boxShadow: 'var(--shadow-sm)'
         }}>
           <h3 style={{
             margin: '0 0 1rem 0',
             fontSize: '1.125rem',
             fontWeight: '600',
-            color: '#1f2937',
+            color: 'var(--color-text-secondary)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem'
@@ -723,8 +735,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             }}>
               {recentExpenses.map(expense => (
                 <div key={expense.id} style={{
-                  background: '#f9fafb',
-                  border: '1px solid #e5e7eb',
+                  background: 'var(--color-neutral-mist)',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
                   padding: '0.75rem',
                   display: 'flex',
@@ -736,13 +748,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                       margin: '0 0 0.25rem 0',
                       fontSize: '0.875rem',
                       fontWeight: '600',
-                      color: '#1f2937'
+                      color: 'var(--color-text-secondary)'
                     }}>
                       {expense.name}
                     </h5>
                     <div style={{
                       fontSize: '0.75rem',
-                      color: '#6b7280',
+                      color: 'var(--color-text-secondary)',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '0.5rem'
@@ -762,7 +774,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                     <div style={{
                       fontSize: '1rem',
                       fontWeight: '600',
-                      color: expense.actualCost && expense.budget && expense.actualCost > expense.budget ? '#dc2626' : '#374151'
+                      color: expense.actualCost && expense.budget && expense.actualCost > expense.budget ? 'var(--color-error)' : 'var(--color-text-primary)'
                     }}>
                       {formatCurrency(expense.actualCost || 0)}
                     </div>
@@ -772,11 +784,11 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                         onClick={() => onEditBudget(expense)}
                         style={{
                           background: 'transparent',
-                          border: '1px solid #d1d5db',
+                          border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '4px',
                           padding: '0.25rem',
                           cursor: 'pointer',
-                          color: '#6b7280'
+                          color: 'var(--color-text-secondary)'
                         }}
                         title="Budget bearbeiten"
                       >
@@ -795,7 +807,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               flexDirection: 'column',
               gap: '0.5rem',
               padding: '2rem',
-              color: '#9ca3af'
+              color: 'var(--color-text-secondary)'
             }}>
               <DollarSign size={24} style={{ opacity: 0.5 }} />
               <span style={{ fontSize: '0.875rem' }}>
@@ -809,8 +821,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       {/* Budget Warnings */}
       {(budgetStats.isOverBudget || budgetStats.destinationsOverBudget > 0) && (
         <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fca5a5',
+          background: 'rgba(220, 38, 38, 0.1)',
+          border: '1px solid var(--color-error)',
           borderRadius: '12px',
           padding: '1rem',
           marginBottom: '1rem'
@@ -821,18 +833,18 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             gap: '0.5rem',
             marginBottom: '0.5rem'
           }}>
-            <AlertTriangle size={20} style={{ color: '#dc2626' }} />
+            <AlertTriangle size={20} style={{ color: 'var(--color-error)' }} />
             <h4 style={{
               margin: 0,
               fontSize: '1rem',
               fontWeight: '600',
-              color: '#dc2626'
+              color: 'var(--color-error)'
             }}>
               Budget-Warnungen
             </h4>
           </div>
           
-          <div style={{ fontSize: '0.875rem', color: '#991b1b' }}>
+          <div style={{ fontSize: '0.875rem', color: 'var(--color-error)' }}>
             {budgetStats.isOverBudget && (
               <p style={{ margin: '0 0 0.5rem 0' }}>
                 • Das Gesamtbudget wurde um {formatCurrency(Math.abs(budgetStats.remaining))} überschritten

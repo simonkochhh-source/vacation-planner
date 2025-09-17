@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { Trip, VehicleConfig, FuelType, CreateTripData } from '../../types';
+import { Trip, VehicleConfig, FuelType, CreateTripData, TripPrivacy } from '../../types';
 import { tripSchema, TripFormData } from '../../schemas/validationSchemas';
 import { getCurrentDateString, addDaysToDate, getCenterCoordinates } from '../../utils';
 import VehicleConfigPanel from '../Trip/VehicleConfigPanel';
@@ -18,7 +18,10 @@ import {
   Car,
   MapPin,
   Coffee,
-  Mountain
+  Mountain,
+  Lock,
+  Globe,
+  Shield
 } from 'lucide-react';
 
 interface TripFormProps {
@@ -37,6 +40,9 @@ const TripForm: React.FC<TripFormProps> = ({
   const [newParticipant, setNewParticipant] = useState('');
   const [tags, setTags] = useState<string[]>(trip?.tags || []);
   const [newTag, setNewTag] = useState('');
+  const [privacy, setPrivacy] = useState<TripPrivacy>(trip?.privacy || TripPrivacy.PRIVATE);
+  const [taggedUsers, setTaggedUsers] = useState<string[]>(trip?.taggedUsers || []);
+  const [newTaggedUser, setNewTaggedUser] = useState('');
   const [vehicleConfig, setVehicleConfig] = useState<VehicleConfig>(trip?.vehicleConfig || {
     fuelType: FuelType.DIESEL,
     fuelConsumption: 9.0,
@@ -69,6 +75,8 @@ const TripForm: React.FC<TripFormProps> = ({
         ...data,
         participants,
         tags,
+        privacy,
+        taggedUsers,
         vehicleConfig,
         destinations: trip?.destinations || [],
         createdAt: trip?.createdAt || new Date().toISOString(),
@@ -113,6 +121,17 @@ const TripForm: React.FC<TripFormProps> = ({
 
   const removeTag = (index: number) => {
     setTags(tags.filter((_, i) => i !== index));
+  };
+
+  const addTaggedUser = () => {
+    if (newTaggedUser.trim() && !taggedUsers.includes(newTaggedUser.trim())) {
+      setTaggedUsers([...taggedUsers, newTaggedUser.trim()]);
+      setNewTaggedUser('');
+    }
+  };
+
+  const removeTaggedUser = (index: number) => {
+    setTaggedUsers(taggedUsers.filter((_, i) => i !== index));
   };
 
   if (!isOpen) return null;
@@ -524,6 +543,185 @@ const TripForm: React.FC<TripFormProps> = ({
                       </button>
                     </div>
                   ))}
+                </div>
+              )}
+            </Card>
+
+            {/* Privacy & Sharing Section */}
+            <Card padding="md">
+              <div className="flex items-center gap-2 mb-4">
+                <Shield size={18} style={{ color: 'var(--color-primary-sage)' }} />
+                <h3 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-base)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  margin: 0,
+                  color: 'var(--color-text-primary)'
+                }}>
+                  Datenschutz & Freigabe
+                </h3>
+              </div>
+
+              {/* Privacy Setting */}
+              <div style={{ marginBottom: 'var(--space-lg)' }}>
+                <label style={{
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: 'var(--space-sm)',
+                  display: 'block'
+                }}>
+                  Sichtbarkeit der Reise
+                </label>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPrivacy(TripPrivacy.PRIVATE)}
+                    style={{
+                      background: privacy === TripPrivacy.PRIVATE ? 'var(--color-primary-sage)' : 'var(--color-neutral-cream)',
+                      border: privacy === TripPrivacy.PRIVATE ? '2px solid var(--color-primary-sage)' : '1px solid var(--color-neutral-mist)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: 'var(--space-md)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-sm)',
+                      color: privacy === TripPrivacy.PRIVATE ? 'white' : 'var(--color-text-primary)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      transition: 'all var(--transition-normal)'
+                    }}
+                  >
+                    <Lock size={16} />
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontWeight: 'var(--font-weight-semibold)' }}>Privat</div>
+                      <div style={{ fontSize: 'var(--text-xs)', opacity: 0.8 }}>Nur für dich und eingeladene Personen</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setPrivacy(TripPrivacy.PUBLIC)}
+                    style={{
+                      background: privacy === TripPrivacy.PUBLIC ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
+                      border: privacy === TripPrivacy.PUBLIC ? '2px solid var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: 'var(--space-md)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-sm)',
+                      color: privacy === TripPrivacy.PUBLIC ? 'white' : 'var(--color-text-primary)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      transition: 'all var(--transition-normal)'
+                    }}
+                  >
+                    <Globe size={16} />
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontWeight: 'var(--font-weight-semibold)' }}>Öffentlich</div>
+                      <div style={{ fontSize: 'var(--text-xs)', opacity: 0.8 }}>Für alle sichtbar, nur du kannst bearbeiten</div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Tagged Users - only show for private trips */}
+              {privacy === TripPrivacy.PRIVATE && (
+                <div>
+                  <label style={{
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-medium)',
+                    color: 'var(--color-text-primary)',
+                    marginBottom: 'var(--space-sm)',
+                    display: 'block'
+                  }}>
+                    Benutzer einladen (können Reise sehen und bearbeiten)
+                  </label>
+
+                  <div style={{ marginBottom: 'var(--space-md)' }}>
+                    <div className="flex gap-2">
+                      <input
+                        value={newTaggedUser}
+                        onChange={(e) => setNewTaggedUser(e.target.value)}
+                        className="input"
+                        placeholder="Benutzer-ID oder E-Mail"
+                        style={{ flex: 1 }}
+                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTaggedUser())}
+                      />
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        onClick={addTaggedUser}
+                        disabled={!newTaggedUser.trim()}
+                      >
+                        Einladen
+                      </Button>
+                    </div>
+                  </div>
+
+                  {taggedUsers.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-sm)' }}>
+                      {taggedUsers.map((user, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            background: 'var(--color-secondary-forest)',
+                            color: 'white',
+                            padding: 'var(--space-xs) var(--space-sm)',
+                            borderRadius: 'var(--radius-full)',
+                            fontSize: 'var(--text-sm)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 'var(--space-xs)'
+                          }}
+                        >
+                          {user}
+                          <button
+                            type="button"
+                            onClick={() => removeTaggedUser(index)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'white',
+                              cursor: 'pointer',
+                              padding: 0,
+                              display: 'flex',
+                              alignItems: 'center'
+                            }}
+                          >
+                            <X size={14} />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{
+                    marginTop: 'var(--space-sm)',
+                    padding: 'var(--space-sm)',
+                    background: 'var(--color-neutral-cream)',
+                    border: '1px solid var(--color-neutral-mist)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: 'var(--text-xs)',
+                    color: 'var(--color-text-secondary)'
+                  }}>
+                    💡 Eingeladene Benutzer können die Reise sehen, bearbeiten und weitere Ziele hinzufügen.
+                  </div>
+                </div>
+              )}
+
+              {privacy === TripPrivacy.PUBLIC && (
+                <div style={{
+                  padding: 'var(--space-sm)',
+                  background: 'var(--color-secondary-sky)',
+                  border: '1px solid var(--color-neutral-mist)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-xs)',
+                  color: 'var(--color-text-secondary)'
+                }}>
+                  🌍 Öffentliche Reisen sind für alle Benutzer sichtbar und können in der Suche gefunden werden. Nur du kannst sie bearbeiten.
                 </div>
               )}
             </Card>

@@ -77,7 +77,7 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
       padding: '1rem'
     }}>
       <div style={{
-        backgroundColor: 'white',
+        backgroundColor: 'var(--color-neutral-cream)',
         borderRadius: '12px',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         width: '100%',
@@ -90,7 +90,7 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
         {/* Header */}
         <div style={{
           padding: '1.5rem',
-          borderBottom: '1px solid #e5e7eb',
+          borderBottom: '1px solid var(--color-neutral-mist)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between'
@@ -100,14 +100,14 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
               margin: 0,
               fontSize: '1.25rem',
               fontWeight: '600',
-              color: '#1f2937'
+              color: 'var(--color-text-primary)'
             }}>
               Standort auf Karte auswählen
             </h2>
             <p style={{
               margin: '0.25rem 0 0 0',
               fontSize: '0.875rem',
-              color: '#6b7280'
+              color: 'var(--color-text-secondary)'
             }}>
               {isSelecting ? 'Klicken Sie auf die Karte, um einen Standort auszuwählen' : 'Standort ausgewählt'}
             </p>
@@ -120,9 +120,9 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
               cursor: 'pointer',
               padding: '0.5rem',
               borderRadius: '6px',
-              color: '#6b7280'
+              color: 'var(--color-text-secondary)'
             }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)'}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <X size={20} />
@@ -133,27 +133,27 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
         {selectedCoordinates && selectedLocation && (
           <div style={{
             padding: '1rem 1.5rem',
-            backgroundColor: '#f0f9ff',
-            borderBottom: '1px solid #e5e7eb'
+            backgroundColor: 'var(--color-neutral-cream)',
+            borderBottom: '1px solid var(--color-neutral-mist)'
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
               gap: '0.75rem'
             }}>
-              <MapPin size={16} style={{ color: '#3b82f6', marginTop: '0.125rem' }} />
+              <MapPin size={16} style={{ color: 'var(--color-primary-ocean)', marginTop: '0.125rem' }} />
               <div style={{ flex: 1 }}>
                 <div style={{
                   fontSize: '0.875rem',
                   fontWeight: '500',
-                  color: '#1f2937',
+                  color: 'var(--color-text-primary)',
                   marginBottom: '0.25rem'
                 }}>
                   {selectedLocation}
                 </div>
                 <div style={{
                   fontSize: '0.75rem',
-                  color: '#6b7280'
+                  color: 'var(--color-text-secondary)'
                 }}>
                   {selectedCoordinates.lat.toFixed(6)}, {selectedCoordinates.lng.toFixed(6)}
                 </div>
@@ -162,14 +162,14 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
                 onClick={resetSelection}
                 style={{
                   padding: '0.25rem 0.5rem',
-                  background: 'white',
-                  border: '1px solid #d1d5db',
+                  background: 'var(--color-neutral-cream)',
+                  border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '4px',
                   fontSize: '0.75rem',
-                  color: '#6b7280',
+                  color: 'var(--color-text-secondary)',
                   cursor: 'pointer'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)'}
                 onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
               >
                 Zurücksetzen
@@ -183,7 +183,7 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
           flex: 1,
           minHeight: '400px',
           position: 'relative',
-          backgroundColor: '#f3f4f6'
+          backgroundColor: 'var(--color-neutral-mist)'
         }}>
           <MapContainer
             center={[mapCenter.lat, mapCenter.lng]}
@@ -221,7 +221,7 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
               left: '50%',
               transform: 'translateX(-50%)',
               backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              color: 'white',
+              color: 'var(--color-neutral-cream)',
               padding: '0.75rem 1rem',
               borderRadius: '8px',
               fontSize: '0.875rem',
@@ -236,7 +236,7 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
         {/* Footer */}
         <div style={{
           padding: '1.5rem',
-          borderTop: '1px solid #e5e7eb',
+          borderTop: '1px solid var(--color-neutral-mist)',
           display: 'flex',
           gap: '0.75rem',
           justifyContent: 'flex-end'
@@ -245,15 +245,15 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
             onClick={handleCancel}
             style={{
               padding: '0.75rem 1.5rem',
-              background: 'white',
-              border: '1px solid #d1d5db',
+              background: 'var(--color-neutral-cream)',
+              border: '1px solid var(--color-neutral-mist)',
               borderRadius: '8px',
               fontSize: '0.875rem',
-              color: '#374151',
+              color: 'var(--color-text-primary)',
               cursor: 'pointer',
               fontWeight: '500'
             }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f9fafb'}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)'}
             onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
           >
             Abbrechen
@@ -264,11 +264,11 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
             disabled={!selectedCoordinates}
             style={{
               padding: '0.75rem 1.5rem',
-              background: selectedCoordinates ? '#3b82f6' : '#9ca3af',
+              background: selectedCoordinates ? 'var(--color-primary-ocean)' : 'var(--color-neutral-stone)',
               border: 'none',
               borderRadius: '8px',
               fontSize: '0.875rem',
-              color: 'white',
+              color: 'var(--color-neutral-cream)',
               cursor: selectedCoordinates ? 'pointer' : 'not-allowed',
               fontWeight: '500',
               display: 'flex',
@@ -277,12 +277,12 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
             }}
             onMouseOver={(e) => {
               if (selectedCoordinates) {
-                e.currentTarget.style.backgroundColor = '#2563eb';
+                e.currentTarget.style.backgroundColor = 'var(--color-primary-ocean)';
               }
             }}
             onMouseOut={(e) => {
               if (selectedCoordinates) {
-                e.currentTarget.style.backgroundColor = '#3b82f6';
+                e.currentTarget.style.backgroundColor = 'var(--color-primary-ocean)';
               }
             }}
           >

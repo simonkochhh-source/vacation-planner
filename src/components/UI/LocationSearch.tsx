@@ -180,11 +180,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           display: 'block',
           fontSize: '0.875rem',
           fontWeight: '500',
-          color: '#374151',
+          color: 'var(--color-text-primary)',
           marginBottom: '0.5rem'
         }}>
           {label}
-          {required && <span style={{ color: '#ef4444', marginLeft: '0.25rem' }}>*</span>}
+          {required && <span style={{ color: 'var(--color-error)', marginLeft: '0.25rem' }}>*</span>}
         </label>
       )}
 
@@ -198,7 +198,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           position: 'absolute',
           left: '0.75rem',
           zIndex: 10,
-          color: '#6b7280'
+          color: 'var(--color-text-secondary)'
         }}>
           {isLoading ? (
             <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
@@ -221,11 +221,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
             paddingRight: searchQuery ? '2.5rem' : '0.75rem',
             paddingTop: '0.75rem',
             paddingBottom: '0.75rem',
-            border: `1px solid ${error ? '#ef4444' : '#d1d5db'}`,
+            border: `1px solid ${error ? 'var(--color-error)' : 'var(--color-neutral-mist)'}`,
             borderRadius: '8px',
             fontSize: '0.875rem',
-            backgroundColor: disabled ? '#f9fafb' : 'white',
-            color: disabled ? '#6b7280' : '#374151',
+            backgroundColor: disabled ? 'var(--color-neutral-mist)' : 'var(--color-neutral-cream)',
+            color: disabled ? 'var(--color-neutral-stone)' : 'var(--color-neutral-charcoal)',
             outline: 'none',
             transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
             boxShadow: error 
@@ -233,14 +233,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               : 'none'
           }}
           onFocus={(e) => {
-            e.target.style.borderColor = error ? '#ef4444' : '#3b82f6';
+            e.target.style.borderColor = error ? 'var(--color-error)' : 'var(--color-primary-ocean)';
             e.target.style.boxShadow = error 
               ? '0 0 0 3px rgba(239, 68, 68, 0.1)' 
               : '0 0 0 3px rgba(59, 130, 246, 0.1)';
             handleFocus();
           }}
           onBlur={(e) => {
-            e.target.style.borderColor = error ? '#ef4444' : '#d1d5db';
+            e.target.style.borderColor = error ? 'var(--color-error)' : 'var(--color-neutral-mist)';
             e.target.style.boxShadow = error 
               ? '0 0 0 3px rgba(239, 68, 68, 0.1)' 
               : 'none';
@@ -259,11 +259,11 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               background: 'transparent',
               border: 'none',
               cursor: 'pointer',
-              color: '#6b7280',
+              color: 'var(--color-text-secondary)',
               borderRadius: '4px'
             }}
             onMouseOver={(e) => {
-              e.currentTarget.style.backgroundColor = '#f3f4f6';
+              e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
             }}
             onMouseOut={(e) => {
               e.currentTarget.style.backgroundColor = 'transparent';
@@ -279,7 +279,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
         <p style={{
           marginTop: '0.25rem',
           fontSize: '0.75rem',
-          color: '#ef4444'
+          color: 'var(--color-error)'
         }}>
           {error}
         </p>
@@ -293,10 +293,10 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           left: 0,
           right: 0,
           marginTop: '0.25rem',
-          backgroundColor: 'white',
+          backgroundColor: 'var(--color-neutral-cream)',
           borderRadius: '8px',
           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
-          border: '1px solid #e5e7eb',
+          border: '1px solid var(--color-neutral-mist)',
           maxHeight: '300px',
           overflowY: 'auto',
           zIndex: 50
@@ -307,7 +307,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
-              color: '#6b7280',
+              color: 'var(--color-text-secondary)',
               fontSize: '0.875rem'
             }}>
               <Loader size={16} style={{ animation: 'spin 1s linear infinite' }} />
@@ -324,7 +324,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
                 padding: '0.75rem',
                 textAlign: 'left',
                 border: 'none',
-                backgroundColor: index === selectedIndex ? '#f0f9ff' : 'transparent',
+                backgroundColor: index === selectedIndex ? 'var(--color-neutral-cream)' : 'transparent',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -334,7 +334,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
               onMouseEnter={() => setSelectedIndex(index)}
               onMouseOver={(e) => {
                 if (index !== selectedIndex) {
-                  e.currentTarget.style.backgroundColor = '#f9fafb';
+                  e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)';
                 }
               }}
               onMouseOut={(e) => {
@@ -355,7 +355,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
                 <div style={{
                   fontSize: '0.875rem',
                   fontWeight: '500',
-                  color: '#374151',
+                  color: 'var(--color-text-primary)',
                   marginBottom: '0.125rem',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -367,7 +367,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
                 {result.address && (
                   <div style={{
                     fontSize: '0.75rem',
-                    color: '#6b7280',
+                    color: 'var(--color-text-secondary)',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',
                     whiteSpace: 'nowrap'
@@ -379,7 +379,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
               <div style={{
                 fontSize: '0.75rem',
-                color: '#9ca3af',
+                color: 'var(--color-text-secondary)',
                 flexShrink: 0,
                 marginTop: '0.125rem'
               }}>
@@ -391,7 +391,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
           {!isLoading && results.length === 0 && searchQuery.length >= 2 && (
             <div style={{
               padding: '0.75rem',
-              color: '#6b7280',
+              color: 'var(--color-text-secondary)',
               fontSize: '0.875rem',
               textAlign: 'center'
             }}>

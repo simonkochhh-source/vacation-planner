@@ -200,7 +200,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           }}>
             <div style={{
               background: budgetProgress > 100 
-                ? 'linear-gradient(90deg, var(--color-secondary-sunset) 0%, #dc2626 100%)'
+                ? 'linear-gradient(90deg, var(--color-secondary-sunset) 0%, var(--color-error) 100%)'
                 : 'linear-gradient(90deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
               height: '100%',
               width: `${Math.min(budgetProgress, 100)}%`,
@@ -329,7 +329,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             color: 'var(--color-text-secondary)'
           }}>
             <Plane size={32} style={{ 
-              color: 'var(--color-neutral-stone)',
+              color: 'var(--color-text-secondary)',
               marginBottom: 'var(--space-md)',
               display: 'block',
               margin: '0 auto var(--space-md) auto'

@@ -111,9 +111,14 @@ const convertSupabaseToTrip = (trip: SupabaseTrip): Trip => ({
   tags: trip.tags || [],
   coverImage: undefined,
   vehicleConfig: undefined,
+  privacy: trip.privacy as any || 'private',
+  ownerId: trip.owner_id || '',
+  taggedUsers: trip.tagged_users || [],
   createdAt: trip.created_at || '',
   updatedAt: trip.updated_at || '',
 });
+
+export { getCurrentUserId };
 
 export class SupabaseService {
   // Trip operations

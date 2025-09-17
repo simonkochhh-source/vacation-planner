@@ -21,33 +21,33 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
     switch (status) {
       case DestinationStatus.PLANNED:
         return {
-          color: '#f59e0b',
-          backgroundColor: '#fef3c7',
-          borderColor: '#fcd34d',
+          color: 'var(--color-secondary-sunset)',
+          backgroundColor: 'rgba(204, 139, 101, 0.2)',
+          borderColor: 'var(--color-secondary-sunset)',
           label: 'Geplant',
           icon: Clock
         };
       case DestinationStatus.VISITED:
         return {
-          color: '#10b981',
-          backgroundColor: '#d1fae5',
-          borderColor: '#6ee7b7',
+          color: 'var(--color-success)',
+          backgroundColor: 'rgba(139, 195, 143, 0.2)',
+          borderColor: 'var(--color-success)',
           label: 'Besucht',
           icon: Check
         };
       case DestinationStatus.SKIPPED:
         return {
-          color: '#ef4444',
-          backgroundColor: '#fee2e2',
-          borderColor: '#fca5a5',
+          color: 'var(--color-error)',
+          backgroundColor: 'rgba(220, 38, 38, 0.2)',
+          borderColor: 'var(--color-error)',
           label: 'Übersprungen',
           icon: X
         };
       default:
         return {
-          color: '#6b7280',
-          backgroundColor: '#f3f4f6',
-          borderColor: '#d1d5db',
+          color: 'var(--color-text-secondary)',
+          backgroundColor: 'var(--color-neutral-mist)',
+          borderColor: 'var(--color-neutral-mist)',
           label: 'Unbekannt',
           icon: MapPin
         };

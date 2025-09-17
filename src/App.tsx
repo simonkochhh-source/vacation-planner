@@ -9,7 +9,7 @@ import MapView from './components/Views/MapView';
 import TimelineView from './components/Views/TimelineView';
 import BudgetView from './components/Views/BudgetView';
 import SettingsView from './components/Views/SettingsView';
-import DestinationDiscovery from './components/Discovery/DestinationDiscovery';
+import DiscoveryView from './components/Views/DiscoveryView';
 import { useTheme } from './hooks/useTheme';
 import { Destination } from './types';
 import './App.css';
@@ -49,7 +49,7 @@ const AppContent: React.FC = () => {
       case 'settings':
         return <SettingsView />;
       case 'discovery':
-        return <DestinationDiscovery />;
+        return <DiscoveryView />;
       case 'list':
       default:
         return (

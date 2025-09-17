@@ -134,7 +134,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                     left: 'var(--space-md)',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    color: 'var(--color-neutral-stone)'
+                    color: 'var(--color-text-secondary)'
                   }}
                 />
                 <input
@@ -245,7 +245,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 left: 'var(--space-md)',
                 top: '50%',
                 transform: 'translateY(-50%)',
-                color: 'var(--color-neutral-stone)'
+                color: 'var(--color-text-secondary)'
               }}
             />
             <input

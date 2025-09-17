@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, useState, ReactNode } from 'react';
-import { SupabaseService } from '../services/supabaseService';
+import { SupabaseService, getCurrentUserId } from '../services/supabaseService';
 import { isUsingPlaceholderCredentials, supabase } from '../lib/supabase';
 import { CrossAppSyncService } from '../services/CrossAppSyncService';
 import { 
@@ -421,6 +421,9 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
       const tripData = {
         ...data,
         status: 'planned' as any,
+        ownerId: await getCurrentUserId() || 'user-1',
+        privacy: data.privacy || 'private' as any,
+        taggedUsers: data.taggedUsers || [],
       };
       const newTrip = await SupabaseService.createTrip(tripData);
       dispatch({ type: 'ADD_TRIP', payload: newTrip });
@@ -447,6 +450,9 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           status: 'planned' as any,
           destinations: [],
           tags: data.tags || [],
+          privacy: data.privacy || 'private' as any,
+          ownerId: 'user-1',
+          taggedUsers: data.taggedUsers || [],
           coverImage: undefined,
           vehicleConfig: undefined,
           createdAt: getCurrentDateString(),

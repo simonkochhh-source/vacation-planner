@@ -42,7 +42,7 @@ interface DestinationFormProps {
 const predefinedColors = [
   'var(--color-primary-sage)', 'var(--color-primary-ocean)', 'var(--color-secondary-sunset)', 
   'var(--color-secondary-forest)', 'var(--color-accent-campfire)', 'var(--color-accent-moss)',
-  '#ef4444', '#f59e0b', '#8b5cf6', '#ec4899'
+  'var(--color-error)', '#f59e0b', '#8b5cf6', '#ec4899'
 ];
 
 // Helper function to get status labels
@@ -310,7 +310,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
               margin: '0 0 1rem 0',
               fontSize: '1.125rem',
               fontWeight: '600',
-              color: '#374151',
+              color: 'var(--color-text-primary)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem'
@@ -326,7 +326,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                   display: 'block',
                   fontSize: '0.875rem',
                   fontWeight: '500',
-                  color: '#374151',
+                  color: 'var(--color-text-primary)',
                   marginBottom: '0.5rem'
                 }}>
                   Name des Ziels *
@@ -336,7 +336,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                   style={{
                     width: '100%',
                     padding: '0.75rem',
-                    border: `1px solid ${errors.name ? '#ef4444' : '#d1d5db'}`,
+                    border: `1px solid ${errors.name ? 'var(--color-error)' : 'var(--color-neutral-mist)'}`,
                     borderRadius: '8px',
                     fontSize: '0.875rem',
                     outline: 'none',
@@ -345,7 +345,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                   placeholder="z.B. Brandenburger Tor"
                 />
                 {errors.name && (
-                  <p style={{ color: '#ef4444', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                  <p style={{ color: 'var(--color-error)', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
                     {errors.name.message}
                   </p>
                 )}
@@ -457,7 +457,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
               margin: '0 0 1rem 0',
               fontSize: '1.125rem',
               fontWeight: '600',
-              color: '#374151',
+              color: 'var(--color-text-primary)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem'
@@ -476,7 +476,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                   display: 'block',
                   fontSize: '0.875rem',
                   fontWeight: '500',
-                  color: '#374151',
+                  color: 'var(--color-text-primary)',
                   marginBottom: '0.5rem'
                 }}>
                   {selectedCategory === DestinationCategory.HOTEL ? 'Anreisedatum *' : 'Datum *'}
@@ -488,7 +488,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                   style={{
                     width: '100%',
                     padding: '0.75rem',
-                    border: `1px solid ${errors.startDate ? '#ef4444' : '#d1d5db'}`,
+                    border: `1px solid ${errors.startDate ? 'var(--color-error)' : 'var(--color-neutral-mist)'}`,
                     borderRadius: '8px',
                     fontSize: '0.875rem',
                     outline: 'none'
@@ -656,7 +656,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
               margin: '0 0 1rem 0',
               fontSize: '1.125rem',
               fontWeight: '600',
-              color: '#374151',
+              color: 'var(--color-text-primary)',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem'
@@ -679,7 +679,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                     height: '40px',
                     borderRadius: '8px',
                     background: color,
-                    border: selectedColor === color ? '3px solid #1f2937' : '1px solid #d1d5db',
+                    border: selectedColor === color ? '3px solid var(--color-neutral-charcoal)' : '1px solid var(--color-neutral-mist)',
                     cursor: 'pointer',
                     transition: 'all 0.2s'
                   }}

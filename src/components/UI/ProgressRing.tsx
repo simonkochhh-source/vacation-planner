@@ -14,8 +14,8 @@ const ProgressRing: React.FC<ProgressRingProps> = ({
   progress,
   size = 60,
   strokeWidth = 4,
-  color = '#10b981',
-  backgroundColor = '#e5e7eb',
+  color = 'var(--color-success)',
+  backgroundColor = 'var(--color-neutral-mist)',
   showText = true,
   text
 }) => {
@@ -74,7 +74,7 @@ const ProgressRing: React.FC<ProgressRingProps> = ({
             justifyContent: 'center',
             fontSize: `${size / 6}px`,
             fontWeight: '600',
-            color: '#374151'
+            color: 'var(--color-text-primary)'
           }}
         >
           {text || `${Math.round(progress)}%`}
