@@ -109,6 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     const finalUrl = `${redirectUrl}/dashboard`;
     console.log('🎯 Auth: Final redirect URL:', finalUrl);
+    console.log('🚀 Auth: OAuth Fix Version 2.0 - Deployed!');
     
     return finalUrl;
   };
