@@ -52,6 +52,21 @@ const TripMapView: React.FC<TripMapViewProps> = ({ trip, destinations }) => {
     return destinations.filter(dest => dest.coordinates);
   }, [destinations]);
 
+  // Calculate center point for the map
+  const center = useMemo(() => {
+    if (destinationsWithCoords.length === 0) {
+      return { lat: 51.1657, lng: 10.4515 }; // Default center (Germany)
+    }
+    
+    const lats = destinationsWithCoords.map(dest => dest.coordinates!.lat);
+    const lngs = destinationsWithCoords.map(dest => dest.coordinates!.lng);
+    
+    return {
+      lat: lats.reduce((sum, lat) => sum + lat, 0) / lats.length,
+      lng: lngs.reduce((sum, lng) => sum + lng, 0) / lngs.length
+    };
+  }, [destinationsWithCoords]);
+
   if (destinationsWithCoords.length === 0) {
     return (
       <div style={{
@@ -69,17 +84,6 @@ const TripMapView: React.FC<TripMapViewProps> = ({ trip, destinations }) => {
       </div>
     );
   }
-
-  // Calculate center point for the map
-  const center = useMemo(() => {
-    const lats = destinationsWithCoords.map(dest => dest.coordinates!.lat);
-    const lngs = destinationsWithCoords.map(dest => dest.coordinates!.lng);
-    
-    return {
-      lat: lats.reduce((sum, lat) => sum + lat, 0) / lats.length,
-      lng: lngs.reduce((sum, lng) => sum + lng, 0) / lngs.length
-    };
-  }, [destinationsWithCoords]);
 
   // Create route polyline coordinates
   const routeCoordinates: LatLngExpression[] = destinationsWithCoords.map(dest => [
