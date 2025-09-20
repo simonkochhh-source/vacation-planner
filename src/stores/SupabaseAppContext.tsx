@@ -44,9 +44,25 @@ type AppAction =
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'SET_LOADING'; payload: boolean };
 
+// Helper function to determine initial view based on user activity
+const getInitialView = (trips: Trip[], hasStoredUIState: boolean): UIState['currentView'] => {
+  // If user has stored UI state, respect their preference
+  if (hasStoredUIState) {
+    return 'list'; // Will be overridden by stored state
+  }
+  
+  // For new users (no trips), show landing page
+  if (!trips || trips.length === 0) {
+    return 'landing';
+  }
+  
+  // For existing users with trips, show list view
+  return 'list';
+};
+
 // Initial UI State
 const initialUIState: UIState = {
-  currentView: 'list',
+  currentView: 'list', // Will be updated in useEffect based on user activity
   activeDestination: undefined,
   activeTripId: undefined,
   filters: {
@@ -272,12 +288,6 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           dispatch({ type: 'UPDATE_SETTINGS', payload: savedSettings });
         }
         
-        // Load UI state from localStorage (still stored locally)
-        const savedUIState = loadFromLocalStorage<Partial<UIState>>('vacation-planner-ui-state');
-        if (savedUIState) {
-          dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, ...savedUIState } });
-        }
-
         // Load trips from Supabase with fallback
         let trips: Trip[] = [];
         try {
@@ -295,6 +305,22 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           trips = [];
         }
         dispatch({ type: 'SET_TRIPS', payload: trips });
+
+        // Load UI state from localStorage (stored locally) and determine initial view
+        const savedUIState = loadFromLocalStorage<Partial<UIState>>('vacation-planner-ui-state');
+        const hasStoredUIState = savedUIState && savedUIState.currentView;
+        
+        // Determine the appropriate initial view
+        const initialView = getInitialView(trips, !!hasStoredUIState);
+        
+        if (savedUIState) {
+          // Respect stored UI state for returning users
+          dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, ...savedUIState } });
+        } else {
+          // For new users, set the determined initial view
+          dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: initialView } });
+          console.log('🎯 New user detected, setting initial view to:', initialView);
+        }
 
         // Load destinations from Supabase with fallback
         let destinations: Destination[] = [];

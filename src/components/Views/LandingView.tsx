@@ -243,12 +243,21 @@ const LandingView: React.FC = () => {
         privacy: TripPrivacy.PRIVATE
       });
 
+      // Validate trip creation
+      if (!newTrip || !newTrip.id) {
+        throw new Error('Failed to create trip: Trip or Trip ID is missing');
+      }
+
+      console.log('✅ Trip created successfully:', newTrip.id, newTrip.name);
+
       // Create destinations for each location
       for (let i = 0; i < suggestion.locations.length; i++) {
         const location = suggestion.locations[i];
         const startDate = new Date(Date.now() + i * 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
         
-        await createDestinationForTrip({
+        console.log(`🎯 Creating destination ${i + 1}/${suggestion.locations.length}:`, location, 'for trip:', newTrip.id);
+        
+        const newDestination = await createDestinationForTrip({
           name: `${location} - ${suggestion.title}`,
           location: location,
           coordinates: suggestion.coordinates,
@@ -260,6 +269,12 @@ const LandingView: React.FC = () => {
           notes: suggestion.description,
           tags: suggestion.tags
         }, newTrip.id);
+        
+        if (!newDestination) {
+          console.warn('⚠️ Destination creation returned null/undefined for:', location);
+        } else {
+          console.log('✅ Destination created:', newDestination.name, newDestination.id);
+        }
       }
 
       // Navigate to the new trip
