@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { Destination, DestinationCategory, Trip, DestinationStatus } from '../../types';
+import { Destination, DestinationCategory, Trip, DestinationStatus, TripPrivacy } from '../../types';
 import { 
   MapPin, 
   Calendar, 
@@ -238,11 +238,9 @@ const LandingView: React.FC = () => {
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date(Date.now() + suggestion.estimatedDuration * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         budget: suggestion.estimatedBudget,
-        destinations: [],
         participants: [],
         tags: suggestion.tags,
-        privacy: 'private' as 'private',
-        status: 'planned'
+        privacy: TripPrivacy.PRIVATE
       });
 
       // Create destinations for each location
@@ -260,8 +258,7 @@ const LandingView: React.FC = () => {
           status: DestinationStatus.PLANNED,
           budget: Math.round(suggestion.estimatedBudget / suggestion.locations.length),
           notes: suggestion.description,
-          tags: suggestion.tags,
-          photos: []
+          tags: suggestion.tags
         }, newTrip.id);
       }
 
