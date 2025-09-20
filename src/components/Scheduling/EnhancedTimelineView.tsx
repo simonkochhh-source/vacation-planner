@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates, getTripPermissions, canUserEditTrip } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
@@ -85,7 +86,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   const { currentTrip, destinations, createDestination, createDestinationForTrip, updateDestination, deleteDestination, settings } = useSupabaseApp();
   
   // Permission system - check if current user can edit this trip
-  const currentUserId = 'user-1'; // TODO: Get from auth context
+  const { user } = useAuth();
+  const currentUserId = user?.id || 'anonymous';
   const tripPermissions = (currentTrip && currentTrip.id) ? getTripPermissions(currentTrip, currentUserId) : { canEdit: true, canView: true, canDelete: false, isOwner: true, isTagged: false };
   const isReadOnly = !tripPermissions.canEdit;
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
@@ -1552,7 +1554,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
               };
 
               // Ensure we have a current trip before creating destination
-              if (!currentTrip?.id) {
+              if (!currentTrip?.id || currentTrip.id.trim() === '') {
                 console.error('❌ Cannot create return destination: No current trip ID available');
                 console.error('❌ Current trip state:', { currentTrip, hasDestinations: destinations.length });
                 throw new Error('No current trip available for creating return destination');

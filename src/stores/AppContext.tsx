@@ -337,7 +337,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       status: 'planned' as any,
       coverImage: undefined,
       privacy: data.privacy || 'private' as any,
-      ownerId: 'user-1', // TODO: Get from auth context
+      ownerId: 'anonymous', // TODO: Integrate with real auth
       taggedUsers: data.taggedUsers || [],
       createdAt: getCurrentDateString(),
       updatedAt: getCurrentDateString()

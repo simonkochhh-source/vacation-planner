@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'success' | 'warning';
   size?: 'sm' | 'md' | 'lg';
   children: React.ReactNode;
   leftIcon?: React.ReactNode;
@@ -24,20 +24,22 @@ const Button: React.FC<ButtonProps> = ({
   const variantClasses = {
     primary: 'btn-primary',
     secondary: 'btn-secondary', 
-    ghost: 'btn-ghost'
+    ghost: 'btn-ghost',
+    danger: 'btn-danger',
+    success: 'btn-success',
+    warning: 'btn-warning'
   };
   const sizeClasses = {
-    sm: 'text-sm px-3 py-2',
-    md: 'text-base px-6 py-3',
-    lg: 'text-lg px-8 py-4'
+    sm: 'btn-sm',
+    md: '', // Default size, no additional class needed
+    lg: 'btn-lg'
   };
 
   const classes = [
     baseClasses,
-    variantClasses[variant],
-    sizeClasses[size],
-    loading && 'opacity-70 cursor-wait',
-    (disabled || loading) && 'cursor-not-allowed',
+    variantClasses[variant] || '',
+    sizeClasses[size] || '',
+    loading && 'loading',
     className
   ].filter(Boolean).join(' ');
 

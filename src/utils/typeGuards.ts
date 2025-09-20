@@ -1,0 +1,127 @@
+import { DestinationCategory, DestinationStatus, TripStatus, TripPrivacy, TransportMode } from '../types';
+
+// Type guards for enums
+export const isDestinationCategory = (value: any): value is DestinationCategory => {
+  return Object.values(DestinationCategory).includes(value);
+};
+
+export const isDestinationStatus = (value: any): value is DestinationStatus => {
+  return Object.values(DestinationStatus).includes(value);
+};
+
+export const isTripStatus = (value: any): value is TripStatus => {
+  return Object.values(TripStatus).includes(value);
+};
+
+export const isTripPrivacy = (value: any): value is TripPrivacy => {
+  return Object.values(TripPrivacy).includes(value);
+};
+
+export const isTransportMode = (value: any): value is TransportMode => {
+  return Object.values(TransportMode).includes(value);
+};
+
+// Mapping functions for Supabase conversion
+const categoryToSupabase = (category: DestinationCategory): string => {
+  const mapping: Record<DestinationCategory, string> = {
+    [DestinationCategory.MUSEUM]: 'museum',
+    [DestinationCategory.RESTAURANT]: 'restaurant',
+    [DestinationCategory.ATTRACTION]: 'attraction',
+    [DestinationCategory.HOTEL]: 'hotel',
+    [DestinationCategory.TRANSPORT]: 'transport',
+    [DestinationCategory.NATURE]: 'nature',
+    [DestinationCategory.ENTERTAINMENT]: 'entertainment',
+    [DestinationCategory.SHOPPING]: 'shopping',
+    [DestinationCategory.CULTURAL]: 'cultural',
+    [DestinationCategory.SPORTS]: 'sports',
+    [DestinationCategory.OTHER]: 'other'
+  };
+  return mapping[category] || 'other';
+};
+
+const statusToSupabase = (status: DestinationStatus): string => {
+  const mapping: Record<DestinationStatus, string> = {
+    [DestinationStatus.PLANNED]: 'geplant',
+    [DestinationStatus.VISITED]: 'besucht',
+    [DestinationStatus.SKIPPED]: 'uebersprungen',
+    [DestinationStatus.IN_PROGRESS]: 'in_bearbeitung'
+  };
+  return mapping[status] || 'geplant';
+};
+
+const tripStatusToSupabase = (status: TripStatus): string => {
+  const mapping: Record<TripStatus, string> = {
+    [TripStatus.PLANNED]: 'geplant',
+    [TripStatus.ACTIVE]: 'aktiv',
+    [TripStatus.COMPLETED]: 'abgeschlossen',
+    [TripStatus.CANCELLED]: 'storniert'
+  };
+  return mapping[status] || 'geplant';
+};
+
+// Safe conversion functions with fallbacks
+export const toDestinationCategory = (value: any): DestinationCategory => {
+  return isDestinationCategory(value) ? value : DestinationCategory.OTHER;
+};
+
+export const toDestinationStatus = (value: any): DestinationStatus => {
+  return isDestinationStatus(value) ? value : DestinationStatus.PLANNED;
+};
+
+export const toTripStatus = (value: any): TripStatus => {
+  return isTripStatus(value) ? value : TripStatus.PLANNED;
+};
+
+export const toTripPrivacy = (value: any): TripPrivacy => {
+  return isTripPrivacy(value) ? value : TripPrivacy.PRIVATE;
+};
+
+export const toTransportMode = (value: any): TransportMode => {
+  return isTransportMode(value) ? value : TransportMode.WALKING;
+};
+
+// Supabase conversion functions
+export const toSupabaseCategory = (category: DestinationCategory): "restaurant" | "museum" | "attraction" | "hotel" | "transport" | "nature" | "entertainment" | "shopping" | "cultural" | "sports" | "other" => {
+  return categoryToSupabase(category) as "restaurant" | "museum" | "attraction" | "hotel" | "transport" | "nature" | "entertainment" | "shopping" | "cultural" | "sports" | "other";
+};
+
+export const toSupabaseStatus = (status: DestinationStatus): "geplant" | "besucht" | "uebersprungen" | "in_bearbeitung" => {
+  return statusToSupabase(status) as "geplant" | "besucht" | "uebersprungen" | "in_bearbeitung";
+};
+
+export const toSupabaseTripStatus = (status: TripStatus): 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' => {
+  return tripStatusToSupabase(status) as 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert';
+};
+
+// Generic object type guard
+export const isObject = (value: any): value is Record<string, any> => {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+};
+
+// Array type guard
+export const isArray = (value: any): value is any[] => {
+  return Array.isArray(value);
+};
+
+// Safe JSON parsing
+export const safeJsonParse = <T = any>(value: string | null | undefined | number | boolean | object, fallback: T): T => {
+  if (value === null || value === undefined) return fallback;
+  
+  // If value is already an object, return it as is
+  if (typeof value === 'object') return value as T;
+  
+  // If value is not a string, try to convert it
+  if (typeof value !== 'string') {
+    try {
+      return value as T;
+    } catch {
+      return fallback;
+    }
+  }
+  
+  try {
+    return JSON.parse(value);
+  } catch {
+    return fallback;
+  }
+};

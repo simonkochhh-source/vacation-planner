@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { destinationSchema, type DestinationFormData } from '../../schemas/validationSchemas';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { 
   DestinationCategory, 
   Destination,
   DestinationStatus 
 } from '../../types';
-import { destinationSchema, DestinationFormData } from '../../schemas/validationSchemas';
 import { 
   getCategoryIcon, 
   getCategoryLabel, 
@@ -25,7 +25,8 @@ import {
   Coffee,
   CheckCircle,
   Mountain,
-  Compass
+  Compass,
+  AlertCircle
 } from 'lucide-react';
 import LocationSearch from '../UI/LocationSearch';
 import MapSelectionModal from '../UI/MapSelectionModal';
@@ -87,7 +88,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
     watch,
     setValue
   } = useForm({
-    // resolver: zodResolver(destinationSchema),
+    resolver: zodResolver(destinationSchema),
     defaultValues: destination ? {
       name: destination.name,
       location: destination.location,
@@ -332,7 +333,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                   Name des Ziels *
                 </label>
                 <input
-                  {...register('name', { required: 'Name ist erforderlich' })}
+                  {...register('name')}
                   style={{
                     width: '100%',
                     padding: '0.75rem',
@@ -345,9 +346,10 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                   placeholder="z.B. Brandenburger Tor"
                 />
                 {errors.name && (
-                  <p style={{ color: 'var(--color-error)', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                  <div className="form-error">
+                    <AlertCircle size={14} />
                     {errors.name.message}
-                  </p>
+                  </div>
                 )}
               </div>
 

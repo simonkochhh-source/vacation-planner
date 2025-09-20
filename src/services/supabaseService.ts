@@ -1,6 +1,18 @@
 import { supabase, isUsingPlaceholderCredentials } from '../lib/supabase';
 import { Database, Tables } from '../types/supabase';
-import { Destination, Trip, TripPrivacy } from '../types';
+import { Destination, Trip, TripPrivacy, DestinationCategory, DestinationStatus } from '../types';
+import { withErrorHandling, createError, ErrorMessages } from '../utils/errorHandling';
+import { 
+  toDestinationCategory, 
+  toDestinationStatus, 
+  toTripStatus, 
+  toTripPrivacy,
+  toSupabaseCategory,
+  toSupabaseStatus,
+  toSupabaseTripStatus,
+  safeJsonParse,
+  isArray
+} from '../utils/typeGuards';
 
 // Type aliases for better readability
 type SupabaseDestination = Tables<'destinations'>;
@@ -27,7 +39,7 @@ const convertSupabaseToDestination = (dest: SupabaseDestination): Destination =>
   id: dest.id,
   name: dest.name,
   location: dest.location,
-  category: dest.category as any,
+  category: toDestinationCategory(dest.category),
   startDate: dest.start_date || '',
   endDate: dest.end_date || '',
   startTime: dest.start_time || undefined,
@@ -41,12 +53,12 @@ const convertSupabaseToDestination = (dest: SupabaseDestination): Destination =>
   notes: dest.notes || '',
   photos: dest.images || [],
   bookingInfo: dest.booking_info || '',
-  status: dest.status as any || 'planned',
+  status: toDestinationStatus(dest.status),
   tags: dest.tags || [],
   color: dest.color || '#6b7280',
   duration: dest.duration || 120,
-  weatherInfo: dest.weather_info as any,
-  transportToNext: dest.transport_to_next as any,
+  weatherInfo: safeJsonParse(dest.weather_info, {}),
+  transportToNext: safeJsonParse(dest.transport_to_next, undefined),
   website: undefined,
   phoneNumber: undefined,
   address: dest.location,
@@ -74,7 +86,7 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     trip_id: tripId, // Required field - must not be null
     name: dest.name || '',
     location: dest.location || '',
-    category: dest.category as any || 'other',
+    category: toSupabaseCategory(dest.category || DestinationCategory.OTHER),
     start_date: (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate,
     end_date: (dest.endDate && dest.endDate.trim()) ? dest.endDate : currentDate,
     start_time: dest.startTime || null,
@@ -86,11 +98,11 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     notes: dest.notes || null,
     images: dest.photos || null,
     booking_info: dest.bookingInfo || null,
-    status: dest.status as any || 'planned',
+    status: toSupabaseStatus(dest.status || DestinationStatus.PLANNED),
     tags: dest.tags || null,
     color: dest.color || null,
-    weather_info: dest.weatherInfo as any || null,
-    transport_to_next: dest.transportToNext as any || null,
+    weather_info: dest.weatherInfo ? JSON.stringify(dest.weatherInfo) : null,
+    transport_to_next: dest.transportToNext ? JSON.stringify(dest.transportToNext) : null,
     duration: dest.duration || 120,
     opening_hours: dest.openingHours || null,
     sort_order: 0,
@@ -106,12 +118,12 @@ const convertSupabaseToTrip = (trip: SupabaseTrip): Trip => ({
   budget: trip.budget || undefined,
   actualCost: 0,
   participants: trip.participants || [],
-  status: trip.status as any || 'planned',
+  status: toTripStatus(trip.status),
   destinations: [], // Will be populated separately
   tags: trip.tags || [],
   coverImage: undefined,
   vehicleConfig: undefined,
-  privacy: trip.privacy as any || 'private',
+  privacy: toTripPrivacy(trip.privacy),
   ownerId: trip.owner_id || '',
   taggedUsers: trip.tagged_users || [],
   createdAt: trip.created_at || '',
@@ -264,9 +276,9 @@ export class SupabaseService {
           end_date: trip.endDate,
           budget: trip.budget || null,
           participants: trip.participants || null,
-          status: trip.status as any || 'planned',
+          status: toTripStatus(trip.status),
           tags: trip.tags || null,
-          privacy: trip.privacy as any || 'private',
+          privacy: toTripPrivacy(trip.privacy),
           owner_id: userId, // Set current user as owner
           tagged_users: trip.taggedUsers || null,
         })
@@ -298,9 +310,9 @@ export class SupabaseService {
     if (updates.endDate) updateData.end_date = updates.endDate;
     if (updates.budget !== undefined) updateData.budget = updates.budget || null;
     if (updates.participants) updateData.participants = updates.participants;
-    if (updates.status) updateData.status = updates.status as any;
+    if (updates.status) updateData.status = toSupabaseTripStatus(updates.status);
     if (updates.tags) updateData.tags = updates.tags;
-    if (updates.privacy !== undefined) updateData.privacy = updates.privacy as any;
+    if (updates.privacy !== undefined) updateData.privacy = toTripPrivacy(updates.privacy);
     if (updates.ownerId !== undefined) updateData.owner_id = updates.ownerId;
     if (updates.taggedUsers !== undefined) updateData.tagged_users = updates.taggedUsers;
 
@@ -496,7 +508,7 @@ export class SupabaseService {
     
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.location !== undefined) updateData.location = updates.location;
-    if (updates.category !== undefined) updateData.category = updates.category as any;
+    if (updates.category !== undefined) updateData.category = toSupabaseCategory(updates.category || DestinationCategory.OTHER);
     if (updates.startDate !== undefined) {
       updateData.start_date = (updates.startDate && updates.startDate.trim()) ? updates.startDate : undefined;
     }
@@ -514,13 +526,13 @@ export class SupabaseService {
     if (updates.notes !== undefined) updateData.notes = updates.notes || null;
     if (updates.photos !== undefined) updateData.images = updates.photos || null;
     if (updates.bookingInfo !== undefined) updateData.booking_info = updates.bookingInfo || null;
-    if (updates.status !== undefined) updateData.status = updates.status as any || null;
+    if (updates.status !== undefined) updateData.status = toSupabaseStatus(updates.status || DestinationStatus.PLANNED);
     if (updates.tags !== undefined) updateData.tags = updates.tags || null;
     if (updates.color !== undefined) updateData.color = updates.color || null;
-    if (updates.weatherInfo !== undefined) updateData.weather_info = updates.weatherInfo as any || null;
-    if (updates.transportToNext !== undefined) updateData.transport_to_next = updates.transportToNext as any || null;
+    if (updates.weatherInfo !== undefined) updateData.weather_info = updates.weatherInfo ? JSON.stringify(updates.weatherInfo) : null;
+    if (updates.transportToNext !== undefined) updateData.transport_to_next = updates.transportToNext ? JSON.stringify(updates.transportToNext) : null;
     if (updates.duration !== undefined) updateData.duration = updates.duration || null;
-    if (updates.openingHours !== undefined) updateData.opening_hours = updates.openingHours as any || null;
+    if (updates.openingHours !== undefined) updateData.opening_hours = updates.openingHours || null;
 
     const { data, error } = await supabase
       .from('destinations')
@@ -569,16 +581,29 @@ export class SupabaseService {
           table: 'trips'
         },
         async () => {
-          const trips = await this.getTrips();
-          callback(trips);
+          try {
+            const trips = await this.getTrips();
+            callback(trips);
+          } catch (error) {
+            console.error('Error in trips subscription:', error);
+            // Don't break the subscription, just log the error
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Trips subscription established');
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Trips subscription error');
+        }
+      });
   }
 
   static subscribeToDestinations(callback: (destinations: Destination[]) => void, tripId?: string) {
+    const channelName = tripId ? `destinations-changes-${tripId}` : 'destinations-changes';
+    
     return supabase
-      .channel('destinations-changes')
+      .channel(channelName)
       .on(
         'postgres_changes',
         {
@@ -588,10 +613,21 @@ export class SupabaseService {
           ...(tripId && { filter: `trip_id=eq.${tripId}` })
         },
         async () => {
-          const destinations = await this.getDestinations(tripId);
-          callback(destinations);
+          try {
+            const destinations = await this.getDestinations(tripId);
+            callback(destinations);
+          } catch (error) {
+            console.error('Error in destinations subscription:', error);
+            // Don't break the subscription, just log the error
+          }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`✅ Destinations subscription established${tripId ? ` for trip ${tripId}` : ''}`);
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error(`❌ Destinations subscription error${tripId ? ` for trip ${tripId}` : ''}`);
+        }
+      });
   }
 }

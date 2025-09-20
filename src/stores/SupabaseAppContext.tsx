@@ -411,22 +411,37 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
 
     console.log('🔄 Setting up real-time subscriptions...');
     
-    // Subscribe to trips changes
-    const tripsSubscription = SupabaseService.subscribeToTrips((trips) => {
-      console.log('📡 Real-time trips update:', trips.length);
-      dispatch({ type: 'SET_TRIPS', payload: trips });
-    });
+    let tripsSubscription: any = null;
+    let destinationsSubscription: any = null;
+    
+    try {
+      // Subscribe to trips changes
+      tripsSubscription = SupabaseService.subscribeToTrips((trips) => {
+        console.log('📡 Real-time trips update:', trips.length);
+        dispatch({ type: 'SET_TRIPS', payload: trips });
+      });
 
-    // Subscribe to destinations changes
-    const destinationsSubscription = SupabaseService.subscribeToDestinations((destinations) => {
-      console.log('📡 Real-time destinations update:', destinations.length);
-      dispatch({ type: 'SET_DESTINATIONS', payload: destinations });
-    });
+      // Subscribe to destinations changes
+      destinationsSubscription = SupabaseService.subscribeToDestinations((destinations) => {
+        console.log('📡 Real-time destinations update:', destinations.length);
+        dispatch({ type: 'SET_DESTINATIONS', payload: destinations });
+      });
+    } catch (error) {
+      console.error('❌ Failed to set up subscriptions:', error);
+    }
 
     return () => {
       console.log('🔌 Cleaning up subscriptions...');
-      tripsSubscription.unsubscribe();
-      destinationsSubscription.unsubscribe();
+      try {
+        if (tripsSubscription) {
+          tripsSubscription.unsubscribe();
+        }
+        if (destinationsSubscription) {
+          destinationsSubscription.unsubscribe();
+        }
+      } catch (error) {
+        console.error('❌ Error during subscription cleanup:', error);
+      }
     };
   }, [isInitialized]);
 
@@ -436,7 +451,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
       const tripData = {
         ...data,
         status: 'planned' as any,
-        ownerId: await getCurrentUserId() || 'user-1',
+        ownerId: await getCurrentUserId() || 'anonymous',
         privacy: data.privacy || 'private' as any,
         taggedUsers: data.taggedUsers || [],
       };
@@ -466,7 +481,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           destinations: [],
           tags: data.tags || [],
           privacy: data.privacy || 'private' as any,
-          ownerId: 'user-1',
+          ownerId: await getCurrentUserId() || 'anonymous',
           taggedUsers: data.taggedUsers || [],
           coverImage: undefined,
           vehicleConfig: undefined,

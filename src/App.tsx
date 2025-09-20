@@ -11,6 +11,7 @@ import BudgetView from './components/Views/BudgetView';
 import SettingsView from './components/Views/SettingsView';
 import DiscoveryView from './components/Views/DiscoveryView';
 import SearchPage from './components/Search/SearchPage';
+import LandingView from './components/Views/LandingView';
 import { useTheme } from './hooks/useTheme';
 import { Destination } from './types';
 import './App.css';
@@ -41,6 +42,8 @@ const AppContent: React.FC = () => {
 
   const renderCurrentView = () => {
     switch (uiState.currentView || uiState.activeView) {
+      case 'landing':
+        return <LandingView />;
       case 'map':
         return <MapView />;
       case 'timeline':

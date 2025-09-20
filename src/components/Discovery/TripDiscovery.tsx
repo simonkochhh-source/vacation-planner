@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, MapPin, Star, Clock, Euro, Users, Globe, ExternalLink, Eye } from 'lucide-react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Trip, TripPrivacy, canUserAccessTrip, getTripPermissions } from '../../types';
 import Button from '../Common/Button';
 import Card from '../Common/Card';
@@ -22,8 +23,8 @@ const TripDiscovery: React.FC<TripDiscoveryProps> = ({
   
   const { trips, setCurrentTrip } = useSupabaseApp();
 
-  // Get current user ID (TODO: from auth context)
-  const currentUserId = 'user-1';
+  const { user } = useAuth();
+  const currentUserId = user?.id || 'anonymous';
 
   // Load public trips on mount
   useEffect(() => {

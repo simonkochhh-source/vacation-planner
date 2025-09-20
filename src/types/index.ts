@@ -7,7 +7,8 @@ export type TimeString = string; // HH:MM format
 export enum DestinationStatus {
   PLANNED = 'planned',
   VISITED = 'visited',
-  SKIPPED = 'skipped'
+  SKIPPED = 'skipped',
+  IN_PROGRESS = 'in_progress'
 }
 
 export enum DestinationCategory {
@@ -195,8 +196,8 @@ export interface SortOptions {
 
 // UI State types
 export interface UIState {
-  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search';
-  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search';
+  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing';
+  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing';
   activeDestination?: UUID;
   activeTripId?: UUID;
   filters: DestinationFilters;

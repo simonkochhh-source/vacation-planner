@@ -30,6 +30,10 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     updateUIState({ currentView: 'settings' });
   };
 
+  const handleLogoClick = () => {
+    updateUIState({ currentView: 'landing' });
+  };
+
   const handleNavigateToItem = (type: 'destination' | 'trip', id: string) => {
     if (type === 'destination') {
       // Navigate to timeline view with destination focus
@@ -89,7 +93,28 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
             )}
             
             {/* Brand */}
-            <div className="flex items-center gap-3">
+            <button
+              onClick={handleLogoClick}
+              style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-md)',
+                padding: 'var(--space-xs)',
+                borderRadius: 'var(--radius-md)',
+                transition: 'all var(--transition-fast)',
+                color: 'inherit'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
+              title="Zur Startseite"
+            >
               <div style={{
                 background: 'rgba(255, 255, 255, 0.2)',
                 padding: 'var(--space-sm)',
@@ -121,7 +146,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   </p>
                 )}
               </div>
-            </div>
+            </button>
 
           </div>
 
