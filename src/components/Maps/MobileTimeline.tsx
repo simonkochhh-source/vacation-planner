@@ -7,7 +7,6 @@ import {
   SkipBack, 
   SkipForward,
   ChevronUp,
-  ChevronDown,
   MapPin,
   Clock
 } from 'lucide-react';
@@ -119,7 +118,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 background: 'transparent',
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
-                padding: '0.5rem',
+                padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center'
@@ -136,7 +135,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 color: isPlaying ? 'white' : '#374151',
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
-                padding: '0.5rem',
+                padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center'
@@ -152,7 +151,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 background: 'transparent',
                 border: '1px solid #d1d5db',
                 borderRadius: '6px',
-                padding: '0.5rem',
+                padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center'
@@ -327,7 +326,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.5rem',
+                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center'
@@ -343,7 +342,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   color: isPlaying ? 'white' : '#374151',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.5rem',
+                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center'
@@ -358,7 +357,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.5rem',
+                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center'
@@ -373,7 +372,7 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.5rem',
+                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center'
@@ -411,13 +410,13 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.5rem',
+                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center'
                 }}
               >
-                <ChevronDown size={16} />
+                <ChevronUp size={16} />
               </button>
             </div>
 

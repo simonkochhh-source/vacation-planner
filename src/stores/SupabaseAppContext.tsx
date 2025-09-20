@@ -320,13 +320,18 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
         // Determine the appropriate initial view
         const initialView = getInitialView(trips, !!hasStoredUIState);
         
-        if (savedUIState) {
-          // Respect stored UI state for returning users
+        // For users without trips, always show landing page regardless of saved state
+        if (!trips || trips.length === 0) {
+          dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: 'landing' } });
+          console.log('🎯 User with no trips detected, setting initial view to: landing');
+        } else if (savedUIState) {
+          // Respect stored UI state for returning users with trips
           dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, ...savedUIState } });
+          console.log('🎯 Returning user with trips, restoring saved UI state:', savedUIState.currentView);
         } else {
-          // For new users, set the determined initial view
+          // For new users with trips, set the determined initial view
           dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: initialView } });
-          console.log('🎯 New user detected, setting initial view to:', initialView);
+          console.log('🎯 New user with trips detected, setting initial view to:', initialView);
         }
 
         // Load destinations from Supabase with fallback

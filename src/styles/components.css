@@ -209,7 +209,7 @@
 .btn-sm {
   padding: var(--space-sm) var(--space-md);
   font-size: var(--text-xs);
-  min-height: 36px;
+  min-height: 44px; /* iOS/Android touch-friendly minimum */
 }
 
 .btn-lg {

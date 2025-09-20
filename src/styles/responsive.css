@@ -2,8 +2,21 @@
 
 /* Base mobile styles (320px+) */
 .container {
-  padding: 0.5rem;
+  padding: 0.75rem; /* Increased padding for better touch experience */
   max-width: 100%;
+}
+
+/* Mobile-friendly spacing for touch interactions */
+.mobile-touch-spacing {
+  margin: 0.5rem 0;
+  min-height: 44px; /* Ensure touch-friendly height */
+}
+
+/* Better mobile list spacing */
+.mobile-list-item {
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  min-height: 48px; /* Android Material Design guideline */
 }
 
 .sidebar {
@@ -334,5 +347,30 @@
 
   .main-content {
     padding: 0.5rem;
+  }
+}
+
+/* Performance optimizations for mobile */
+@media (max-width: 767px) {
+  /* Reduce animation complexity on mobile */
+  .complex-animation {
+    animation: none;
+  }
+  
+  /* Optimize scroll performance */
+  .scrollable-container {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Reduce motion for better performance */
+  .reduce-motion-mobile {
+    transition-duration: 0.1s;
+  }
+  
+  /* Better image loading */
+  .mobile-image {
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
   }
 }

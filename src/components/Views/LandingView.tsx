@@ -65,115 +65,14 @@ const LandingView: React.FC = () => {
     const userDestinations = destinations;
     const userTrips = trips;
     
-    // Analyze user preferences
-    const categoryPreferences = userDestinations.reduce((acc, dest) => {
-      acc[dest.category] = (acc[dest.category] || 0) + 1;
-      return acc;
-    }, {} as Record<DestinationCategory, number>);
+    // If user has no trips or destinations, return empty array (no mock suggestions)
+    if (userDestinations.length === 0 && userTrips.length === 0) {
+      return [];
+    }
     
-    const mostVisitedCategories = Object.entries(categoryPreferences)
-      .sort(([,a], [,b]) => b - a)
-      .slice(0, 3)
-      .map(([category]) => category as DestinationCategory);
-    
-    const averageBudget = userDestinations.length > 0
-      ? userDestinations.reduce((sum, dest) => sum + (dest.budget || 0), 0) / userDestinations.length
-      : 500;
-    
-    // Base suggestions with AI-like personalization
-    const baseSuggestions: TravelSuggestion[] = [
-      {
-        id: 'alpine-adventure',
-        title: 'Alpine Wanderparadies',
-        description: 'Entdecke die schönsten Bergwege der Alpen mit kristallklaren Seen und majestätischen Gipfeln',
-        reason: mostVisitedCategories.includes(DestinationCategory.NATURE) 
-          ? 'Basierend auf deiner Liebe zur Natur' 
-          : 'Neue Inspiration für Outdoor-Abenteuer',
-        category: DestinationCategory.NATURE,
-        estimatedBudget: Math.round(averageBudget * 1.2),
-        estimatedDuration: 7,
-        locations: ['Zermatt', 'Interlaken', 'Grindelwald', 'St. Moritz'],
-        coordinates: { lat: 46.5197, lng: 7.4815 },
-        difficulty: 'moderate',
-        season: 'summer',
-        tags: ['Berge', 'Wandern', 'Natur', 'Fotografie'],
-        inspirationText: '🏔️ "Die Berge rufen - erlebe unvergessliche Momente zwischen Himmel und Erde!"'
-      },
-      {
-        id: 'cultural-cities',
-        title: 'Europäische Kulturmetropolen',
-        description: 'Eine Reise durch die reichste Kulturgeschichte Europas - Museen, Architektur und Kunst',
-        reason: mostVisitedCategories.includes(DestinationCategory.CULTURAL)
-          ? 'Perfekt für deinen kulturellen Geschmack'
-          : 'Erweitere deinen kulturellen Horizont',
-        category: DestinationCategory.CULTURAL,
-        estimatedBudget: Math.round(averageBudget * 1.5),
-        estimatedDuration: 10,
-        locations: ['Paris', 'Rom', 'Florenz', 'Wien'],
-        coordinates: { lat: 48.8566, lng: 2.3522 },
-        difficulty: 'easy',
-        season: 'all',
-        tags: ['Kultur', 'Museen', 'Architektur', 'Geschichte'],
-        inspirationText: '🎭 "Tauche ein in jahrtausendealte Geschichte und erlebe Kunst, die die Welt bewegte!"'
-      },
-      {
-        id: 'culinary-journey',
-        title: 'Kulinarische Entdeckungsreise',
-        description: 'Von Michelin-Sternen bis zu versteckten Lokaljuwelen - eine Reise für alle Sinne',
-        reason: mostVisitedCategories.includes(DestinationCategory.RESTAURANT)
-          ? 'Für den Genießer in dir'
-          : 'Entdecke neue Geschmackswelten',
-        category: DestinationCategory.RESTAURANT,
-        estimatedBudget: Math.round(averageBudget * 1.8),
-        estimatedDuration: 5,
-        locations: ['Lyon', 'San Sebastián', 'Bologna', 'Kopenhagen'],
-        coordinates: { lat: 45.7640, lng: 4.8357 },
-        difficulty: 'easy',
-        season: 'all',
-        tags: ['Gourmet', 'Wein', 'Lokalität', 'Genuss'],
-        inspirationText: '🍷 "Lass dich von authentischen Aromen verführen und entdecke kulinarische Schätze!"'
-      },
-      {
-        id: 'coastal-retreat',
-        title: 'Mediterrane Küstenträume',
-        description: 'Entspannung pur: Türkisblaues Wasser, weiße Sandstrände und malerische Küstenstädtchen',
-        reason: 'Perfekt für eine entspannende Auszeit',
-        category: DestinationCategory.NATURE,
-        estimatedBudget: Math.round(averageBudget * 1.3),
-        estimatedDuration: 8,
-        locations: ['Santorini', 'Amalfiküste', 'Mallorca', 'Côte d\'Azur'],
-        coordinates: { lat: 36.3932, lng: 25.4615 },
-        difficulty: 'easy',
-        season: 'summer',
-        tags: ['Strand', 'Entspannung', 'Sonne', 'Meer'],
-        inspirationText: '🌊 "Spüre den Sand zwischen den Zehen und lass die Seele am Meer baumeln!"'
-      },
-      {
-        id: 'winter-magic',
-        title: 'Winterzauber & Wellness',
-        description: 'Verschneite Landschaften, gemütliche Hütten und entspannende Wellness-Oasen',
-        reason: 'Für magische Wintermomente',
-        category: DestinationCategory.SPORTS,
-        estimatedBudget: Math.round(averageBudget * 1.4),
-        estimatedDuration: 6,
-        locations: ['Tirol', 'Schwarzwald', 'Dolomiten', 'Salzburg'],
-        coordinates: { lat: 47.2692, lng: 11.4041 },
-        difficulty: 'moderate',
-        season: 'winter',
-        tags: ['Ski', 'Wellness', 'Winter', 'Erholung'],
-        inspirationText: '❄️ "Erlebe die Stille verschneiter Wälder und wärme dich an knisternden Kaminfeuern!"'
-      }
-    ];
-
-    // Filter and personalize based on user behavior
-    return baseSuggestions
-      .map(suggestion => ({
-        ...suggestion,
-        // Boost score if user has experience with this category
-        score: mostVisitedCategories.includes(suggestion.category) ? 10 : 5
-      }))
-      .sort((a, b) => (b as any).score - (a as any).score)
-      .slice(0, 4);
+    // Only return suggestions based on actual user data
+    // For now, return empty array until we implement real data-driven suggestions
+    return [];
   };
 
   const personalizedSuggestions = useMemo(() => {
