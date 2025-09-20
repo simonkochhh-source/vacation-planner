@@ -44,27 +44,14 @@ type AppAction =
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'SET_LOADING'; payload: boolean };
 
-// Helper function to determine initial view based on user activity
-const getInitialView = (trips: Trip[], hasStoredUIState: boolean): UIState['currentView'] => {
-  // Check URL parameter for forcing landing page (useful for testing)
+// URL parameter support for forcing landing page (useful for testing)
+const checkForLandingPageForce = (): boolean => {
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('view') === 'landing') {
     console.log('🎯 Forcing landing view via URL parameter');
-    return 'landing';
+    return true;
   }
-  
-  // If user has stored UI state, respect their preference
-  if (hasStoredUIState) {
-    return 'list'; // Will be overridden by stored state
-  }
-  
-  // For new users (no trips), show landing page
-  if (!trips || trips.length === 0) {
-    return 'landing';
-  }
-  
-  // For existing users with trips, show list view
-  return 'list';
+  return false;
 };
 
 // Initial UI State
@@ -313,9 +300,8 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
         }
         dispatch({ type: 'SET_TRIPS', payload: trips });
 
-        // Load UI state from localStorage (stored locally) and determine initial view
+        // Load UI state from localStorage (stored locally) for logging purposes
         const savedUIState = loadFromLocalStorage<Partial<UIState>>('vacation-planner-ui-state');
-        const hasStoredUIState = savedUIState && savedUIState.currentView;
         
         // Always show landing page after SSO login, regardless of saved state or trips
         dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: 'landing' } });
