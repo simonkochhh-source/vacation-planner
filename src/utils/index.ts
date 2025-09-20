@@ -73,7 +73,8 @@ export const getStatusColor = (status: DestinationStatus): string => {
   const colors: Record<DestinationStatus, string> = {
     [DestinationStatus.PLANNED]: '#6B7280',
     [DestinationStatus.VISITED]: '#10B981',
-    [DestinationStatus.SKIPPED]: '#EF4444'
+    [DestinationStatus.SKIPPED]: '#EF4444',
+    [DestinationStatus.IN_PROGRESS]: '#F59E0B'
   };
   return colors[status];
 };

@@ -358,7 +358,8 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                 const statusConfig = {
                   [DestinationStatus.PLANNED]: { label: 'Geplant', emoji: '⏳', color: '#3b82f6' },
                   [DestinationStatus.VISITED]: { label: 'Besucht', emoji: '✅', color: '#10b981' },
-                  [DestinationStatus.SKIPPED]: { label: 'Übersprungen', emoji: '❌', color: '#ef4444' }
+                  [DestinationStatus.SKIPPED]: { label: 'Übersprungen', emoji: '❌', color: '#ef4444' },
+                  [DestinationStatus.IN_PROGRESS]: { label: 'In Bearbeitung', emoji: '🔄', color: '#f59e0b' }
                 };
                 const config = statusConfig[status];
 

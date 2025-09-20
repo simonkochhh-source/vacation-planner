@@ -327,7 +327,8 @@ const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
                   const statusConfig = {
                     [DestinationStatus.PLANNED]: { label: 'Geplant', color: '#3b82f6', emoji: '⏳' },
                     [DestinationStatus.VISITED]: { label: 'Besucht', color: '#10b981', emoji: '✅' },
-                    [DestinationStatus.SKIPPED]: { label: 'Übersprungen', color: '#ef4444', emoji: '❌' }
+                    [DestinationStatus.SKIPPED]: { label: 'Übersprungen', color: '#ef4444', emoji: '❌' },
+                    [DestinationStatus.IN_PROGRESS]: { label: 'In Bearbeitung', color: '#f59e0b', emoji: '🔄' }
                   };
                   const config = statusConfig[status];
 

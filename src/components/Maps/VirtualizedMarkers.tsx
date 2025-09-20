@@ -71,7 +71,7 @@ const VirtualizedMarkers: React.FC<VirtualizedMarkersProps> = ({
         return inViewport
           .sort((a, b) => {
             // Primary sort: status (planned > visited > skipped)
-            const statusPriority = { 'planned': 3, 'visited': 2, 'skipped': 1 };
+            const statusPriority = { 'planned': 3, 'visited': 2, 'skipped': 1, 'in_progress': 4 };
             const statusDiff = (statusPriority[b.status] || 0) - (statusPriority[a.status] || 0);
             if (statusDiff !== 0) return statusDiff;
             // Secondary sort: name

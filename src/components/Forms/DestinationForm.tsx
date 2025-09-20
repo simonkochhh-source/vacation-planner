@@ -51,7 +51,8 @@ const getStatusLabel = (status: DestinationStatus): string => {
   const labels: Record<DestinationStatus, string> = {
     [DestinationStatus.PLANNED]: 'Geplant',
     [DestinationStatus.VISITED]: 'Besucht',
-    [DestinationStatus.SKIPPED]: 'Übersprungen'
+    [DestinationStatus.SKIPPED]: 'Übersprungen',
+    [DestinationStatus.IN_PROGRESS]: 'In Bearbeitung'
   };
   return labels[status];
 };
@@ -61,7 +62,8 @@ const getStatusIcon = (status: DestinationStatus): string => {
   const icons: Record<DestinationStatus, string> = {
     [DestinationStatus.PLANNED]: '📋',
     [DestinationStatus.VISITED]: '✅',
-    [DestinationStatus.SKIPPED]: '⏭️'
+    [DestinationStatus.SKIPPED]: '⏭️',
+    [DestinationStatus.IN_PROGRESS]: '🔄'
   };
   return icons[status];
 };
