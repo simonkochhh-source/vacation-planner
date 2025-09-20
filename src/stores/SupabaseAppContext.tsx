@@ -317,9 +317,6 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
         const savedUIState = loadFromLocalStorage<Partial<UIState>>('vacation-planner-ui-state');
         const hasStoredUIState = savedUIState && savedUIState.currentView;
         
-        // Determine the appropriate initial view
-        const initialView = getInitialView(trips, !!hasStoredUIState);
-        
         // Always show landing page after SSO login, regardless of saved state or trips
         dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: 'landing' } });
         console.log('🎯 Post-SSO: All users directed to landing page, trips count:', trips?.length || 0);
