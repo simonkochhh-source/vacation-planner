@@ -26,17 +26,17 @@ const categoryToSupabase = (category: DestinationCategory): string => {
   const mapping: Record<DestinationCategory, string> = {
     [DestinationCategory.MUSEUM]: 'museum',
     [DestinationCategory.RESTAURANT]: 'restaurant',
-    [DestinationCategory.ATTRACTION]: 'attraction',
+    [DestinationCategory.ATTRACTION]: 'sehenswuerdigkeit', // Map to valid Supabase category
     [DestinationCategory.HOTEL]: 'hotel',
     [DestinationCategory.TRANSPORT]: 'transport',
-    [DestinationCategory.NATURE]: 'nature',
-    [DestinationCategory.ENTERTAINMENT]: 'entertainment',
+    [DestinationCategory.NATURE]: 'natur',
+    [DestinationCategory.ENTERTAINMENT]: 'nachtleben',
     [DestinationCategory.SHOPPING]: 'shopping',
-    [DestinationCategory.CULTURAL]: 'cultural',
-    [DestinationCategory.SPORTS]: 'sports',
-    [DestinationCategory.OTHER]: 'other'
+    [DestinationCategory.CULTURAL]: 'kultur',
+    [DestinationCategory.SPORTS]: 'sport',
+    [DestinationCategory.OTHER]: 'sonstiges'
   };
-  return mapping[category] || 'other';
+  return mapping[category] || 'sonstiges';
 };
 
 const statusToSupabase = (status: DestinationStatus): string => {
@@ -81,8 +81,8 @@ export const toTransportMode = (value: any): TransportMode => {
 };
 
 // Supabase conversion functions
-export const toSupabaseCategory = (category: DestinationCategory): "restaurant" | "museum" | "attraction" | "hotel" | "transport" | "nature" | "entertainment" | "shopping" | "cultural" | "sports" | "other" => {
-  return categoryToSupabase(category) as "restaurant" | "museum" | "attraction" | "hotel" | "transport" | "nature" | "entertainment" | "shopping" | "cultural" | "sports" | "other";
+export const toSupabaseCategory = (category: DestinationCategory): "restaurant" | "museum" | "hotel" | "transport" | "shopping" | "sehenswuerdigkeit" | "aktivitaet" | "nachtleben" | "natur" | "kultur" | "sport" | "wellness" | "business" | "sonstiges" => {
+  return categoryToSupabase(category) as "restaurant" | "museum" | "hotel" | "transport" | "shopping" | "sehenswuerdigkeit" | "aktivitaet" | "nachtleben" | "natur" | "kultur" | "sport" | "wellness" | "business" | "sonstiges";
 };
 
 export const toSupabaseStatus = (status: DestinationStatus): "geplant" | "besucht" | "uebersprungen" | "in_bearbeitung" => {

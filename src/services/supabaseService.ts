@@ -86,7 +86,7 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     trip_id: tripId, // Required field - must not be null
     name: dest.name || '',
     location: dest.location || '',
-    category: toSupabaseCategory(dest.category || DestinationCategory.OTHER),
+    category: toSupabaseCategory(dest.category || DestinationCategory.OTHER) as any,
     start_date: (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate,
     end_date: (dest.endDate && dest.endDate.trim()) ? dest.endDate : currentDate,
     start_time: dest.startTime || null,
@@ -508,7 +508,7 @@ export class SupabaseService {
     
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.location !== undefined) updateData.location = updates.location;
-    if (updates.category !== undefined) updateData.category = toSupabaseCategory(updates.category || DestinationCategory.OTHER);
+    if (updates.category !== undefined) updateData.category = toSupabaseCategory(updates.category || DestinationCategory.OTHER) as any;
     if (updates.startDate !== undefined) {
       updateData.start_date = (updates.startDate && updates.startDate.trim()) ? updates.startDate : undefined;
     }
