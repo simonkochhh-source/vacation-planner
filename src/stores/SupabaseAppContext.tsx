@@ -320,18 +320,13 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
         // Determine the appropriate initial view
         const initialView = getInitialView(trips, !!hasStoredUIState);
         
-        // For users without trips, always show landing page regardless of saved state
-        if (!trips || trips.length === 0) {
-          dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: 'landing' } });
-          console.log('🎯 User with no trips detected, setting initial view to: landing');
-        } else if (savedUIState) {
-          // Respect stored UI state for returning users with trips
-          dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, ...savedUIState } });
-          console.log('🎯 Returning user with trips, restoring saved UI state:', savedUIState.currentView);
-        } else {
-          // For new users with trips, set the determined initial view
-          dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: initialView } });
-          console.log('🎯 New user with trips detected, setting initial view to:', initialView);
+        // Always show landing page after SSO login, regardless of saved state or trips
+        dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: 'landing' } });
+        console.log('🎯 Post-SSO: All users directed to landing page, trips count:', trips?.length || 0);
+        
+        // If user has saved UI state, log it but don't apply it (they can navigate manually)
+        if (savedUIState) {
+          console.log('🎯 Previous UI state found but ignored for post-SSO landing:', savedUIState.currentView);
         }
 
         // Load destinations from Supabase with fallback
