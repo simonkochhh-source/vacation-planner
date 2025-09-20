@@ -46,6 +46,13 @@ type AppAction =
 
 // Helper function to determine initial view based on user activity
 const getInitialView = (trips: Trip[], hasStoredUIState: boolean): UIState['currentView'] => {
+  // Check URL parameter for forcing landing page (useful for testing)
+  const urlParams = new URLSearchParams(window.location.search);
+  if (urlParams.get('view') === 'landing') {
+    console.log('🎯 Forcing landing view via URL parameter');
+    return 'landing';
+  }
+  
   // If user has stored UI state, respect their preference
   if (hasStoredUIState) {
     return 'list'; // Will be overridden by stored state
