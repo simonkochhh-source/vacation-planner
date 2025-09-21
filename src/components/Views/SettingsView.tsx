@@ -45,8 +45,8 @@ const renderMobileSettingsContent = (
       color: 'var(--color-text-primary)'
     },
     label: {
-      display: 'flex',
-      alignItems: 'center',
+      display: 'flex' as const,
+      alignItems: 'center' as const,
       gap: '0.75rem',
       fontSize: '1rem',
       fontWeight: '500',
@@ -54,8 +54,8 @@ const renderMobileSettingsContent = (
       color: 'var(--color-text-primary)'
     },
     section: {
-      display: 'flex',
-      flexDirection: 'column',
+      display: 'flex' as const,
+      flexDirection: 'column' as const,
       gap: '1.5rem'
     },
     buttonGrid: {
@@ -69,14 +69,14 @@ const renderMobileSettingsContent = (
       border: '2px solid var(--color-border)',
       background: 'var(--color-background)',
       color: 'var(--color-text-primary)',
-      cursor: 'pointer',
+      cursor: 'pointer' as const,
       fontSize: '0.875rem',
       fontWeight: '500',
       minHeight: '48px',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
+      display: 'flex' as const,
+      flexDirection: 'column' as const,
+      alignItems: 'center' as const,
+      justifyContent: 'center' as const,
       gap: '0.5rem',
       transition: 'all 0.2s'
     }
@@ -85,7 +85,7 @@ const renderMobileSettingsContent = (
   switch (activeTab) {
     case 'account':
       return (
-        <div style={mobileStyle.section as any}>
+        <div style={mobileStyle.section}>
           {/* User Info Card */}
           <div style={{
             background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
@@ -197,10 +197,10 @@ const renderMobileSettingsContent = (
 
     case 'general':
       return (
-        <div style={mobileStyle.section as any}>
+        <div style={mobileStyle.section}>
           {/* Language Setting */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Languages size={18} />
               Sprache
             </label>
@@ -216,7 +216,7 @@ const renderMobileSettingsContent = (
 
           {/* Theme Setting */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Palette size={18} />
               Design
             </label>
@@ -245,7 +245,7 @@ const renderMobileSettingsContent = (
 
           {/* Currency Setting */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <DollarSign size={18} />
               Währung
             </label>
@@ -263,7 +263,7 @@ const renderMobileSettingsContent = (
 
           {/* Time Format Setting */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Clock size={18} />
               Zeitformat
             </label>
@@ -292,10 +292,10 @@ const renderMobileSettingsContent = (
 
     case 'map':
       return (
-        <div style={mobileStyle.section as any}>
+        <div style={mobileStyle.section}>
           {/* Map Provider */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Globe size={18} />
               Kartenanbieter
             </label>
@@ -312,7 +312,7 @@ const renderMobileSettingsContent = (
 
           {/* Default Zoom */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <MapPin size={18} />
               Standard-Zoom: {settings.defaultMapZoom}
             </label>
@@ -336,7 +336,7 @@ const renderMobileSettingsContent = (
 
           {/* Map Features */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Settings size={18} />
               Kartenfeatures
             </label>
@@ -367,10 +367,10 @@ const renderMobileSettingsContent = (
 
     case 'travel':
       return (
-        <div style={mobileStyle.section as any}>
+        <div style={mobileStyle.section}>
           {/* Default Transport Mode */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Car size={18} />
               Standard-Transportmittel
             </label>
@@ -390,7 +390,7 @@ const renderMobileSettingsContent = (
 
           {/* Fuel Type */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <DollarSign size={18} />
               Kraftstoffart
             </label>
@@ -407,7 +407,7 @@ const renderMobileSettingsContent = (
 
           {/* Fuel Consumption */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Car size={18} />
               Kraftstoffverbrauch (L/100km)
             </label>
@@ -425,7 +425,7 @@ const renderMobileSettingsContent = (
 
           {/* Home Point Status */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Home size={18} />
               Home-Point
             </label>
@@ -465,10 +465,10 @@ const renderMobileSettingsContent = (
 
     case 'notifications':
       return (
-        <div style={mobileStyle.section as any}>
+        <div style={mobileStyle.section}>
           {/* Enable Notifications */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Bell size={18} />
               Benachrichtigungen
             </label>
@@ -486,7 +486,7 @@ const renderMobileSettingsContent = (
           {/* Reminder Time */}
           {settings.enableNotifications && (
             <div>
-              <label style={mobileStyle.label as any}>
+              <label style={mobileStyle.label}>
                 <Clock size={18} />
                 Erinnerungszeit (Minuten vor Termin)
               </label>
@@ -506,10 +506,10 @@ const renderMobileSettingsContent = (
 
     case 'export':
       return (
-        <div style={mobileStyle.section as any}>
+        <div style={mobileStyle.section}>
           {/* Default Export Format */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Download size={18} />
               Standard-Exportformat
             </label>
@@ -527,7 +527,7 @@ const renderMobileSettingsContent = (
 
           {/* Export Options */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Settings size={18} />
               Export-Optionen
             </label>
@@ -558,10 +558,10 @@ const renderMobileSettingsContent = (
 
     case 'privacy':
       return (
-        <div style={mobileStyle.section as any}>
+        <div style={mobileStyle.section}>
           {/* Privacy Settings */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <Shield size={18} />
               Datenschutzeinstellungen
             </label>
@@ -592,10 +592,10 @@ const renderMobileSettingsContent = (
 
     case 'backup':
       return (
-        <div style={mobileStyle.section as any}>
+        <div style={mobileStyle.section}>
           {/* Auto Backup */}
           <div>
-            <label style={mobileStyle.label as any}>
+            <label style={mobileStyle.label}>
               <HardDrive size={18} />
               Automatische Backups
             </label>
@@ -613,7 +613,7 @@ const renderMobileSettingsContent = (
           {/* Backup Interval */}
           {settings.autoBackup && (
             <div>
-              <label style={mobileStyle.label as any}>
+              <label style={mobileStyle.label}>
                 <Clock size={18} />
                 Backup-Intervall (Stunden)
               </label>
