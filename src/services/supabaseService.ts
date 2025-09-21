@@ -126,7 +126,7 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
   const coordinatesLat = hasValidCoordinates ? dest.coordinates!.lat : null;
   const coordinatesLng = hasValidCoordinates ? dest.coordinates!.lng : null;
   
-  return {
+  const insertData = {
     ...(dest.id && { id: dest.id }),
     user_id: userId,
     trip_id: tripId, // Required field - must not be null
@@ -145,7 +145,8 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     notes: dest.notes || null,
     images: dest.photos || null,
     booking_info: dest.bookingInfo || null,
-    status: supabaseStatus as any,
+    // TEMPORARILY OMIT STATUS to test if that's the issue
+    // status: supabaseStatus as any,
     tags: dest.tags || null,
     color: dest.color || null,
     weather_info: dest.weatherInfo ? JSON.stringify(dest.weatherInfo) : null,
@@ -154,6 +155,12 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     opening_hours: dest.openingHours || null,
     sort_order: 0,
   };
+  
+  console.log('🔍 TESTING WITHOUT STATUS FIELD:');
+  console.log('  - Status field OMITTED from insert');
+  console.log('  - Database should use default status value');
+  
+  return insertData;
 };
 
 const convertSupabaseToTrip = (trip: SupabaseTrip): Trip => ({
