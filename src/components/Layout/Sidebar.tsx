@@ -131,24 +131,48 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
     Math.ceil((new Date(currentTrip.endDate).getTime() - new Date(currentTrip.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1
     : 0;
 
-  if (!isOpen) return null;
+  // For mobile, always render but use transform to show/hide
+  // For desktop, use the isOpen prop to control rendering
+  if (!isMobile && !isOpen) return null;
 
   return (
-    <div 
-      style={{
-        position: isMobile ? 'fixed' : 'sticky',
-        top: isMobile ? 0 : 'var(--header-height)',
-        left: 0,
-        height: isMobile ? '100vh' : 'calc(100vh - var(--header-height))',
-        width: isMobile ? '100vw' : 'var(--sidebar-width)',
-        background: 'var(--color-background)',
-        borderRight: isMobile ? 'none' : '1px solid var(--color-border)',
-        overflowY: 'auto',
-        zIndex: isMobile ? 40 : 10,
-        padding: 'var(--space-lg)',
-        boxShadow: isMobile ? 'var(--shadow-lg)' : 'none'
-      }}
-    >
+    <>
+      {/* Mobile Overlay */}
+      {isMobile && isOpen && onClose && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 39,
+            opacity: 1,
+            transition: 'opacity var(--transition-normal)'
+          }}
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div 
+        style={{
+          position: isMobile ? 'fixed' : 'sticky',
+          top: isMobile ? 0 : 'var(--header-height)',
+          left: 0,
+          height: isMobile ? '100vh' : 'calc(100vh - var(--header-height))',
+          width: isMobile ? '280px' : 'var(--sidebar-width)',
+          background: 'var(--color-background)',
+          borderRight: isMobile ? 'none' : '1px solid var(--color-border)',
+          overflowY: 'auto',
+          zIndex: isMobile ? 40 : 10,
+          padding: 'var(--space-lg)',
+          boxShadow: isMobile ? 'var(--shadow-lg)' : 'none',
+          transform: isMobile && isOpen ? 'translateX(0)' : isMobile ? 'translateX(-100%)' : 'none',
+          transition: isMobile ? 'transform var(--transition-normal)' : 'none'
+        }}
+      >
       {/* Mobile Header */}
       {isMobile && onClose && (
         <div className="flex items-center justify-between mb-6">
@@ -771,7 +795,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

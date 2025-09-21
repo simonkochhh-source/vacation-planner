@@ -41,7 +41,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       
       {/* Sidebar */}
       <Sidebar 
-        isOpen={isMobile ? sidebarOpen : true} 
+        isOpen={sidebarOpen || !isMobile} 
         isMobile={isMobile}
         onClose={() => setSidebarOpen(false)}
       />
