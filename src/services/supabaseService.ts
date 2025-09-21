@@ -80,6 +80,18 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
   // Use current date as fallback if dates are not provided or are empty
   const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   
+  // Ensure valid status 
+  const validStatus = dest.status && Object.values(DestinationStatus).includes(dest.status as DestinationStatus) 
+    ? dest.status 
+    : DestinationStatus.PLANNED;
+  
+  const supabaseStatus = toSupabaseStatus(validStatus);
+  
+  console.log('🔍 Status conversion debug:');
+  console.log('  - Original status:', dest.status);
+  console.log('  - Valid status:', validStatus);
+  console.log('  - Supabase status:', supabaseStatus);
+  
   return {
     ...(dest.id && { id: dest.id }),
     user_id: userId,
@@ -98,7 +110,7 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     notes: dest.notes || null,
     images: dest.photos || null,
     booking_info: dest.bookingInfo || null,
-    status: toSupabaseStatus(dest.status || DestinationStatus.PLANNED),
+    status: supabaseStatus,
     tags: dest.tags || null,
     color: dest.color || null,
     weather_info: dest.weatherInfo ? JSON.stringify(dest.weatherInfo) : null,
