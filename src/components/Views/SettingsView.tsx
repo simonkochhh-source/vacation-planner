@@ -950,7 +950,7 @@ const SettingsView: React.FC = () => {
 
   // Mobile view - show category list or specific category
   if (isMobile) {
-    if (activeTab === 'account' || activeTab === 'list') {
+    if (activeTab === 'list') {
       return <MobileSettingsList setActiveTab={setActiveTab} />;
     } else {
       return (
