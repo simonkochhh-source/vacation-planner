@@ -40,6 +40,7 @@ const convertSupabaseToDestination = (dest: SupabaseDestination): Destination =>
   name: dest.name,
   location: dest.location,
   category: toDestinationCategory(dest.category),
+  priority: dest.priority || 1,
   startDate: dest.start_date || '',
   endDate: dest.end_date || '',
   startTime: dest.start_time || undefined,
@@ -92,6 +93,18 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
   console.log('  - Valid status:', validStatus);
   console.log('  - Supabase status:', supabaseStatus);
   
+  // Ensure dates are properly formatted and end_date >= start_date
+  const startDate = (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate;
+  const endDate = (dest.endDate && dest.endDate.trim()) ? dest.endDate : currentDate;
+  
+  // Ensure end date is not before start date
+  const finalEndDate = endDate < startDate ? startDate : endDate;
+  
+  // Handle coordinates constraint: either both null or both valid
+  const hasValidCoordinates = dest.coordinates?.lat !== undefined && dest.coordinates?.lng !== undefined;
+  const coordinatesLat = hasValidCoordinates ? dest.coordinates!.lat : null;
+  const coordinatesLng = hasValidCoordinates ? dest.coordinates!.lng : null;
+  
   return {
     ...(dest.id && { id: dest.id }),
     user_id: userId,
@@ -99,14 +112,15 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     name: dest.name || '',
     location: dest.location || '',
     category: toSupabaseCategory(dest.category || DestinationCategory.OTHER) as any,
-    start_date: (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate,
-    end_date: (dest.endDate && dest.endDate.trim()) ? dest.endDate : currentDate,
+    start_date: startDate,
+    end_date: finalEndDate,
     start_time: dest.startTime || null,
     end_time: dest.endTime || null,
-    budget: dest.budget || null,
-    actual_cost: dest.actualCost || null,
-    coordinates_lat: dest.coordinates?.lat || null,
-    coordinates_lng: dest.coordinates?.lng || null,
+    priority: dest.priority || 1, // Required: must be between 1-5
+    budget: dest.budget && dest.budget >= 0 ? dest.budget : null, // Must be positive or null
+    actual_cost: dest.actualCost && dest.actualCost >= 0 ? dest.actualCost : null, // Must be positive or null
+    coordinates_lat: coordinatesLat,
+    coordinates_lng: coordinatesLng,
     notes: dest.notes || null,
     images: dest.photos || null,
     booking_info: dest.bookingInfo || null,
@@ -115,7 +129,7 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     color: dest.color || null,
     weather_info: dest.weatherInfo ? JSON.stringify(dest.weatherInfo) : null,
     transport_to_next: dest.transportToNext ? JSON.stringify(dest.transportToNext) : null,
-    duration: dest.duration || 120,
+    duration: (dest.duration && dest.duration > 0) ? dest.duration : 120, // Must be > 0
     opening_hours: dest.openingHours || null,
     sort_order: 0,
   };
@@ -521,6 +535,7 @@ export class SupabaseService {
     if (updates.name !== undefined) updateData.name = updates.name;
     if (updates.location !== undefined) updateData.location = updates.location;
     if (updates.category !== undefined) updateData.category = toSupabaseCategory(updates.category || DestinationCategory.OTHER) as any;
+    if (updates.priority !== undefined) updateData.priority = (updates.priority && updates.priority >= 1 && updates.priority <= 5) ? updates.priority : 1;
     if (updates.startDate !== undefined) {
       updateData.start_date = (updates.startDate && updates.startDate.trim()) ? updates.startDate : undefined;
     }
@@ -529,11 +544,13 @@ export class SupabaseService {
     }
     if (updates.startTime !== undefined) updateData.start_time = updates.startTime || null;
     if (updates.endTime !== undefined) updateData.end_time = updates.endTime || null;
-    if (updates.budget !== undefined) updateData.budget = updates.budget || null;
-    if (updates.actualCost !== undefined) updateData.actual_cost = updates.actualCost || null;
+    if (updates.budget !== undefined) updateData.budget = (updates.budget && updates.budget >= 0) ? updates.budget : null;
+    if (updates.actualCost !== undefined) updateData.actual_cost = (updates.actualCost && updates.actualCost >= 0) ? updates.actualCost : null;
     if (updates.coordinates !== undefined) {
-      updateData.coordinates_lat = updates.coordinates?.lat || null;
-      updateData.coordinates_lng = updates.coordinates?.lng || null;
+      // Handle coordinates constraint: either both null or both valid
+      const hasValidCoordinates = updates.coordinates?.lat !== undefined && updates.coordinates?.lng !== undefined;
+      updateData.coordinates_lat = hasValidCoordinates ? updates.coordinates!.lat : null;
+      updateData.coordinates_lng = hasValidCoordinates ? updates.coordinates!.lng : null;
     }
     if (updates.notes !== undefined) updateData.notes = updates.notes || null;
     if (updates.photos !== undefined) updateData.images = updates.photos || null;
@@ -543,7 +560,7 @@ export class SupabaseService {
     if (updates.color !== undefined) updateData.color = updates.color || null;
     if (updates.weatherInfo !== undefined) updateData.weather_info = updates.weatherInfo ? JSON.stringify(updates.weatherInfo) : null;
     if (updates.transportToNext !== undefined) updateData.transport_to_next = updates.transportToNext ? JSON.stringify(updates.transportToNext) : null;
-    if (updates.duration !== undefined) updateData.duration = updates.duration || null;
+    if (updates.duration !== undefined) updateData.duration = (updates.duration && updates.duration > 0) ? updates.duration : null;
     if (updates.openingHours !== undefined) updateData.opening_hours = updates.openingHours || null;
 
     const { data, error } = await supabase

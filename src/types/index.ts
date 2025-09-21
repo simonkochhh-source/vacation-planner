@@ -105,6 +105,7 @@ export interface Destination {
   startDate: DateString;
   endDate: DateString;
   category: DestinationCategory;
+  priority?: number; // 1-5 priority level for importance ranking
   budget?: number;
   actualCost?: number;
   notes?: string;
