@@ -38,6 +38,18 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   const [selectedTimeframe, setSelectedTimeframe] = useState<'all' | 'upcoming' | 'past'>('all');
   const [groupBy, setGroupBy] = useState<'category' | 'date' | 'status'>('category');
   const [currentFuelPrice, setCurrentFuelPrice] = useState<number>(1.65);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Get current trip destinations in the same order as EnhancedTimelineView
   const currentDestinations = useMemo(() => currentTrip 
@@ -203,21 +215,23 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
   return (
     <div style={{ 
-      padding: '1.5rem',
+      padding: isMobile ? '1rem' : '1.5rem',
       background: 'var(--color-neutral-cream)',
       minHeight: '100%'
     }}>
       {/* Header */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'space-between',
-        marginBottom: '2rem'
+        marginBottom: isMobile ? '1.5rem' : '2rem',
+        gap: isMobile ? '1rem' : 0
       }}>
-        <div>
+        <div style={{ flex: isMobile ? 'none' : 1 }}>
           <h1 style={{
             margin: '0 0 0.5rem 0',
-            fontSize: '2rem',
+            fontSize: isMobile ? '1.5rem' : '2rem',
             fontWeight: 'bold',
             color: 'var(--color-text-secondary)'
           }}>
@@ -226,27 +240,31 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           <p style={{
             margin: 0,
             color: 'var(--color-text-secondary)',
-            fontSize: '1rem'
+            fontSize: isMobile ? '0.875rem' : '1rem',
+            lineHeight: 1.4
           }}>
-            {currentTrip.name} • Finanzielle Planung und Ausgabentracking
+            {currentTrip.name} • {isMobile ? 'Finanzplanung' : 'Finanzielle Planung und Ausgabentracking'}
           </p>
         </div>
 
         <div style={{
           display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
           gap: '0.5rem',
-          alignItems: 'center'
+          alignItems: isMobile ? 'stretch' : 'center',
+          width: isMobile ? '100%' : 'auto'
         }}>
           <select
             value={groupBy}
             onChange={(e) => setGroupBy(e.target.value as any)}
             style={{
-              padding: '0.5rem',
+              padding: isMobile ? '0.75rem' : '0.5rem',
               border: '1px solid var(--color-neutral-mist)',
               borderRadius: '6px',
               fontSize: '0.875rem',
               background: 'var(--color-neutral-cream)',
-              color: 'var(--color-text-secondary)'
+              color: 'var(--color-text-secondary)',
+              minHeight: isMobile ? '48px' : 'auto'
             }}
           >
             <option value="category">Nach Kategorie</option>
@@ -258,12 +276,13 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             value={selectedTimeframe}
             onChange={(e) => setSelectedTimeframe(e.target.value as any)}
             style={{
-              padding: '0.5rem',
+              padding: isMobile ? '0.75rem' : '0.5rem',
               border: '1px solid var(--color-neutral-mist)',
               borderRadius: '6px',
               fontSize: '0.875rem',
               background: 'var(--color-neutral-cream)',
-              color: 'var(--color-text-secondary)'
+              color: 'var(--color-text-secondary)',
+              minHeight: isMobile ? '48px' : 'auto'
             }}
           >
             <option value="all">Alle Ausgaben</option>
@@ -276,9 +295,9 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       {/* Budget Statistics Cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '2rem'
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
+        gap: isMobile ? '1rem' : '1.5rem',
+        marginBottom: isMobile ? '1.5rem' : '2rem'
       }}>
         {/* Total Budget */}
         <div style={{
@@ -585,9 +604,9 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       {/* Budget by Category */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '2rem'
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(400px, 1fr))',
+        gap: isMobile ? '1rem' : '1.5rem',
+        marginBottom: isMobile ? '1.5rem' : '2rem'
       }}>
         {/* Category Breakdown */}
         <div style={{
@@ -656,8 +675,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: '1fr 1fr',
-                    gap: '1rem',
+                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                    gap: isMobile ? '0.5rem' : '1rem',
                     marginBottom: '0.5rem',
                     fontSize: '0.875rem',
                     color: 'var(--color-text-secondary)'
@@ -786,13 +805,18 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                           background: 'transparent',
                           border: '1px solid var(--color-neutral-mist)',
                           borderRadius: '4px',
-                          padding: '0.25rem',
+                          padding: isMobile ? '0.5rem' : '0.25rem',
                           cursor: 'pointer',
-                          color: 'var(--color-text-secondary)'
+                          color: 'var(--color-text-secondary)',
+                          minHeight: isMobile ? '44px' : 'auto',
+                          minWidth: isMobile ? '44px' : 'auto',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                         title="Budget bearbeiten"
                       >
-                        <Edit size={12} />
+                        <Edit size={isMobile ? 16 : 12} />
                       </button>
                     )}
                   </div>

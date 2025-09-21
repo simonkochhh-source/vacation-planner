@@ -19,6 +19,18 @@ const BudgetView: React.FC = () => {
   const { currentTrip, destinations, updateTrip, updateDestination } = useSupabaseApp();
   const [activeTab, setActiveTab] = useState<BudgetTab>('overview');
   const [showBudgetForm, setShowBudgetForm] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   const tabs = [
     {
@@ -97,19 +109,21 @@ const BudgetView: React.FC = () => {
       <div style={{
         background: 'var(--color-neutral-cream)',
         borderBottom: '1px solid var(--color-neutral-mist)',
-        padding: '0 1.5rem'
+        padding: isMobile ? '0 1rem' : '0 1.5rem'
       }}>
         <div style={{
           display: 'flex',
-          alignItems: 'center',
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'center',
           justifyContent: 'space-between',
           paddingTop: '1rem',
-          marginBottom: '1rem'
+          marginBottom: '1rem',
+          gap: isMobile ? '1rem' : 0
         }}>
-          <div>
+          <div style={{ flex: isMobile ? 'none' : 1 }}>
             <h1 style={{
               margin: '0 0 0.5rem 0',
-              fontSize: '1.875rem',
+              fontSize: isMobile ? '1.5rem' : '1.875rem',
               fontWeight: '700',
               color: 'var(--color-text-primary)'
             }}>
@@ -117,10 +131,11 @@ const BudgetView: React.FC = () => {
             </h1>
             <p style={{
               margin: 0,
-              fontSize: '1rem',
-              color: 'var(--color-text-primary)'
+              fontSize: isMobile ? '0.875rem' : '1rem',
+              color: 'var(--color-text-primary)',
+              lineHeight: 1.4
             }}>
-              {currentTrip.name} • Vollständige Kontrolle über Ihre Reisefinanzen
+              {currentTrip.name} • {isMobile ? 'Reisefinanzen' : 'Vollständige Kontrolle über Ihre Reisefinanzen'}
             </p>
           </div>
 
@@ -128,18 +143,21 @@ const BudgetView: React.FC = () => {
           {quickStats && (
             <div style={{
               display: 'flex',
-              gap: '1rem',
-              alignItems: 'center'
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? '0.75rem' : '1rem',
+              alignItems: isMobile ? 'stretch' : 'center',
+              width: isMobile ? '100%' : 'auto'
             }}>
               <div style={{
                 background: quickStats.isOverBudget ? 'rgba(220, 38, 38, 0.1)' : 'rgba(139, 195, 143, 0.1)',
                 border: `1px solid ${quickStats.isOverBudget ? 'var(--color-error)' : 'var(--color-success)'}`,
                 borderRadius: '8px',
-                padding: '0.75rem 1rem',
-                textAlign: 'center'
+                padding: isMobile ? '0.75rem' : '0.75rem 1rem',
+                textAlign: 'center',
+                flex: isMobile ? 1 : 'none'
               }}>
                 <div style={{
-                  fontSize: '1.25rem',
+                  fontSize: isMobile ? '1.125rem' : '1.25rem',
                   fontWeight: 'bold',
                   color: quickStats.isOverBudget ? 'var(--color-error)' : 'var(--color-success)',
                   marginBottom: '0.25rem'
@@ -159,13 +177,14 @@ const BudgetView: React.FC = () => {
                   background: 'rgba(204, 139, 101, 0.1)',
                   border: '1px solid var(--color-warning)',
                   borderRadius: '8px',
-                  padding: '0.75rem 1rem',
+                  padding: isMobile ? '0.75rem' : '0.75rem 1rem',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem'
+                  gap: '0.5rem',
+                  flex: isMobile ? 1 : 'none'
                 }}>
                   <AlertTriangle size={16} style={{ color: 'var(--color-warning)' }} />
-                  <div>
+                  <div style={{ flex: 1 }}>
                     <div style={{
                       fontSize: '0.875rem',
                       fontWeight: '600',
@@ -177,7 +196,7 @@ const BudgetView: React.FC = () => {
                       fontSize: '0.75rem',
                       color: 'var(--color-secondary-sunset)'
                     }}>
-                      Ziele über Budget
+                      {isMobile ? 'Über Budget' : 'Ziele über Budget'}
                     </div>
                   </div>
                 </div>
@@ -190,18 +209,21 @@ const BudgetView: React.FC = () => {
                   color: 'white',
                   border: 'none',
                   borderRadius: '8px',
-                  padding: '0.75rem',
+                  padding: isMobile ? '0.75rem' : '0.75rem',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: '0.5rem',
                   fontSize: '0.875rem',
-                  fontWeight: '500'
+                  fontWeight: '500',
+                  minHeight: '48px', // Touch target
+                  flex: isMobile ? 1 : 'none'
                 }}
                 title="Budget-Daten exportieren"
               >
                 <Download size={16} />
-                Export
+                {isMobile ? 'Export' : 'Export'}
               </button>
             </div>
           )}
@@ -210,7 +232,7 @@ const BudgetView: React.FC = () => {
         {/* Tab Navigation */}
         <div style={{
           display: 'flex',
-          gap: '0.5rem',
+          gap: isMobile ? '0.25rem' : '0.5rem',
           overflowX: 'auto',
           paddingBottom: '1px'
         }}>
@@ -223,25 +245,27 @@ const BudgetView: React.FC = () => {
                 border: 'none',
                 borderBottom: activeTab === tab.id ? '2px solid var(--color-primary-ocean)' : '2px solid transparent',
                 cursor: 'pointer',
-                padding: '0.75rem 1rem',
+                padding: isMobile ? '0.875rem 1rem' : '0.75rem 1rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                fontSize: '0.875rem',
+                fontSize: isMobile ? '0.9rem' : '0.875rem',
                 fontWeight: activeTab === tab.id ? '600' : '500',
                 color: activeTab === tab.id ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
                 transition: 'all 0.2s',
                 whiteSpace: 'nowrap',
-                minWidth: 'fit-content'
+                minWidth: 'fit-content',
+                minHeight: isMobile ? '48px' : 'auto', // Touch target
+                flex: isMobile ? 1 : 'none'
               }}
               title={tab.description}
               onMouseOver={(e) => {
-                if (activeTab !== tab.id) {
+                if (activeTab !== tab.id && !isMobile) {
                   e.currentTarget.style.color = 'var(--color-text-primary)';
                 }
               }}
               onMouseOut={(e) => {
-                if (activeTab !== tab.id) {
+                if (activeTab !== tab.id && !isMobile) {
                   e.currentTarget.style.color = 'var(--color-text-secondary)';
                 }
               }}
@@ -286,29 +310,37 @@ const BudgetView: React.FC = () => {
       <div style={{
         background: 'var(--color-neutral-cream)',
         borderTop: '1px solid var(--color-neutral-mist)',
-        padding: '1rem 1.5rem',
-        fontSize: '0.875rem',
+        padding: isMobile ? '1rem' : '1rem 1.5rem',
+        fontSize: isMobile ? '0.8rem' : '0.875rem',
         color: 'var(--color-text-primary)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center',
+        justifyContent: 'space-between',
+        gap: isMobile ? '0.75rem' : 0
       }}>
-        <div>
-          {activeTab === 'overview' && 'Gesamtübersicht über Budget und Ausgaben'}
-          {activeTab === 'expenses' && 'Detaillierte Ausgabenverfolgung mit Kategorisierung'}
+        <div style={{ 
+          fontSize: isMobile ? '0.8rem' : '0.875rem',
+          lineHeight: 1.4 
+        }}>
+          {activeTab === 'overview' && (isMobile ? 'Budget & Ausgaben' : 'Gesamtübersicht über Budget und Ausgaben')}
+          {activeTab === 'expenses' && (isMobile ? 'Ausgaben-Tracking' : 'Detaillierte Ausgabenverfolgung mit Kategorisierung')}
         </div>
         
         <div style={{
           display: 'flex',
-          alignItems: 'center',
-          gap: '1rem'
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'flex-start' : 'center',
+          gap: isMobile ? '0.5rem' : '1rem',
+          width: isMobile ? '100%' : 'auto'
         }}>
           {quickStats && (
             <>
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                fontSize: isMobile ? '0.8rem' : '0.875rem'
               }}>
                 <span>Budget:</span>
                 <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>
@@ -319,7 +351,8 @@ const BudgetView: React.FC = () => {
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
-                gap: '0.5rem'
+                gap: '0.5rem',
+                fontSize: isMobile ? '0.8rem' : '0.875rem'
               }}>
                 <span>Verbleibend:</span>
                 <span style={{ 
@@ -335,10 +368,18 @@ const BudgetView: React.FC = () => {
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.5rem'
+            gap: '0.5rem',
+            fontSize: isMobile ? '0.8rem' : '0.875rem'
           }}>
             <span>Reise:</span>
-            <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>
+            <span style={{ 
+              fontWeight: '500', 
+              color: 'var(--color-text-primary)',
+              maxWidth: isMobile ? '150px' : 'none',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap'
+            }}>
               {currentTrip.name}
             </span>
           </div>
@@ -355,17 +396,19 @@ const BudgetView: React.FC = () => {
           bottom: 0,
           background: 'rgba(0, 0, 0, 0.75)',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: isMobile ? 'flex-end' : 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          padding: '1rem'
+          padding: isMobile ? '0' : '1rem'
         }}>
           <div style={{
             background: 'var(--color-neutral-cream)',
-            borderRadius: '12px',
-            padding: '2rem',
-            maxWidth: '500px',
-            width: '100%'
+            borderRadius: isMobile ? '16px 16px 0 0' : '12px',
+            padding: isMobile ? '1.5rem' : '2rem',
+            maxWidth: isMobile ? '100%' : '500px',
+            width: '100%',
+            maxHeight: isMobile ? '85vh' : 'auto',
+            overflowY: 'auto'
           }}>
             <div style={{
               display: 'flex',
@@ -375,7 +418,7 @@ const BudgetView: React.FC = () => {
             }}>
               <h2 style={{
                 margin: 0,
-                fontSize: '1.5rem',
+                fontSize: isMobile ? '1.25rem' : '1.5rem',
                 fontWeight: '600',
                 color: 'var(--color-text-primary)'
               }}>
@@ -389,7 +432,12 @@ const BudgetView: React.FC = () => {
                   cursor: 'pointer',
                   color: 'var(--color-text-primary)',
                   fontSize: '1.5rem',
-                  padding: '0.5rem'
+                  padding: '0.5rem',
+                  minHeight: '48px',
+                  minWidth: '48px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
                 }}
               >
                 ×
@@ -400,8 +448,9 @@ const BudgetView: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              padding: '2rem',
-              color: 'var(--color-text-primary)'
+              padding: isMobile ? '1.5rem' : '2rem',
+              color: 'var(--color-text-primary)',
+              fontSize: isMobile ? '0.875rem' : '1rem'
             }}>
               Budget-Formular wird hier implementiert
             </div>

@@ -64,6 +64,18 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | 'all'>('all');
   const [selectedDestination, setSelectedDestination] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'all' | 'today' | 'week' | 'month'>('all');
+  const [isMobile, setIsMobile] = useState(false);
+
+  // Mobile detection
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Get current trip destinations in the same order as EnhancedTimelineView
   const currentDestinations = useMemo(() => currentTrip 
@@ -284,18 +296,20 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   }
 
   return (
-    <div style={{ padding: '1.5rem' }}>
+    <div style={{ padding: isMobile ? '1rem' : '1.5rem' }}>
       {/* Header */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
+        flexDirection: isMobile ? 'column' : 'row',
+        alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'space-between',
-        marginBottom: '2rem'
+        marginBottom: isMobile ? '1.5rem' : '2rem',
+        gap: isMobile ? '1rem' : 0
       }}>
-        <div>
+        <div style={{ flex: isMobile ? 'none' : 1 }}>
           <h1 style={{
             margin: '0 0 0.5rem 0',
-            fontSize: '2rem',
+            fontSize: isMobile ? '1.5rem' : '2rem',
             fontWeight: 'bold',
             color: 'var(--color-text-primary)'
           }}>
@@ -304,9 +318,10 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
           <p style={{
             margin: 0,
             color: 'var(--color-text-secondary)',
-            fontSize: '1rem'
+            fontSize: isMobile ? '0.875rem' : '1rem',
+            lineHeight: 1.4
           }}>
-            Detaillierte Verfolgung aller Reiseausgaben
+            {isMobile ? 'Ausgaben-Verfolgung' : 'Detaillierte Verfolgung aller Reiseausgaben'}
           </p>
         </div>
 
@@ -317,17 +332,20 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
             color: 'var(--color-neutral-cream)',
             border: 'none',
             borderRadius: '8px',
-            padding: '0.75rem 1.5rem',
+            padding: isMobile ? '0.875rem 1.25rem' : '0.75rem 1.5rem',
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '0.5rem',
             fontSize: '0.875rem',
-            fontWeight: '600'
+            fontWeight: '600',
+            minHeight: isMobile ? '48px' : 'auto',
+            width: isMobile ? '100%' : 'auto'
           }}
         >
           <Plus size={16} />
-          Ausgabe hinzufügen
+          {isMobile ? 'Hinzufügen' : 'Ausgabe hinzufügen'}
         </button>
       </div>
 
