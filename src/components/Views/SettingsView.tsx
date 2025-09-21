@@ -12,6 +12,630 @@ import {
 
 // Mobile Components need to be defined before SettingsView
 
+// Mobile settings content renderer
+const renderMobileSettingsContent = (
+  activeTab: string,
+  settings: AppSettings,
+  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void,
+  user: any,
+  signOut: () => void,
+  showResetConfirm: boolean,
+  setShowResetConfirm: (show: boolean) => void,
+  resetToDefaults: () => void
+) => {
+  const mobileStyle = {
+    input: {
+      width: '100%',
+      padding: '0.875rem',
+      borderRadius: '8px',
+      border: '1px solid var(--color-border)',
+      background: 'var(--color-background)',
+      fontSize: '1rem',
+      minHeight: '48px',
+      color: 'var(--color-text-primary)'
+    },
+    select: {
+      width: '100%',
+      padding: '0.875rem',
+      borderRadius: '8px',
+      border: '1px solid var(--color-border)',
+      background: 'var(--color-background)',
+      fontSize: '1rem',
+      minHeight: '48px',
+      color: 'var(--color-text-primary)'
+    },
+    label: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '0.75rem',
+      fontSize: '1rem',
+      fontWeight: '500',
+      marginBottom: '0.75rem',
+      color: 'var(--color-text-primary)'
+    },
+    section: {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '1.5rem'
+    },
+    buttonGrid: {
+      display: 'grid',
+      gridTemplateColumns: '1fr 1fr',
+      gap: '0.75rem'
+    },
+    button: {
+      padding: '0.875rem',
+      borderRadius: '8px',
+      border: '2px solid var(--color-border)',
+      background: 'var(--color-background)',
+      color: 'var(--color-text-primary)',
+      cursor: 'pointer',
+      fontSize: '0.875rem',
+      fontWeight: '500',
+      minHeight: '48px',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '0.5rem',
+      transition: 'all 0.2s'
+    }
+  };
+
+  switch (activeTab) {
+    case 'account':
+      return (
+        <div style={mobileStyle.section as any}>
+          {/* User Info Card */}
+          <div style={{
+            background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
+            borderRadius: '12px',
+            padding: '1.5rem',
+            color: 'white'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              marginBottom: '1rem'
+            }}>
+              {user?.user_metadata?.avatar_url ? (
+                <img
+                  src={user.user_metadata.avatar_url}
+                  alt="Avatar"
+                  style={{
+                    width: '48px',
+                    height: '48px',
+                    borderRadius: '50%',
+                    border: '2px solid rgba(255, 255, 255, 0.3)'
+                  }}
+                />
+              ) : (
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  border: '2px solid rgba(255, 255, 255, 0.3)'
+                }}>
+                  <User size={24} />
+                </div>
+              )}
+              <div>
+                <h3 style={{
+                  fontSize: '1.125rem',
+                  fontWeight: '600',
+                  margin: '0 0 0.25rem 0'
+                }}>
+                  {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Benutzer'}
+                </h3>
+                {user?.email && (
+                  <p style={{
+                    margin: 0,
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    fontSize: '0.875rem'
+                  }}>
+                    {user.email}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gap: '1rem',
+              marginTop: '1rem'
+            }}>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase' }}>
+                  Angemeldet seit
+                </p>
+                <p style={{ margin: '0.25rem 0 0 0', fontWeight: '600', color: 'white', fontSize: '0.875rem' }}>
+                  {user?.created_at ? new Date(user.created_at).toLocaleDateString('de-DE') : 'Unbekannt'}
+                </p>
+              </div>
+              <div>
+                <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase' }}>
+                  Provider
+                </p>
+                <p style={{ margin: '0.25rem 0 0 0', fontWeight: '600', color: 'white', fontSize: '0.875rem' }}>
+                  {user?.app_metadata?.provider === 'google' ? 'Google' : user?.app_metadata?.provider || 'E-Mail'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Logout Button */}
+          <button
+            onClick={signOut}
+            style={{
+              background: 'var(--color-error)',
+              color: 'white',
+              border: 'none',
+              borderRadius: '8px',
+              padding: '1rem',
+              fontSize: '1rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.5rem',
+              width: '100%',
+              minHeight: '48px'
+            }}
+          >
+            <Power size={18} />
+            Abmelden
+          </button>
+        </div>
+      );
+
+    case 'general':
+      return (
+        <div style={mobileStyle.section as any}>
+          {/* Language Setting */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Languages size={18} />
+              Sprache
+            </label>
+            <select
+              value={settings.language}
+              onChange={(e) => onSettingChange('language', e.target.value as 'de' | 'en')}
+              style={mobileStyle.select}
+            >
+              <option value="de">Deutsch</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
+          {/* Theme Setting */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Palette size={18} />
+              Design
+            </label>
+            <div style={mobileStyle.buttonGrid}>
+              {[
+                { value: 'light', label: 'Hell', icon: Sun },
+                { value: 'dark', label: 'Dunkel', icon: Moon },
+                { value: 'auto', label: 'System', icon: Monitor }
+              ].map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  onClick={() => onSettingChange('theme', value as any)}
+                  style={{
+                    ...mobileStyle.button,
+                    border: `2px solid ${settings.theme === value ? 'var(--color-primary-ocean)' : 'var(--color-border)'}`,
+                    background: settings.theme === value ? 'var(--color-primary-ocean)' : 'var(--color-background)',
+                    color: settings.theme === value ? 'white' : 'var(--color-text-primary)'
+                  }}
+                >
+                  <Icon size={16} />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Currency Setting */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <DollarSign size={18} />
+              Währung
+            </label>
+            <select
+              value={settings.currency}
+              onChange={(e) => onSettingChange('currency', e.target.value)}
+              style={mobileStyle.select}
+            >
+              <option value="EUR">Euro (EUR)</option>
+              <option value="USD">US Dollar (USD)</option>
+              <option value="GBP">Britisches Pfund (GBP)</option>
+              <option value="CHF">Schweizer Franken (CHF)</option>
+            </select>
+          </div>
+
+          {/* Time Format Setting */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Clock size={18} />
+              Zeitformat
+            </label>
+            <div style={mobileStyle.buttonGrid}>
+              {[
+                { value: '24h', label: '24h (14:30)' },
+                { value: '12h', label: '12h (2:30 PM)' }
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => onSettingChange('timeFormat', value as any)}
+                  style={{
+                    ...mobileStyle.button,
+                    border: `2px solid ${settings.timeFormat === value ? 'var(--color-primary-ocean)' : 'var(--color-border)'}`,
+                    background: settings.timeFormat === value ? 'var(--color-primary-ocean)' : 'var(--color-background)',
+                    color: settings.timeFormat === value ? 'white' : 'var(--color-text-primary)'
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'map':
+      return (
+        <div style={mobileStyle.section as any}>
+          {/* Map Provider */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Globe size={18} />
+              Kartenanbieter
+            </label>
+            <select
+              value={settings.defaultMapProvider}
+              onChange={(e) => onSettingChange('defaultMapProvider', e.target.value as any)}
+              style={mobileStyle.select}
+            >
+              <option value="osm">OpenStreetMap</option>
+              <option value="google">Google Maps</option>
+              <option value="mapbox">Mapbox</option>
+            </select>
+          </div>
+
+          {/* Default Zoom */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <MapPin size={18} />
+              Standard-Zoom: {settings.defaultMapZoom}
+            </label>
+            <input
+              type="range"
+              min="5"
+              max="18"
+              value={settings.defaultMapZoom}
+              onChange={(e) => onSettingChange('defaultMapZoom', parseInt(e.target.value))}
+              style={{
+                width: '100%',
+                height: '48px',
+                background: 'var(--color-surface)',
+                borderRadius: '8px',
+                appearance: 'none',
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            />
+          </div>
+
+          {/* Map Features */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Settings size={18} />
+              Kartenfeatures
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.showTraffic}
+                  onChange={(e) => onSettingChange('showTraffic', e.target.checked)}
+                  style={{ width: '20px', height: '20px' }}
+                />
+                Verkehrsinformationen anzeigen
+              </label>
+              
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.showPublicTransport}
+                  onChange={(e) => onSettingChange('showPublicTransport', e.target.checked)}
+                  style={{ width: '20px', height: '20px' }}
+                />
+                Öffentliche Verkehrsmittel anzeigen
+              </label>
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'travel':
+      return (
+        <div style={mobileStyle.section as any}>
+          {/* Default Transport Mode */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Car size={18} />
+              Standard-Transportmittel
+            </label>
+            <select
+              value={settings.defaultTransportMode}
+              onChange={(e) => onSettingChange('defaultTransportMode', e.target.value as any)}
+              style={mobileStyle.select}
+            >
+              <option value="WALKING">Zu Fuß</option>
+              <option value="DRIVING">Auto</option>
+              <option value="PUBLIC_TRANSPORT">Öffentliche Verkehrsmittel</option>
+              <option value="BICYCLE">Fahrrad</option>
+              <option value="FLIGHT">Flugzeug</option>
+              <option value="TRAIN">Zug</option>
+            </select>
+          </div>
+
+          {/* Fuel Type */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <DollarSign size={18} />
+              Kraftstoffart
+            </label>
+            <select
+              value={settings.fuelType}
+              onChange={(e) => onSettingChange('fuelType', e.target.value as any)}
+              style={mobileStyle.select}
+            >
+              <option value="DIESEL">Diesel</option>
+              <option value="E5">Super E5</option>
+              <option value="E10">Super E10</option>
+            </select>
+          </div>
+
+          {/* Fuel Consumption */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Car size={18} />
+              Kraftstoffverbrauch (L/100km)
+            </label>
+            <input
+              type="number"
+              value={settings.fuelConsumption}
+              onChange={(e) => onSettingChange('fuelConsumption', parseFloat(e.target.value) || 0)}
+              min="1"
+              max="30"
+              step="0.1"
+              style={mobileStyle.input}
+              placeholder="9.0"
+            />
+          </div>
+
+          {/* Home Point Status */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Home size={18} />
+              Home-Point
+            </label>
+            {settings.homePoint ? (
+              <div style={{
+                background: 'rgba(139, 195, 143, 0.2)',
+                border: '2px solid var(--color-success)',
+                borderRadius: '8px',
+                padding: '1rem',
+                color: 'var(--color-text-primary)'
+              }}>
+                <div style={{ fontWeight: '600', marginBottom: '0.5rem' }}>
+                  {settings.homePoint.name}
+                </div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', marginBottom: '0.5rem' }}>
+                  {settings.homePoint.address}
+                </div>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                  📍 {settings.homePoint.coordinates.lat.toFixed(4)}, {settings.homePoint.coordinates.lng.toFixed(4)}
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                background: 'rgba(204, 139, 101, 0.2)',
+                border: '2px solid var(--color-warning)',
+                borderRadius: '8px',
+                padding: '1rem',
+                color: 'var(--color-text-primary)',
+                fontSize: '0.875rem'
+              }}>
+                ℹ️ Kein Home-Point konfiguriert
+              </div>
+            )}
+          </div>
+        </div>
+      );
+
+    case 'notifications':
+      return (
+        <div style={mobileStyle.section as any}>
+          {/* Enable Notifications */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Bell size={18} />
+              Benachrichtigungen
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
+              <input
+                type="checkbox"
+                checked={settings.enableNotifications}
+                onChange={(e) => onSettingChange('enableNotifications', e.target.checked)}
+                style={{ width: '20px', height: '20px' }}
+              />
+              Benachrichtigungen aktivieren
+            </label>
+          </div>
+          
+          {/* Reminder Time */}
+          {settings.enableNotifications && (
+            <div>
+              <label style={mobileStyle.label as any}>
+                <Clock size={18} />
+                Erinnerungszeit (Minuten vor Termin)
+              </label>
+              <input
+                type="number"
+                value={settings.reminderTime}
+                onChange={(e) => onSettingChange('reminderTime', parseInt(e.target.value) || 0)}
+                min="0"
+                max="120"
+                style={mobileStyle.input}
+                placeholder="30"
+              />
+            </div>
+          )}
+        </div>
+      );
+
+    case 'export':
+      return (
+        <div style={mobileStyle.section as any}>
+          {/* Default Export Format */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Download size={18} />
+              Standard-Exportformat
+            </label>
+            <select
+              value={settings.defaultExportFormat}
+              onChange={(e) => onSettingChange('defaultExportFormat', e.target.value as any)}
+              style={mobileStyle.select}
+            >
+              <option value="json">JSON</option>
+              <option value="csv">CSV</option>
+              <option value="gpx">GPX</option>
+              <option value="kml">KML</option>
+            </select>
+          </div>
+
+          {/* Export Options */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Settings size={18} />
+              Export-Optionen
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.includePhotosInExport}
+                  onChange={(e) => onSettingChange('includePhotosInExport', e.target.checked)}
+                  style={{ width: '20px', height: '20px' }}
+                />
+                Fotos in Export einschließen
+              </label>
+              
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.includeNotesInExport}
+                  onChange={(e) => onSettingChange('includeNotesInExport', e.target.checked)}
+                  style={{ width: '20px', height: '20px' }}
+                />
+                Notizen in Export einschließen
+              </label>
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'privacy':
+      return (
+        <div style={mobileStyle.section as any}>
+          {/* Privacy Settings */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <Shield size={18} />
+              Datenschutzeinstellungen
+            </label>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.shareLocation}
+                  onChange={(e) => onSettingChange('shareLocation', e.target.checked)}
+                  style={{ width: '20px', height: '20px' }}
+                />
+                Standort teilen
+              </label>
+              
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
+                <input
+                  type="checkbox"
+                  checked={settings.trackVisitHistory}
+                  onChange={(e) => onSettingChange('trackVisitHistory', e.target.checked)}
+                  style={{ width: '20px', height: '20px' }}
+                />
+                Besuchshistorie verfolgen
+              </label>
+            </div>
+          </div>
+        </div>
+      );
+
+    case 'backup':
+      return (
+        <div style={mobileStyle.section as any}>
+          {/* Auto Backup */}
+          <div>
+            <label style={mobileStyle.label as any}>
+              <HardDrive size={18} />
+              Automatische Backups
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
+              <input
+                type="checkbox"
+                checked={settings.autoBackup}
+                onChange={(e) => onSettingChange('autoBackup', e.target.checked)}
+                style={{ width: '20px', height: '20px' }}
+              />
+              Automatische Backups aktivieren
+            </label>
+          </div>
+          
+          {/* Backup Interval */}
+          {settings.autoBackup && (
+            <div>
+              <label style={mobileStyle.label as any}>
+                <Clock size={18} />
+                Backup-Intervall (Stunden)
+              </label>
+              <input
+                type="number"
+                value={settings.backupInterval}
+                onChange={(e) => onSettingChange('backupInterval', parseInt(e.target.value) || 1)}
+                min="1"
+                max="168"
+                style={mobileStyle.input}
+                placeholder="24"
+              />
+            </div>
+          )}
+        </div>
+      );
+
+    default:
+      return <div>Einstellungen für {activeTab} werden noch entwickelt...</div>;
+  }
+};
+
 // First, define the mobile settings list component
 const MobileSettingsList: React.FC<{
   setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup') => void;
@@ -231,7 +855,7 @@ const MobileSettingsCategory: React.FC<{
         padding: '1.5rem',
         boxShadow: 'var(--shadow-sm)'
       }}>
-        <div>Placeholder for {activeTab} settings</div>
+        {renderMobileSettingsContent(activeTab, settings, onSettingChange, user, signOut, showResetConfirm, setShowResetConfirm, resetToDefaults)}
       </div>
     </div>
   );
