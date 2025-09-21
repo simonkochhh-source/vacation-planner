@@ -42,21 +42,35 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
   const [showEditTripForm, setShowEditTripForm] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [tripToDelete, setTripToDelete] = useState<string | null>(null);
-  const [headerHeight, setHeaderHeight] = useState(80); // Default fallback
+  const [headerHeight, setHeaderHeight] = useState(120); // Increased default for mobile
 
-  // Calculate header height dynamically
+  // Calculate header height dynamically with better timing
   useEffect(() => {
+    const updateHeaderHeight = () => {
+      const header = document.querySelector('header');
+      if (header) {
+        const height = header.getBoundingClientRect().height;
+        setHeaderHeight(height);
+        console.log('Header height updated:', height);
+      }
+    };
+    
     if (isMobile) {
-      const updateHeaderHeight = () => {
-        const header = document.querySelector('header');
-        if (header) {
-          setHeaderHeight(header.offsetHeight);
-        }
-      };
+      // Initial calculation with delay to ensure DOM is ready
+      setTimeout(updateHeaderHeight, 100);
       
-      updateHeaderHeight();
+      // Also update on resize
       window.addEventListener('resize', updateHeaderHeight);
-      return () => window.removeEventListener('resize', updateHeaderHeight);
+      
+      // Update when orientation changes (mobile specific)
+      window.addEventListener('orientationchange', () => {
+        setTimeout(updateHeaderHeight, 200);
+      });
+      
+      return () => {
+        window.removeEventListener('resize', updateHeaderHeight);
+        window.removeEventListener('orientationchange', updateHeaderHeight);
+      };
     }
   }, [isMobile]);
 
@@ -159,7 +173,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
         <div
           style={{
             position: 'fixed',
-            top: `${headerHeight}px`,
+            top: `${headerHeight + 4}px`, // Match sidebar positioning
             left: 0,
             right: 0,
             bottom: 0,
@@ -176,9 +190,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
       <div 
         style={{
           position: isMobile ? 'fixed' : 'relative',
-          top: isMobile ? `${headerHeight}px` : 0,
+          top: isMobile ? `${headerHeight + 4}px` : 0, // Add small margin below header
           left: 0,
-          height: isMobile ? `calc(100vh - ${headerHeight}px)` : '100%',
+          height: isMobile ? `calc(100vh - ${headerHeight + 4}px)` : '100%',
           width: isMobile ? '280px' : 'var(--sidebar-width)',
           background: 'var(--color-background)',
           borderRight: isMobile ? 'none' : '1px solid var(--color-border)',
