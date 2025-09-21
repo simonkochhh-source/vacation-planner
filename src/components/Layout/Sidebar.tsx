@@ -8,7 +8,6 @@ import {
   Plane,
   ChevronDown,
   ChevronRight,
-  X,
   Edit3,
   Calendar,
   DollarSign,
@@ -205,23 +204,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           flexShrink: 0
         }}
       >
-      {/* Mobile Header */}
-      {isMobile && onClose && (
-        <div className="flex items-center justify-between mb-6">
-          <h2 style={{
-            fontFamily: 'var(--font-heading)',
-            fontSize: 'var(--text-xl)',
-            fontWeight: 'var(--font-weight-semibold)',
-            margin: 0,
-            color: 'var(--color-text-primary)'
-          }}>
-            🏕️ Trailkeeper
-          </h2>
-          <Button variant="ghost" size="sm" onClick={onClose}>
-            <X size={20} />
-          </Button>
-        </div>
-      )}
 
       {/* Current Trip Section */}
       {currentTrip ? (
