@@ -81,17 +81,35 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
   // Use current date as fallback if dates are not provided or are empty
   const currentDate = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
   
-  // Ensure valid status 
-  const validStatus = dest.status && Object.values(DestinationStatus).includes(dest.status as DestinationStatus) 
-    ? dest.status 
-    : DestinationStatus.PLANNED;
+  // Ensure valid status with explicit validation
+  console.log('🔍 Status validation debug:');
+  console.log('  - Original dest.status:', dest.status);
+  console.log('  - typeof dest.status:', typeof dest.status);
+  console.log('  - DestinationStatus values:', Object.values(DestinationStatus));
+  
+  let validStatus: DestinationStatus = DestinationStatus.PLANNED; // Default fallback
+  
+  if (dest.status && typeof dest.status === 'string') {
+    // Check if the status is a valid DestinationStatus enum value
+    const statusValues = Object.values(DestinationStatus) as string[];
+    if (statusValues.includes(dest.status)) {
+      validStatus = dest.status as DestinationStatus;
+    }
+  }
   
   const supabaseStatus = toSupabaseStatus(validStatus);
   
-  console.log('🔍 Status conversion debug:');
-  console.log('  - Original status:', dest.status);
+  console.log('🔍 Final status conversion:');
   console.log('  - Valid status:', validStatus);
   console.log('  - Supabase status:', supabaseStatus);
+  console.log('  - Expected values: geplant, besucht, uebersprungen, in_bearbeitung');
+  
+  // Double-check the supabase status is valid
+  const allowedSupabaseStatuses = ['geplant', 'besucht', 'uebersprungen', 'in_bearbeitung'];
+  if (!allowedSupabaseStatuses.includes(supabaseStatus)) {
+    console.error('❌ Invalid supabase status generated:', supabaseStatus);
+    throw new Error(`Invalid status for database: ${supabaseStatus}. Must be one of: ${allowedSupabaseStatuses.join(', ')}`);
+  }
   
   // Ensure dates are properly formatted and end_date >= start_date
   const startDate = (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate;
@@ -555,7 +573,12 @@ export class SupabaseService {
     if (updates.notes !== undefined) updateData.notes = updates.notes || null;
     if (updates.photos !== undefined) updateData.images = updates.photos || null;
     if (updates.bookingInfo !== undefined) updateData.booking_info = updates.bookingInfo || null;
-    if (updates.status !== undefined) updateData.status = toSupabaseStatus(updates.status || DestinationStatus.PLANNED);
+    if (updates.status !== undefined) {
+      const validStatus = updates.status && Object.values(DestinationStatus).includes(updates.status as DestinationStatus) 
+        ? updates.status 
+        : DestinationStatus.PLANNED;
+      updateData.status = toSupabaseStatus(validStatus);
+    }
     if (updates.tags !== undefined) updateData.tags = updates.tags || null;
     if (updates.color !== undefined) updateData.color = updates.color || null;
     if (updates.weatherInfo !== undefined) updateData.weather_info = updates.weatherInfo ? JSON.stringify(updates.weatherInfo) : null;
