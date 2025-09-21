@@ -534,6 +534,9 @@ export class SupabaseService {
       throw new Error('tripId is required for creating destinations');
     }
     
+    // FIRST: Check what status value the database uses by default
+    console.log('🔍 Checking what status the database sets by default...');
+    
     const insertData = await convertDestinationToSupabase(destination, tripId);
     
     console.log('🎯 SupabaseService.createDestination called with:');
@@ -555,6 +558,10 @@ export class SupabaseService {
     }
     
     console.log('✅ Supabase destination created successfully:', data);
+    console.log('🔍 IMPORTANT: Database default status value is:', data.status);
+    console.log('🔍 Status type:', typeof data.status);
+    console.log('🔍 This is the correct format to use!');
+    
     return convertSupabaseToDestination(data);
   }
 
