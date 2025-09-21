@@ -108,11 +108,12 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
   // Start with the most likely candidate
   const supabaseStatus = 'PLANNED';
   
-  console.log('🔍 Status debugging - TESTING PLANNED:');
-  console.log('  - Original dest.status:', dest.status);
-  console.log('  - Valid status:', validStatus);
-  console.log('  - Testing supabase status:', supabaseStatus);
-  console.log('  - Possible values to try:', possibleStatusValues);
+  console.log('🔍 Destination conversion debugging:');
+  console.log('  - Original dest.category:', dest.category);
+  console.log('  - Category type:', typeof dest.category);
+  console.log('  - DestinationCategory.ATTRACTION:', DestinationCategory.ATTRACTION);
+  console.log('  - DestinationCategory.OTHER:', DestinationCategory.OTHER);
+  console.log('  - Will map to Supabase category:', toSupabaseCategory(dest.category || DestinationCategory.OTHER));
   
   // Ensure dates are properly formatted and end_date >= start_date
   const startDate = (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate;

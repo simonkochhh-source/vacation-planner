@@ -59,9 +59,42 @@ const tripStatusToSupabase = (status: TripStatus): string => {
   return mapping[status] || 'geplant';
 };
 
+// Reverse mapping from Supabase categories to our enum values
+const supabaseCategoryToEnum = (supabaseCategory: string): DestinationCategory => {
+  const reverseMapping: Record<string, DestinationCategory> = {
+    'museum': DestinationCategory.MUSEUM,
+    'restaurant': DestinationCategory.RESTAURANT,
+    'sehenswuerdigkeit': DestinationCategory.ATTRACTION, // This was the issue!
+    'hotel': DestinationCategory.HOTEL,
+    'transport': DestinationCategory.TRANSPORT,
+    'natur': DestinationCategory.NATURE,
+    'nachtleben': DestinationCategory.ENTERTAINMENT,
+    'shopping': DestinationCategory.SHOPPING,
+    'kultur': DestinationCategory.CULTURAL,
+    'sport': DestinationCategory.SPORTS,
+    'aktivitaet': DestinationCategory.SPORTS, // Alternative mapping
+    'wellness': DestinationCategory.NATURE, // Map to nature or add new category
+    'business': DestinationCategory.OTHER,
+    'sonstiges': DestinationCategory.OTHER
+  };
+  
+  return reverseMapping[supabaseCategory] || DestinationCategory.OTHER;
+};
+
 // Safe conversion functions with fallbacks
 export const toDestinationCategory = (value: any): DestinationCategory => {
-  return isDestinationCategory(value) ? value : DestinationCategory.OTHER;
+  // If it's already a valid enum value, return it
+  if (isDestinationCategory(value)) {
+    return value;
+  }
+  
+  // If it's a string from Supabase, convert it
+  if (typeof value === 'string') {
+    return supabaseCategoryToEnum(value);
+  }
+  
+  // Fallback to OTHER
+  return DestinationCategory.OTHER;
 };
 
 export const toDestinationStatus = (value: any): DestinationStatus => {
