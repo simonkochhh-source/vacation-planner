@@ -10,7 +10,232 @@ import {
   Moon, Sun, Monitor, Languages, DollarSign, Clock, Home, User, Power
 } from 'lucide-react';
 
-// Forward declarations for mobile components (defined at end of file)
+// Mobile Components need to be defined before SettingsView
+
+// First, define the mobile settings list component
+const MobileSettingsList: React.FC<{
+  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup') => void;
+}> = ({ setActiveTab }) => {
+  const tabs = [
+    { id: 'account', label: 'Account', icon: User, description: 'Profile und Anmeldung' },
+    { id: 'general', label: 'Allgemein', icon: Settings, description: 'Sprache, Design, Währung' },
+    { id: 'map', label: 'Karte', icon: MapPin, description: 'Kartenanbieter, Zoom, Features' },
+    { id: 'travel', label: 'Reise', icon: Car, description: 'Transport, Kraftstoff, Home-Point' },
+    { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, description: 'Erinnerungen und Alerts' },
+    { id: 'export', label: 'Export', icon: Download, description: 'Exportformate und Optionen' },
+    { id: 'privacy', label: 'Datenschutz', icon: Shield, description: 'Standort und Tracking' },
+    { id: 'backup', label: 'Backup', icon: HardDrive, description: 'Automatische Sicherungen' }
+  ];
+
+  return (
+    <div style={{
+      background: 'var(--color-background)',
+      minHeight: '100vh',
+      padding: '1rem'
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+        marginBottom: '1.5rem',
+        padding: '0 0.5rem'
+      }}>
+        <Settings size={28} style={{ color: 'var(--color-primary-ocean)' }} />
+        <div>
+          <h1 style={{ 
+            fontSize: '1.5rem', 
+            fontWeight: '600', 
+            margin: 0,
+            color: 'var(--color-text-primary)'
+          }}>
+            Einstellungen
+          </h1>
+          <p style={{ 
+            color: 'var(--color-text-secondary)',
+            margin: '0.25rem 0 0 0',
+            fontSize: '0.875rem'
+          }}>
+            App-Konfiguration
+          </p>
+        </div>
+      </div>
+
+      <div style={{
+        background: 'var(--color-surface)',
+        borderRadius: '12px',
+        overflow: 'hidden',
+        boxShadow: 'var(--shadow-sm)'
+      }}>
+        {tabs.map(({ id, label, icon: Icon, description }, index) => (
+          <button
+            key={id}
+            onClick={() => setActiveTab(id as any)}
+            style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              padding: '1rem',
+              border: 'none',
+              background: 'transparent',
+              textAlign: 'left',
+              cursor: 'pointer',
+              borderBottom: index < tabs.length - 1 ? '1px solid var(--color-border)' : 'none',
+              minHeight: '48px',
+              transition: 'background-color var(--transition-fast)'
+            }}
+            onTouchStart={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+            }}
+            onTouchEnd={(e) => {
+              setTimeout(() => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }, 150);
+            }}
+          >
+            <div style={{
+              background: 'var(--color-primary-sage)',
+              color: 'white',
+              padding: '0.5rem',
+              borderRadius: '8px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minWidth: '40px',
+              minHeight: '40px'
+            }}>
+              <Icon size={20} />
+            </div>
+            
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{
+                fontSize: '1rem',
+                fontWeight: '500',
+                color: 'var(--color-text-primary)',
+                marginBottom: '0.25rem',
+                lineHeight: 1.2
+              }}>
+                {label}
+              </div>
+              <div style={{
+                fontSize: '0.875rem',
+                color: 'var(--color-text-secondary)',
+                lineHeight: 1.3
+              }}>
+                {description}
+              </div>
+            </div>
+            
+            <div style={{
+              color: 'var(--color-text-secondary)',
+              display: 'flex',
+              alignItems: 'center'
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="9,18 15,12 9,6" />
+              </svg>
+            </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Mobile settings category component  
+const MobileSettingsCategory: React.FC<{
+  activeTab: string;
+  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup') => void;
+  settings: AppSettings;
+  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
+  user: any;
+  signOut: () => void;
+  showResetConfirm: boolean;
+  setShowResetConfirm: (show: boolean) => void;
+  resetToDefaults: () => void;
+}> = ({ 
+  activeTab, 
+  setActiveTab, 
+  settings, 
+  onSettingChange, 
+  user, 
+  signOut,
+  showResetConfirm,
+  setShowResetConfirm,
+  resetToDefaults
+}) => {
+  const categoryInfo = {
+    account: { title: 'Account', icon: User },
+    general: { title: 'Allgemein', icon: Settings },
+    map: { title: 'Karte', icon: MapPin },
+    travel: { title: 'Reise', icon: Car },
+    notifications: { title: 'Benachrichtigungen', icon: Bell },
+    export: { title: 'Export', icon: Download },
+    privacy: { title: 'Datenschutz', icon: Shield },
+    backup: { title: 'Backup', icon: HardDrive }
+  };
+
+  const currentCategory = categoryInfo[activeTab as keyof typeof categoryInfo];
+
+  return (
+    <div style={{
+      background: 'var(--color-background)',
+      minHeight: '100vh',
+      padding: '1rem'
+    }}>
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '1rem',
+        marginBottom: '1.5rem',
+        padding: '0 0.5rem'
+      }}>
+        <button
+          onClick={() => setActiveTab('list')}
+          style={{
+            background: 'var(--color-surface)',
+            border: '1px solid var(--color-border)',
+            borderRadius: '8px',
+            width: '40px',
+            height: '40px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            cursor: 'pointer',
+            color: 'var(--color-text-primary)'
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="15,18 9,12 15,6" />
+          </svg>
+        </button>
+        
+        {currentCategory && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <currentCategory.icon size={24} style={{ color: 'var(--color-primary-ocean)' }} />
+            <h1 style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: '600', 
+              margin: 0,
+              color: 'var(--color-text-primary)'
+            }}>
+              {currentCategory.title}
+            </h1>
+          </div>
+        )}
+      </div>
+
+      <div style={{
+        background: 'var(--color-surface)',
+        borderRadius: '12px',
+        padding: '1.5rem',
+        boxShadow: 'var(--shadow-sm)'
+      }}>
+        <div>Placeholder for {activeTab} settings</div>
+      </div>
+    </div>
+  );
+};
 
 const SettingsView: React.FC = () => {
   const { settings, updateSettings } = useSupabaseApp();
@@ -92,16 +317,16 @@ const SettingsView: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Force 'list' as initial tab for mobile on first render - MUST be outside conditional blocks
+  React.useEffect(() => {
+    if (isMobile && activeTab === 'account') {
+      setActiveTab('list');
+    }
+  }, [isMobile, activeTab]);
+
   // Mobile view - show category list or specific category
   if (isMobile) {
-    // Force 'list' as initial tab for mobile on first render
     if (activeTab === 'account' || activeTab === 'list') {
-      React.useEffect(() => {
-        if (activeTab === 'account') {
-          setActiveTab('list');
-        }
-      }, []);
-      
       return <MobileSettingsList setActiveTab={setActiveTab} />;
     } else {
       return (
@@ -1325,317 +1550,6 @@ const HomePointConfigurator: React.FC<{
   );
 };
 
-// Mobile-optimized settings components
-const MobileAccountSettings: React.FC<{ user: any; signOut: () => void }> = ({ user, signOut }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-    {/* User Info Card */}
-    <div style={{
-      background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
-      borderRadius: '12px',
-      padding: '1.5rem',
-      color: 'white'
-    }}>
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-        marginBottom: '1rem'
-      }}>
-        {user?.user_metadata?.avatar_url ? (
-          <img
-            src={user.user_metadata.avatar_url}
-            alt="Avatar"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '50%',
-              border: '2px solid rgba(255, 255, 255, 0.3)'
-            }}
-          />
-        ) : (
-          <div style={{
-            width: '48px',
-            height: '48px',
-            borderRadius: '50%',
-            background: 'rgba(255, 255, 255, 0.2)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            border: '2px solid rgba(255, 255, 255, 0.3)'
-          }}>
-            <User size={24} />
-          </div>
-        )}
-        <div>
-          <h3 style={{
-            fontSize: '1.125rem',
-            fontWeight: '600',
-            margin: '0 0 0.25rem 0'
-          }}>
-            {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Benutzer'}
-          </h3>
-          {user?.email && (
-            <p style={{
-              margin: 0,
-              color: 'rgba(255, 255, 255, 0.9)',
-              fontSize: '0.875rem'
-            }}>
-              {user.email}
-            </p>
-          )}
-        </div>
-      </div>
-
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '1rem',
-        marginTop: '1rem'
-      }}>
-        <div>
-          <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase' }}>
-            Angemeldet seit
-          </p>
-          <p style={{ margin: '0.25rem 0 0 0', fontWeight: '600', color: 'white', fontSize: '0.875rem' }}>
-            {user?.created_at ? new Date(user.created_at).toLocaleDateString('de-DE') : 'Unbekannt'}
-          </p>
-        </div>
-        <div>
-          <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase' }}>
-            Provider
-          </p>
-          <p style={{ margin: '0.25rem 0 0 0', fontWeight: '600', color: 'white', fontSize: '0.875rem' }}>
-            {user?.app_metadata?.provider === 'google' ? 'Google' : user?.app_metadata?.provider || 'E-Mail'}
-          </p>
-        </div>
-      </div>
-    </div>
-
-    {/* Logout Button */}
-    <button
-      onClick={signOut}
-      style={{
-        background: 'var(--color-error)',
-        color: 'white',
-        border: 'none',
-        borderRadius: '8px',
-        padding: '1rem',
-        fontSize: '1rem',
-        fontWeight: '600',
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: '0.5rem',
-        width: '100%',
-        minHeight: '48px'
-      }}
-    >
-      <Power size={18} />
-      Abmelden
-    </button>
-  </div>
-);
-
-const MobileGeneralSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-    {/* Language Setting */}
-    <div>
-      <label style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '0.5rem',
-        fontSize: '1rem',
-        fontWeight: '500',
-        marginBottom: '0.75rem',
-        color: 'var(--color-text-primary)'
-      }}>
-        <Languages size={18} />
-        Sprache
-      </label>
-      <select
-        value={settings.language}
-        onChange={(e) => onSettingChange('language', e.target.value as 'de' | 'en')}
-        style={{
-          width: '100%',
-          padding: '0.75rem',
-          borderRadius: '8px',
-          border: '1px solid var(--color-border)',
-          background: 'var(--color-background)',
-          fontSize: '1rem',
-          minHeight: '48px'
-        }}
-      >
-        <option value="de">Deutsch</option>
-        <option value="en">English</option>
-      </select>
-    </div>
-
-    {/* Theme Setting */}
-    <div>
-      <label style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '0.5rem',
-        fontSize: '1rem',
-        fontWeight: '500',
-        marginBottom: '0.75rem',
-        color: 'var(--color-text-primary)'
-      }}>
-        <Palette size={18} />
-        Design
-      </label>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
-        {[
-          { value: 'light', label: 'Hell', icon: Sun },
-          { value: 'dark', label: 'Dunkel', icon: Moon },
-          { value: 'auto', label: 'System', icon: Monitor }
-        ].map(({ value, label, icon: Icon }) => (
-          <button
-            key={value}
-            onClick={() => onSettingChange('theme', value as any)}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: `2px solid ${settings.theme === value ? 'var(--color-primary-ocean)' : 'var(--color-border)'}`,
-              background: settings.theme === value ? 'var(--color-primary-ocean)' : 'var(--color-background)',
-              color: settings.theme === value ? 'white' : 'var(--color-text-primary)',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              minHeight: '48px'
-            }}
-          >
-            <Icon size={16} />
-            {label}
-          </button>
-        ))}
-      </div>
-    </div>
-
-    {/* Currency Setting */}
-    <div>
-      <label style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '0.5rem',
-        fontSize: '1rem',
-        fontWeight: '500',
-        marginBottom: '0.75rem',
-        color: 'var(--color-text-primary)'
-      }}>
-        <DollarSign size={18} />
-        Währung
-      </label>
-      <select
-        value={settings.currency}
-        onChange={(e) => onSettingChange('currency', e.target.value)}
-        style={{
-          width: '100%',
-          padding: '0.75rem',
-          borderRadius: '8px',
-          border: '1px solid var(--color-border)',
-          background: 'var(--color-background)',
-          fontSize: '1rem',
-          minHeight: '48px'
-        }}
-      >
-        <option value="EUR">Euro (EUR)</option>
-        <option value="USD">US Dollar (USD)</option>
-        <option value="GBP">Britisches Pfund (GBP)</option>
-        <option value="CHF">Schweizer Franken (CHF)</option>
-      </select>
-    </div>
-
-    {/* Time Format Setting */}
-    <div>
-      <label style={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: '0.5rem',
-        fontSize: '1rem',
-        fontWeight: '500',
-        marginBottom: '0.75rem',
-        color: 'var(--color-text-primary)'
-      }}>
-        <Clock size={18} />
-        Zeitformat
-      </label>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
-        {[
-          { value: '24h', label: '24h (14:30)' },
-          { value: '12h', label: '12h (2:30 PM)' }
-        ].map(({ value, label }) => (
-          <button
-            key={value}
-            onClick={() => onSettingChange('timeFormat', value as any)}
-            style={{
-              padding: '0.75rem',
-              borderRadius: '8px',
-              border: `2px solid ${settings.timeFormat === value ? 'var(--color-primary-ocean)' : 'var(--color-border)'}`,
-              background: settings.timeFormat === value ? 'var(--color-primary-ocean)' : 'var(--color-background)',
-              color: settings.timeFormat === value ? 'white' : 'var(--color-text-primary)',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              minHeight: '48px'
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-    </div>
-  </div>
-);
-
-// Mobile versions for other settings categories (reuse desktop components for now)
-const MobileMapSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <MapSettings settings={settings} onSettingChange={onSettingChange} />
-);
-
-const MobileTravelSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <TravelSettings settings={settings} onSettingChange={onSettingChange} />
-);
-
-const MobileNotificationSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <NotificationSettings settings={settings} onSettingChange={onSettingChange} />
-);
-
-const MobileExportSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <ExportSettings settings={settings} onSettingChange={onSettingChange} />
-);
-
-const MobilePrivacySettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <PrivacySettings settings={settings} onSettingChange={onSettingChange} />
-);
-
-const MobileBackupSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <BackupSettings settings={settings} onSettingChange={onSettingChange} />
-);
+// Remove duplicate mobile components - they are now defined before SettingsView
 
 export default SettingsView;
