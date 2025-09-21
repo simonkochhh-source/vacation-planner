@@ -97,14 +97,22 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     }
   }
   
-  // TEMPORARY: Force status to 'geplant' to isolate the problem
-  const supabaseStatus = 'geplant';
+  // Try different status values to find the correct one
+  const possibleStatusValues = [
+    'planned', 'visited', 'skipped', 'in_progress',  // English
+    'geplant', 'besucht', 'uebersprungen', 'in_bearbeitung',  // German
+    'PLANNED', 'VISITED', 'SKIPPED', 'IN_PROGRESS',  // Uppercase English
+    'GEPLANT', 'BESUCHT', 'UEBERSPRUNGEN', 'IN_BEARBEITUNG'  // Uppercase German
+  ];
   
-  console.log('🔍 Status debugging - FORCED TO geplant:');
+  // Start with the most likely candidate
+  const supabaseStatus = 'PLANNED';
+  
+  console.log('🔍 Status debugging - TESTING PLANNED:');
   console.log('  - Original dest.status:', dest.status);
   console.log('  - Valid status:', validStatus);
-  console.log('  - Forced supabase status:', supabaseStatus);
-  console.log('  - This should eliminate ANY status-related issues');
+  console.log('  - Testing supabase status:', supabaseStatus);
+  console.log('  - Possible values to try:', possibleStatusValues);
   
   // Ensure dates are properly formatted and end_date >= start_date
   const startDate = (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate;
