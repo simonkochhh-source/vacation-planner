@@ -645,60 +645,99 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                   background: 'var(--color-neutral-mist)',
                   border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
-                  padding: '1rem'
+                  padding: isMobile ? '0.75rem' : '1rem'
                 }}>
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    marginBottom: '0.5rem'
+                    marginBottom: isMobile ? '0.75rem' : '0.5rem'
                   }}>
                     <h4 style={{
                       margin: 0,
-                      fontSize: '1rem',
+                      fontSize: isMobile ? '0.875rem' : '1rem',
                       fontWeight: '600',
-                      color: 'var(--color-text-secondary)'
+                      color: 'var(--color-text-secondary)',
+                      flex: 1
                     }}>
                       {category.category}
                     </h4>
                     <span style={{
                       background: color,
                       color: 'white',
-                      padding: '0.25rem 0.5rem',
+                      padding: isMobile ? '0.375rem 0.75rem' : '0.25rem 0.5rem',
                       borderRadius: '12px',
-                      fontSize: '0.75rem',
-                      fontWeight: '500'
+                      fontSize: isMobile ? '0.8rem' : '0.75rem',
+                      fontWeight: '600',
+                      marginLeft: '0.5rem'
                     }}>
                       {formatCurrency(category.totalCost)}
                     </span>
                   </div>
 
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-                    gap: isMobile ? '0.5rem' : '1rem',
-                    marginBottom: '0.5rem',
-                    fontSize: '0.875rem',
-                    color: 'var(--color-text-secondary)'
-                  }}>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)' }}>Gesamtkosten:</span>
-                      <div style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>{formatCurrency(category.totalCost)}</div>
+                  {isMobile ? (
+                    /* Mobile: Simplified layout */
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      marginBottom: '0.75rem'
+                    }}>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--color-text-secondary)'
+                      }}>
+                        {category.destinationCount} Ziele • Ø {formatCurrency(category.avgCostPerDestination)}
+                      </div>
+                      <div style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        color: 'var(--color-text-primary)'
+                      }}>
+                        {percentage.toFixed(1)}%
+                      </div>
                     </div>
-                    <div>
-                      <span style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)' }}>Ø pro Ziel:</span>
-                      <div style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>{formatCurrency(category.avgCostPerDestination)}</div>
-                    </div>
-                  </div>
+                  ) : (
+                    /* Desktop: Detailed layout */
+                    <>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: '1fr 1fr',
+                        gap: '1rem',
+                        marginBottom: '0.5rem',
+                        fontSize: '0.875rem',
+                        color: 'var(--color-text-secondary)'
+                      }}>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)' }}>Ø pro Ziel:</span>
+                          <div style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>{formatCurrency(category.avgCostPerDestination)}</div>
+                        </div>
+                        <div>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-primary)' }}>Anteil:</span>
+                          <div style={{ fontWeight: '600', color: 'var(--color-text-primary)' }}>{percentage.toFixed(1)}%</div>
+                        </div>
+                      </div>
+                      
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        fontSize: '0.75rem',
+                        color: 'var(--color-text-secondary)',
+                        marginBottom: '0.5rem'
+                      }}>
+                        <span>{category.destinationCount} Ziele</span>
+                      </div>
+                    </>
+                  )}
 
                   {/* Cost Distribution Bar */}
                   <div style={{
                     width: '100%',
-                    height: '6px',
-                    background: 'var(--color-neutral-mist)',
+                    height: isMobile ? '4px' : '6px',
+                    background: 'var(--color-neutral-cream)',
                     borderRadius: '3px',
-                    overflow: 'hidden',
-                    marginBottom: '0.5rem'
+                    overflow: 'hidden'
                   }}>
                     <div style={{
                       width: `${percentage}%`,
@@ -707,17 +746,6 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                       borderRadius: '3px',
                       transition: 'width 0.3s ease'
                     }} />
-                  </div>
-
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    fontSize: '0.75rem',
-                    color: 'var(--color-text-secondary)'
-                  }}>
-                    <span>{category.destinationCount} Ziele</span>
-                    <span>{percentage.toFixed(1)}% der Gesamtkosten</span>
                   </div>
                 </div>
               );
@@ -730,19 +758,19 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           background: 'var(--color-neutral-cream)',
           border: '1px solid var(--color-neutral-mist)',
           borderRadius: '12px',
-          padding: '1.5rem',
+          padding: isMobile ? '1rem' : '1.5rem',
           boxShadow: 'var(--shadow-sm)'
         }}>
           <h3 style={{
             margin: '0 0 1rem 0',
-            fontSize: '1.125rem',
+            fontSize: isMobile ? '1rem' : '1.125rem',
             fontWeight: '600',
             color: 'var(--color-text-secondary)',
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem'
           }}>
-            <Calendar size={18} />
+            <Calendar size={isMobile ? 16 : 18} />
             Letzte Ausgaben
           </h3>
 
@@ -750,37 +778,52 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '0.75rem'
+              gap: isMobile ? '0.5rem' : '0.75rem'
             }}>
               {recentExpenses.map(expense => (
                 <div key={expense.id} style={{
                   background: 'var(--color-neutral-mist)',
                   border: '1px solid var(--color-neutral-mist)',
                   borderRadius: '8px',
-                  padding: '0.75rem',
+                  padding: isMobile ? '0.75rem' : '0.75rem',
                   display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between'
+                  flexDirection: isMobile ? 'column' : 'row',
+                  alignItems: isMobile ? 'flex-start' : 'center',
+                  justifyContent: 'space-between',
+                  gap: isMobile ? '0.5rem' : 0
                 }}>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
                     <h5 style={{
                       margin: '0 0 0.25rem 0',
-                      fontSize: '0.875rem',
+                      fontSize: isMobile ? '0.8rem' : '0.875rem',
                       fontWeight: '600',
-                      color: 'var(--color-text-secondary)'
+                      color: 'var(--color-text-secondary)',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap'
                     }}>
                       {expense.name}
                     </h5>
                     <div style={{
-                      fontSize: '0.75rem',
+                      fontSize: isMobile ? '0.7rem' : '0.75rem',
                       color: 'var(--color-text-secondary)',
                       display: 'flex',
                       alignItems: 'center',
-                      gap: '0.5rem'
+                      gap: '0.5rem',
+                      flexWrap: isMobile ? 'wrap' : 'nowrap'
                     }}>
-                      <MapPin size={10} />
-                      <span>{expense.location}</span>
-                      <span>•</span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                        <MapPin size={isMobile ? 8 : 10} />
+                        <span style={{
+                          maxWidth: isMobile ? '120px' : 'none',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {expense.location}
+                        </span>
+                      </div>
+                      {!isMobile && <span>•</span>}
                       <span>{formatDate(expense.updatedAt)}</span>
                     </div>
                   </div>
@@ -788,10 +831,12 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem'
+                    justifyContent: isMobile ? 'space-between' : 'flex-end',
+                    gap: '0.5rem',
+                    width: isMobile ? '100%' : 'auto'
                   }}>
                     <div style={{
-                      fontSize: '1rem',
+                      fontSize: isMobile ? '0.9rem' : '1rem',
                       fontWeight: '600',
                       color: expense.actualCost && expense.budget && expense.actualCost > expense.budget ? 'var(--color-error)' : 'var(--color-text-primary)'
                     }}>
@@ -808,15 +853,15 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                           padding: isMobile ? '0.5rem' : '0.25rem',
                           cursor: 'pointer',
                           color: 'var(--color-text-secondary)',
-                          minHeight: isMobile ? '44px' : 'auto',
-                          minWidth: isMobile ? '44px' : 'auto',
+                          minHeight: isMobile ? '40px' : 'auto',
+                          minWidth: isMobile ? '40px' : 'auto',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center'
                         }}
                         title="Budget bearbeiten"
                       >
-                        <Edit size={isMobile ? 16 : 12} />
+                        <Edit size={isMobile ? 14 : 12} />
                       </button>
                     )}
                   </div>
