@@ -30,45 +30,51 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     <div className={`layout ${isMobile ? 'mobile' : 'desktop'}`} style={{
       height: '100vh',
       display: 'flex',
-      flexDirection: isMobile ? 'column' : 'row',
+      flexDirection: 'column',
       overflow: 'hidden',
       position: 'relative',
       backgroundColor: 'var(--color-background)',
       color: 'var(--color-text-primary)'
     }}>
-      {/* Mobile Header */}
-      {isMobile && !uiState.hideHeader && <Header onMenuClick={() => setSidebarOpen(true)} />}
+      {/* Header - Always full width at top */}
+      {!uiState.hideHeader && (
+        <Header onMenuClick={isMobile ? () => setSidebarOpen(true) : undefined} />
+      )}
       
-      {/* Sidebar */}
-      <Sidebar 
-        isOpen={sidebarOpen || !isMobile} 
-        isMobile={isMobile}
-        onClose={() => setSidebarOpen(false)}
-      />
-      
-      {/* Main Content */}
-      <main className="main-content" style={{
+      {/* Content Container - Sidebar + Main */}
+      <div style={{
         flex: 1,
         display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden',
-        backgroundColor: 'var(--color-background)',
-        color: 'var(--color-text-primary)',
-        ...(isMobile && { marginTop: 0 })
+        flexDirection: 'row',
+        overflow: 'hidden'
       }}>
-        {/* Desktop Header */}
-        {!isMobile && !uiState.hideHeader && <Header />}
+        {/* Sidebar */}
+        <Sidebar 
+          isOpen={sidebarOpen || !isMobile} 
+          isMobile={isMobile}
+          onClose={() => setSidebarOpen(false)}
+        />
         
-        <div style={{
+        {/* Main Content */}
+        <main className="main-content" style={{
           flex: 1,
-          overflow: 'auto',
-          padding: isMobile ? '0.5rem' : '1rem',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
           backgroundColor: 'var(--color-background)',
           color: 'var(--color-text-primary)'
         }}>
-          {children}
-        </div>
-      </main>
+          <div style={{
+            flex: 1,
+            overflow: 'auto',
+            padding: isMobile ? '0.5rem' : '1rem',
+            backgroundColor: 'var(--color-background)',
+            color: 'var(--color-text-primary)'
+          }}>
+            {children}
+          </div>
+        </main>
+      </div>
     </div>
   );
 };

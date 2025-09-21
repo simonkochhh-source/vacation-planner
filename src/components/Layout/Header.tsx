@@ -69,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
       boxShadow: 'var(--shadow-md)',
       position: 'sticky',
       top: 0,
-      zIndex: 50
+      zIndex: 100
     }}>
       <div className="container">
         <div className="flex items-center justify-between">

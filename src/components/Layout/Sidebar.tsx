@@ -42,6 +42,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
   const [showEditTripForm, setShowEditTripForm] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [tripToDelete, setTripToDelete] = useState<string | null>(null);
+  const [headerHeight, setHeaderHeight] = useState(80); // Default fallback
+
+  // Calculate header height dynamically
+  useEffect(() => {
+    if (isMobile) {
+      const updateHeaderHeight = () => {
+        const header = document.querySelector('header');
+        if (header) {
+          setHeaderHeight(header.offsetHeight);
+        }
+      };
+      
+      updateHeaderHeight();
+      window.addEventListener('resize', updateHeaderHeight);
+      return () => window.removeEventListener('resize', updateHeaderHeight);
+    }
+  }, [isMobile]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -142,7 +159,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
         <div
           style={{
             position: 'fixed',
-            top: 0,
+            top: `${headerHeight}px`,
             left: 0,
             right: 0,
             bottom: 0,
@@ -158,10 +175,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
       {/* Sidebar */}
       <div 
         style={{
-          position: isMobile ? 'fixed' : 'sticky',
-          top: isMobile ? 0 : 'var(--header-height)',
+          position: isMobile ? 'fixed' : 'relative',
+          top: isMobile ? `${headerHeight}px` : 0,
           left: 0,
-          height: isMobile ? '100vh' : 'calc(100vh - var(--header-height))',
+          height: isMobile ? `calc(100vh - ${headerHeight}px)` : '100%',
           width: isMobile ? '280px' : 'var(--sidebar-width)',
           background: 'var(--color-background)',
           borderRight: isMobile ? 'none' : '1px solid var(--color-border)',
@@ -170,7 +187,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           padding: 'var(--space-lg)',
           boxShadow: isMobile ? 'var(--shadow-lg)' : 'none',
           transform: isMobile && isOpen ? 'translateX(0)' : isMobile ? 'translateX(-100%)' : 'none',
-          transition: isMobile ? 'transform var(--transition-normal)' : 'none'
+          transition: isMobile ? 'transform var(--transition-normal)' : 'none',
+          flexShrink: 0
         }}
       >
       {/* Mobile Header */}
