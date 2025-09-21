@@ -97,31 +97,14 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     }
   }
   
-  // Force to explicit string value to avoid any conversion issues
-  let supabaseStatus: string = 'geplant'; // Default safe value
+  // TEMPORARY: Force status to 'geplant' to isolate the problem
+  const supabaseStatus = 'geplant';
   
-  switch (validStatus) {
-    case DestinationStatus.PLANNED:
-      supabaseStatus = 'geplant';
-      break;
-    case DestinationStatus.VISITED:
-      supabaseStatus = 'besucht';
-      break;
-    case DestinationStatus.SKIPPED:
-      supabaseStatus = 'uebersprungen';
-      break;
-    case DestinationStatus.IN_PROGRESS:
-      supabaseStatus = 'in_bearbeitung';
-      break;
-    default:
-      supabaseStatus = 'geplant';
-      break;
-  }
-  
-  console.log('🔍 Final status conversion:');
+  console.log('🔍 Status debugging - FORCED TO geplant:');
+  console.log('  - Original dest.status:', dest.status);
   console.log('  - Valid status:', validStatus);
-  console.log('  - Supabase status (explicit):', supabaseStatus);
-  console.log('  - Expected values: geplant, besucht, uebersprungen, in_bearbeitung');
+  console.log('  - Forced supabase status:', supabaseStatus);
+  console.log('  - This should eliminate ANY status-related issues');
   
   // Ensure dates are properly formatted and end_date >= start_date
   const startDate = (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate;
@@ -541,7 +524,9 @@ export class SupabaseService {
     console.log('🎯 SupabaseService.createDestination called with:');
     console.log('  - tripId:', tripId);
     console.log('  - destination name:', destination.name);
-    console.log('  - insertData:', insertData);
+    console.log('  - insertData FULL OBJECT:', JSON.stringify(insertData, null, 2));
+    console.log('  - insertData.status specifically:', insertData.status);
+    console.log('  - typeof insertData.status:', typeof insertData.status);
     
     const { data, error } = await supabase
       .from('destinations')
