@@ -97,19 +97,31 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     }
   }
   
-  const supabaseStatus = toSupabaseStatus(validStatus);
+  // Force to explicit string value to avoid any conversion issues
+  let supabaseStatus: string = 'geplant'; // Default safe value
+  
+  switch (validStatus) {
+    case DestinationStatus.PLANNED:
+      supabaseStatus = 'geplant';
+      break;
+    case DestinationStatus.VISITED:
+      supabaseStatus = 'besucht';
+      break;
+    case DestinationStatus.SKIPPED:
+      supabaseStatus = 'uebersprungen';
+      break;
+    case DestinationStatus.IN_PROGRESS:
+      supabaseStatus = 'in_bearbeitung';
+      break;
+    default:
+      supabaseStatus = 'geplant';
+      break;
+  }
   
   console.log('🔍 Final status conversion:');
   console.log('  - Valid status:', validStatus);
-  console.log('  - Supabase status:', supabaseStatus);
+  console.log('  - Supabase status (explicit):', supabaseStatus);
   console.log('  - Expected values: geplant, besucht, uebersprungen, in_bearbeitung');
-  
-  // Double-check the supabase status is valid
-  const allowedSupabaseStatuses = ['geplant', 'besucht', 'uebersprungen', 'in_bearbeitung'];
-  if (!allowedSupabaseStatuses.includes(supabaseStatus)) {
-    console.error('❌ Invalid supabase status generated:', supabaseStatus);
-    throw new Error(`Invalid status for database: ${supabaseStatus}. Must be one of: ${allowedSupabaseStatuses.join(', ')}`);
-  }
   
   // Ensure dates are properly formatted and end_date >= start_date
   const startDate = (dest.startDate && dest.startDate.trim()) ? dest.startDate : currentDate;
@@ -142,7 +154,7 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     notes: dest.notes || null,
     images: dest.photos || null,
     booking_info: dest.bookingInfo || null,
-    status: supabaseStatus,
+    status: supabaseStatus as any,
     tags: dest.tags || null,
     color: dest.color || null,
     weather_info: dest.weatherInfo ? JSON.stringify(dest.weatherInfo) : null,
@@ -577,7 +589,27 @@ export class SupabaseService {
       const validStatus = updates.status && Object.values(DestinationStatus).includes(updates.status as DestinationStatus) 
         ? updates.status 
         : DestinationStatus.PLANNED;
-      updateData.status = toSupabaseStatus(validStatus);
+      
+      // Use explicit switch to ensure correct status values
+      let supabaseStatus = 'geplant';
+      switch (validStatus) {
+        case DestinationStatus.PLANNED:
+          supabaseStatus = 'geplant';
+          break;
+        case DestinationStatus.VISITED:
+          supabaseStatus = 'besucht';
+          break;
+        case DestinationStatus.SKIPPED:
+          supabaseStatus = 'uebersprungen';
+          break;
+        case DestinationStatus.IN_PROGRESS:
+          supabaseStatus = 'in_bearbeitung';
+          break;
+        default:
+          supabaseStatus = 'geplant';
+          break;
+      }
+      updateData.status = supabaseStatus as any;
     }
     if (updates.tags !== undefined) updateData.tags = updates.tags || null;
     if (updates.color !== undefined) updateData.color = updates.color || null;
