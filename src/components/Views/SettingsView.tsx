@@ -864,7 +864,7 @@ const MobileSettingsCategory: React.FC<{
 const SettingsView: React.FC = () => {
   const { settings, updateSettings } = useSupabaseApp();
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup'>('account');
+  const [activeTab, setActiveTab] = useState<'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup'>('list');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleSettingChange = <K extends keyof AppSettings>(
@@ -941,10 +941,11 @@ const SettingsView: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Force 'list' as initial tab for mobile on first render - MUST be outside conditional blocks
+  // Handle desktop vs mobile initial state
   React.useEffect(() => {
-    if (isMobile && activeTab === 'account') {
-      setActiveTab('list');
+    if (!isMobile && activeTab === 'list') {
+      // If switching to desktop view, show account tab instead of list
+      setActiveTab('account');
     }
   }, [isMobile, activeTab]);
 
