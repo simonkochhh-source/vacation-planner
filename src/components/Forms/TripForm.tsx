@@ -36,6 +36,19 @@ const TripForm: React.FC<TripFormProps> = ({
   trip 
 }) => {
   const { createTrip, updateTrip, setCurrentTrip, destinations } = useSupabaseApp();
+  
+  // Mobile responsiveness
+  const [isMobile, setIsMobile] = useState(false);
+  
+  React.useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [participants, setParticipants] = useState<string[]>(trip?.participants || []);
   const [newParticipant, setNewParticipant] = useState('');
   const [tags, setTags] = useState<string[]>(trip?.tags || []);
@@ -147,27 +160,27 @@ const TripForm: React.FC<TripFormProps> = ({
       backdropFilter: 'blur(4px)',
       zIndex: 1000,
       display: 'flex',
-      alignItems: 'center',
+      alignItems: isMobile ? 'flex-end' : 'center',
       justifyContent: 'center',
-      padding: 'var(--space-lg)'
+      padding: isMobile ? 0 : 'var(--space-lg)'
     }}>
       <div style={{
         background: 'var(--color-surface)',
-        borderRadius: 'var(--radius-xl)',
-        maxWidth: '600px',
+        borderRadius: isMobile ? 'var(--radius-xl) var(--radius-xl) 0 0' : 'var(--radius-xl)',
+        maxWidth: isMobile ? '100%' : '600px',
         width: '100%',
-        maxHeight: '90vh',
+        maxHeight: isMobile ? '85vh' : '90vh',
         overflowY: 'auto',
         boxShadow: 'var(--shadow-lg)',
         border: '1px solid var(--color-border)'
       }}>
         {/* Header */}
         <div style={{
-          padding: 'var(--space-xl)',
+          padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)',
           borderBottom: '1px solid var(--color-border)',
           background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
           color: 'white',
-          borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
+          borderRadius: isMobile ? 'var(--radius-xl) var(--radius-xl) 0 0' : 'var(--radius-xl) var(--radius-xl) 0 0',
           position: 'relative'
         }}>
           <div className="flex items-center justify-between">
@@ -220,7 +233,7 @@ const TripForm: React.FC<TripFormProps> = ({
         </div>
 
         {/* Form Content */}
-        <form onSubmit={handleSubmit(onSubmit as any)} style={{ padding: 'var(--space-xl)' }}>
+        <form onSubmit={handleSubmit(onSubmit as any)} style={{ padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)' }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
             {/* Basic Info Section */}
             <Card padding="md" style={{ background: 'var(--color-neutral-mist)' }}>
@@ -778,7 +791,8 @@ const TripForm: React.FC<TripFormProps> = ({
             borderTop: '1px solid var(--color-border)',
             display: 'flex',
             gap: 'var(--space-md)',
-            justifyContent: 'flex-end'
+            justifyContent: isMobile ? 'stretch' : 'flex-end',
+            flexDirection: isMobile ? 'column' : 'row'
           }}>
             <Button
               type="button"

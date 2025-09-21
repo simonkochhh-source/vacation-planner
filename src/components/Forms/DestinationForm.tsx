@@ -74,6 +74,19 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
   destination 
 }) => {
   const { createDestination, updateDestination } = useSupabaseApp();
+  
+  // Mobile responsiveness
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
   const [tags, setTags] = useState<string[]>(destination?.tags || []);
   const [newTag, setNewTag] = useState('');
   const [selectedColor, setSelectedColor] = useState(
@@ -231,17 +244,17 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
       inset: 0,
       background: 'rgba(0, 0, 0, 0.5)',
       display: 'flex',
-      alignItems: 'center',
+      alignItems: isMobile ? 'flex-end' : 'center',
       justifyContent: 'center',
       zIndex: 1000,
-      padding: 'var(--space-lg)'
+      padding: isMobile ? 0 : 'var(--space-lg)'
     }}>
       <div style={{
         background: 'var(--color-surface)',
-        borderRadius: 'var(--radius-xl)',
+        borderRadius: isMobile ? 'var(--radius-xl) var(--radius-xl) 0 0' : 'var(--radius-xl)',
         width: '100%',
-        maxWidth: '700px',
-        maxHeight: '95vh',
+        maxWidth: isMobile ? '100%' : '700px',
+        maxHeight: isMobile ? '85vh' : '95vh',
         overflow: 'auto',
         boxShadow: 'var(--shadow-lg)',
         border: '1px solid var(--color-border)'
@@ -250,11 +263,13 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
         <div style={{
           background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-primary-ocean) 100%)',
           color: 'white',
-          padding: 'var(--space-xl)',
-          borderRadius: 'var(--radius-xl) var(--radius-xl) 0 0',
+          padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)',
+          borderRadius: isMobile ? 'var(--radius-xl) var(--radius-xl) 0 0' : 'var(--radius-xl) var(--radius-xl) 0 0',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'space-between'
+          justifyContent: 'space-between',
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 'var(--space-md)' : 0
         }}>
           <div className="flex items-center gap-3">
             <div style={{
@@ -270,10 +285,11 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
             <div>
               <h2 style={{
                 fontFamily: 'var(--font-heading)',
-                fontSize: 'var(--text-2xl)',
+                fontSize: isMobile ? 'var(--text-xl)' : 'var(--text-2xl)',
                 fontWeight: 'var(--font-weight-semibold)',
                 margin: 0,
-                lineHeight: 1.2
+                lineHeight: 1.2,
+                textAlign: isMobile ? 'center' : 'left'
               }}>
                 {destination ? 'Ziel bearbeiten' : 'Neues Ziel hinzufügen'}
               </h2>
@@ -281,7 +297,8 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
                 fontSize: 'var(--text-sm)',
                 margin: 0,
                 opacity: 0.8,
-                fontWeight: 'var(--font-weight-normal)'
+                fontWeight: 'var(--font-weight-normal)',
+                textAlign: isMobile ? 'center' : 'left'
               }}>
                 {destination ? 'Aktualisiere deine Destination' : 'Plane dein nächstes Abenteuer'}
               </p>
@@ -305,7 +322,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
         {/* Form */}
         <form 
           onSubmit={handleSubmit(onSubmit)} 
-          style={{ padding: '2rem' }}
+          style={{ padding: isMobile ? '1rem' : '2rem' }}
         >
           {/* Basic Info */}
           <div style={{ marginBottom: '2rem' }}>
@@ -472,8 +489,10 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
 
             <div style={{ 
               display: 'grid', 
-              gridTemplateColumns: selectedCategory === DestinationCategory.HOTEL ? '1fr 1fr' : '1fr', 
-              gap: '1rem' 
+              gridTemplateColumns: selectedCategory === DestinationCategory.HOTEL 
+                ? (isMobile ? '1fr' : '1fr 1fr') 
+                : '1fr', 
+              gap: isMobile ? '0.75rem' : '1rem' 
             }}>
               <div>
                 <label style={{
@@ -833,15 +852,17 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
           <div style={{
             display: 'flex',
             gap: 'var(--space-md)',
-            justifyContent: 'flex-end',
+            justifyContent: isMobile ? 'stretch' : 'flex-end',
             paddingTop: 'var(--space-lg)',
-            borderTop: `2px solid var(--color-border)`
+            borderTop: `2px solid var(--color-border)`,
+            flexDirection: isMobile ? 'column' : 'row'
           }}>
             <Button
               variant="secondary"
               onClick={onClose}
               style={{
-                minWidth: '120px'
+                minWidth: isMobile ? 'auto' : '120px',
+                width: isMobile ? '100%' : 'auto'
               }}
             >
               Abbrechen
@@ -852,7 +873,8 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
               loading={isSubmitting}
               onClick={() => console.log('Submit button clicked!')}
               style={{
-                minWidth: '140px'
+                minWidth: isMobile ? 'auto' : '140px',
+                width: isMobile ? '100%' : 'auto'
               }}
             >
               {destination ? 'Aktualisieren' : 'Hinzufügen'}

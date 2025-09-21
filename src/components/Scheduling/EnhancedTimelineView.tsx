@@ -85,6 +85,19 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 }) => {
   const { currentTrip, destinations, createDestination, createDestinationForTrip, updateDestination, deleteDestination, settings } = useSupabaseApp();
   
+  // Mobile responsiveness
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+  
   // Permission system - check if current user can edit this trip
   const { user } = useAuth();
   const currentUserId = user?.id || 'anonymous';
@@ -1756,29 +1769,42 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
   return (
     <>
-    <div data-timeline-container style={{ padding: '1.5rem' }}>
+    <div data-timeline-container style={{ padding: isMobile ? '1rem' : '1.5rem' }}>
       {/* Enhanced Header */}
       <div style={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'space-between',
-        marginBottom: '2rem'
+        marginBottom: isMobile ? '1.5rem' : '2rem',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '1rem' : 0
       }}>
-        <div>
+        <div style={{ width: isMobile ? '100%' : 'auto' }}>
           <h1 style={{
             margin: '0 0 0.5rem 0',
-            fontSize: '2rem',
+            fontSize: isMobile ? '1.5rem' : '2rem',
             fontWeight: 'bold',
-            color: 'var(--color-text-primary)'
+            color: 'var(--color-text-primary)',
+            lineHeight: 1.2
           }}>
-            📅 Erweiterte Timeline
+            📅 {isMobile ? 'Timeline' : 'Erweiterte Timeline'}
           </h1>
           <p style={{
             margin: 0,
             color: 'var(--color-text-secondary)',
-            fontSize: '1rem'
+            fontSize: isMobile ? '0.875rem' : '1rem',
+            lineHeight: 1.4
           }}>
-            {currentTrip.name} • {formatDate(currentTrip.startDate)} - {formatDate(currentTrip.endDate)}
+            {isMobile ? (
+              <>
+                <div>{currentTrip.name}</div>
+                <div style={{ marginTop: '0.25rem' }}>
+                  {formatDate(currentTrip.startDate)} - {formatDate(currentTrip.endDate)}
+                </div>
+              </>
+            ) : (
+              `${currentTrip.name} • ${formatDate(currentTrip.startDate)} - ${formatDate(currentTrip.endDate)}`
+            )}
           </p>
         </div>
 
@@ -1787,9 +1813,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
       {/* Enhanced Statistics */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: '1rem',
-        marginBottom: '2rem'
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
+        gap: isMobile ? '0.75rem' : '1rem',
+        marginBottom: isMobile ? '1.5rem' : '2rem'
       }}>
 
 
@@ -1797,8 +1823,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         <div style={{
           background: 'rgba(74, 144, 164, 0.1)',
           border: '1px solid var(--color-primary-ocean)',
-          borderRadius: '12px',
-          padding: '1.5rem',
+          borderRadius: isMobile ? '8px' : '12px',
+          padding: isMobile ? '1rem' : '1.5rem',
           gridColumn: '1 / -1' // Spannt über alle Spalten
         }}>
           {/* Header der übergeordneten Kachel */}
@@ -1816,10 +1842,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           
           {/* Gesamtdistanz */}
           <div style={{ 
-            fontSize: '2.5rem', 
+            fontSize: isMobile ? '2rem' : '2.5rem', 
             fontWeight: 'bold', 
             color: 'var(--color-secondary-forest)',
-            marginBottom: '1.5rem',
+            marginBottom: isMobile ? '1rem' : '1.5rem',
             textAlign: 'center'
           }}>
             {Math.round(overallStats.distance)}km
@@ -1828,8 +1854,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           {/* Eingebettete Transportmodi-Kacheln */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-            gap: '1rem'
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(150px, 1fr))',
+            gap: isMobile ? '0.75rem' : '1rem'
           }}>
             {/* Auto-Strecke */}
             {overallStats.drivingDistance > 0 && (
@@ -2523,20 +2549,24 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
               {/* Day Header */}
               <div style={{
                 background: 'var(--color-neutral-cream)',
-                padding: '1rem 1.5rem',
+                padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
                 borderBottom: '1px solid var(--color-neutral-mist)',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'space-between'
+                justifyContent: 'space-between',
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: isMobile ? '0.5rem' : 0
               }}>
                 <div style={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '1rem'
+                  gap: isMobile ? '0.75rem' : '1rem',
+                  width: isMobile ? '100%' : 'auto',
+                  justifyContent: isMobile ? 'space-between' : 'flex-start'
                 }}>
                   <h3 style={{
                     margin: 0,
-                    fontSize: '1.125rem',
+                    fontSize: isMobile ? '1rem' : '1.125rem',
                     fontWeight: '600',
                     color: 'var(--color-text-primary)'
                   }}>
@@ -2566,7 +2596,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
               </div>
 
               {/* Day Timeline */}
-              <div style={{ padding: '1rem 1.5rem' }}>
+              <div style={{ padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem' }}>
                 {/* Add first destination button */}
                 {!creatingDestination && day.destinations.length > 0 && (
                   <div style={{
@@ -3014,7 +3044,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           
                           <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
                             gap: '0.5rem',
                             marginBottom: '0.5rem'
                           }}>
@@ -3241,32 +3271,33 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       onDrop={(e) => handleDrop(e, day.date, destIndex)}
                       style={{
                         display: 'flex',
-                        alignItems: 'center',
-                        padding: '1rem',
+                        alignItems: isMobile ? 'flex-start' : 'center',
+                        padding: isMobile ? '0.75rem' : '1rem',
                         background: dragState.dragOverDay === day.date && dragState.dragOverIndex === destIndex 
                           ? 'var(--color-neutral-cream)' : 'var(--color-neutral-cream)',
                         borderRadius: '8px',
                         opacity: isProcessingDrop ? 0.6 : 1,
                         cursor: isProcessingDrop ? 'wait' : (dragState.isDragging ? 'move' : 'grab'),
-                        marginBottom: '0.5rem',
+                        marginBottom: isMobile ? '0.75rem' : '0.5rem',
                         border: dragState.draggedItem?.id === dest.id ? '2px dashed var(--color-primary-ocean)' : '1px solid var(--color-neutral-mist)',
-                        transition: 'all 0.2s'
+                        transition: 'all 0.2s',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        gap: isMobile ? '0.5rem' : 0
                       }}
                       onClick={() => onDestinationClick?.(dest)}
                     >
                       {/* Drag Handle */}
                       <div style={{
-                        marginRight: '1rem',
+                        marginRight: isMobile ? '0.5rem' : '1rem',
                         color: 'var(--color-text-secondary)'
                       }}>
                         <GripVertical size={16} />
                       </div>
 
-
                       {/* Category Icon */}
                       <div style={{
                         fontSize: '1.25rem',
-                        marginRight: '1rem'
+                        marginRight: isMobile ? '0.5rem' : '1rem'
                       }}>
                         {getCategoryIcon(dest.category)}
                       </div>
@@ -3462,10 +3493,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       <div style={{
                         background: 'var(--color-neutral-cream)',
                         border: '2px solid var(--color-primary-ocean)',
-                        borderRadius: '12px',
-                        padding: '1.5rem',
-                        margin: '1rem 0',
-                        marginLeft: '6rem'
+                        borderRadius: isMobile ? '8px' : '12px',
+                        padding: isMobile ? '1rem' : '1.5rem',
+                        margin: isMobile ? '0.75rem 0' : '1rem 0',
+                        marginLeft: isMobile ? '0' : '6rem'
                       }}>
                         <h4 style={{
                           margin: '0 0 1rem 0',
@@ -4277,7 +4308,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           
                           <div style={{
                             display: 'grid',
-                            gridTemplateColumns: 'repeat(4, 1fr)',
+                            gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
                             gap: '0.5rem',
                             marginBottom: '0.5rem'
                           }}>
