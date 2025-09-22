@@ -6,7 +6,6 @@ import { AppSettings, TransportMode, FuelType, Coordinates } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
 import UserProfileManager from '../User/UserProfileManager';
-import AvatarConnectionTest from '../Debug/AvatarConnectionTest';
 import {
   Settings, Globe, Palette, MapPin, Car, Bell, Download,
   Shield, HardDrive, RotateCcw, AlertTriangle,
@@ -593,46 +592,6 @@ const renderMobileSettingsContent = (
         </div>
       );
 
-    case 'backup':
-      return (
-        <div style={mobileStyle.section}>
-          {/* Auto Backup */}
-          <div>
-            <label style={mobileStyle.label}>
-              <HardDrive size={18} />
-              Automatische Backups
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
-              <input
-                type="checkbox"
-                checked={settings.autoBackup}
-                onChange={(e) => onSettingChange('autoBackup', e.target.checked)}
-                style={{ width: '20px', height: '20px' }}
-              />
-              Automatische Backups aktivieren
-            </label>
-          </div>
-          
-          {/* Backup Interval */}
-          {settings.autoBackup && (
-            <div>
-              <label style={mobileStyle.label}>
-                <Clock size={18} />
-                Backup-Intervall (Stunden)
-              </label>
-              <input
-                type="number"
-                value={settings.backupInterval}
-                onChange={(e) => onSettingChange('backupInterval', parseInt(e.target.value) || 1)}
-                min="1"
-                max="168"
-                style={mobileStyle.input}
-                placeholder="24"
-              />
-            </div>
-          )}
-        </div>
-      );
 
     default:
       return <div>Einstellungen für {activeTab} werden noch entwickelt...</div>;
@@ -641,7 +600,7 @@ const renderMobileSettingsContent = (
 
 // First, define the mobile settings list component
 const MobileSettingsList: React.FC<{
-  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup') => void;
+  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy') => void;
 }> = ({ setActiveTab }) => {
   const tabs = [
     { id: 'account', label: 'Account', icon: User, description: 'Profile und Anmeldung' },
@@ -650,8 +609,7 @@ const MobileSettingsList: React.FC<{
     { id: 'travel', label: 'Reise', icon: Car, description: 'Transport, Kraftstoff, Home-Point' },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, description: 'Erinnerungen und Alerts' },
     { id: 'export', label: 'Export', icon: Download, description: 'Exportformate und Optionen' },
-    { id: 'privacy', label: 'Datenschutz', icon: Shield, description: 'Standort und Tracking' },
-    { id: 'backup', label: 'Backup', icon: HardDrive, description: 'Automatische Sicherungen' }
+    { id: 'privacy', label: 'Datenschutz', icon: Shield, description: 'Standort und Tracking' }
   ];
 
   return (
@@ -772,7 +730,7 @@ const MobileSettingsList: React.FC<{
 // Mobile settings category component  
 const MobileSettingsCategory: React.FC<{
   activeTab: string;
-  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup') => void;
+  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy') => void;
   settings: AppSettings;
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   user: any;
@@ -798,8 +756,7 @@ const MobileSettingsCategory: React.FC<{
     travel: { title: 'Reise', icon: Car },
     notifications: { title: 'Benachrichtigungen', icon: Bell },
     export: { title: 'Export', icon: Download },
-    privacy: { title: 'Datenschutz', icon: Shield },
-    backup: { title: 'Backup', icon: HardDrive }
+    privacy: { title: 'Datenschutz', icon: Shield }
   };
 
   const currentCategory = categoryInfo[activeTab as keyof typeof categoryInfo];
@@ -867,7 +824,7 @@ const MobileSettingsCategory: React.FC<{
 const SettingsView: React.FC = () => {
   const { settings, updateSettings } = useSupabaseApp();
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy' | 'backup'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy'>('list');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleSettingChange = <K extends keyof AppSettings>(
@@ -927,8 +884,7 @@ const SettingsView: React.FC = () => {
     { id: 'travel', label: 'Reise', icon: Car },
     { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
     { id: 'export', label: 'Export', icon: Download },
-    { id: 'privacy', label: 'Datenschutz', icon: Shield },
-    { id: 'backup', label: 'Backup', icon: HardDrive }
+    { id: 'privacy', label: 'Datenschutz', icon: Shield }
   ];
 
   // Responsive design is now handled by useResponsive hook
@@ -1101,9 +1057,6 @@ const SettingsView: React.FC = () => {
                 Account-Informationen
               </h2>
 
-              {/* Avatar Connection Test */}
-              <AvatarConnectionTest />
-              
               {/* User Profile Manager */}
               <UserProfileManager 
                 onProfileUpdate={(profile) => {
@@ -1131,9 +1084,6 @@ const SettingsView: React.FC = () => {
           )}
           {activeTab === 'privacy' && (
             <PrivacySettings settings={settings} onSettingChange={handleSettingChange} />
-          )}
-          {activeTab === 'backup' && (
-            <BackupSettings settings={settings} onSettingChange={handleSettingChange} />
           )}
         </div>
       </div>
@@ -1605,7 +1555,7 @@ const TravelSettings: React.FC<{
           color: 'var(--color-text-primary)'
         }}>
           <Home size={18} />
-          Home-Point (Zuhause)
+          Home-Point
         </label>
         
         {settings.homePoint ? (
@@ -1822,55 +1772,6 @@ const PrivacySettings: React.FC<{
   </div>
 );
 
-const BackupSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
-      Backup-Einstellungen
-    </h2>
-    
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <input
-          type="checkbox"
-          checked={settings.autoBackup}
-          onChange={(e) => onSettingChange('autoBackup', e.target.checked)}
-        />
-        Automatische Backups aktivieren
-      </label>
-      
-      {settings.autoBackup && (
-        <div>
-          <label style={{ 
-            fontSize: '1rem',
-            fontWeight: '500',
-            marginBottom: '0.5rem',
-            color: 'var(--color-text-primary)',
-            display: 'block'
-          }}>
-            Backup-Intervall (Stunden)
-          </label>
-          <input
-            type="number"
-            value={settings.backupInterval}
-            onChange={(e) => onSettingChange('backupInterval', parseInt(e.target.value) || 1)}
-            min="1"
-            max="168"
-            style={{
-              padding: '0.5rem',
-              borderRadius: '6px',
-              border: '1px solid #d1d5db',
-              background: 'var(--color-neutral-cream)',
-              minWidth: '200px'
-            }}
-          />
-        </div>
-      )}
-    </div>
-  </div>
-);
 
 // Home Point Configurator Component
 const HomePointConfigurator: React.FC<{
@@ -1886,16 +1787,16 @@ const HomePointConfigurator: React.FC<{
 
   const handlePlaceSelect = (place: PlacePrediction) => {
     setHomePointForm({
-      name: place.structured_formatting?.main_text || place.display_name,
+      name: 'Home', // Always name homepoint as "Home" for privacy
       address: place.display_name,
       coordinates: place.coordinates
     });
   };
 
   const handleSave = () => {
-    if (homePointForm.name && homePointForm.address && homePointForm.coordinates) {
+    if (homePointForm.address && homePointForm.coordinates) {
       onHomePointChange({
-        name: homePointForm.name,
+        name: 'Home', // Always set as "Home" for privacy
         address: homePointForm.address,
         coordinates: homePointForm.coordinates
       });
@@ -1948,30 +1849,20 @@ const HomePointConfigurator: React.FC<{
         Home-Point {currentHomePoint ? 'bearbeiten' : 'definieren'}
       </h4>
       
-      <div style={{ marginBottom: '1rem' }}>
-        <label style={{
-          display: 'block',
-          fontSize: '0.875rem',
-          fontWeight: '500',
-          color: 'var(--color-text-primary)',
-          marginBottom: '0.5rem'
-        }}>
-          Name (z.B. "Zuhause", "Wohnung")
-        </label>
-        <input
-          type="text"
-          value={homePointForm.name}
-          onChange={(e) => setHomePointForm(prev => ({ ...prev, name: e.target.value }))}
-          placeholder="Zuhause"
-          style={{
-            width: '100%',
-            padding: '0.5rem',
-            borderRadius: '6px',
-            border: '1px solid var(--color-border)',
-            background: 'var(--color-surface)',
-            color: 'var(--color-text-primary)'
-          }}
-        />
+      {/* Info about automatic naming */}
+      <div style={{
+        background: 'var(--color-info)',
+        color: 'white',
+        padding: '0.5rem',
+        borderRadius: '6px',
+        fontSize: '0.875rem',
+        marginBottom: '1rem',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+      }}>
+        <Home size={16} />
+        <span>Ihr Homepoint wird automatisch als "Home" bezeichnet, um Ihre Privatsphäre zu schützen.</span>
       </div>
 
       <div style={{ marginBottom: '1rem' }}>
@@ -2025,18 +1916,18 @@ const HomePointConfigurator: React.FC<{
         </button>
         <button
           onClick={handleSave}
-          disabled={!homePointForm.name || !homePointForm.address || !homePointForm.coordinates}
+          disabled={!homePointForm.address || !homePointForm.coordinates}
           style={{
-            background: (!homePointForm.name || !homePointForm.address || !homePointForm.coordinates) 
+            background: (!homePointForm.address || !homePointForm.coordinates) 
               ? 'var(--color-text-secondary)' : 'var(--color-success)',
             color: 'white',
             border: 'none',
             borderRadius: '6px',
             padding: '0.5rem 1rem',
             fontSize: '0.875rem',
-            cursor: (!homePointForm.name || !homePointForm.address || !homePointForm.coordinates) 
+            cursor: (!homePointForm.address || !homePointForm.coordinates) 
               ? 'not-allowed' : 'pointer',
-            opacity: (!homePointForm.name || !homePointForm.address || !homePointForm.coordinates) 
+            opacity: (!homePointForm.address || !homePointForm.coordinates) 
               ? 0.6 : 1
           }}
         >

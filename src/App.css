@@ -13,6 +13,12 @@
   }
 }
 
+/* Spinner animation for nickname validation */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .App-header {
   background-color: #282c34;
   min-height: 100vh;

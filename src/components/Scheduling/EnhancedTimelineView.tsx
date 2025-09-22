@@ -1429,7 +1429,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     if (settings.homePoint) {
       setNewDestinationForm(prev => ({
         ...prev,
-        name: 'Zuhause',
+        name: 'Home',
         location: settings.homePoint!.address,
         coordinates: settings.homePoint!.coordinates
       }));
@@ -1440,7 +1440,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     if (settings.homePoint) {
       setEditForm(prev => ({
         ...prev,
-        name: 'Zuhause',
+        name: 'Home',
         location: settings.homePoint!.address,
         coordinates: settings.homePoint!.coordinates
       }));
@@ -2082,7 +2082,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           alignItems: 'center',
                           justifyContent: 'center'
                         }}
-                        title={`Zuhause auswählen: ${settings.homePoint.name}`}
+                        title={`Home auswählen: ${settings.homePoint.name}`}
                         onMouseOver={(e) => {
                           e.currentTarget.style.background = 'var(--color-secondary-forest)';
                         }}
@@ -2883,7 +2883,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   width: '2rem',
                                   height: '2rem'
                                 }}
-                                title={`Zuhause auswählen: ${settings.homePoint.name}`}
+                                title={`Home auswählen: ${settings.homePoint.name}`}
                                 onMouseOver={(e) => {
                                   e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}
@@ -3566,7 +3566,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   alignItems: 'center',
                                   justifyContent: 'center'
                                 }}
-                                title={`Zuhause auswählen: ${settings.homePoint.name}`}
+                                title={`Home auswählen: ${settings.homePoint.name}`}
                                 onMouseOver={(e) => {
                                   e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}
@@ -4156,7 +4156,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   width: '2rem',
                                   height: '2rem'
                                 }}
-                                title={`Zuhause auswählen: ${settings.homePoint.name}`}
+                                title={`Home auswählen: ${settings.homePoint.name}`}
                                 onMouseOver={(e) => {
                                   e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}

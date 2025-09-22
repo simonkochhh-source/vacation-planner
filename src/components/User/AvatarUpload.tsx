@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Camera, Upload, User, X, Check, AlertCircle } from 'lucide-react';
+import { Camera, Upload, User, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { userService } from '../../services/userService';
 
@@ -18,8 +18,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
 }) => {
   const { userProfile, refreshUserProfile } = useAuth();
   const [uploading, setUploading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -55,13 +53,13 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setError('Bitte wählen Sie eine Bilddatei aus');
+      console.warn('No file selected');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError('Bild ist zu groß. Maximum 5MB erlaubt');
+      console.warn('File too large:', file.size);
       return;
     }
 
@@ -79,8 +77,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const handleUpload = async (file: File) => {
     try {
       setUploading(true);
-      setError(null);
-      setSuccess(null);
+      // Starting upload
 
       console.log('📷 Avatar: Starting upload...', file.name, file.size);
 
@@ -99,7 +96,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       // Refresh user profile to get updated data
       await refreshUserProfile();
       
-      setSuccess('Profilbild erfolgreich aktualisiert!');
+      console.log('✅ Avatar updated successfully');
       setPreviewUrl(null); // Clear preview since it's now saved
       
       // Notify parent component
@@ -107,12 +104,9 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         onAvatarUpdate(avatarUrl);
       }
 
-      // Clear success message after 3 seconds
-      setTimeout(() => setSuccess(null), 3000);
-
     } catch (error: any) {
       console.error('❌ Avatar: Upload failed:', error);
-      setError(error.message || 'Upload fehlgeschlagen');
+      console.error('Upload failed:', error.message);
       setPreviewUrl(null); // Clear preview on error
     } finally {
       setUploading(false);
@@ -132,23 +126,21 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const handleRemoveAvatar = async () => {
     try {
       setUploading(true);
-      setError(null);
+      // Starting removal
 
       await userService.updateUserProfile({ avatar_url: null });
       await refreshUserProfile();
 
-      setSuccess('Profilbild entfernt');
+      console.log('✅ Avatar removed successfully');
       setPreviewUrl(null);
 
       if (onAvatarUpdate) {
         onAvatarUpdate('');
       }
 
-      setTimeout(() => setSuccess(null), 3000);
-
     } catch (error: any) {
       console.error('❌ Avatar: Remove failed:', error);
-      setError('Fehler beim Entfernen des Profilbilds');
+      console.error('Failed to remove avatar:', error);
     } finally {
       setUploading(false);
     }
@@ -271,68 +263,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         </button>
       )}
 
-      {/* Status Messages */}
-      {(error || success) && size !== 'small' && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          marginTop: '0.5rem',
-          minWidth: '200px',
-          textAlign: 'center'
-        }}>
-          {error && (
-            <div style={{
-              background: 'var(--color-error)',
-              color: 'white',
-              padding: '0.5rem',
-              borderRadius: '6px',
-              fontSize: config.fontSize,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.25rem'
-            }}>
-              <AlertCircle size={14} />
-              {error}
-            </div>
-          )}
-          
-          {success && (
-            <div style={{
-              background: 'var(--color-success)',
-              color: 'white',
-              padding: '0.5rem',
-              borderRadius: '6px',
-              fontSize: config.fontSize,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '0.25rem'
-            }}>
-              <Check size={14} />
-              {success}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Upload Instructions */}
-      {editable && !avatarUrl && !uploading && size === 'large' && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          marginTop: '0.5rem',
-          textAlign: 'center',
-          color: 'var(--color-text-secondary)',
-          fontSize: '0.75rem'
-        }}>
-          Klicken zum Hochladen
-        </div>
-      )}
     </div>
   );
 };

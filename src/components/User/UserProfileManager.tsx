@@ -18,6 +18,10 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
   const [isSaving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isCheckingNickname, setIsCheckingNickname] = useState(false);
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
+  const [nicknameSuccess, setNicknameSuccess] = useState<string | null>(null);
+  const [nicknameSuggestions, setNicknameSuggestions] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     nickname: '',
@@ -34,6 +38,74 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
   useEffect(() => {
     loadUserProfile();
   }, [user]);
+
+  // Debounced nickname validation
+  useEffect(() => {
+    const validateNickname = async () => {
+      if (!isEditing || !formData.nickname.trim()) {
+        setNicknameError(null);
+        setNicknameSuccess(null);
+        return;
+      }
+
+      const nickname = formData.nickname.trim();
+      
+      // Skip validation if nickname hasn't changed
+      if (profile && nickname === profile.nickname) {
+        setNicknameError(null);
+        setNicknameSuccess(null);
+        return;
+      }
+
+      // Basic validation first
+      if (nickname.length < 3) {
+        setNicknameError('Nickname muss mindestens 3 Zeichen lang sein');
+        setNicknameSuccess(null);
+        return;
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(nickname)) {
+        setNicknameError('Nickname darf nur Buchstaben, Zahlen und Unterstriche enthalten');
+        setNicknameSuccess(null);
+        return;
+      }
+
+      // Check uniqueness
+      setIsCheckingNickname(true);
+      setNicknameError(null);
+      setNicknameSuccess(null);
+
+      try {
+        const isAvailable = await userService.isNicknameAvailable(nickname, user?.id);
+        
+        if (isAvailable) {
+          setNicknameSuccess('✓ Nickname ist verfügbar');
+          setNicknameError(null);
+          setNicknameSuggestions([]);
+        } else {
+          setNicknameError('Nickname ist bereits vergeben');
+          setNicknameSuccess(null);
+          
+          // Generate suggestions for taken nickname
+          try {
+            const suggestions = await userService.suggestAvailableNicknames(nickname, 3);
+            setNicknameSuggestions(suggestions);
+          } catch (error) {
+            setNicknameSuggestions([]);
+          }
+        }
+      } catch (error) {
+        setNicknameError('Fehler bei der Überprüfung des Nicknames');
+        setNicknameSuccess(null);
+      } finally {
+        setIsCheckingNickname(false);
+      }
+    };
+
+    // Debounce validation (500ms delay)
+    const timeoutId = setTimeout(validateNickname, 500);
+    return () => clearTimeout(timeoutId);
+  }, [formData.nickname, isEditing, profile, user]);
 
   const loadUserProfile = async () => {
     if (!user) return;
@@ -85,6 +157,22 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
         return;
       }
 
+      // Check if there's a nickname error from real-time validation
+      if (nicknameError) {
+        setError(nicknameError);
+        return;
+      }
+
+      // Final uniqueness check before saving
+      const nickname = formData.nickname.trim();
+      if (profile && nickname !== profile.nickname) {
+        const isAvailable = await userService.isNicknameAvailable(nickname, user?.id);
+        if (!isAvailable) {
+          setError('Nickname ist bereits vergeben');
+          return;
+        }
+      }
+
       const updates: UpdateUserProfileData = {
         nickname: formData.nickname.trim(),
         display_name: formData.display_name.trim() || undefined,
@@ -128,6 +216,10 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
     setIsEditing(false);
     setError(null);
     setSuccess(null);
+    setNicknameError(null);
+    setNicknameSuccess(null);
+    setNicknameSuggestions([]);
+    setIsCheckingNickname(false);
   };
 
   if (loading) {
@@ -258,34 +350,71 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
       {/* Profile Content */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         {/* Avatar Section */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <AvatarUpload 
-            currentAvatarUrl={profile.avatar_url}
-            size="large"
-            editable={true}
-            onAvatarUpdate={(newAvatarUrl) => {
-              // Update local profile state immediately for better UX
-              setProfile(prev => prev ? { ...prev, avatar_url: newAvatarUrl } : null);
-              setFormData(prev => ({ ...prev, avatar_url: newAvatarUrl }));
-            }}
-          />
+        <div style={{ 
+          display: 'block',
+          marginBottom: '1.5rem'
+        }}>
+          {/* Avatar Upload - Centered */}
+          <div style={{ 
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: '0.5rem'
+          }}>
+            <AvatarUpload 
+              currentAvatarUrl={profile.avatar_url}
+              size="large"
+              editable={true}
+              onAvatarUpdate={(newAvatarUrl) => {
+                // Update local profile state immediately for better UX
+                setProfile(prev => prev ? { ...prev, avatar_url: newAvatarUrl } : null);
+                setFormData(prev => ({ ...prev, avatar_url: newAvatarUrl }));
+              }}
+            />
+          </div>
           
-          <div style={{ flex: 1 }}>
+          {/* Upload Instructions - Separate from Avatar */}
+          {!profile.avatar_url && (
             <div style={{
-              fontSize: '1.125rem',
+              textAlign: 'center',
+              color: 'var(--color-text-secondary)',
+              fontSize: '0.75rem',
+              marginBottom: '1rem'
+            }}>
+              Klicken zum Hochladen eines Profilbilds
+            </div>
+          )}
+          
+          {/* User Info - Centered */}
+          <div style={{ 
+            textAlign: 'center',
+            padding: '0 1rem'
+          }}>
+            <div style={{
+              fontSize: '1.25rem',
               fontWeight: '600',
               color: 'var(--color-text-primary)',
-              marginBottom: '0.25rem'
+              marginBottom: '0.75rem',
+              wordWrap: 'break-word'
             }}>
               @{profile.nickname}
+            </div>
+            
+            {/* Badges - Centered */}
+            <div style={{ 
+              display: 'flex', 
+              flexWrap: 'wrap', 
+              gap: '0.5rem', 
+              justifyContent: 'center',
+              marginBottom: '0.75rem'
+            }}>
               {profile.is_verified && (
                 <span style={{
                   background: 'var(--color-success)',
                   color: 'white',
                   fontSize: '0.75rem',
-                  padding: '0.125rem 0.375rem',
-                  borderRadius: '4px',
-                  marginLeft: '0.5rem'
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '12px',
+                  whiteSpace: 'nowrap'
                 }}>
                   ✓ Verifiziert
                 </span>
@@ -295,12 +424,12 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
                   background: 'var(--color-primary-ocean)',
                   color: 'white',
                   fontSize: '0.75rem',
-                  padding: '0.125rem 0.375rem',
-                  borderRadius: '4px',
-                  marginLeft: '0.5rem',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '12px',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '0.25rem'
+                  gap: '0.25rem',
+                  whiteSpace: 'nowrap'
                 }}>
                   <Shield size={10} />
                   {getProviderDisplayName(getOAuthProvider(user))}
@@ -308,31 +437,41 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
               )}
             </div>
             
+            {/* Display Name */}
             {profile.display_name && (
               <div style={{
                 color: 'var(--color-text-secondary)',
-                marginBottom: '0.25rem'
+                fontSize: '1rem',
+                marginBottom: '0.5rem'
               }}>
                 {profile.display_name}
               </div>
             )}
             
+            {/* Email Address - Better integrated */}
             <div style={{
               fontSize: '0.875rem',
               color: 'var(--color-text-secondary)',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.5rem'
+              justifyContent: 'center',
+              gap: '0.5rem',
+              marginBottom: '0.5rem',
+              padding: '0.5rem 1rem',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '8px',
+              border: '1px solid var(--color-border)'
             }}>
-              <Mail size={14} />
-              {profile.email}
+              <Mail size={16} />
+              <span>{profile.email}</span>
               {!isOAuthUser(user) && !profile.is_verified && (
                 <span style={{
                   background: 'var(--color-warning)',
                   color: 'white',
                   fontSize: '0.625rem',
-                  padding: '0.125rem 0.25rem',
-                  borderRadius: '3px'
+                  padding: '0.125rem 0.375rem',
+                  borderRadius: '12px',
+                  marginLeft: '0.25rem'
                 }}>
                   Nicht verifiziert
                 </span>
@@ -355,20 +494,83 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
               Nickname
             </label>
             {isEditing ? (
-              <input
-                type="text"
-                value={formData.nickname}
-                onChange={(e) => setFormData(prev => ({ ...prev, nickname: e.target.value }))}
-                style={{
-                  width: '100%',
-                  padding: '0.5rem',
-                  border: '1px solid var(--color-border)',
-                  borderRadius: '6px',
-                  background: 'var(--color-surface)',
-                  color: 'var(--color-text-primary)'
-                }}
-                placeholder="nickname"
-              />
+              <div>
+                <div style={{ position: 'relative' }}>
+                  <input
+                    type="text"
+                    value={formData.nickname}
+                    onChange={(e) => setFormData(prev => ({ ...prev, nickname: e.target.value }))}
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem',
+                      paddingRight: isCheckingNickname ? '2.5rem' : '0.5rem',
+                      border: `1px solid ${nicknameError ? 'var(--color-error)' : nicknameSuccess ? 'var(--color-success)' : 'var(--color-border)'}`,
+                      borderRadius: '6px',
+                      background: 'var(--color-surface)',
+                      color: 'var(--color-text-primary)'
+                    }}
+                    placeholder="nickname"
+                  />
+                  {isCheckingNickname && (
+                    <div style={{
+                      position: 'absolute',
+                      right: '0.5rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      width: '16px',
+                      height: '16px',
+                      border: '2px solid var(--color-primary-ocean)',
+                      borderTop: '2px solid transparent',
+                      borderRadius: '50%',
+                      animation: 'spin 1s linear infinite'
+                    }} />
+                  )}
+                </div>
+                {(nicknameError || nicknameSuccess) && (
+                  <div style={{
+                    fontSize: '0.75rem',
+                    marginTop: '0.25rem',
+                    color: nicknameError ? 'var(--color-error)' : 'var(--color-success)'
+                  }}>
+                    {nicknameError || nicknameSuccess}
+                  </div>
+                )}
+                {nicknameSuggestions.length > 0 && (
+                  <div style={{
+                    marginTop: '0.5rem',
+                    fontSize: '0.75rem',
+                    color: 'var(--color-text-secondary)'
+                  }}>
+                    <div style={{ marginBottom: '0.25rem' }}>Verfügbare Alternativen:</div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      {nicknameSuggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, nickname: suggestion }));
+                            setNicknameSuggestions([]);
+                          }}
+                          style={{
+                            padding: '0.25rem 0.5rem',
+                            background: 'var(--color-primary-ocean)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px',
+                            fontSize: '0.75rem',
+                            cursor: 'pointer',
+                            transition: 'opacity 0.2s'
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.opacity = '0.8'}
+                          onMouseLeave={(e) => e.currentTarget.style.opacity = '1'}
+                        >
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             ) : (
               <div style={{
                 padding: '0.5rem',
@@ -638,23 +840,25 @@ const UserProfileManager: React.FC<UserProfileManagerProps> = ({ onProfileUpdate
             
             <button
               onClick={handleSave}
-              disabled={isSaving}
+              disabled={isSaving || isCheckingNickname || !!nicknameError}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
                 padding: '0.75rem 1rem',
-                background: 'var(--color-success)',
+                background: (isSaving || isCheckingNickname || !!nicknameError) 
+                  ? 'var(--color-text-secondary)' 
+                  : 'var(--color-success)',
                 color: 'white',
                 border: 'none',
                 borderRadius: '6px',
-                cursor: isSaving ? 'not-allowed' : 'pointer',
+                cursor: (isSaving || isCheckingNickname || !!nicknameError) ? 'not-allowed' : 'pointer',
                 fontSize: '0.875rem',
-                opacity: isSaving ? 0.6 : 1
+                opacity: (isSaving || isCheckingNickname || !!nicknameError) ? 0.6 : 1
               }}
             >
               <Check size={16} />
-              {isSaving ? 'Speichern...' : 'Speichern'}
+              {isSaving ? 'Speichern...' : isCheckingNickname ? 'Prüfen...' : 'Speichern'}
             </button>
           </div>
         )}

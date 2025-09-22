@@ -312,12 +312,12 @@ class UserService {
         throw new Error('User not authenticated');
       }
 
-      // Generate unique filename
+      // Generate unique filename with user folder structure
       const fileExt = file.name.split('.').pop();
-      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
-      const filePath = `avatars/${fileName}`;
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `${user.id}/${fileName}`;
 
-      console.log('📷 UserService: Uploading avatar:', fileName);
+      console.log('📷 UserService: Uploading avatar for user:', user.id, 'file:', fileName);
 
       // Upload file to storage
       const { error: uploadError } = await supabase.storage
@@ -341,7 +341,14 @@ class UserService {
         throw new Error('Failed to get public URL');
       }
 
-      console.log('✅ UserService: Avatar uploaded successfully:', data.publicUrl);
+      // Final security validation: Ensure the returned URL belongs to the current user
+      if (!data.publicUrl.includes(`/avatars/${user.id}/`)) {
+        console.error('❌ UserService: Security error - avatar URL does not belong to current user');
+        throw new Error('Avatar upload security validation failed');
+      }
+
+      console.log('✅ UserService: Avatar uploaded successfully for user:', user.id);
+      console.log('📎 Avatar URL:', data.publicUrl);
       return data.publicUrl;
 
     } catch (error) {
@@ -351,14 +358,32 @@ class UserService {
   }
 
   /**
-   * Delete avatar from storage
+   * Delete avatar from storage - SECURE: Only delete user's own avatars
    */
   async deleteAvatar(avatarUrl: string): Promise<void> {
     try {
-      // Extract file path from URL
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        console.error('❌ UserService: Cannot delete avatar - user not authenticated');
+        return;
+      }
+
+      // Security: Extract and validate file path
+      // Expected URL format: https://...supabase.co/storage/v1/object/public/avatars/userid/filename.ext
       const urlParts = avatarUrl.split('/');
       const fileName = urlParts[urlParts.length - 1];
-      const filePath = `avatars/${fileName}`;
+      const userIdFromUrl = urlParts[urlParts.length - 2];
+      
+      // CRITICAL SECURITY CHECK: Only allow deletion of own avatars
+      if (userIdFromUrl !== user.id) {
+        console.error('❌ UserService: Security violation - attempted to delete another user\'s avatar');
+        console.error('Current user:', user.id, 'Attempted to delete:', userIdFromUrl);
+        throw new Error('Permission denied: Cannot delete another user\'s avatar');
+      }
+
+      const filePath = `${user.id}/${fileName}`;
+      console.log('🗑️ UserService: Deleting avatar for user:', user.id, 'path:', filePath);
 
       const { error } = await supabase.storage
         .from('avatars')
@@ -366,13 +391,13 @@ class UserService {
 
       if (error) {
         console.error('❌ UserService: Delete avatar error:', error);
-        // Don't throw error here - avatar might already be deleted
+        throw error;
       }
 
       console.log('✅ UserService: Avatar deleted from storage');
     } catch (error) {
       console.error('❌ UserService: Failed to delete avatar:', error);
-      // Don't throw error - this is cleanup
+      throw error;
     }
   }
 

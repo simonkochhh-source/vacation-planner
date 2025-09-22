@@ -36,6 +36,7 @@ import {
   calculateDistance 
 } from '../../utils';
 import { PhotoService, TripPhoto } from '../../services/photoService';
+import { anonymizeTripForPublicDisplay } from '../../utils/privacyUtils';
 
 // Fix Leaflet default markers in React
 delete (Icon.Default.prototype as any)._getIconUrl;
@@ -542,10 +543,19 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
   const [isImporting, setIsImporting] = useState(false);
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
 
-  // Get trip destinations
+  // Get trip destinations and anonymize for public display
   const tripDestinations = useMemo(() => {
-    return destinations.filter(dest => trip.destinations.includes(dest.id));
-  }, [destinations, trip.destinations]);
+    const filteredDestinations = destinations.filter(dest => trip.destinations.includes(dest.id));
+    
+    // Anonymize homepoints for public display (no settings needed as we detect by name "Home")
+    const { destinations: anonymizedDestinations } = anonymizeTripForPublicDisplay(
+      trip, 
+      filteredDestinations, 
+      {} // No user settings needed - we detect homepoints by name "Home"
+    );
+    
+    return anonymizedDestinations;
+  }, [destinations, trip]);
 
   // Calculate trip statistics
   const tripStats = useMemo(() => {

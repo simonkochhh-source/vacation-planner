@@ -1,0 +1,35 @@
+# Content Security Policy für Trailkeeper Vacation Planner
+# Diese Datei dient als Referenz für Server-Konfiguration
+
+# Hauptinhalt Security Policy
+Content-Security-Policy: 
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com;
+  style-src 'self' 'unsafe-inline' https://unpkg.com https://cdnjs.cloudflare.com;
+  img-src 'self' data: https: blob:;
+  font-src 'self' https: data:;
+  connect-src 'self' 
+    https://*.supabase.co 
+    https://nominatim.openstreetmap.org 
+    https://tile.openstreetmap.org 
+    https://*.wikipedia.org 
+    https://de.wikipedia.org;
+  frame-src 'none';
+  object-src 'none';
+  base-uri 'self';
+  form-action 'self';
+  frame-ancestors 'none';
+
+# Weitere Sicherheits-Header
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+X-XSS-Protection: 1; mode=block
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(self), camera=(), microphone=(), payment=()
+
+# HSTS (HTTPS Strict Transport Security)
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+
+# Cross-Origin Policies
+Cross-Origin-Embedder-Policy: require-corp
+Cross-Origin-Opener-Policy: same-origin

@@ -1,5 +1,7 @@
 import React from 'react';
 import { AuthProvider } from './contexts/AuthContext';
+import { SecurityProvider } from './security/SecurityProvider';
+import CookieConsent from './components/GDPR/CookieConsent';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import { SupabaseAppProvider, useSupabaseApp } from './stores/SupabaseAppContext';
@@ -80,19 +82,22 @@ const AppContent: React.FC = () => {
           {renderCurrentView()}
         </MainLayout>
       </DashboardLayout>
+      <CookieConsent />
     </div>
   );
 };
 
 function App() {
   return (
-    <AuthProvider>
-      <ProtectedRoute>
-        <SupabaseAppProvider>
-          <AppContent />
-        </SupabaseAppProvider>
-      </ProtectedRoute>
-    </AuthProvider>
+    <SecurityProvider>
+      <AuthProvider>
+        <ProtectedRoute>
+          <SupabaseAppProvider>
+            <AppContent />
+          </SupabaseAppProvider>
+        </ProtectedRoute>
+      </AuthProvider>
+    </SecurityProvider>
   );
 }
 
