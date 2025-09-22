@@ -48,6 +48,7 @@ const PhotosView: React.FC = () => {
   const { currentTrip, destinations } = useSupabaseApp();
   
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [photos, setPhotos] = useState<DisplayPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -72,6 +73,16 @@ const PhotosView: React.FC = () => {
         photos: []
       }));
   }, [currentTrip, destinations]);
+
+  // Handle responsive design
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Helper function to convert photo types to DisplayPhoto
   const convertToDisplayPhoto = (photo: TripPhoto | PhotoInfo): DisplayPhoto => {
@@ -331,7 +342,7 @@ const PhotosView: React.FC = () => {
 
   return (
     <div style={{ 
-      padding: '1.5rem',
+      padding: isMobile ? '1rem' : '1.5rem',
       maxWidth: '1200px',
       margin: '0 auto'
     }}>
@@ -341,14 +352,14 @@ const PhotosView: React.FC = () => {
       }}>
         <h1 style={{
           margin: '0 0 0.5rem 0',
-          fontSize: '2rem',
+          fontSize: isMobile ? '1.5rem' : '2rem',
           fontWeight: 'bold',
           color: 'var(--color-text-primary)',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.75rem'
+          gap: isMobile ? '0.5rem' : '0.75rem'
         }}>
-          <Camera size={32} style={{ color: 'var(--color-primary-ocean)' }} />
+          <Camera size={isMobile ? 24 : 32} style={{ color: 'var(--color-primary-ocean)' }} />
           Reise-Fotos
         </h1>
         <p style={{
@@ -362,21 +373,24 @@ const PhotosView: React.FC = () => {
 
       <div style={{
         display: 'grid',
-        gridTemplateColumns: selectedDestination ? '300px 1fr' : '1fr',
-        gap: '2rem',
-        minHeight: '600px'
+        gridTemplateColumns: isMobile 
+          ? '1fr'
+          : selectedDestination ? '300px 1fr' : '1fr',
+        gap: isMobile ? '1rem' : '2rem',
+        minHeight: isMobile ? 'auto' : '600px'
       }}>
         {/* Destinations List */}
         <div style={{
           background: 'var(--color-surface)',
           border: '1px solid var(--color-border)',
-          borderRadius: '12px',
-          padding: '1rem',
-          height: 'fit-content'
+          borderRadius: isMobile ? '8px' : '12px',
+          padding: isMobile ? '0.75rem' : '1rem',
+          height: 'fit-content',
+          order: isMobile && selectedDestination ? 2 : 1
         }}>
           <h3 style={{
             margin: '0 0 1rem 0',
-            fontSize: '1.125rem',
+            fontSize: isMobile ? '1rem' : '1.125rem',
             fontWeight: '600',
             color: 'var(--color-text-primary)',
             display: 'flex',
@@ -406,14 +420,15 @@ const PhotosView: React.FC = () => {
                   onClick={() => handleDestinationSelect(destination.id)}
                   style={{
                     width: '100%',
-                    padding: '0.75rem',
+                    padding: isMobile ? '0.6rem' : '0.75rem',
                     background: selectedDestination === destination.id ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
                     border: '1px solid var(--color-border)',
-                    borderRadius: '8px',
+                    borderRadius: isMobile ? '6px' : '8px',
                     cursor: 'pointer',
                     textAlign: 'left',
                     transition: 'all 0.2s',
-                    color: selectedDestination === destination.id ? 'white' : 'var(--color-text-primary)'
+                    color: selectedDestination === destination.id ? 'white' : 'var(--color-text-primary)',
+                    fontSize: isMobile ? '0.875rem' : '1rem'
                   }}
                   onMouseOver={(e) => {
                     if (selectedDestination !== destination.id) {
@@ -429,7 +444,7 @@ const PhotosView: React.FC = () => {
                   <div style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.75rem'
+                    gap: isMobile ? '0.5rem' : '0.75rem'
                   }}>
                     <div style={{ fontSize: '1.25rem' }}>
                       {getCategoryIcon(destination.category)}
@@ -476,18 +491,21 @@ const PhotosView: React.FC = () => {
           <div style={{
             background: 'var(--color-surface)',
             border: '1px solid var(--color-border)',
-            borderRadius: '12px',
-            padding: '1.5rem'
+            borderRadius: isMobile ? '8px' : '12px',
+            padding: isMobile ? '1rem' : '1.5rem',
+            order: isMobile ? 1 : 2
           }}>
             <div style={{
               display: 'flex',
               justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '1.5rem'
+              alignItems: isMobile ? 'flex-start' : 'center',
+              marginBottom: isMobile ? '1rem' : '1.5rem',
+              flexDirection: isMobile ? 'column' : 'row',
+              gap: isMobile ? '1rem' : '0'
             }}>
               <h3 style={{
                 margin: 0,
-                fontSize: '1.125rem',
+                fontSize: isMobile ? '1rem' : '1.125rem',
                 fontWeight: '600',
                 color: 'var(--color-text-primary)',
                 display: 'flex',
@@ -503,14 +521,16 @@ const PhotosView: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                padding: '0.75rem 1rem',
+                padding: isMobile ? '0.6rem 0.8rem' : '0.75rem 1rem',
                 background: 'var(--color-primary-ocean)',
                 color: 'white',
-                borderRadius: '8px',
+                borderRadius: isMobile ? '6px' : '8px',
                 cursor: uploading ? 'not-allowed' : 'pointer',
-                fontSize: '0.875rem',
+                fontSize: isMobile ? '0.8rem' : '0.875rem',
                 fontWeight: '500',
-                opacity: uploading ? 0.6 : 1
+                opacity: uploading ? 0.6 : 1,
+                width: isMobile ? '100%' : 'auto',
+                justifyContent: isMobile ? 'center' : 'flex-start'
               }}>
                 {uploading ? (
                   <>
@@ -581,14 +601,21 @@ const PhotosView: React.FC = () => {
                 <div style={{
                   display: 'flex',
                   justifyContent: 'space-between',
-                  alignItems: 'center',
+                  alignItems: isMobile ? 'flex-start' : 'center',
                   marginBottom: '1rem',
-                  padding: '0.75rem',
+                  padding: isMobile ? '0.5rem' : '0.75rem',
                   background: 'var(--color-neutral-cream)',
-                  borderRadius: '8px',
-                  border: '1px solid var(--color-border)'
+                  borderRadius: isMobile ? '6px' : '8px',
+                  border: '1px solid var(--color-border)',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? '0.75rem' : '0'
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: isMobile ? '0.75rem' : '1rem',
+                    flexWrap: isMobile ? 'wrap' : 'nowrap'
+                  }}>
                     <button
                       onClick={handleSelectAll}
                       style={{
@@ -620,7 +647,12 @@ const PhotosView: React.FC = () => {
                     </span>
                   </div>
                   
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <div style={{ 
+                    display: 'flex', 
+                    gap: isMobile ? '0.3rem' : '0.5rem',
+                    flexWrap: isMobile ? 'wrap' : 'nowrap',
+                    width: isMobile ? '100%' : 'auto'
+                  }}>
                     <button
                       onClick={() => handlePrivacyUpdate('private')}
                       disabled={selectedPhotosForPrivacy.size === 0}
@@ -629,12 +661,14 @@ const PhotosView: React.FC = () => {
                         color: selectedPhotosForPrivacy.size > 0 ? 'white' : 'var(--color-text-secondary)',
                         border: 'none',
                         borderRadius: '6px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
+                        padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+                        fontSize: isMobile ? '0.75rem' : '0.875rem',
                         cursor: selectedPhotosForPrivacy.size > 0 ? 'pointer' : 'not-allowed',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        flex: isMobile ? '1' : 'none',
+                        justifyContent: 'center'
                       }}
                     >
                       <Lock size={14} />
@@ -648,12 +682,14 @@ const PhotosView: React.FC = () => {
                         color: selectedPhotosForPrivacy.size > 0 ? 'white' : 'var(--color-text-secondary)',
                         border: 'none',
                         borderRadius: '6px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
+                        padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+                        fontSize: isMobile ? '0.75rem' : '0.875rem',
                         cursor: selectedPhotosForPrivacy.size > 0 ? 'pointer' : 'not-allowed',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        flex: isMobile ? '1' : 'none',
+                        justifyContent: 'center'
                       }}
                     >
                       <Unlock size={14} />
@@ -667,12 +703,14 @@ const PhotosView: React.FC = () => {
                         color: selectedPhotosForPrivacy.size > 0 ? 'white' : 'var(--color-text-secondary)',
                         border: 'none',
                         borderRadius: '6px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
+                        padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+                        fontSize: isMobile ? '0.75rem' : '0.875rem',
                         cursor: selectedPhotosForPrivacy.size > 0 ? 'pointer' : 'not-allowed',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        flex: isMobile ? '1' : 'none',
+                        justifyContent: 'center'
                       }}
                     >
                       <Trash2 size={14} />
@@ -684,8 +722,9 @@ const PhotosView: React.FC = () => {
                 {/* Filter Buttons */}
                 <div style={{
                   display: 'flex',
-                  gap: '0.5rem',
-                  marginBottom: '1rem'
+                  gap: isMobile ? '0.3rem' : '0.5rem',
+                  marginBottom: '1rem',
+                  flexWrap: isMobile ? 'wrap' : 'nowrap'
                 }}>
                   {(['all', 'private', 'public'] as const).map(filter => (
                     <button
@@ -696,12 +735,14 @@ const PhotosView: React.FC = () => {
                         color: privacyFilter === filter ? 'white' : 'var(--color-text-primary)',
                         border: 'none',
                         borderRadius: '6px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
+                        padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
+                        fontSize: isMobile ? '0.75rem' : '0.875rem',
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '0.5rem'
+                        gap: '0.5rem',
+                        flex: isMobile ? '1' : 'none',
+                        justifyContent: 'center'
                       }}
                     >
                       {filter === 'all' && <Filter size={14} />}
@@ -712,23 +753,27 @@ const PhotosView: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Photos Grid */}
+                {/* Photos Grid - Mobile Optimized */}
                 <div style={{
                   display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-                  gap: '1rem'
+                  gridTemplateColumns: isMobile 
+                    ? 'repeat(auto-fill, minmax(140px, 1fr))' 
+                    : 'repeat(auto-fill, minmax(200px, 1fr))',
+                  gap: isMobile ? '0.5rem' : '1rem'
                 }}>
                   {filteredPhotos.map((photo) => (
                     <div
                       key={photo.id}
                       style={{
                         background: 'var(--color-neutral-cream)',
-                        borderRadius: '8px',
+                        borderRadius: isMobile ? '6px' : '8px',
                         overflow: 'hidden',
                         border: selectedPhotosForPrivacy.has(photo.id) ? '2px solid var(--color-primary-ocean)' : '1px solid var(--color-border)',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
-                        position: 'relative'
+                        position: 'relative',
+                        // Improved touch handling on mobile
+                        touchAction: isMobile ? 'manipulation' : 'auto'
                       }}
                       onMouseOver={(e) => {
                         e.currentTarget.style.transform = 'scale(1.02)';
@@ -741,12 +786,18 @@ const PhotosView: React.FC = () => {
                       <div
                         style={{
                           position: 'absolute',
-                          top: '0.5rem',
-                          left: '0.5rem',
+                          top: isMobile ? '0.3rem' : '0.5rem',
+                          left: isMobile ? '0.3rem' : '0.5rem',
                           zIndex: 10,
                           background: 'rgba(0,0,0,0.7)',
                           borderRadius: '4px',
-                          padding: '0.25rem'
+                          padding: isMobile ? '0.3rem' : '0.25rem',
+                          // Larger touch target on mobile
+                          minWidth: isMobile ? '32px' : 'auto',
+                          minHeight: isMobile ? '32px' : 'auto',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
                         }}
                         onClick={(e) => {
                           e.stopPropagation();
@@ -754,7 +805,7 @@ const PhotosView: React.FC = () => {
                         }}
                       >
                         <CheckCircle 
-                          size={16} 
+                          size={isMobile ? 18 : 16} 
                           style={{
                             color: selectedPhotosForPrivacy.has(photo.id) ? 'var(--color-success)' : 'rgba(255,255,255,0.6)'
                           }}
@@ -764,17 +815,17 @@ const PhotosView: React.FC = () => {
                       {/* Privacy Status Indicator */}
                       <div style={{
                         position: 'absolute',
-                        top: '0.5rem',
-                        right: '0.5rem',
+                        top: isMobile ? '0.3rem' : '0.5rem',
+                        right: isMobile ? '0.3rem' : '0.5rem',
                         display: 'flex',
-                        gap: '0.25rem'
+                        gap: isMobile ? '0.2rem' : '0.25rem'
                       }}>
                         <div style={{
                           background: photo.privacy === 'public' ? 'var(--color-success)' : 'var(--color-warning)',
                           color: 'white',
                           borderRadius: '4px',
-                          padding: '0.25rem 0.5rem',
-                          fontSize: '0.75rem',
+                          padding: isMobile ? '0.2rem 0.4rem' : '0.25rem 0.5rem',
+                          fontSize: isMobile ? '0.65rem' : '0.75rem',
                           display: 'flex',
                           alignItems: 'center',
                           gap: '0.25rem'
@@ -796,11 +847,15 @@ const PhotosView: React.FC = () => {
                             color: 'white',
                             border: 'none',
                             borderRadius: '4px',
-                            padding: '0.25rem',
+                            padding: isMobile ? '0.3rem' : '0.25rem',
                             cursor: 'pointer',
                             display: 'flex',
                             alignItems: 'center',
-                            fontSize: '0.75rem'
+                            fontSize: '0.75rem',
+                            // Larger touch target on mobile
+                            minWidth: isMobile ? '32px' : 'auto',
+                            minHeight: isMobile ? '32px' : 'auto',
+                            justifyContent: 'center'
                           }}
                           title="Foto löschen"
                         >
@@ -818,9 +873,9 @@ const PhotosView: React.FC = () => {
                       >
                       </div>
                       
-                      <div style={{ padding: '0.75rem' }} onClick={() => setSelectedPhoto(photo)}>
+                      <div style={{ padding: isMobile ? '0.5rem' : '0.75rem' }} onClick={() => setSelectedPhoto(photo)}>
                         <div style={{
-                          fontSize: '0.875rem',
+                          fontSize: isMobile ? '0.8rem' : '0.875rem',
                           fontWeight: '500',
                           color: 'var(--color-text-primary)',
                           marginBottom: '0.25rem',
@@ -832,7 +887,7 @@ const PhotosView: React.FC = () => {
                         </div>
                         {photo.caption && (
                           <div style={{
-                            fontSize: '0.75rem',
+                            fontSize: isMobile ? '0.7rem' : '0.75rem',
                             color: 'var(--color-text-secondary)',
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -981,7 +1036,7 @@ const PhotosView: React.FC = () => {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 1000,
-          padding: '2rem'
+          padding: isMobile ? '1rem' : '2rem'
         }}>
           <div style={{
             background: 'var(--color-surface)',
@@ -1048,9 +1103,11 @@ const PhotosView: React.FC = () => {
               src={selectedPhoto.url}
               alt={selectedPhoto.fileName}
               style={{
-                maxWidth: '80vw',
-                maxHeight: '70vh',
-                objectFit: 'contain'
+                maxWidth: isMobile ? '90vw' : '80vw',
+                maxHeight: isMobile ? '60vh' : '70vh',
+                objectFit: 'contain',
+                width: '100%',
+                height: 'auto'
               }}
             />
             {selectedPhoto.caption && (
