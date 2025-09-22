@@ -9,7 +9,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
 }
 
-const Button: React.FC<ButtonProps> = ({ 
+const Button = React.memo(React.forwardRef<HTMLButtonElement, ButtonProps>(({ 
   variant = 'primary', 
   size = 'md',
   children, 
@@ -19,7 +19,7 @@ const Button: React.FC<ButtonProps> = ({
   className = '',
   disabled,
   ...props 
-}) => {
+}, ref) => {
   const baseClasses = 'btn';
   const variantClasses = {
     primary: 'btn-primary',
@@ -45,6 +45,7 @@ const Button: React.FC<ButtonProps> = ({
 
   return (
     <button 
+      ref={ref}
       className={classes}
       disabled={disabled || loading}
       {...props}
@@ -74,6 +75,8 @@ const Button: React.FC<ButtonProps> = ({
       )}
     </button>
   );
-};
+}));
+
+Button.displayName = 'Button';
 
 export default Button;

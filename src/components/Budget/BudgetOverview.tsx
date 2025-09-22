@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { Destination } from '../../types';
 import {
   DollarSign,
@@ -38,18 +39,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   const [selectedTimeframe, setSelectedTimeframe] = useState<'all' | 'upcoming' | 'past'>('all');
   const [groupBy, setGroupBy] = useState<'category' | 'date' | 'status'>('category');
   const [currentFuelPrice, setCurrentFuelPrice] = useState<number>(1.65);
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Mobile detection
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const { isMobile } = useResponsive();
 
   // Get current trip destinations in the same order as EnhancedTimelineView
   const currentDestinations = useMemo(() => currentTrip 

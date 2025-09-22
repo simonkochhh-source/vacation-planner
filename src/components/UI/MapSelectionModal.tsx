@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker } from 'react-leaflet';
-import { X, Check, MapPin } from 'lucide-react';
+import { Check, MapPin } from 'lucide-react';
 import { Coordinates } from '../../types';
 import MapClickHandler from '../Maps/MapClickHandler';
 import { Icon } from 'leaflet';
+import Modal from '../Common/Modal';
+import Button from '../Common/Button';
+import { useResponsive } from '../../hooks/useResponsive';
 import 'leaflet/dist/leaflet.css';
 
 // Fix Leaflet default markers in React
@@ -29,6 +32,7 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
   initialCoordinates,
   initialLocation
 }) => {
+  const { isMobile } = useResponsive();
   const [selectedCoordinates, setSelectedCoordinates] = useState<Coordinates | undefined>(initialCoordinates);
   const [selectedLocation, setSelectedLocation] = useState<string>(initialLocation || '');
   const [isSelecting, setIsSelecting] = useState(true);
@@ -63,117 +67,77 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
     setIsSelecting(true);
   };
 
-  if (!isOpen) return null;
+  const footer = (
+    <>
+      <Button
+        variant="secondary"
+        onClick={handleCancel}
+        size={isMobile ? 'sm' : 'md'}
+      >
+        Abbrechen
+      </Button>
+      
+      <Button
+        variant="primary"
+        onClick={handleConfirm}
+        disabled={!selectedCoordinates}
+        size={isMobile ? 'sm' : 'md'}
+        leftIcon={<Check size={16} />}
+      >
+        Standort bestätigen
+      </Button>
+    </>
+  );
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.5)',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      zIndex: 9999,
-      padding: '1rem'
-    }}>
-      <div style={{
-        backgroundColor: 'var(--color-neutral-cream)',
-        borderRadius: '12px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-        width: '100%',
-        maxWidth: '800px',
-        maxHeight: '90vh',
-        display: 'flex',
-        flexDirection: 'column',
-        overflow: 'hidden'
-      }}>
-        {/* Header */}
-        <div style={{
-          padding: '1.5rem',
-          borderBottom: '1px solid var(--color-neutral-mist)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
-          <div>
-            <h2 style={{
-              margin: 0,
-              fontSize: '1.25rem',
-              fontWeight: '600',
-              color: 'var(--color-text-primary)'
-            }}>
-              Standort auf Karte auswählen
-            </h2>
-            <p style={{
-              margin: '0.25rem 0 0 0',
-              fontSize: '0.875rem',
-              color: 'var(--color-text-secondary)'
-            }}>
-              {isSelecting ? 'Klicken Sie auf die Karte, um einen Standort auszuwählen' : 'Standort ausgewählt'}
-            </p>
-          </div>
-          <button
-            onClick={handleCancel}
-            style={{
-              background: 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              padding: '0.5rem',
-              borderRadius: '6px',
-              color: 'var(--color-text-secondary)'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-          >
-            <X size={20} />
-          </button>
-        </div>
+    <Modal
+      isOpen={isOpen}
+      onClose={handleCancel}
+      title="Standort auf Karte auswählen"
+      subtitle={isSelecting ? 'Klicken Sie auf die Karte, um einen Standort auszuwählen' : 'Standort ausgewählt'}
+      size="lg"
+      footer={footer}
+      preventScroll={true}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', height: '100%' }}>
 
         {/* Selected Location Info */}
         {selectedCoordinates && selectedLocation && (
           <div style={{
-            padding: '1rem 1.5rem',
+            padding: 'var(--space-md)',
             backgroundColor: 'var(--color-neutral-cream)',
-            borderBottom: '1px solid var(--color-neutral-mist)'
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-border)'
           }}>
             <div style={{
               display: 'flex',
               alignItems: 'flex-start',
-              gap: '0.75rem'
+              gap: 'var(--space-md)'
             }}>
               <MapPin size={16} style={{ color: 'var(--color-primary-ocean)', marginTop: '0.125rem' }} />
               <div style={{ flex: 1 }}>
                 <div style={{
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)',
                   color: 'var(--color-text-primary)',
-                  marginBottom: '0.25rem'
+                  marginBottom: 'var(--space-xs)'
                 }}>
                   {selectedLocation}
                 </div>
                 <div style={{
-                  fontSize: '0.75rem',
+                  fontSize: 'var(--text-xs)',
                   color: 'var(--color-text-secondary)'
                 }}>
                   {selectedCoordinates.lat.toFixed(6)}, {selectedCoordinates.lng.toFixed(6)}
                 </div>
               </div>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={resetSelection}
-                style={{
-                  padding: '0.25rem 0.5rem',
-                  background: 'var(--color-neutral-cream)',
-                  border: '1px solid var(--color-neutral-mist)',
-                  borderRadius: '4px',
-                  fontSize: '0.75rem',
-                  color: 'var(--color-text-secondary)',
-                  cursor: 'pointer'
-                }}
-                onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)'}
-                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
               >
                 Zurücksetzen
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -183,7 +147,9 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
           flex: 1,
           minHeight: '400px',
           position: 'relative',
-          backgroundColor: 'var(--color-neutral-mist)'
+          backgroundColor: 'var(--color-neutral-mist)',
+          borderRadius: 'var(--radius-md)',
+          overflow: 'hidden'
         }}>
           <MapContainer
             center={[mapCenter.lat, mapCenter.lng]}
@@ -217,14 +183,14 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
           {isSelecting && !selectedCoordinates && (
             <div style={{
               position: 'absolute',
-              top: '1rem',
+              top: 'var(--space-md)',
               left: '50%',
               transform: 'translateX(-50%)',
               backgroundColor: 'rgba(0, 0, 0, 0.8)',
-              color: 'var(--color-neutral-cream)',
-              padding: '0.75rem 1rem',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
+              color: 'white',
+              padding: 'var(--space-md) var(--space-lg)',
+              borderRadius: 'var(--radius-md)',
+              fontSize: 'var(--text-sm)',
               zIndex: 1000,
               pointerEvents: 'none'
             }}>
@@ -232,66 +198,8 @@ const MapSelectionModal: React.FC<MapSelectionModalProps> = ({
             </div>
           )}
         </div>
-
-        {/* Footer */}
-        <div style={{
-          padding: '1.5rem',
-          borderTop: '1px solid var(--color-neutral-mist)',
-          display: 'flex',
-          gap: '0.75rem',
-          justifyContent: 'flex-end'
-        }}>
-          <button
-            onClick={handleCancel}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: 'var(--color-neutral-cream)',
-              border: '1px solid var(--color-neutral-mist)',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              color: 'var(--color-text-primary)',
-              cursor: 'pointer',
-              fontWeight: '500'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'white'}
-          >
-            Abbrechen
-          </button>
-          
-          <button
-            onClick={handleConfirm}
-            disabled={!selectedCoordinates}
-            style={{
-              padding: '0.75rem 1.5rem',
-              background: selectedCoordinates ? 'var(--color-primary-ocean)' : 'var(--color-neutral-stone)',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '0.875rem',
-              color: 'var(--color-neutral-cream)',
-              cursor: selectedCoordinates ? 'pointer' : 'not-allowed',
-              fontWeight: '500',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem'
-            }}
-            onMouseOver={(e) => {
-              if (selectedCoordinates) {
-                e.currentTarget.style.backgroundColor = 'var(--color-primary-ocean)';
-              }
-            }}
-            onMouseOut={(e) => {
-              if (selectedCoordinates) {
-                e.currentTarget.style.backgroundColor = 'var(--color-primary-ocean)';
-              }
-            }}
-          >
-            <Check size={16} />
-            Standort bestätigen
-          </button>
-        </div>
       </div>
-    </div>
+    </Modal>
   );
 };
 

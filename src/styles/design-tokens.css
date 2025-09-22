@@ -37,6 +37,7 @@
   --font-body: 'Inter', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'SF Mono', 'Monaco', monospace;
   
+  /* Desktop Typography Scale */
   --text-xs: 0.75rem;    /* 12px */
   --text-sm: 0.875rem;   /* 14px */
   --text-base: 1rem;     /* 16px */
@@ -44,6 +45,15 @@
   --text-xl: 1.25rem;    /* 20px */
   --text-2xl: 1.5rem;    /* 24px */
   --text-3xl: 2rem;      /* 32px */
+
+  /* Mobile Typography Scale - Optimized for touch interfaces */
+  --text-mobile-xs: 0.8125rem;  /* 13px - Slightly larger for readability */
+  --text-mobile-sm: 0.9375rem;  /* 15px - Enhanced readability */
+  --text-mobile-base: 1.0625rem;/* 17px - Optimal reading size */
+  --text-mobile-lg: 1.1875rem;  /* 19px - Better touch targets */
+  --text-mobile-xl: 1.3125rem;  /* 21px - Enhanced headers */
+  --text-mobile-2xl: 1.4375rem; /* 23px - Mobile-friendly large text */
+  --text-mobile-3xl: 1.625rem;  /* 26px - Mobile hero text */
   
   --font-weight-normal: 400;
   --font-weight-medium: 500;

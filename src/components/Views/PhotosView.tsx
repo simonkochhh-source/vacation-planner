@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { Destination } from '../../types';
 import { 
   Camera, 
@@ -24,6 +25,7 @@ import {
 } from 'lucide-react';
 import { formatDate, getCategoryIcon, getCategoryLabel } from '../../utils';
 import { PhotoService, TripPhoto, PhotoInfo, PhotoUploadOptions } from '../../services/photoService';
+import Button from '../Common/Button';
 import '../../utils/testPrivacyUpdate'; // Import test utility
 
 // Unified photo interface for display
@@ -46,9 +48,9 @@ interface DestinationWithPhotos extends Omit<Destination, 'photos'> {
 
 const PhotosView: React.FC = () => {
   const { currentTrip, destinations } = useSupabaseApp();
+  const { isMobile } = useResponsive();
   
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [photos, setPhotos] = useState<DisplayPhoto[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -74,15 +76,7 @@ const PhotosView: React.FC = () => {
       }));
   }, [currentTrip, destinations]);
 
-  // Handle responsive design
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  // Responsive design is now handled by useResponsive hook
 
   // Helper function to convert photo types to DisplayPhoto
   const convertToDisplayPhoto = (photo: TripPhoto | PhotoInfo): DisplayPhoto => {
@@ -616,32 +610,22 @@ const PhotosView: React.FC = () => {
                     gap: isMobile ? '0.75rem' : '1rem',
                     flexWrap: isMobile ? 'wrap' : 'nowrap'
                   }}>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={handleSelectAll}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--color-primary-ocean)',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                        textDecoration: 'underline'
-                      }}
+                      style={{ textDecoration: 'underline' }}
                     >
                       Alle auswählen
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={handleDeselectAll}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--color-text-secondary)',
-                        cursor: 'pointer',
-                        fontSize: '0.875rem',
-                        textDecoration: 'underline'
-                      }}
+                      style={{ textDecoration: 'underline' }}
                     >
                       Auswahl aufheben
-                    </button>
+                    </Button>
                     <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                       {selectedPhotosForPrivacy.size} ausgewählt
                     </span>
@@ -653,69 +637,45 @@ const PhotosView: React.FC = () => {
                     flexWrap: isMobile ? 'wrap' : 'nowrap',
                     width: isMobile ? '100%' : 'auto'
                   }}>
-                    <button
+                    <Button
+                      variant="warning"
+                      size={isMobile ? "sm" : "md"}
                       onClick={() => handlePrivacyUpdate('private')}
                       disabled={selectedPhotosForPrivacy.size === 0}
+                      leftIcon={<Lock size={14} />}
                       style={{
-                        background: selectedPhotosForPrivacy.size > 0 ? 'var(--color-warning)' : 'var(--color-neutral-200)',
-                        color: selectedPhotosForPrivacy.size > 0 ? 'white' : 'var(--color-text-secondary)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
-                        fontSize: isMobile ? '0.75rem' : '0.875rem',
-                        cursor: selectedPhotosForPrivacy.size > 0 ? 'pointer' : 'not-allowed',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
                         flex: isMobile ? '1' : 'none',
                         justifyContent: 'center'
                       }}
                     >
-                      <Lock size={14} />
                       Privat setzen
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="success"
+                      size={isMobile ? "sm" : "md"}
                       onClick={() => handlePrivacyUpdate('public')}
                       disabled={selectedPhotosForPrivacy.size === 0}
+                      leftIcon={<Unlock size={14} />}
                       style={{
-                        background: selectedPhotosForPrivacy.size > 0 ? 'var(--color-success)' : 'var(--color-neutral-200)',
-                        color: selectedPhotosForPrivacy.size > 0 ? 'white' : 'var(--color-text-secondary)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
-                        fontSize: isMobile ? '0.75rem' : '0.875rem',
-                        cursor: selectedPhotosForPrivacy.size > 0 ? 'pointer' : 'not-allowed',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
                         flex: isMobile ? '1' : 'none',
                         justifyContent: 'center'
                       }}
                     >
-                      <Unlock size={14} />
                       Öffentlich freigeben
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="danger"
+                      size={isMobile ? "sm" : "md"}
                       onClick={() => setShowDeleteConfirmation(true)}
                       disabled={selectedPhotosForPrivacy.size === 0}
+                      leftIcon={<Trash2 size={14} />}
                       style={{
-                        background: selectedPhotosForPrivacy.size > 0 ? 'var(--color-error)' : 'var(--color-neutral-200)',
-                        color: selectedPhotosForPrivacy.size > 0 ? 'white' : 'var(--color-text-secondary)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
-                        fontSize: isMobile ? '0.75rem' : '0.875rem',
-                        cursor: selectedPhotosForPrivacy.size > 0 ? 'pointer' : 'not-allowed',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
                         flex: isMobile ? '1' : 'none',
                         justifyContent: 'center'
                       }}
                     >
-                      <Trash2 size={14} />
                       Löschen ({selectedPhotosForPrivacy.size})
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -727,29 +687,23 @@ const PhotosView: React.FC = () => {
                   flexWrap: isMobile ? 'wrap' : 'nowrap'
                 }}>
                   {(['all', 'private', 'public'] as const).map(filter => (
-                    <button
+                    <Button
                       key={filter}
+                      variant={privacyFilter === filter ? "primary" : "secondary"}
+                      size={isMobile ? "sm" : "md"}
                       onClick={() => setPrivacyFilter(filter)}
+                      leftIcon={
+                        filter === 'all' ? <Filter size={14} /> :
+                        filter === 'private' ? <Lock size={14} /> :
+                        <Unlock size={14} />
+                      }
                       style={{
-                        background: privacyFilter === filter ? 'var(--color-primary-ocean)' : 'var(--color-neutral-200)',
-                        color: privacyFilter === filter ? 'white' : 'var(--color-text-primary)',
-                        border: 'none',
-                        borderRadius: '6px',
-                        padding: isMobile ? '0.4rem 0.6rem' : '0.5rem 1rem',
-                        fontSize: isMobile ? '0.75rem' : '0.875rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
                         flex: isMobile ? '1' : 'none',
                         justifyContent: 'center'
                       }}
                     >
-                      {filter === 'all' && <Filter size={14} />}
-                      {filter === 'private' && <Lock size={14} />}
-                      {filter === 'public' && <Unlock size={14} />}
                       {filter === 'all' ? 'Alle' : filter === 'private' ? 'Privat' : 'Öffentlich'}
-                    </button>
+                    </Button>
                   ))}
                 </div>
 
@@ -965,59 +919,23 @@ const PhotosView: React.FC = () => {
               gap: '1rem',
               justifyContent: 'center'
             }}>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setShowDeleteConfirmation(false)}
                 disabled={deleting}
-                style={{
-                  background: 'var(--color-neutral-200)',
-                  color: 'var(--color-text-primary)',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '0.875rem',
-                  cursor: deleting ? 'not-allowed' : 'pointer',
-                  opacity: deleting ? 0.6 : 1
-                }}
               >
                 Abbrechen
-              </button>
+              </Button>
               
-              <button
+              <Button
+                variant="danger"
                 onClick={handleDeletePhotos}
                 disabled={deleting}
-                style={{
-                  background: 'var(--color-error)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '6px',
-                  padding: '0.75rem 1.5rem',
-                  fontSize: '0.875rem',
-                  cursor: deleting ? 'not-allowed' : 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  opacity: deleting ? 0.6 : 1
-                }}
+                loading={deleting}
+                leftIcon={!deleting ? <Trash2 size={14} /> : undefined}
               >
-                {deleting ? (
-                  <>
-                    <div style={{
-                      width: '14px',
-                      height: '14px',
-                      border: '2px solid rgba(255,255,255,0.3)',
-                      borderTop: '2px solid white',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
-                    Lösche...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={14} />
-                    Löschen
-                  </>
-                )}
-              </button>
+                {deleting ? 'Lösche...' : 'Löschen'}
+              </Button>
             </div>
           </div>
         </div>
@@ -1063,40 +981,26 @@ const PhotosView: React.FC = () => {
               </h4>
               
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <button
+                <Button
+                  variant="danger"
+                  size="sm"
                   onClick={() => {
                     if (window.confirm(`Foto "${selectedPhoto.fileName}" wirklich löschen?`)) {
                       handleSinglePhotoDelete(selectedPhoto.id);
                     }
                   }}
-                  style={{
-                    background: 'var(--color-error)',
-                    color: 'white',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '0.5rem',
-                    borderRadius: '4px',
-                    display: 'flex',
-                    alignItems: 'center'
-                  }}
                   title="Foto löschen"
                 >
                   <Trash2 size={16} />
-                </button>
+                </Button>
                 
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setSelectedPhoto(null)}
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    padding: '0.5rem',
-                    borderRadius: '4px',
-                    color: 'var(--color-text-secondary)'
-                  }}
                 >
                   <X size={20} />
-                </button>
+                </Button>
               </div>
             </div>
             <img

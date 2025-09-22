@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { Trip, VehicleConfig, FuelType, CreateTripData, TripPrivacy } from '../../types';
 import { tripSchema, TripFormData } from '../../schemas/validationSchemas';
 import { getCurrentDateString, addDaysToDate, getCenterCoordinates } from '../../utils';
@@ -38,17 +39,7 @@ const TripForm: React.FC<TripFormProps> = ({
   const { createTrip, updateTrip, setCurrentTrip, destinations } = useSupabaseApp();
   
   // Mobile responsiveness
-  const [isMobile, setIsMobile] = useState(false);
-  
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const { isMobile } = useResponsive();
   const [participants, setParticipants] = useState<string[]>(trip?.participants || []);
   const [newParticipant, setNewParticipant] = useState('');
   const [tags, setTags] = useState<string[]>(trip?.tags || []);

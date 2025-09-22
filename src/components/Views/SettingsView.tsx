@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { AppSettings, TransportMode, FuelType, Coordinates } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
@@ -930,18 +931,8 @@ const SettingsView: React.FC = () => {
     { id: 'backup', label: 'Backup', icon: HardDrive }
   ];
 
-  // Check if mobile
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  // Responsive design is now handled by useResponsive hook
+  const { isMobile } = useResponsive();
 
   // Handle desktop vs mobile initial state
   React.useEffect(() => {

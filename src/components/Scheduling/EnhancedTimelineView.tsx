@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates, getTripPermissions, canUserEditTrip } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
@@ -87,17 +88,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   const { currentTrip, destinations, createDestination, createDestinationForTrip, updateDestination, deleteDestination, settings } = useSupabaseApp();
   
   // Mobile responsiveness
-  const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const { isMobile } = useResponsive();
   
   // Permission system - check if current user can edit this trip
   const { user } = useAuth();

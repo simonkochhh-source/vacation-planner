@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { Destination, DestinationCategory } from '../../types';
 import {
   Plus,
@@ -64,18 +65,7 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<ExpenseCategory | 'all'>('all');
   const [selectedDestination, setSelectedDestination] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'all' | 'today' | 'week' | 'month'>('all');
-  const [isMobile, setIsMobile] = useState(false);
-
-  // Mobile detection
-  React.useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const { isMobile } = useResponsive();
 
   // Get current trip destinations in the same order as EnhancedTimelineView
   const currentDestinations = useMemo(() => currentTrip 

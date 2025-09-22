@@ -2,29 +2,23 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useResponsive } from '../../hooks/useResponsive';
 
 interface MainLayoutProps {
   children: React.ReactNode;
 }
 
 const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
-  const [isMobile, setIsMobile] = useState(false);
+  const { isMobile } = useResponsive();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { uiState } = useSupabaseApp();
 
+  // Close sidebar when switching to desktop
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (!mobile) {
-        setSidebarOpen(false); // Close sidebar when switching to desktop
-      }
-    };
-
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+    if (!isMobile) {
+      setSidebarOpen(false);
+    }
+  }, [isMobile]);
 
   return (
     <div className={`layout ${isMobile ? 'mobile' : 'desktop'}`} style={{

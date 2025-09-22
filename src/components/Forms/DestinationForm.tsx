@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { destinationSchema, type DestinationFormData } from '../../schemas/validationSchemas';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { 
   DestinationCategory, 
   Destination,
@@ -76,17 +77,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
   const { createDestination, updateDestination } = useSupabaseApp();
   
   // Mobile responsiveness
-  const [isMobile, setIsMobile] = useState(false);
-  
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
+  const { isMobile } = useResponsive();
   const [tags, setTags] = useState<string[]>(destination?.tags || []);
   const [newTag, setNewTag] = useState('');
   const [selectedColor, setSelectedColor] = useState(

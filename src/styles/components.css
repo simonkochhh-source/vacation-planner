@@ -205,6 +205,50 @@
   pointer-events: none;
 }
 
+/* Header specific styles - Replace inline styles */
+.header-brand-button {
+  background: none !important;
+  border: none !important;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xs);
+  border-radius: var(--radius-md);
+  transition: all var(--transition-fast);
+  color: inherit;
+}
+
+.header-brand-button:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.header-navigation {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-md);
+  padding: var(--space-xs);
+}
+
+.header-menu-button {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+  padding: var(--space-sm) !important;
+  min-width: auto !important;
+  border-radius: var(--radius-md);
+  border: none;
+}
+
+.header-settings-button {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: white !important;
+  min-width: auto !important;
+  padding: var(--space-sm) !important;
+  border-radius: var(--radius-md);
+}
+
 /* Button size variants */
 .btn-sm {
   padding: var(--space-sm) var(--space-md);
@@ -499,8 +543,26 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* Responsive Typography Utilities */
+.text-responsive-xs { font-size: var(--text-xs); }
+.text-responsive-sm { font-size: var(--text-sm); }
+.text-responsive-base { font-size: var(--text-base); }
+.text-responsive-lg { font-size: var(--text-lg); }
+.text-responsive-xl { font-size: var(--text-xl); }
+.text-responsive-2xl { font-size: var(--text-2xl); }
+.text-responsive-3xl { font-size: var(--text-3xl); }
+
 /* Responsive Utilities */
 @media (max-width: 768px) {
+  /* Mobile typography overrides */
+  .text-responsive-xs { font-size: var(--text-mobile-xs); }
+  .text-responsive-sm { font-size: var(--text-mobile-sm); }
+  .text-responsive-base { font-size: var(--text-mobile-base); }
+  .text-responsive-lg { font-size: var(--text-mobile-lg); }
+  .text-responsive-xl { font-size: var(--text-mobile-xl); }
+  .text-responsive-2xl { font-size: var(--text-mobile-2xl); }
+  .text-responsive-3xl { font-size: var(--text-mobile-3xl); }
+
   .header-container {
     flex-direction: column;
     align-items: flex-start;
@@ -515,11 +577,16 @@
     overflow-x: scroll;
   }
   
-  /* Mobile form adjustments */
+  /* Mobile form adjustments - Use mobile typography */
   .form-input,
   .form-select {
-    font-size: var(--text-base);
+    font-size: var(--text-mobile-base);
     padding: var(--space-lg);
+  }
+  
+  /* Enhanced mobile line height for readability */
+  body {
+    line-height: 1.65;
   }
 }
 
