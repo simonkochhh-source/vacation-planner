@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { Trip, Destination, DestinationStatus } from '../../types';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
@@ -22,7 +22,11 @@ import {
   CheckCircle,
   AlertCircle,
   List,
-  Map
+  Map,
+  Camera,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { 
   formatDate, 
@@ -31,6 +35,7 @@ import {
   getCategoryLabel,
   calculateDistance 
 } from '../../utils';
+import { PhotoService, TripPhoto } from '../../services/photoService';
 
 // Fix Leaflet default markers in React
 delete (Icon.Default.prototype as any)._getIconUrl;
@@ -145,6 +150,383 @@ const TripMapView: React.FC<TripMapViewProps> = ({ trip, destinations }) => {
         ))}
       </MapContainer>
     </div>
+  );
+};
+
+// Photo Gallery Component
+interface PublicPhotoGalleryProps {
+  tripId: string;
+  destinations: Destination[];
+}
+
+const PublicPhotoGallery: React.FC<PublicPhotoGalleryProps> = ({ tripId, destinations }) => {
+  const [photos, setPhotos] = useState<TripPhoto[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<TripPhoto | null>(null);
+  const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    loadPublicPhotos();
+  }, [tripId]);
+
+  const loadPublicPhotos = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const publicPhotos = await PhotoService.getPublicPhotosForTrip(tripId);
+      setPhotos(publicPhotos);
+    } catch (err) {
+      console.error('Failed to load public photos:', err);
+      setError('Fotos konnten nicht geladen werden');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const openPhotoModal = (photo: TripPhoto) => {
+    setSelectedPhoto(photo);
+    setShowModal(true);
+  };
+
+  const closePhotoModal = () => {
+    setShowModal(false);
+    setSelectedPhoto(null);
+  };
+
+  const navigatePhoto = (direction: 'prev' | 'next') => {
+    if (!selectedPhoto) return;
+    
+    const currentIndex = photos.findIndex(p => p.id === selectedPhoto.id);
+    let newIndex = direction === 'next' ? currentIndex + 1 : currentIndex - 1;
+    
+    if (newIndex >= photos.length) newIndex = 0;
+    if (newIndex < 0) newIndex = photos.length - 1;
+    
+    setSelectedPhoto(photos[newIndex]);
+  };
+
+  const getDestinationName = (destinationId: string) => {
+    const destination = destinations.find(d => d.id === destinationId);
+    return destination?.name || 'Unbekanntes Ziel';
+  };
+
+  if (loading) {
+    return (
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        padding: '40px',
+        textAlign: 'center',
+        border: '1px solid #e5e7eb'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #f3f4f6',
+          borderTop: '3px solid #3b82f6',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 16px'
+        }} />
+        <p style={{ margin: 0, color: '#6b7280' }}>Lade Fotos...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        padding: '40px',
+        textAlign: 'center',
+        border: '1px solid #e5e7eb'
+      }}>
+        <AlertCircle size={48} style={{ color: '#ef4444', margin: '0 auto 16px' }} />
+        <h3 style={{ margin: '0 0 8px 0', color: '#ef4444' }}>Fehler beim Laden</h3>
+        <p style={{ margin: '0 0 16px 0', color: '#6b7280' }}>{error}</p>
+        <button
+          onClick={loadPublicPhotos}
+          style={{
+            background: '#3b82f6',
+            color: 'white',
+            border: 'none',
+            borderRadius: '6px',
+            padding: '8px 16px',
+            fontSize: '0.875rem',
+            cursor: 'pointer'
+          }}
+        >
+          Erneut versuchen
+        </button>
+      </div>
+    );
+  }
+
+  if (photos.length === 0) {
+    return (
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        padding: '40px',
+        textAlign: 'center',
+        border: '1px solid #e5e7eb'
+      }}>
+        <Camera size={48} style={{ color: '#9ca3af', margin: '0 auto 16px' }} />
+        <h3 style={{ margin: '0 0 8px 0', color: '#6b7280' }}>Keine öffentlichen Fotos</h3>
+        <p style={{ margin: '0', color: '#9ca3af' }}>
+          Für diese Reise wurden noch keine Fotos öffentlich freigegeben.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        padding: '24px',
+        border: '1px solid #e5e7eb',
+        boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '20px'
+        }}>
+          <h3 style={{
+            margin: 0,
+            fontSize: '1.25rem',
+            fontWeight: '600',
+            color: '#1f2937'
+          }}>
+            Reisefotos ({photos.length})
+          </h3>
+          <div style={{
+            background: '#eff6ff',
+            color: '#1d4ed8',
+            borderRadius: '6px',
+            padding: '4px 8px',
+            fontSize: '0.75rem',
+            fontWeight: '500'
+          }}>
+            Öffentlich freigegebene Fotos
+          </div>
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+          gap: '16px'
+        }}>
+          {photos.map((photo) => (
+            <div
+              key={photo.id}
+              onClick={() => openPhotoModal(photo)}
+              style={{
+                position: 'relative',
+                aspectRatio: '1',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.transform = 'scale(1.05)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.transform = 'scale(1)';
+                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
+              }}
+            >
+              <img
+                src={photo.url}
+                alt={photo.caption || photo.file_name}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
+              
+              {/* Photo overlay */}
+              <div style={{
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                background: 'linear-gradient(transparent, rgba(0, 0, 0, 0.7))',
+                color: 'white',
+                padding: '16px 12px 8px',
+                fontSize: '0.75rem'
+              }}>
+                <div style={{ fontWeight: '500' }}>
+                  {getDestinationName(photo.destination_id)}
+                </div>
+                {photo.caption && (
+                  <div style={{ opacity: 0.9, marginTop: '2px' }}>
+                    {photo.caption}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Photo Modal */}
+      {showModal && selectedPhoto && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}
+          onClick={closePhotoModal}
+        >
+          {/* Close button */}
+          <button
+            onClick={closePhotoModal}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              background: 'rgba(0, 0, 0, 0.5)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '40px',
+              height: '40px',
+              color: 'white',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              zIndex: 1001
+            }}
+          >
+            <X size={20} />
+          </button>
+
+          {/* Navigation buttons */}
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigatePhoto('prev');
+                }}
+                style={{
+                  position: 'absolute',
+                  left: '20px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(0, 0, 0, 0.5)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '50px',
+                  height: '50px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1001
+                }}
+              >
+                <ChevronLeft size={24} />
+              </button>
+              
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  navigatePhoto('next');
+                }}
+                style={{
+                  position: 'absolute',
+                  right: '20px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'rgba(0, 0, 0, 0.5)',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '50px',
+                  height: '50px',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  zIndex: 1001
+                }}
+              >
+                <ChevronRight size={24} />
+              </button>
+            </>
+          )}
+
+          {/* Photo container */}
+          <div 
+            style={{
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={selectedPhoto.url}
+              alt={selectedPhoto.caption || selectedPhoto.file_name}
+              style={{
+                maxWidth: '100%',
+                maxHeight: 'calc(90vh - 100px)',
+                objectFit: 'contain',
+                borderRadius: '8px'
+              }}
+            />
+            
+            {/* Photo info */}
+            <div style={{
+              background: 'rgba(0, 0, 0, 0.8)',
+              color: 'white',
+              padding: '16px',
+              borderRadius: '8px',
+              marginTop: '16px',
+              textAlign: 'center',
+              maxWidth: '500px'
+            }}>
+              <h4 style={{ margin: '0 0 8px 0', fontSize: '1.125rem' }}>
+                {getDestinationName(selectedPhoto.destination_id)}
+              </h4>
+              {selectedPhoto.caption && (
+                <p style={{ margin: '0 0 8px 0', fontSize: '0.875rem', opacity: 0.9 }}>
+                  {selectedPhoto.caption}
+                </p>
+              )}
+              {selectedPhoto.taken_at && (
+                <p style={{ margin: '0', fontSize: '0.75rem', opacity: 0.7 }}>
+                  {formatDate(selectedPhoto.taken_at)}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 
@@ -704,6 +1086,11 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
           {activeTab === 'map' && (
             <TripMapView trip={trip} destinations={tripDestinations} />
           )}
+        </div>
+
+        {/* Public Photo Gallery */}
+        <div style={{ marginBottom: '32px' }}>
+          <PublicPhotoGallery tripId={trip.id} destinations={tripDestinations} />
         </div>
 
         {/* Additional Info */}

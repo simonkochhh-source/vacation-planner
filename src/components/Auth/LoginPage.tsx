@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { isUsingPlaceholderCredentials } from '../../lib/supabase';
 import { MapPin, Mountain, Compass } from 'lucide-react';
+import EmailVerificationPage from './EmailVerificationPage';
+import ForgotPasswordPage from './ForgotPasswordPage';
 
 const LoginPage: React.FC = () => {
   const { signInWithGoogle, signInWithApple, signInWithEmail, signUpWithEmail, loading } = useAuth();
@@ -11,6 +13,8 @@ const LoginPage: React.FC = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [currentView, setCurrentView] = useState<'login' | 'verification' | 'forgot-password'>('login');
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState('');
 
   const handleGoogleSignIn = async () => {
     if (isUsingPlaceholderCredentials) {
@@ -75,7 +79,12 @@ const LoginPage: React.FC = () => {
       setError(null);
       
       if (isSignUp) {
-        await signUpWithEmail(email, password);
+        const result = await signUpWithEmail(email, password);
+        if (result.needsVerification) {
+          setPendingVerificationEmail(email);
+          setCurrentView('verification');
+        }
+        // If no verification needed, user will be automatically signed in
       } else {
         await signInWithEmail(email, password);
       }
@@ -86,6 +95,26 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleBackToLogin = () => {
+    setCurrentView('login');
+    setShowEmailForm(false);
+    setIsSignUp(false);
+    setEmail('');
+    setPassword('');
+    setError(null);
+    setPendingVerificationEmail('');
+  };
+
+  const handleVerificationComplete = () => {
+    // User will be automatically signed in after verification
+    // The auth state change will be handled by the AuthContext
+    window.location.href = '/dashboard';
+  };
+
+  const handleForgotPassword = () => {
+    setCurrentView('forgot-password');
+  };
+
   if (loading) {
     return (
       <div className="app-container min-h-screen flex items-center justify-center">
@@ -94,6 +123,26 @@ const LoginPage: React.FC = () => {
           <p className="text-secondary">Loading...</p>
         </div>
       </div>
+    );
+  }
+
+  // Show verification page if user needs to verify email
+  if (currentView === 'verification') {
+    return (
+      <EmailVerificationPage
+        email={pendingVerificationEmail}
+        onBackToLogin={handleBackToLogin}
+        onVerificationComplete={handleVerificationComplete}
+      />
+    );
+  }
+
+  // Show forgot password page
+  if (currentView === 'forgot-password') {
+    return (
+      <ForgotPasswordPage
+        onBackToLogin={handleBackToLogin}
+      />
     );
   }
 
@@ -368,48 +417,76 @@ const LoginPage: React.FC = () => {
                 {isSigningIn ? 'Processing...' : (isSignUp ? 'Sign Up' : 'Sign In')}
               </button>
               
-              <div className="flex justify-between items-center" style={{ fontSize: 'var(--text-sm)' }}>
-                <button
-                  type="button"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  style={{
-                    color: 'var(--color-primary-ocean)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 'var(--text-sm)',
-                    transition: 'color var(--transition-fast)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'var(--color-secondary-forest)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'var(--color-primary-ocean)';
-                  }}
-                >
-                  {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
-                </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
+                <div className="flex justify-between items-center" style={{ fontSize: 'var(--text-sm)' }}>
+                  <button
+                    type="button"
+                    onClick={() => setIsSignUp(!isSignUp)}
+                    style={{
+                      color: 'var(--color-primary-ocean)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 'var(--text-sm)',
+                      transition: 'color var(--transition-fast)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = 'var(--color-secondary-forest)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'var(--color-primary-ocean)';
+                    }}
+                  >
+                    {isSignUp ? 'Already have an account? Sign in' : 'Need an account? Sign up'}
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => setShowEmailForm(false)}
+                    style={{
+                      color: 'var(--color-text-secondary)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontSize: 'var(--text-sm)',
+                      transition: 'color var(--transition-fast)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = 'var(--color-text-primary)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'var(--color-text-secondary)';
+                    }}
+                  >
+                    Back
+                  </button>
+                </div>
                 
-                <button
-                  type="button"
-                  onClick={() => setShowEmailForm(false)}
-                  style={{
-                    color: 'var(--color-text-secondary)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    fontSize: 'var(--text-sm)',
-                    transition: 'color var(--transition-fast)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.color = 'var(--color-text-primary)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.color = 'var(--color-text-secondary)';
-                  }}
-                >
-                  Back
-                </button>
+                {!isSignUp && (
+                  <div style={{ textAlign: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      style={{
+                        color: 'var(--color-text-secondary)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: 'var(--text-sm)',
+                        transition: 'color var(--transition-fast)',
+                        textDecoration: 'underline'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'var(--color-primary-ocean)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--color-text-secondary)';
+                      }}
+                    >
+                      Passwort vergessen?
+                    </button>
+                  </div>
+                )}
               </div>
             </form>
           ) : (

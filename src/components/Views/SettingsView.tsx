@@ -4,6 +4,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { AppSettings, TransportMode, FuelType, Coordinates } from '../../types';
 import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
+import UserProfileManager from '../User/UserProfileManager';
+import AvatarConnectionTest from '../Debug/AvatarConnectionTest';
 import {
   Settings, Globe, Palette, MapPin, Car, Bell, Download,
   Shield, HardDrive, RotateCcw, AlertTriangle,
@@ -1108,137 +1110,16 @@ const SettingsView: React.FC = () => {
                 Account-Informationen
               </h2>
 
-              {/* User Info Card */}
-              <div style={{
-                background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
-                borderRadius: '12px',
-                padding: '2rem',
-                marginBottom: '2rem',
-                color: 'white',
-                border: '2px solid rgba(255, 255, 255, 0.2)'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '1rem',
-                  marginBottom: '1rem'
-                }}>
-                  {user?.user_metadata?.avatar_url ? (
-                    <img
-                      src={user.user_metadata.avatar_url}
-                      alt="Avatar"
-                      style={{
-                        width: '64px',
-                        height: '64px',
-                        borderRadius: '50%',
-                        border: '3px solid rgba(255, 255, 255, 0.3)'
-                      }}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '64px',
-                      height: '64px',
-                      borderRadius: '50%',
-                      background: 'rgba(255, 255, 255, 0.2)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      border: '3px solid rgba(255, 255, 255, 0.3)'
-                    }}>
-                      <User size={32} />
-                    </div>
-                  )}
-                  <div>
-                    <h3 style={{
-                      fontSize: '1.25rem',
-                      fontWeight: '600',
-                      margin: '0 0 0.5rem 0'
-                    }}>
-                      {user?.user_metadata?.full_name || user?.user_metadata?.name || user?.email || 'Benutzer'}
-                    </h3>
-                    {user?.email && (
-                      <p style={{
-                        margin: 0,
-                        color: 'rgba(255, 255, 255, 0.95)',
-                        fontSize: '0.875rem'
-                      }}>
-                        {user.email}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                  gap: '1rem',
-                  marginTop: '1.5rem'
-                }}>
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Angemeldet seit
-                    </p>
-                    <p style={{ margin: '0.25rem 0 0 0', fontWeight: '600', color: 'white' }}>
-                      {user?.created_at ? new Date(user.created_at).toLocaleDateString('de-DE') : 'Unbekannt'}
-                    </p>
-                  </div>
-                  <div>
-                    <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                      Provider
-                    </p>
-                    <p style={{ margin: '0.25rem 0 0 0', fontWeight: '600', color: 'white' }}>
-                      {user?.app_metadata?.provider === 'google' ? 'Google' : user?.app_metadata?.provider || 'E-Mail'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Logout Button */}
-              <div style={{
-                background: 'var(--color-surface)',
-                border: '1px solid var(--color-border)',
-                borderRadius: '8px',
-                padding: '1.5rem',
-                marginBottom: '2rem'
-              }}>
-                <h3 style={{
-                  fontSize: '1rem',
-                  fontWeight: '600',
-                  margin: '0 0 1rem 0',
-                  color: 'var(--color-error)'
-                }}>
-                  Account-Verwaltung
-                </h3>
-                <p style={{
-                  margin: '0 0 1rem 0',
-                  color: 'var(--color-text-secondary)',
-                  fontSize: '0.875rem'
-                }}>
-                  Möchten Sie sich von Ihrem Account abmelden?
-                </p>
-                <button
-                  onClick={signOut}
-                  style={{
-                    background: 'var(--color-error)',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '0.75rem 1.5rem',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    transition: 'background-color 0.2s'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.background = '#b91c1c'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'var(--color-error)'}
-                >
-                  <Power size={16} />
-                  Abmelden
-                </button>
-              </div>
+              {/* Avatar Connection Test */}
+              <AvatarConnectionTest />
+              
+              {/* User Profile Manager */}
+              <UserProfileManager 
+                onProfileUpdate={(profile) => {
+                  console.log('Profile updated:', profile);
+                  // Optionally refresh auth context
+                }}
+              />
             </div>
           )}
 

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { Destination, DestinationCategory, Trip, DestinationStatus, TripPrivacy } from '../../types';
 import { 
   MapPin, 
@@ -56,6 +57,8 @@ const LandingView: React.FC = () => {
     settings
   } = useSupabaseApp();
   
+  const { userProfile } = useAuth();
+  
   const [selectedSuggestion, setSelectedSuggestion] = useState<TravelSuggestion | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importingTripId, setImportingTripId] = useState<string | null>(null);
@@ -82,7 +85,24 @@ const LandingView: React.FC = () => {
   // Welcome message based on time and user activity
   const getWelcomeMessage = () => {
     const hour = new Date().getHours();
-    const userName = 'Explorer'; // TODO: Add displayName to AppSettings interface
+    // Use user profile nickname (without @)
+    const getUserName = () => {
+      // Debug log to see what we have
+      console.log('🔍 LandingView: userProfile:', userProfile);
+      
+      if (userProfile?.nickname) {
+        const nickname = userProfile.nickname.startsWith('@') 
+          ? userProfile.nickname.substring(1) 
+          : userProfile.nickname;
+        console.log('✅ LandingView: Using nickname:', nickname);
+        return nickname;
+      }
+      
+      console.log('⚠️ LandingView: No nickname found, using fallback');
+      return 'Trailkeeper'; // Use your actual nickname as fallback
+    };
+    
+    const userName = getUserName();
     const tripCount = trips.length;
     const destinationCount = destinations.length;
 

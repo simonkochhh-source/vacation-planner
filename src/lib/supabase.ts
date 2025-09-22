@@ -22,7 +22,7 @@ if (isPlaceholder) {
 const clientUrl = isPlaceholder ? 'https://placeholder.supabase.co' : supabaseUrl;
 const clientKey = isPlaceholder ? 'placeholder-key' : supabaseAnonKey;
 
-// Configure Auth options to handle dynamic redirect URLs
+// Configure Auth options to handle dynamic redirect URLs and allow multiple sessions
 const authOptions = {
   auth: {
     flowType: 'pkce' as const,
@@ -30,7 +30,15 @@ const authOptions = {
     persistSession: true,
     detectSessionInUrl: true,
     // Dynamic redirect URL based on current environment
-    redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined
+    redirectTo: typeof window !== 'undefined' ? `${window.location.origin}/dashboard` : undefined,
+    // Use consistent storage key but allow debug mode
+    debug: true
+  },
+  // Add client info to prevent warnings
+  global: {
+    headers: {
+      'X-Client-Info': 'trailkeeper-app'
+    }
   }
 };
 

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { MapPin, Calendar, Settings, DollarSign, Menu, Mountain } from 'lucide-react';
+import { MapPin, Calendar, Settings, DollarSign, Menu, Mountain, Camera } from 'lucide-react';
 import Button from '../Common/Button';
 import IntelligentSearch from '../Search/IntelligentSearch';
 
@@ -22,7 +22,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
 
-  const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'budget' | 'search') => {
+  const handleViewChange = (view: 'list' | 'map' | 'timeline' | 'budget' | 'search' | 'photos') => {
     updateUIState({ currentView: view, activeView: view });
   };
 
@@ -231,6 +231,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               >
                 <DollarSign size={18} />
                 {isLargeScreen && <span style={{ fontSize: 'var(--text-sm)' }}>Budget</span>}
+              </Button>
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleViewChange('photos')}
+                style={{
+                  background: uiState.currentView === 'photos' ? 'rgba(255, 255, 255, 0.2)' : 'transparent',
+                  color: 'white',
+                  minWidth: 'auto',
+                  padding: 'var(--space-sm)'
+                }}
+                title="Fotos"
+              >
+                <Camera size={18} />
+                {isLargeScreen && <span style={{ fontSize: 'var(--text-sm)' }}>Fotos</span>}
               </Button>
               
             </div>

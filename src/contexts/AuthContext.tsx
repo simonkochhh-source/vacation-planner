@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase, isUsingPlaceholderCredentials } from '../lib/supabase';
+import { userService, UserProfile } from '../services/userService';
 
 interface AuthContextType {
   user: User | null;
@@ -9,9 +10,14 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string) => Promise<void>;
+  signUpWithEmail: (email: string, password: string) => Promise<{ needsVerification: boolean }>;
   signOut: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  verifyOtp: (email: string, token: string, type: 'signup' | 'recovery') => Promise<void>;
+  resendVerification: (email: string) => Promise<void>;
   isAuthenticated: boolean;
+  userProfile: UserProfile | null;
+  refreshUserProfile: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -32,6 +38,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
     // Handle placeholder credentials - skip authentication
@@ -41,20 +48,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return;
     }
 
-    // Get initial session
+    // Get initial session - but don't auto-login
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error('❌ Auth: Error getting session:', error);
+          setSession(null);
+          setUser(null);
         } else {
-          console.log('🔐 Auth: Initial session:', session?.user?.email || 'No user');
-          setSession(session);
-          setUser(session?.user ?? null);
+          // Only set session if it's valid and not expired
+          if (session?.user) {
+            // Check if session is expired
+            const isExpired = session.expires_at && new Date(session.expires_at * 1000) <= new Date();
+            
+            if (!isExpired) {
+              console.log('🔐 Auth: Valid session found:', session.user.email);
+              setSession(session);
+              setUser(session.user);
+            } else {
+              console.log('🔓 Auth: Session expired, clearing...');
+              setSession(null);
+              setUser(null);
+              await supabase.auth.signOut();
+            }
+          } else {
+            console.log('🔓 Auth: No valid session found');
+            setSession(null);
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('❌ Auth: Failed to get initial session:', error);
+        setSession(null);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -65,10 +93,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('🔄 Auth: State change:', event, session?.user?.email || 'No user');
+        console.log('🔄 Auth: State change:', event, 'User:', session?.user?.email || 'No user');
+        console.log('🔍 Auth: User ID:', session?.user?.id || 'No ID');
+        console.log('🔍 Auth: Provider:', session?.user?.app_metadata?.provider || 'No provider');
         
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Load user profile dynamically when user signs in (non-blocking)
+        if (session?.user) {
+          console.log('👤 Auth: Loading profile for user:', session.user.id);
+          // Load profile in background - don't block authentication
+          if (!userProfile || userProfile.id !== session.user.id) {
+            loadUserProfile(session.user.id); // Removed await - non-blocking
+          }
+        } else {
+          console.log('🔓 Auth: No user, clearing profile');
+          setUserProfile(null);
+        }
+        
         setLoading(false);
       }
     );
@@ -77,6 +120,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       subscription.unsubscribe();
     };
   }, []);
+
+  // Load user profile from users table - SIMPLE VERSION to prevent loops
+  const loadUserProfile = async (userId: string) => {
+    try {
+      console.log('👤 Auth: Loading user profile for:', userId);
+      
+      // Direct profile loading without timeout for faster response
+      const profile = await userService.getCurrentUserProfile();
+      
+      if (profile && typeof profile === 'object' && 'nickname' in profile) {
+        console.log('✅ Auth: User profile loaded:', profile.nickname);
+        setUserProfile(profile as UserProfile);
+      } else {
+        console.log('⚠️ Auth: No user profile found - but continuing anyway');
+        // Set to null instead of retrying to prevent loops
+        setUserProfile(null);
+      }
+    } catch (error) {
+      console.error('❌ Auth: Failed to load user profile:', error);
+      console.log('⚠️ Auth: Continuing without profile to prevent loading loop');
+      setUserProfile(null);
+    }
+  };
+
+  // Refresh user profile
+  const refreshUserProfile = async () => {
+    if (!user) return;
+    await loadUserProfile(user.id);
+  };
+
 
   const getRedirectUrl = () => {
     // Get current origin dynamically
@@ -207,17 +280,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signUpWithEmail = async (email: string, password: string) => {
+  const signUpWithEmail = async (email: string, password: string): Promise<{ needsVerification: boolean }> => {
     if (isUsingPlaceholderCredentials) {
       console.log('⚠️ Auth: Cannot sign up with placeholder credentials');
-      return;
+      return { needsVerification: false };
     }
 
     try {
       console.log('📧 Auth: Attempting email sign up...');
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
       });
 
       if (error) {
@@ -225,7 +301,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw error;
       }
       
-      console.log('✅ Auth: Email sign up successful');
+      const needsVerification = !data.session && !!data.user && !data.user.email_confirmed_at;
+      
+      console.log('✅ Auth: Email sign up successful', { 
+        needsVerification,
+        userId: data.user?.id,
+        emailConfirmed: !!data.user?.email_confirmed_at 
+      });
+      
+      return { needsVerification: !!needsVerification };
     } catch (error) {
       console.error('❌ Auth: Failed to sign up with email:', error);
       throw error;
@@ -254,6 +338,84 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    if (isUsingPlaceholderCredentials) {
+      console.log('⚠️ Auth: Cannot reset password with placeholder credentials');
+      return;
+    }
+
+    try {
+      console.log('🔐 Auth: Attempting password reset...');
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`
+      });
+
+      if (error) {
+        console.error('❌ Auth: Password reset error:', error.message);
+        throw error;
+      }
+      
+      console.log('✅ Auth: Password reset email sent');
+    } catch (error) {
+      console.error('❌ Auth: Failed to reset password:', error);
+      throw error;
+    }
+  };
+
+  const verifyOtp = async (email: string, token: string, type: 'signup' | 'recovery') => {
+    if (isUsingPlaceholderCredentials) {
+      console.log('⚠️ Auth: Cannot verify OTP with placeholder credentials');
+      return;
+    }
+
+    try {
+      console.log('🔑 Auth: Attempting OTP verification...');
+      const { error } = await supabase.auth.verifyOtp({
+        email,
+        token,
+        type
+      });
+
+      if (error) {
+        console.error('❌ Auth: OTP verification error:', error.message);
+        throw error;
+      }
+      
+      console.log('✅ Auth: OTP verification successful');
+    } catch (error) {
+      console.error('❌ Auth: Failed to verify OTP:', error);
+      throw error;
+    }
+  };
+
+  const resendVerification = async (email: string) => {
+    if (isUsingPlaceholderCredentials) {
+      console.log('⚠️ Auth: Cannot resend verification with placeholder credentials');
+      return;
+    }
+
+    try {
+      console.log('📧 Auth: Resending verification email...');
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback`
+        }
+      });
+
+      if (error) {
+        console.error('❌ Auth: Resend verification error:', error.message);
+        throw error;
+      }
+      
+      console.log('✅ Auth: Verification email resent');
+    } catch (error) {
+      console.error('❌ Auth: Failed to resend verification:', error);
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     session,
@@ -263,7 +425,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     signInWithEmail,
     signUpWithEmail,
     signOut,
+    resetPassword,
+    verifyOtp,
+    resendVerification,
     isAuthenticated: !!user || isUsingPlaceholderCredentials,
+    userProfile,
+    refreshUserProfile,
   };
 
   return (

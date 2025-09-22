@@ -6,14 +6,15 @@ import { SupabaseAppProvider, useSupabaseApp } from './stores/SupabaseAppContext
 import MainLayout from './components/Layout/MainLayout';
 import EnhancedTimelineView from './components/Scheduling/EnhancedTimelineView';
 import MapView from './components/Views/MapView';
-import TimelineView from './components/Views/TimelineView';
 import BudgetView from './components/Views/BudgetView';
 import SettingsView from './components/Views/SettingsView';
 import DiscoveryView from './components/Views/DiscoveryView';
 import SearchPage from './components/Search/SearchPage';
 import LandingView from './components/Views/LandingView';
+import PhotosView from './components/Views/PhotosView';
 import { useTheme } from './hooks/useTheme';
 import { Destination } from './types';
+// import './utils/debugDashboard'; // Debug utilities disabled to prevent refresh loops
 import './App.css';
 import './styles/responsive.css';
 import './styles/components.css';
@@ -46,8 +47,6 @@ const AppContent: React.FC = () => {
         return <LandingView />;
       case 'map':
         return <MapView />;
-      case 'timeline':
-        return <TimelineView />;
       case 'budget':
         return <BudgetView />;
       case 'settings':
@@ -56,6 +55,8 @@ const AppContent: React.FC = () => {
         return <DiscoveryView />;
       case 'search':
         return <SearchPage />;
+      case 'photos':
+        return <PhotosView />;
       case 'list':
       default:
         return (

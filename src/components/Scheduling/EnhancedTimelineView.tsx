@@ -6,6 +6,7 @@ import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
 import { PlacePrediction } from '../../services/openStreetMapService';
 import LeafletMapOnly from '../Maps/LeafletMapOnly';
 import MapErrorBoundary from '../Maps/MapErrorBoundary';
+import DestinationWeather from '../Weather/DestinationWeather';
 import {
   Calendar,
   MapPin,
@@ -3342,6 +3343,15 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                         }}>
                           <span>{getCategoryLabel(dest.category)}</span>
                           <span>{dest.location}</span>
+                        </div>
+                        
+                        {/* Weather Information */}
+                        <div style={{ marginTop: '0.5rem' }}>
+                          <DestinationWeather
+                            coordinates={dest.coordinates}
+                            date={dest.startDate}
+                            compact={true}
+                          />
                         </div>
                       </div>
 
