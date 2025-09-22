@@ -19,18 +19,8 @@ interface DestinationWeatherProps {
   style?: React.CSSProperties;
 }
 
-interface WeatherData {
-  weather?: {
-    temperature?: number;
-    condition: string;
-    description: string;
-    humidity?: number;
-    windSpeed?: number;
-    icon: string;
-  };
-  seasonal?: string;
-  type: 'current' | 'forecast' | 'seasonal';
-}
+// Use the exact return type from WeatherService.getDestinationWeather
+type WeatherData = Awaited<ReturnType<typeof WeatherService.getDestinationWeather>>;
 
 const DestinationWeather: React.FC<DestinationWeatherProps> = ({
   coordinates,
@@ -208,7 +198,7 @@ const DestinationWeather: React.FC<DestinationWeatherProps> = ({
           color: 'var(--color-text-secondary)',
           ...style
         }}>
-          {getWeatherIcon(weather.condition, 14)}
+          {getWeatherIcon(weather.condition || 'Clear', 14)}
           <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>
             {weather.temperature || 0}°C
           </span>
@@ -236,7 +226,7 @@ const DestinationWeather: React.FC<DestinationWeatherProps> = ({
           gap: '0.75rem',
           marginBottom: '0.5rem'
         }}>
-          {getWeatherIcon(weather.condition, 20)}
+          {getWeatherIcon(weather.condition || 'Clear', 20)}
           <div>
             <div style={{
               fontSize: '1.25rem',

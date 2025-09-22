@@ -79,7 +79,7 @@ export async function debugDashboardLoading() {
     
   } catch (error) {
     console.error('💥 Debug failed:', error);
-    return { step: 'error', success: false, error: error.message };
+    return { step: 'error', success: false, error: error instanceof Error ? error.message : 'Unknown error' };
   }
 }
 
