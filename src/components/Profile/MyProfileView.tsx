@@ -11,7 +11,7 @@ import {
   Activity,
   Edit3,
   Shield,
-  Share2,
+  Share,
   TrendingUp
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';

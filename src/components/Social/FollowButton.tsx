@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { UserPlus2, UserCheck2, Clock, UserMinus2 } from 'lucide-react';
+import { User, Check, Clock, X } from 'lucide-react';
 import { UUID, FollowStatus } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
