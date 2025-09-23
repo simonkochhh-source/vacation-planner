@@ -19,8 +19,14 @@ interface DataDeletionRequest {
   createdAt: Date;
 }
 
+interface CookiePreferences {
+  analytics: boolean;
+  marketing: boolean;
+  personalization: boolean;
+}
+
 const DataProtectionSettings: React.FC = () => {
-  const [cookiePreferences, setCookiePreferences] = useLocalStorage('cookie_preferences', null);
+  const [cookiePreferences, setCookiePreferences] = useLocalStorage<CookiePreferences | null>('cookie_preferences', null);
   const [showPrivacyPolicy, setShowPrivacyPolicy] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -139,9 +145,9 @@ const DataProtectionSettings: React.FC = () => {
               <h4 className="font-medium text-gray-900 mb-2">Aktuelle Einstellungen:</h4>
               <ul className="text-sm text-gray-600 space-y-1">
                 <li>Notwendige Cookies: ✅ Aktiviert</li>
-                <li>Analyse-Cookies: {cookiePreferences.analytics ? '✅ Aktiviert' : '❌ Deaktiviert'}</li>
-                <li>Marketing-Cookies: {cookiePreferences.marketing ? '✅ Aktiviert' : '❌ Deaktiviert'}</li>
-                <li>Personalisierung: {cookiePreferences.personalization ? '✅ Aktiviert' : '❌ Deaktiviert'}</li>
+                <li>Analyse-Cookies: {cookiePreferences?.analytics ? '✅ Aktiviert' : '❌ Deaktiviert'}</li>
+                <li>Marketing-Cookies: {cookiePreferences?.marketing ? '✅ Aktiviert' : '❌ Deaktiviert'}</li>
+                <li>Personalisierung: {cookiePreferences?.personalization ? '✅ Aktiviert' : '❌ Deaktiviert'}</li>
               </ul>
             </div>
           )}
