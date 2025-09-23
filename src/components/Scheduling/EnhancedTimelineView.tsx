@@ -1761,7 +1761,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
   return (
     <>
-    <div data-timeline-container style={{ padding: isMobile ? '1rem' : '1.5rem' }}>
+    <div data-timeline-container style={{ 
+      padding: 0,
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column'
+    }}>
       {/* Enhanced Header */}
       <div style={{
         display: 'flex',
@@ -1769,7 +1774,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         justifyContent: 'space-between',
         marginBottom: isMobile ? '1.5rem' : '2rem',
         flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '1rem' : 0
+        gap: isMobile ? '1rem' : 0,
+        padding: isMobile ? '1rem 1rem 0' : '1.5rem 1.5rem 0',
+        flexShrink: 0
       }}>
         <div style={{ width: isMobile ? '100%' : 'auto' }}>
           <h1 style={{
@@ -1940,7 +1947,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         background: 'var(--color-neutral-cream)',
         borderRadius: '12px',
         border: '1px solid var(--color-neutral-mist)',
-        overflow: 'hidden'
+        overflow: 'auto',
+        flex: 1,
+        margin: isMobile ? '0 1rem 1rem' : '0 1.5rem 1.5rem',
+        minHeight: 0
       }}>
         {enhancedTimelineData.length === 0 ? (
           <div style={{
@@ -4531,6 +4541,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
             </div>
           ))
         )}
+        
+        {/* Bottom spacing to ensure last elements are fully visible */}
+        <div style={{ height: isMobile ? '2rem' : '3rem' }} />
       </div>
 
       {/* Mobile Navigation */}

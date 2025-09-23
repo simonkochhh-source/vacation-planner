@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SupabaseService } from '../../services/supabaseService';
+import PolicyUpdater from './PolicyUpdater';
 
 const DestinationDebugger: React.FC = () => {
+  const [showPolicyUpdater, setShowPolicyUpdater] = useState(false);
   const testDestinationLoading = async () => {
     console.log('🚀 Manual destination loading test started...');
     
@@ -76,6 +78,24 @@ const DestinationDebugger: React.FC = () => {
       >
         Test Direct Query
       </button>
+      <button 
+        onClick={() => setShowPolicyUpdater(true)}
+        style={{ 
+          padding: '5px 10px', 
+          fontSize: '11px',
+          background: '#dc3545',
+          color: 'white',
+          border: 'none',
+          borderRadius: '3px',
+          cursor: 'pointer'
+        }}
+      >
+        Update RLS Policies
+      </button>
+      
+      {showPolicyUpdater && (
+        <PolicyUpdater onClose={() => setShowPolicyUpdater(false)} />
+      )}
     </div>
   );
 };
