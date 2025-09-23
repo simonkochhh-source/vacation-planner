@@ -61,7 +61,7 @@ const DestinationDetailModal: React.FC<DestinationDetailModalProps> = ({
   const [showTripImport, setShowTripImport] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
 
-  const CategoryIcon = getCategoryIcon(destination.category);
+  const categoryIcon = getCategoryIcon(destination.category);
 
   const handleImportComplete = async (targetTrip: Trip, selectedDate: string) => {
     if (!user) {
@@ -175,7 +175,12 @@ const DestinationDetailModal: React.FC<DestinationDetailModalProps> = ({
           {/* Header Information */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-              <CategoryIcon size={24} style={{ color: destination.color || 'var(--color-primary)' }} />
+              <span style={{ 
+                fontSize: '24px',
+                color: destination.color || 'var(--color-primary)'
+              }}>
+                {categoryIcon}
+              </span>
               <span style={{ 
                 fontSize: 'var(--text-sm)', 
                 color: 'var(--color-text-secondary)',
