@@ -267,9 +267,9 @@ const DestinationDetailModal: React.FC<DestinationDetailModalProps> = ({
                 </h4>
               </div>
               <PhotoPreview
-                photos={destination.photos}
+                destinationId={destination.id}
                 onUpload={onPhotoUpload ? () => onPhotoUpload(destination) : undefined}
-                onViewGallery={onPhotoGallery ? () => onPhotoGallery(destination) : undefined}
+                onViewAll={onPhotoGallery ? () => onPhotoGallery(destination) : undefined}
               />
             </Card>
           )}
