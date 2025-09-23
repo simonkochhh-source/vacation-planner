@@ -17,7 +17,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { socialService } from '../../services/socialService';
-import { SocialUserProfile, Trip, TripPrivacy, ActivityFeedItem } from '../../types';
+import { SocialUserProfile, Trip, TripPrivacy, ActivityFeedItem, ActivityType } from '../../types';
 import AvatarUpload from '../User/AvatarUpload';
 import { formatDate } from '../../utils';
 
@@ -97,17 +97,17 @@ const MyProfileView: React.FC = () => {
   const getActivityIcon = (activity: ActivityFeedItem) => {
     // Reuse the same icons from SocialActivityFeed
     switch (activity.activity_type) {
-      case 'trip_planned':
+      case ActivityType.TRIP_CREATED:
         return <Calendar size={16} style={{ color: '#3b82f6' }} />;
-      case 'trip_started':
+      case ActivityType.TRIP_STARTED:
         return <MapPin size={16} style={{ color: '#10b981' }} />;
-      case 'trip_completed':
+      case ActivityType.TRIP_COMPLETED:
         return <TrendingUp size={16} style={{ color: '#f59e0b' }} />;
-      case 'destination_visited':
+      case ActivityType.DESTINATION_VISITED:
         return <MapPin size={16} style={{ color: '#ef4444' }} />;
-      case 'destination_planned':
+      case ActivityType.DESTINATION_ADDED:
         return <MapPin size={16} style={{ color: '#6b7280' }} />;
-      case 'user_followed':
+      case ActivityType.USER_FOLLOWED:
         return <Users size={16} style={{ color: '#8b5cf6' }} />;
       default:
         return <Activity size={16} style={{ color: '#6b7280' }} />;
