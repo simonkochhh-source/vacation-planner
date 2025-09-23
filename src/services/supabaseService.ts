@@ -434,13 +434,12 @@ export class SupabaseService {
     // Create social activity for trip status changes
     if (updates.status) {
       try {
-        let activityType: ActivityType | null = null;
+        let activityType: ActivityType.TRIP_CREATED | ActivityType.TRIP_COMPLETED | ActivityType.TRIP_SHARED | null = null;
         
-        if (updates.status === TripStatus.ACTIVE) {
-          activityType = ActivityType.TRIP_STARTED;
-        } else if (updates.status === TripStatus.COMPLETED) {
+        if (updates.status === TripStatus.COMPLETED) {
           activityType = ActivityType.TRIP_COMPLETED;
         }
+        // Note: TRIP_STARTED is not supported by createTripActivity, so we skip it
         
         if (activityType) {
           await socialService.createTripActivity(
