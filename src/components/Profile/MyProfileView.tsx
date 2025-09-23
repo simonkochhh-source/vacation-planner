@@ -228,14 +228,14 @@ const MyProfileView: React.FC = () => {
               </p>
             )}
 
-            {userProfile.bio && (
+            {socialProfile?.bio && (
               <p style={{
                 fontSize: 'var(--text-base)',
                 color: 'var(--color-text-secondary)',
                 margin: '0 0 var(--space-md) 0',
                 lineHeight: 1.5
               }}>
-                {userProfile.bio}
+                {socialProfile.bio}
               </p>
             )}
 
