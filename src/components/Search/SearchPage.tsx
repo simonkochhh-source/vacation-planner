@@ -273,20 +273,15 @@ const SearchPage: React.FC = () => {
         return;
       }
 
-      // Create a copy of the destination with cross-reference to original
-      const { id, createdAt, updatedAt, isOriginal, copiedFromId, ...destinationData } = destination;
+      // Create a copy of the destination data for import
+      const { id, createdAt, updatedAt, ...destinationData } = destination;
       
-      // Determine the original destination ID for cross-reference
-      const originalDestinationId = destination.isOriginal ? destination.id : destination.copiedFromId;
       
       const importedDestination = await createDestinationForTrip({
         ...destinationData,
         // Keep original name without "Copy of" prefix
         name: destination.name,
         status: DestinationStatus.PLANNED, // Reset status for imported destinations
-        // Set cross-reference to original destination
-        copiedFromId: originalDestinationId,
-        isOriginal: false,
         notes: destination.notes ? 
           `${destination.notes}\n\n[Importiert aus "${sourceTrip.name}"]` : 
           `[Importiert aus "${sourceTrip.name}"]`
