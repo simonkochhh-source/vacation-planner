@@ -1,6 +1,6 @@
 import { supabase, isUsingPlaceholderCredentials } from '../lib/supabase';
 import { Database, Tables } from '../types/supabase';
-import { Destination, Trip, TripPrivacy, DestinationCategory, DestinationStatus } from '../types';
+import { Destination, Trip, TripPrivacy, DestinationCategory, DestinationStatus, TripStatus, ActivityType } from '../types';
 import { withErrorHandling, createError, ErrorMessages } from '../utils/errorHandling';
 import { 
   toDestinationCategory, 
@@ -10,9 +10,11 @@ import {
   toSupabaseCategory,
   toSupabaseStatus,
   toSupabaseTripStatus,
+  toSupabaseTripPrivacy,
   safeJsonParse,
   isArray
 } from '../utils/typeGuards';
+import { socialService } from './socialService';
 
 // Type aliases for better readability
 type SupabaseDestination = Tables<'destinations'>;
@@ -350,7 +352,21 @@ export class SupabaseService {
         throw new Error('No data returned from trip creation');
       }
       
-      return convertSupabaseToTrip(data);
+      const convertedTrip = convertSupabaseToTrip(data);
+      
+      // Create social activity for trip planning
+      try {
+        await socialService.createTripActivity(
+          ActivityType.TRIP_PLANNED,
+          data.id,
+          data.name
+        );
+      } catch (activityError) {
+        console.warn('Failed to create trip activity:', activityError);
+        // Don't fail the trip creation if activity logging fails
+      }
+      
+      return convertedTrip;
     } catch (error) {
       console.error('Failed to create trip:', error);
       throw error;
@@ -368,7 +384,7 @@ export class SupabaseService {
     if (updates.participants) updateData.participants = updates.participants;
     if (updates.status) updateData.status = toSupabaseTripStatus(updates.status);
     if (updates.tags) updateData.tags = updates.tags;
-    if (updates.privacy !== undefined) updateData.privacy = toTripPrivacy(updates.privacy);
+    if (updates.privacy !== undefined) updateData.privacy = toSupabaseTripPrivacy(updates.privacy);
     if (updates.ownerId !== undefined) updateData.owner_id = updates.ownerId;
     if (updates.taggedUsers !== undefined) updateData.tagged_users = updates.taggedUsers;
 
@@ -412,7 +428,34 @@ export class SupabaseService {
       }
       throw error;
     }
-    return convertSupabaseToTrip(data);
+    
+    const convertedTrip = convertSupabaseToTrip(data);
+    
+    // Create social activity for trip status changes
+    if (updates.status) {
+      try {
+        let activityType: ActivityType | null = null;
+        
+        if (updates.status === TripStatus.ACTIVE) {
+          activityType = ActivityType.TRIP_STARTED;
+        } else if (updates.status === TripStatus.COMPLETED) {
+          activityType = ActivityType.TRIP_COMPLETED;
+        }
+        
+        if (activityType) {
+          await socialService.createTripActivity(
+            activityType,
+            data.id,
+            data.name
+          );
+        }
+      } catch (activityError) {
+        console.warn('Failed to create trip activity:', activityError);
+        // Don't fail the trip update if activity logging fails
+      }
+    }
+    
+    return convertedTrip;
   }
 
   static async deleteTrip(id: string): Promise<void> {
@@ -564,7 +607,22 @@ export class SupabaseService {
     console.log('🔍 Status type:', typeof data.status);
     console.log('🔍 This is the correct format to use!');
     
-    return convertSupabaseToDestination(data);
+    const convertedDestination = convertSupabaseToDestination(data);
+    
+    // Create social activity for destination planning
+    try {
+      await socialService.createDestinationActivity(
+        ActivityType.DESTINATION_PLANNED,
+        data.id,
+        data.name,
+        data.location
+      );
+    } catch (activityError) {
+      console.warn('Failed to create destination activity:', activityError);
+      // Don't fail the destination creation if activity logging fails
+    }
+    
+    return convertedDestination;
   }
 
   static async updateDestination(id: string, updates: Partial<Destination>): Promise<Destination> {
@@ -617,7 +675,25 @@ export class SupabaseService {
       .single();
 
     if (error) throw error;
-    return convertSupabaseToDestination(data);
+    
+    const convertedDestination = convertSupabaseToDestination(data);
+    
+    // Create social activity for destination status changes
+    if (updates.status === DestinationStatus.VISITED) {
+      try {
+        await socialService.createDestinationActivity(
+          ActivityType.DESTINATION_VISITED,
+          data.id,
+          data.name,
+          data.location
+        );
+      } catch (activityError) {
+        console.warn('Failed to create destination activity:', activityError);
+        // Don't fail the destination update if activity logging fails
+      }
+    }
+    
+    return convertedDestination;
   }
 
   static async deleteDestination(id: string): Promise<void> {
@@ -704,5 +780,114 @@ export class SupabaseService {
           console.error(`❌ Destinations subscription error${tripId ? ` for trip ${tripId}` : ''}`);
         }
       });
+  }
+
+  // Destination copy operations
+  static async copyDestinationToTrip(sourceDestinationId: string, targetTripId: string): Promise<Destination> {
+    console.log(`🔄 Starting destination copy: ${sourceDestinationId} -> ${targetTripId}`);
+    
+    // Use the database function to copy the destination
+    const { data, error } = await supabase.rpc('copy_destination_to_trip', {
+      source_destination_id: sourceDestinationId,
+      target_trip_id: targetTripId
+    });
+
+    if (error) {
+      console.error('❌ Failed to copy destination:', error);
+      throw new Error(`Failed to copy destination: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('No data returned from copy operation');
+    }
+
+    console.log('✅ Destination copied successfully, new ID:', data);
+
+    // Fetch the newly created destination
+    const { data: newDestination, error: fetchError } = await supabase
+      .from('destinations')
+      .select()
+      .eq('id', data)
+      .single();
+
+    if (fetchError || !newDestination) {
+      console.error('❌ Failed to fetch copied destination:', fetchError);
+      throw new Error('Failed to fetch the copied destination');
+    }
+
+    const convertedDestination = convertSupabaseToDestination(newDestination);
+    
+    // Create social activity for destination import
+    try {
+      await socialService.createDestinationActivity(
+        ActivityType.DESTINATION_PLANNED,
+        newDestination.id,
+        `${newDestination.name} (importiert)`,
+        newDestination.location
+      );
+    } catch (activityError) {
+      console.warn('Failed to create destination import activity:', activityError);
+      // Don't fail the copy operation if activity logging fails
+    }
+
+    console.log('✅ Destination copy completed:', convertedDestination.name);
+    return convertedDestination;
+  }
+
+  static async getDestinationCopies(originalDestinationId: string): Promise<Array<{
+    copyId: string;
+    copyName: string;
+    tripId: string;
+    tripName: string;
+    userId: string;
+    createdAt: string;
+  }>> {
+    const { data, error } = await supabase.rpc('get_destination_copies', {
+      source_destination_id: originalDestinationId
+    });
+
+    if (error) {
+      console.error('❌ Failed to get destination copies:', error);
+      return [];
+    }
+
+    return data || [];
+  }
+
+  static async getOriginalDestination(copyDestinationId: string): Promise<{
+    originalId: string;
+    originalName: string;
+    tripId: string;
+    tripName: string;
+    userId: string;
+  } | null> {
+    const { data, error } = await supabase.rpc('get_original_destination', {
+      copy_destination_id: copyDestinationId
+    });
+
+    if (error) {
+      console.error('❌ Failed to get original destination:', error);
+      return null;
+    }
+
+    return data?.[0] || null;
+  }
+
+  static async getDestinationFamilyPhotos(destinationId: string): Promise<Array<{
+    photoUrl: string;
+    destinationId: string;
+    destinationName: string;
+    isOriginal: boolean;
+  }>> {
+    const { data, error } = await supabase.rpc('get_destination_family_photos', {
+      destination_id: destinationId
+    });
+
+    if (error) {
+      console.error('❌ Failed to get destination family photos:', error);
+      return [];
+    }
+
+    return data || [];
   }
 }

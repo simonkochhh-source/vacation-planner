@@ -606,6 +606,31 @@ const TripForm: React.FC<TripFormProps> = ({
 
                   <button
                     type="button"
+                    onClick={() => setPrivacy(TripPrivacy.CONTACTS)}
+                    style={{
+                      background: privacy === TripPrivacy.CONTACTS ? 'var(--color-warning)' : 'var(--color-neutral-cream)',
+                      border: privacy === TripPrivacy.CONTACTS ? '2px solid var(--color-warning)' : '1px solid var(--color-neutral-mist)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: 'var(--space-md)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-sm)',
+                      color: privacy === TripPrivacy.CONTACTS ? 'white' : 'var(--color-text-primary)',
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      transition: 'all var(--transition-normal)'
+                    }}
+                  >
+                    <Users size={16} />
+                    <div style={{ textAlign: 'left' }}>
+                      <div style={{ fontWeight: 'var(--font-weight-semibold)' }}>Kontakte</div>
+                      <div style={{ fontSize: 'var(--text-xs)', opacity: 0.8 }}>Nur für Follower sichtbar</div>
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
                     onClick={() => setPrivacy(TripPrivacy.PUBLIC)}
                     style={{
                       background: privacy === TripPrivacy.PUBLIC ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
@@ -713,6 +738,19 @@ const TripForm: React.FC<TripFormProps> = ({
                   }}>
                     💡 Eingeladene Benutzer können die Reise sehen, bearbeiten und weitere Ziele hinzufügen.
                   </div>
+                </div>
+              )}
+
+              {privacy === TripPrivacy.CONTACTS && (
+                <div style={{
+                  padding: 'var(--space-sm)',
+                  background: 'var(--color-warning)',
+                  border: '1px solid var(--color-neutral-mist)',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-xs)',
+                  color: 'white'
+                }}>
+                  👥 Kontakt-Reisen sind nur für deine Follower sichtbar. Perfekt für Reisen mit Freunden und Familie.
                 </div>
               )}
 

@@ -1,22 +1,24 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { Destination, Trip } from '../../types';
-import { Search, MapPin, Globe, Users, Calendar, ArrowRight } from 'lucide-react';
+import { Destination, Trip, UserSearchResult, canUserAccessTripAsync } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
+import { Search, MapPin, Globe, Users, Calendar, ArrowRight, User } from 'lucide-react';
 import { formatDate, getCategoryIcon } from '../../utils';
+import { socialService } from '../../services/socialService';
 
 interface SearchSuggestion {
-  type: 'destination' | 'trip';
+  type: 'destination' | 'trip' | 'user';
   id: string;
   title: string;
   subtitle: string;
   icon: string;
-  data: Destination | Trip;
+  data: Destination | Trip | UserSearchResult;
 }
 
 interface IntelligentSearchProps {
   value: string;
   onChange: (value: string) => void;
-  onNavigate: (type: 'destination' | 'trip', id: string) => void;
+  onNavigate: (type: 'destination' | 'trip' | 'user', id: string) => void;
   onShowSearchPage: (query: string) => void;
   placeholder?: string;
   className?: string;
@@ -34,10 +36,17 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
   style,
   isMobile = false
 }) => {
-  const { destinations, publicTrips, currentTrip, loadPublicTrips } = useSupabaseApp();
+  const { destinations, trips, publicTrips, currentTrip, loadPublicTrips } = useSupabaseApp();
+  const { user: currentUser } = useAuth();
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [userSuggestions, setUserSuggestions] = useState<UserSearchResult[]>([]);
+  const [tripSuggestions, setTripSuggestions] = useState<Trip[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [isSearchingUsers, setIsSearchingUsers] = useState(false);
+  const [isSearchingTrips, setIsSearchingTrips] = useState(false);
+  const [accessibleDestinations, setAccessibleDestinations] = useState<Destination[]>([]);
+  const [isLoadingDestinations, setIsLoadingDestinations] = useState(false);
   
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -49,6 +58,150 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
     }
   }, [loadPublicTrips, publicTrips.length]);
 
+  // Load destinations from all accessible trips (same logic as SearchPage)
+  useEffect(() => {
+    const loadAccessibleDestinations = async () => {
+      if (!currentUser || trips.length === 0 || destinations.length === 0) {
+        setAccessibleDestinations(destinations);
+        return;
+      }
+
+      setIsLoadingDestinations(true);
+      
+      try {
+        console.log(`🔍 [IntelligentSearch] Loading accessible destinations from ${trips.length} trips`);
+        
+        const accessibleDestIds = new Set<string>();
+        
+        // Check each trip for accessibility
+        for (const trip of trips) {
+          const hasAccess = await canUserAccessTripAsync(trip, currentUser.id);
+          
+          if (hasAccess) {
+            console.log(`✅ [IntelligentSearch] Access granted to trip: "${trip.name}" (${trip.destinations.length} destinations)`);
+            trip.destinations.forEach(destId => accessibleDestIds.add(destId));
+          } else {
+            console.log(`❌ [IntelligentSearch] Access denied to trip: "${trip.name}"`);
+          }
+        }
+        
+        // Filter destinations to only include accessible ones
+        const accessibleDests = destinations.filter(dest => accessibleDestIds.has(dest.id));
+        
+        console.log(`📊 [IntelligentSearch] Accessible destinations: ${accessibleDests.length} of ${destinations.length} total`);
+        setAccessibleDestinations(accessibleDests);
+        
+      } catch (error) {
+        console.error('Failed to load accessible destinations:', error);
+        // Fallback to user's own destinations on error
+        setAccessibleDestinations(destinations);
+      } finally {
+        setIsLoadingDestinations(false);
+      }
+    };
+
+    loadAccessibleDestinations();
+  }, [trips, destinations, currentUser]);
+
+  // Search for users with debouncing
+  useEffect(() => {
+    const searchUsers = async () => {
+      if (!value.trim() || value.length < 2) {
+        setUserSuggestions([]);
+        return;
+      }
+
+      setIsSearchingUsers(true);
+      try {
+        const users = await socialService.searchUsers(value, 3);
+        setUserSuggestions(users);
+      } catch (error) {
+        console.error('User search failed:', error);
+        setUserSuggestions([]);
+      } finally {
+        setIsSearchingUsers(false);
+      }
+    };
+
+    // Debounce user search
+    const timeoutId = setTimeout(searchUsers, 300);
+    return () => clearTimeout(timeoutId);
+  }, [value]);
+
+  // Enhanced trip search with permissions
+  useEffect(() => {
+    const searchTrips = async () => {
+      if (!value.trim() || value.length < 2 || !currentUser) {
+        setTripSuggestions([]);
+        return;
+      }
+
+      setIsSearchingTrips(true);
+      try {
+        const searchTerm = value.toLowerCase();
+        const matchingTrips: Trip[] = [];
+        
+        console.log(`🔍 [Header Search] Searching for trips: "${searchTerm}"`);
+        console.log(`📊 [Header Search] Total trips: ${trips.length}`);
+        console.log(`👤 [Header Search] Current user: ${currentUser.id}`);
+        
+        // Search through all trips
+        for (const trip of trips) {
+          // Check if trip matches search term
+          const matchesSearch = 
+            trip.name.toLowerCase().includes(searchTerm) ||
+            trip.description?.toLowerCase().includes(searchTerm) ||
+            trip.tags?.some(tag => tag.toLowerCase().includes(searchTerm));
+          
+          if (!matchesSearch) continue;
+          
+          console.log(`🎯 [Header Search] Found matching trip: "${trip.name}" (privacy: ${trip.privacy}, owner: ${trip.ownerId})`);
+          
+          // Check permissions
+          const hasAccess = await canUserAccessTripAsync(trip, currentUser.id);
+          console.log(`🔐 [Header Search] Access check for "${trip.name}": ${hasAccess}`);
+          
+          if (hasAccess) {
+            matchingTrips.push(trip);
+            console.log(`✅ [Header Search] Added: "${trip.name}"`);
+            
+            // Limit to 5 trips for performance
+            if (matchingTrips.length >= 5) break;
+          }
+        }
+        
+        // Sort: own trips first, then contacts, then public
+        const sortedTrips = matchingTrips.sort((a, b) => {
+          const aIsOwn = a.ownerId === currentUser.id;
+          const bIsOwn = b.ownerId === currentUser.id;
+          const aIsPublic = a.privacy === 'public';
+          const bIsPublic = b.privacy === 'public';
+          
+          // Own trips first
+          if (aIsOwn && !bIsOwn) return -1;
+          if (!aIsOwn && bIsOwn) return 1;
+          
+          // Then contacts/private trips
+          if (!aIsPublic && bIsPublic) return -1;
+          if (aIsPublic && !bIsPublic) return 1;
+          
+          return 0;
+        });
+        
+        console.log(`📋 [Header Search] Final trip results: ${sortedTrips.length}`);
+        setTripSuggestions(sortedTrips);
+      } catch (error) {
+        console.error('Trip search failed:', error);
+        setTripSuggestions([]);
+      } finally {
+        setIsSearchingTrips(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchTrips, 300);
+    return () => clearTimeout(timeoutId);
+  }, [value, trips, currentUser]);
+
   // Generate suggestions based on search query
   const generateSuggestions = useCallback((query: string): SearchSuggestion[] => {
     if (!query.trim()) return [];
@@ -56,8 +209,8 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
     const searchTerm = query.toLowerCase();
     const results: SearchSuggestion[] = [];
 
-    // Search in destinations
-    const matchingDestinations = destinations
+    // Search in accessible destinations (includes own + shared + public destinations)
+    const matchingDestinations = accessibleDestinations
       .filter(dest => 
         dest.name.toLowerCase().includes(searchTerm) ||
         dest.location.toLowerCase().includes(searchTerm) ||
@@ -76,27 +229,43 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
 
     results.push(...matchingDestinations);
 
-    // Search in public trips
-    const matchingTrips = publicTrips
-      .filter(trip => 
-        trip.name.toLowerCase().includes(searchTerm) ||
-        trip.description?.toLowerCase().includes(searchTerm) ||
-        trip.tags?.some(tag => tag.toLowerCase().includes(searchTerm))
-      )
+    // Use enhanced trip search results (includes own, contacts, and public trips)
+    const tripResults = tripSuggestions
       .slice(0, 3) // Limit to 3 trips
-      .map(trip => ({
-        type: 'trip' as const,
-        id: trip.id,
-        title: trip.name,
-        subtitle: `${trip.destinations?.length || 0} Ziele • ${formatDate(trip.startDate)} - ${formatDate(trip.endDate)}`,
-        icon: '🧳',
-        data: trip
-      }));
+      .map(trip => {
+        // Determine icon and subtitle based on trip type
+        const isOwn = currentUser && trip.ownerId === currentUser.id;
+        const icon = isOwn ? '🎒' : (trip.privacy === 'public' ? '🌍' : '👥');
+        const privacyLabel = isOwn ? 'Meine' : (trip.privacy === 'public' ? 'Öffentlich' : 'Kontakt');
+        
+        return {
+          type: 'trip' as const,
+          id: trip.id,
+          title: trip.name,
+          subtitle: `${privacyLabel} • ${trip.destinations?.length || 0} Ziele • ${formatDate(trip.startDate)} - ${formatDate(trip.endDate)}`,
+          icon,
+          data: trip
+        };
+      });
 
-    results.push(...matchingTrips);
+    results.push(...tripResults);
 
-    return results.slice(0, 6); // Maximum 6 total suggestions
-  }, [destinations, publicTrips]);
+    // Add user suggestions
+    const userResults = userSuggestions.map(user => ({
+      type: 'user' as const,
+      id: user.id,
+      title: `@${user.nickname}`,
+      subtitle: user.display_name ? 
+        `${user.display_name} • ${user.follower_count} Follower • ${user.trip_count} Reisen` :
+        `${user.follower_count} Follower • ${user.trip_count} Reisen`,
+      icon: '👤',
+      data: user
+    }));
+
+    results.push(...userResults);
+
+    return results.slice(0, 9); // Maximum 9 total suggestions (3 each type)
+  }, [accessibleDestinations, tripSuggestions, userSuggestions, currentUser]);
 
   // Update suggestions when query changes
   useEffect(() => {
@@ -288,8 +457,12 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
                 fontSize: 'var(--text-xs)',
                 color: 'var(--color-text-secondary)'
               }}>
-                {suggestion.type === 'destination' ? <MapPin size={12} /> : <Globe size={12} />}
-                {suggestion.type === 'destination' ? 'Ziel' : 'Reise'}
+                {suggestion.type === 'destination' && <MapPin size={12} />}
+                {suggestion.type === 'trip' && <Globe size={12} />}
+                {suggestion.type === 'user' && <User size={12} />}
+                {suggestion.type === 'destination' && 'Ziel'}
+                {suggestion.type === 'trip' && 'Reise'}
+                {suggestion.type === 'user' && 'User'}
               </div>
             </div>
           ))}

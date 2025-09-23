@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, MapPin, Star, Clock, Euro, Users, Globe, ExternalLink, Eye } from 'lucide-react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { Trip, TripPrivacy, canUserAccessTrip, getTripPermissions } from '../../types';
+import { Trip, TripPrivacy, canUserAccessTrip, canUserAccessTripAsync, getTripPermissions } from '../../types';
 import Button from '../Common/Button';
 import Card from '../Common/Card';
 
@@ -43,7 +43,7 @@ const TripDiscovery: React.FC<TripDiscoveryProps> = ({
     loadPublicTrips();
   }, [trips, currentUserId]);
 
-  // Search trips with debouncing
+  // Enhanced search that includes own trips, public trips, and contact trips
   const searchTrips = useCallback(async (query: string) => {
     if (!query.trim()) {
       setSearchResults([]);
@@ -53,21 +53,66 @@ const TripDiscovery: React.FC<TripDiscoveryProps> = ({
     setIsLoading(true);
     try {
       const searchTerm = query.toLowerCase();
-      const results = trips.filter(trip => {
-        // Only search public trips or trips the user has access to
-        if (!canUserAccessTrip(trip, currentUserId)) {
-          return false;
+      const results: Trip[] = [];
+      
+      console.log(`🔍 Searching for: "${searchTerm}"`);
+      console.log(`📊 Total trips to search: ${trips.length}`);
+      console.log(`👤 Current user ID: ${currentUserId}`);
+      
+      // Process trips in batches to handle async permission checks
+      for (const trip of trips) {
+        // Check if trip matches search term
+        const matchesSearch = 
+          trip.name.toLowerCase().includes(searchTerm) ||
+          trip.description?.toLowerCase().includes(searchTerm) ||
+          trip.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+        
+        if (!matchesSearch) continue;
+        
+        console.log(`🎯 Found matching trip: "${trip.name}" (privacy: ${trip.privacy}, owner: ${trip.ownerId})`);
+        
+        // Use async permission check for comprehensive access validation
+        const hasAccess = await canUserAccessTripAsync(trip, currentUserId);
+        
+        console.log(`🔐 Access check for "${trip.name}": ${hasAccess}`);
+        
+        if (hasAccess) {
+          results.push(trip);
+          console.log(`✅ Added to results: "${trip.name}"`);
+        } else {
+          console.log(`❌ Access denied for: "${trip.name}"`);
         }
-
-        // Search in trip name, description, and tags
-        return trip.name.toLowerCase().includes(searchTerm) ||
-               trip.description?.toLowerCase().includes(searchTerm) ||
-               trip.tags.some(tag => tag.toLowerCase().includes(searchTerm));
+        
+        // Limit results for performance
+        if (results.length >= 15) break;
+      }
+      
+      // Sort results by relevance: own trips first, then contacts, then public
+      const sortedResults = results.sort((a, b) => {
+        const aIsOwn = a.ownerId === currentUserId;
+        const bIsOwn = b.ownerId === currentUserId;
+        const aIsPublic = a.privacy === TripPrivacy.PUBLIC;
+        const bIsPublic = b.privacy === TripPrivacy.PUBLIC;
+        
+        // Own trips first
+        if (aIsOwn && !bIsOwn) return -1;
+        if (!aIsOwn && bIsOwn) return 1;
+        
+        // Then contacts/private trips
+        if (!aIsPublic && bIsPublic) return -1;
+        if (aIsPublic && !bIsPublic) return 1;
+        
+        // Finally sort by creation date (newest first)
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       });
       
-      setSearchResults(results.slice(0, 10)); // Limit to 10 results
+      console.log(`📋 Final results: ${sortedResults.length} trips found`);
+      sortedResults.forEach(trip => console.log(`  - ${trip.name} (${trip.privacy})`));
+      
+      setSearchResults(sortedResults.slice(0, 10)); // Limit to 10 results
     } catch (error) {
       console.error('Error searching trips:', error);
+      setSearchResults([]);
     } finally {
       setIsLoading(false);
     }
@@ -145,7 +190,20 @@ const TripDiscovery: React.FC<TripDiscoveryProps> = ({
             </div>
             
             <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', marginLeft: 'var(--space-sm)' }}>
-              {trip.privacy === TripPrivacy.PUBLIC && (
+              {isOwn && (
+                <div style={{
+                  background: 'var(--color-primary-sage)',
+                  color: 'white',
+                  padding: '2px 6px',
+                  borderRadius: 'var(--radius-sm)',
+                  fontSize: 'var(--text-xs)',
+                  fontWeight: 'var(--font-weight-medium)'
+                }}>
+                  Meine
+                </div>
+              )}
+              
+              {!isOwn && trip.privacy === TripPrivacy.PUBLIC && (
                 <div style={{
                   background: 'var(--color-secondary-sky)',
                   color: 'white',
@@ -162,16 +220,20 @@ const TripDiscovery: React.FC<TripDiscoveryProps> = ({
                 </div>
               )}
               
-              {isOwn && (
+              {!isOwn && trip.privacy === TripPrivacy.CONTACTS && (
                 <div style={{
-                  background: 'var(--color-primary-sage)',
+                  background: 'var(--color-accent-coral)',
                   color: 'white',
                   padding: '2px 6px',
                   borderRadius: 'var(--radius-sm)',
                   fontSize: 'var(--text-xs)',
-                  fontWeight: 'var(--font-weight-medium)'
+                  fontWeight: 'var(--font-weight-medium)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '2px'
                 }}>
-                  Meine
+                  <Users size={10} />
+                  Kontakt
                 </div>
               )}
             </div>

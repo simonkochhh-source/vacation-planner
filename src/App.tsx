@@ -14,6 +14,8 @@ import DiscoveryView from './components/Views/DiscoveryView';
 import SearchPage from './components/Search/SearchPage';
 import LandingView from './components/Views/LandingView';
 import PhotosView from './components/Views/PhotosView';
+import UserProfileView from './components/Social/UserProfileView';
+import MyProfileView from './components/Profile/MyProfileView';
 import { useTheme } from './hooks/useTheme';
 import { Destination } from './types';
 // import './utils/debugDashboard'; // Debug utilities disabled to prevent refresh loops
@@ -22,7 +24,7 @@ import './styles/responsive.css';
 import './styles/components.css';
 
 const AppContent: React.FC = () => {
-  const { uiState, currentTrip, reorderDestinations } = useSupabaseApp();
+  const { uiState, currentTrip, reorderDestinations, updateUIState } = useSupabaseApp();
   
   // Initialize theme system
   useTheme();
@@ -59,6 +61,15 @@ const AppContent: React.FC = () => {
         return <SearchPage />;
       case 'photos':
         return <PhotosView />;
+      case 'user-profile':
+        return (
+          <UserProfileView
+            userId={uiState.selectedUserId || ''}
+            onBack={() => updateUIState({ currentView: 'landing' })}
+          />
+        );
+      case 'my-profile':
+        return <MyProfileView />;
       case 'list':
       default:
         return (

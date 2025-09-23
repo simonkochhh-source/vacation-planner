@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { Trip, TripPrivacy, DestinationCategory } from '../../types';
+import { Trip, TripPrivacy, DestinationCategory, canUserAccessTripAsync } from '../../types';
+import { useAuth } from '../../contexts/AuthContext';
 import { 
   Search, 
   Filter,
@@ -26,8 +27,8 @@ import {
 
 interface PublicTripSearchProps {
   onTripSelect: (trip: Trip) => void;
-  onModeChange?: (mode: 'destinations' | 'trips') => void;
-  currentMode?: 'destinations' | 'trips';
+  onModeChange?: (mode: 'destinations' | 'trips' | 'destination-browser') => void;
+  currentMode?: 'destinations' | 'trips' | 'destination-browser';
 }
 
 const PublicTripSearch: React.FC<PublicTripSearchProps> = ({ 
@@ -37,11 +38,13 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
 }) => {
   const { 
     publicTrips,
+    trips,
     destinations,
     currentTrip,
     uiState,
     loadPublicTrips
   } = useSupabaseApp();
+  const { user: currentUser } = useAuth();
 
   // Add CSS styles for smooth hover effects
   React.useEffect(() => {
@@ -73,15 +76,73 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
   const [showFilters, setShowFilters] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<DestinationCategory[]>([]);
   const [sortBy, setSortBy] = useState<'name' | 'date' | 'destinations' | 'budget'>('name');
+  const [accessibleTrips, setAccessibleTrips] = useState<Trip[]>([]);
+  const [isLoadingTrips, setIsLoadingTrips] = useState(false);
 
-  // Load public trips on component mount
+  // Load public trips and check all trips for accessibility
   React.useEffect(() => {
     loadPublicTrips();
   }, [loadPublicTrips]);
 
-  // Calculate enhanced trip data
-  const enhancedPublicTrips = useMemo(() => {
-    return publicTrips.map(trip => {
+  // Enhanced trip loading with permission checking
+  React.useEffect(() => {
+    const loadAccessibleTrips = async () => {
+      if (!currentUser || trips.length === 0) {
+        setAccessibleTrips([]);
+        return;
+      }
+
+      setIsLoadingTrips(true);
+      try {
+        const accessibleTripsList: Trip[] = [];
+        
+        console.log(`🔍 [PublicTripSearch] Checking access for ${trips.length} trips`);
+        
+        for (const trip of trips) {
+          const hasAccess = await canUserAccessTripAsync(trip, currentUser.id);
+          
+          if (hasAccess) {
+            accessibleTripsList.push(trip);
+            console.log(`✅ [PublicTripSearch] Access granted: "${trip.name}" (privacy: ${trip.privacy})`);
+          } else {
+            console.log(`❌ [PublicTripSearch] Access denied: "${trip.name}" (privacy: ${trip.privacy})`);
+          }
+        }
+        
+        // Sort: own trips first, then contacts, then public
+        const sortedTrips = accessibleTripsList.sort((a, b) => {
+          const aIsOwn = a.ownerId === currentUser.id;
+          const bIsOwn = b.ownerId === currentUser.id;
+          const aIsPublic = a.privacy === 'public';
+          const bIsPublic = b.privacy === 'public';
+          
+          // Own trips first
+          if (aIsOwn && !bIsOwn) return -1;
+          if (!aIsOwn && bIsOwn) return 1;
+          
+          // Then contacts/private trips
+          if (!aIsPublic && bIsPublic) return -1;
+          if (aIsPublic && !bIsPublic) return 1;
+          
+          return 0;
+        });
+        
+        console.log(`📋 [PublicTripSearch] Final accessible trips: ${sortedTrips.length}`);
+        setAccessibleTrips(sortedTrips);
+      } catch (error) {
+        console.error('Failed to load accessible trips:', error);
+        setAccessibleTrips([]);
+      } finally {
+        setIsLoadingTrips(false);
+      }
+    };
+
+    loadAccessibleTrips();
+  }, [trips, currentUser]);
+
+  // Calculate enhanced trip data for all accessible trips
+  const enhancedAccessibleTrips = useMemo(() => {
+    return accessibleTrips.map(trip => {
       const tripDestinations = destinations.filter(dest => 
         trip.destinations.includes(dest.id)
       );
@@ -108,11 +169,11 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
         destinations: tripDestinations
       };
     });
-  }, [publicTrips, destinations]);
+  }, [accessibleTrips, destinations]);
 
   // Search and filter results
   const searchResults = useMemo(() => {
-    let results = enhancedPublicTrips;
+    let results = enhancedAccessibleTrips;
 
     // Text search
     if (searchQuery.trim()) {
@@ -153,7 +214,7 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
     });
 
     return results;
-  }, [enhancedPublicTrips, searchQuery, selectedCategories, sortBy]);
+  }, [enhancedAccessibleTrips, searchQuery, selectedCategories, sortBy]);
 
   const handleCategoryToggle = (category: DestinationCategory) => {
     setSelectedCategories(prev => 
@@ -170,8 +231,17 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
 
   const hasActiveFilters = searchQuery.trim() || selectedCategories.length > 0;
 
-  const PublicTripCard: React.FC<{ trip: typeof enhancedPublicTrips[0] }> = ({ trip }) => (
-    <div
+  const PublicTripCard: React.FC<{ trip: typeof enhancedAccessibleTrips[0] }> = ({ trip }) => {
+    // Determine privacy display
+    const isOwn = currentUser && trip.ownerId === currentUser.id;
+    const privacyInfo = {
+      label: isOwn ? 'Meine Reise' : (trip.privacy === 'public' ? 'Öffentlich' : 'Für Kontakte'),
+      color: isOwn ? 'var(--color-primary-ocean)' : (trip.privacy === 'public' ? 'var(--color-success)' : 'var(--color-warning)'),
+      icon: isOwn ? Users : (trip.privacy === 'public' ? Globe : Users)
+    };
+
+    return (
+      <div
       className="public-trip-card"
       style={{
         background: 'var(--color-surface)',
@@ -226,7 +296,7 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
               {trip.name}
             </h3>
             <div style={{
-              background: 'var(--color-success)',
+              background: privacyInfo.color,
               color: 'var(--color-surface)',
               borderRadius: '6px',
               padding: '2px 8px',
@@ -236,8 +306,8 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
               alignItems: 'center',
               gap: '4px'
             }}>
-              <Globe size={12} />
-              Öffentlich
+              <privacyInfo.icon size={12} />
+              {privacyInfo.label}
             </div>
           </div>
           
@@ -481,7 +551,8 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
         </button>
       </div>
     </div>
-  );
+    );
+  };
 
   return (
     <div style={{ 
@@ -502,14 +573,14 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
               color: 'var(--color-text-primary)',
               marginBottom: '8px'
             }}>
-              Öffentliche Reisen entdecken
+              Reisen entdecken
             </h1>
             <p style={{ 
               margin: 0,
               fontSize: '1rem',
               color: 'var(--color-text-secondary)'
             }}>
-              Entdecke inspirierende Reisen von anderen Nutzern und finde deine nächste Traumreise
+              Entdecke deine eigenen, öffentliche und Kontakte-Reisen - finde deine nächste Traumreise
             </p>
           </div>
           
@@ -553,7 +624,7 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
                   transition: 'all 0.2s'
                 }}
               >
-                Öffentliche Reisen
+                Alle Reisen
               </button>
             </div>
           )}
@@ -729,7 +800,8 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
         justifyContent: 'space-between'
       }}>
         <div style={{ fontSize: '0.875rem', color: 'var(--color-primary-ocean)' }}>
-          <strong>{searchResults.length}</strong> von <strong>{publicTrips.length}</strong> öffentlichen Reisen gefunden
+          <strong>{searchResults.length}</strong> von <strong>{accessibleTrips.length}</strong> zugänglichen Reisen gefunden
+          {isLoadingTrips && <span style={{ marginLeft: '8px', fontStyle: 'italic' }}>Laden...</span>}
         </div>
         {hasActiveFilters && (
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -796,7 +868,7 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
             fontWeight: '600',
             color: 'var(--color-text-primary)'
           }}>
-            Keine öffentlichen Reisen gefunden
+            Keine Reisen gefunden
           </h3>
           <p style={{ 
             margin: 0,
@@ -806,7 +878,9 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
           }}>
             {hasActiveFilters 
               ? 'Versuche deine Suchkriterien zu ändern oder Filter zu entfernen.'
-              : 'Es gibt noch keine öffentlichen Reisen zu entdecken.'
+              : isLoadingTrips 
+                ? 'Reisen werden geladen...'
+                : 'Es gibt noch keine zugänglichen Reisen zu entdecken.'
             }
           </p>
           {hasActiveFilters && (

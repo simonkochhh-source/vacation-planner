@@ -6,7 +6,7 @@ import { getResponsiveTextSize } from '../../utils/responsive';
 interface HeaderSearchProps {
   searchQuery: string;
   onSearchChange: (value: string) => void;
-  onNavigate: (type: 'destination' | 'trip', id: string) => void;
+  onNavigate: (type: 'destination' | 'trip' | 'user', id: string) => void;
   onShowSearchPage: (query: string) => void;
 }
 
@@ -40,7 +40,7 @@ const HeaderSearch = ({
           onChange={onSearchChange}
           onNavigate={onNavigate}
           onShowSearchPage={onShowSearchPage}
-          placeholder="Ziele, Reisen suchen..."
+          placeholder="Ziele, Reisen, Nutzer suchen..."
           className="input"
           style={{
             width: '100%',
@@ -69,7 +69,7 @@ const HeaderSearch = ({
           onChange={onSearchChange}
           onNavigate={onNavigate}
           onShowSearchPage={onShowSearchPage}
-          placeholder="Ziele, Reisen suchen..."
+          placeholder="Ziele, Reisen, Nutzer suchen..."
           className="input"
           style={{
             width: '100%',

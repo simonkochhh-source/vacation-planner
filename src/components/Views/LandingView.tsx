@@ -28,6 +28,7 @@ import {
   getDestinationBudget 
 } from '../../utils';
 import TripImportService from '../../services/tripImportService';
+import SocialActivityFeed from '../Social/SocialActivityFeed';
 
 interface TravelSuggestion {
   id: string;
@@ -263,6 +264,11 @@ const LandingView: React.FC = () => {
         }}>
           {welcomeData.subtitle}
         </p>
+      </div>
+
+      {/* Social Activity Feed Section */}
+      <div style={{ maxWidth: '1200px', margin: '0 auto var(--space-2xl)' }}>
+        <SocialActivityFeed maxItems={8} compact={true} />
       </div>
 
       {/* Travel Suggestions Grid */}

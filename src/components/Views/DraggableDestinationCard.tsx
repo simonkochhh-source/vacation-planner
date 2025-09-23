@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   useSortable
 } from '@dnd-kit/sortable';
@@ -22,7 +22,9 @@ import {
   CheckSquare,
   Square,
   Camera,
-  Mountain
+  Mountain,
+  Info,
+  Download
 } from 'lucide-react';
 import { 
   getCategoryIcon, 
@@ -33,6 +35,7 @@ import {
 import { Destination, DestinationStatus } from '../../types';
 import Button from '../Common/Button';
 import Card from '../Common/Card';
+import DestinationDetailModal from '../Destinations/DestinationDetailModal';
 
 interface DraggableDestinationCardProps {
   destination: Destination;
@@ -44,6 +47,7 @@ interface DraggableDestinationCardProps {
   onWeatherClick?: (destination: Destination) => void;
   onPhotoUpload?: (destination: Destination) => void;
   onPhotoGallery?: (destination: Destination) => void;
+  showImportButton?: boolean;
 }
 
 export const DraggableDestinationCard: React.FC<DraggableDestinationCardProps> = ({
@@ -55,9 +59,11 @@ export const DraggableDestinationCard: React.FC<DraggableDestinationCardProps> =
   onToggleSelection,
   onWeatherClick,
   onPhotoUpload,
-  onPhotoGallery
+  onPhotoGallery,
+  showImportButton = false
 }) => {
   const { updateDestination } = useSupabaseApp();
+  const [showDetailModal, setShowDetailModal] = useState(false);
   
   const {
     attributes,
@@ -447,8 +453,17 @@ export const DraggableDestinationCard: React.FC<DraggableDestinationCardProps> =
           {/* Status Badge */}
           <StatusBadge status={destination.status} size="md" />
 
-          {/* Edit & Delete */}
+          {/* Detail, Edit & Delete */}
           <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDetailModal(true)}
+              leftIcon={<Info size={16} />}
+              title="Details anzeigen"
+            >
+              Details
+            </Button>
             <Button
               variant="secondary"
               size="sm"
@@ -475,6 +490,20 @@ export const DraggableDestinationCard: React.FC<DraggableDestinationCardProps> =
           </div>
         </div>
       </div>
+      
+      {/* Detail Modal */}
+      <DestinationDetailModal
+        destination={destination}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onPhotoUpload={onPhotoUpload}
+        onPhotoGallery={onPhotoGallery}
+        showImportButton={showImportButton}
+        canEdit={true}
+        canDelete={true}
+      />
     </div>
   );
 };

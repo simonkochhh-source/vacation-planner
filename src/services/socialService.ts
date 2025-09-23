@@ -1,0 +1,565 @@
+/**
+ * Social Network Service
+ * Handles user following, activity feeds, and social interactions
+ */
+
+import { supabase } from '../lib/supabase';
+import {
+  UUID,
+  Follow,
+  FollowStatus,
+  UserActivity,
+  ActivityType,
+  SocialUserProfile,
+  UserSearchResult,
+  ActivityFeedItem,
+  SocialStats,
+  SocialServiceInterface
+} from '../types';
+
+class SocialService implements SocialServiceInterface {
+  
+  // =====================================================
+  // Follow Management
+  // =====================================================
+  
+  /**
+   * Send a follow request to another user
+   */
+  async followUser(targetUserId: UUID): Promise<Follow> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Check if relationship already exists
+    const { data: existing } = await supabase
+      .from('follows')
+      .select('*')
+      .eq('follower_id', user.id)
+      .eq('following_id', targetUserId)
+      .single();
+
+    if (existing) {
+      throw new Error('Follow relationship already exists');
+    }
+
+    const { data, error } = await supabase
+      .from('follows')
+      .insert({
+        follower_id: user.id,
+        following_id: targetUserId,
+        status: FollowStatus.PENDING
+      })
+      .select('*')
+      .single();
+
+    if (error) throw new Error(`Failed to create follow request: ${error.message}`);
+    
+    // Create activity for follow request
+    await this.createActivity({
+      user_id: user.id,
+      activity_type: ActivityType.TRIP_SHARED, // We can add FOLLOW_REQUEST later
+      title: `Follow-Anfrage gesendet`,
+      description: `Du hast eine Follow-Anfrage gesendet`,
+      metadata: { target_user_id: targetUserId }
+    });
+
+    return data;
+  }
+
+  /**
+   * Unfollow a user (or cancel follow request)
+   */
+  async unfollowUser(targetUserId: UUID): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('follows')
+      .delete()
+      .eq('follower_id', user.id)
+      .eq('following_id', targetUserId);
+
+    if (error) throw new Error(`Failed to unfollow user: ${error.message}`);
+  }
+
+  /**
+   * Accept a follow request
+   */
+  async acceptFollowRequest(followId: UUID): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Get the follow request details before accepting
+    const { data: followData } = await supabase
+      .from('follows')
+      .select('follower_id')
+      .eq('id', followId)
+      .eq('following_id', user.id)
+      .single();
+
+    const { error } = await supabase
+      .from('follows')
+      .update({ status: FollowStatus.ACCEPTED, updated_at: new Date().toISOString() })
+      .eq('id', followId)
+      .eq('following_id', user.id); // Only the person being followed can accept
+
+    if (error) throw new Error(`Failed to accept follow request: ${error.message}`);
+
+    // Create activity for the user who initiated the follow
+    if (followData?.follower_id) {
+      try {
+        const { data: targetUserProfile } = await supabase
+          .from('user_profiles')
+          .select('nickname')
+          .eq('user_id', user.id)
+          .single();
+
+        await this.createActivity({
+          user_id: followData.follower_id,
+          activity_type: ActivityType.USER_FOLLOWED,
+          title: 'Neuer Follower',
+          description: `Du folgst jetzt ${targetUserProfile?.nickname || 'einem Nutzer'}`,
+          metadata: { 
+            target_user_id: user.id,
+            target_user_name: targetUserProfile?.nickname || 'Unbekannt'
+          }
+        });
+      } catch (activityError) {
+        console.warn('Failed to create follow activity:', activityError);
+      }
+    }
+  }
+
+  /**
+   * Decline a follow request
+   */
+  async declineFollowRequest(followId: UUID): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { error } = await supabase
+      .from('follows')
+      .update({ status: FollowStatus.DECLINED, updated_at: new Date().toISOString() })
+      .eq('id', followId)
+      .eq('following_id', user.id); // Only the person being followed can decline
+
+    if (error) throw new Error(`Failed to decline follow request: ${error.message}`);
+  }
+
+  // =====================================================
+  // User Search and Discovery
+  // =====================================================
+
+  /**
+   * Search for users by nickname or display name
+   */
+  async searchUsers(query: string, limit: number = 20): Promise<UserSearchResult[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const searchQuery = `%${query.toLowerCase()}%`;
+
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select(`
+        id,
+        nickname,
+        display_name,
+        avatar_url,
+        bio,
+        location,
+        follower_count,
+        trip_count,
+        is_verified,
+        is_public_profile
+      `)
+      .or(`nickname.ilike.${searchQuery},display_name.ilike.${searchQuery}`)
+      .eq('is_public_profile', true)
+      .neq('id', user.id) // Exclude current user
+      .order('follower_count', { ascending: false })
+      .limit(limit);
+
+    if (error) throw new Error(`Failed to search users: ${error.message}`);
+
+    // Get follow status for each user
+    const userIds = data.map(u => u.id);
+    const { data: followData } = await supabase
+      .from('follows')
+      .select('following_id, status')
+      .eq('follower_id', user.id)
+      .in('following_id', userIds);
+
+    const followMap = new Map();
+    followData?.forEach(f => {
+      followMap.set(f.following_id, f.status);
+    });
+
+    return data.map(u => ({
+      ...u,
+      follow_status: followMap.get(u.id) || 'none'
+    }));
+  }
+
+  /**
+   * Get a user's public profile
+   */
+  async getUserProfile(userId: UUID): Promise<SocialUserProfile> {
+    const { data, error } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('id', userId)
+      .eq('is_public_profile', true)
+      .single();
+
+    if (error) throw new Error(`Failed to get user profile: ${error.message}`);
+    return data;
+  }
+
+  // =====================================================
+  // Follow Relationships
+  // =====================================================
+
+  /**
+   * Get a user's followers
+   */
+  async getFollowers(userId: UUID): Promise<SocialUserProfile[]> {
+    const { data, error } = await supabase
+      .from('follows')
+      .select(`
+        user_profiles!follows_follower_id_fkey(*)
+      `)
+      .eq('following_id', userId)
+      .eq('status', FollowStatus.ACCEPTED);
+
+    if (error) throw new Error(`Failed to get followers: ${error.message}`);
+    
+    return (data?.map(f => f.user_profiles).filter(Boolean) || []) as SocialUserProfile[];
+  }
+
+  /**
+   * Get users that a user is following
+   */
+  async getFollowing(userId: UUID): Promise<SocialUserProfile[]> {
+    const { data, error } = await supabase
+      .from('follows')
+      .select(`
+        user_profiles!follows_following_id_fkey(*)
+      `)
+      .eq('follower_id', userId)
+      .eq('status', FollowStatus.ACCEPTED);
+
+    if (error) throw new Error(`Failed to get following: ${error.message}`);
+    
+    return (data?.map(f => f.user_profiles).filter(Boolean) || []) as SocialUserProfile[];
+  }
+
+  /**
+   * Get pending follow requests for the current user
+   */
+  async getFollowRequests(): Promise<Follow[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const { data, error } = await supabase
+      .from('follows')
+      .select(`
+        *,
+        user_profiles!follows_follower_id_fkey(nickname, display_name, avatar_url)
+      `)
+      .eq('following_id', user.id)
+      .eq('status', FollowStatus.PENDING)
+      .order('created_at', { ascending: false });
+
+    if (error) throw new Error(`Failed to get follow requests: ${error.message}`);
+    return data || [];
+  }
+
+  /**
+   * Get follow status between current user and target user
+   */
+  async getFollowStatus(targetUserId: UUID): Promise<FollowStatus | 'none'> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 'none';
+
+    const { data, error } = await supabase
+      .from('follows')
+      .select('status')
+      .eq('follower_id', user.id)
+      .eq('following_id', targetUserId)
+      .single();
+
+    if (error || !data) return 'none';
+    return data.status as FollowStatus;
+  }
+
+  // =====================================================
+  // Activity Feed
+  // =====================================================
+
+  /**
+   * Get activities for a specific user (for their profile view)
+   */
+  async getUserActivities(userId: UUID, limit: number = 20): Promise<ActivityFeedItem[]> {
+    const { data, error } = await supabase
+      .from('user_activities')
+      .select(`
+        *,
+        user_profiles!user_activities_user_id_fkey (
+          nickname,
+          avatar_url
+        )
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw new Error(`Failed to get user activities: ${error.message}`);
+
+    return this.enhanceActivityFeedItems(data?.map(activity => ({
+      id: activity.id,
+      user_id: activity.user_id,
+      activity_type: activity.activity_type,
+      title: activity.title,
+      description: activity.description,
+      created_at: activity.created_at,
+      metadata: activity.metadata || {},
+      user_nickname: activity.user_profiles?.nickname,
+      user_avatar_url: activity.user_profiles?.avatar_url,
+      related_data: {}
+    })) || []);
+  }
+
+  /**
+   * Get activity feed for current user (their activities + followed users' activities)
+   */
+  async getActivityFeed(limit: number = 50): Promise<ActivityFeedItem[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Use the database function for efficient feed generation
+    const { data, error } = await supabase
+      .rpc('get_activity_feed', {
+        user_uuid: user.id,
+        limit_count: limit
+      });
+
+    if (error) throw new Error(`Failed to get activity feed: ${error.message}`);
+
+    // Enhance activities with additional trip/destination info if needed
+    return this.enhanceActivityFeedItems(data || []);
+  }
+
+  /**
+   * Get activity feed for a specific user
+   */
+  async getUserActivityFeed(userId: UUID, limit: number = 20): Promise<ActivityFeedItem[]> {
+    const { data, error } = await supabase
+      .from('user_activities')
+      .select(`
+        *,
+        user_profiles!user_activities_user_id_fkey(nickname, avatar_url)
+      `)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw new Error(`Failed to get user activity feed: ${error.message}`);
+
+    return this.enhanceActivityFeedItems(data?.map(activity => ({
+      activity_id: activity.id,
+      user_id: activity.user_id,
+      user_nickname: activity.user_profiles?.nickname || 'Unknown',
+      user_avatar: activity.user_profiles?.avatar_url,
+      activity_type: activity.activity_type,
+      title: activity.title,
+      description: activity.description,
+      metadata: activity.metadata,
+      created_at: activity.created_at
+    })) || []);
+  }
+
+  /**
+   * Create a new activity
+   */
+  async createActivity(activity: Omit<UserActivity, 'id' | 'created_at'>): Promise<UserActivity> {
+    const { data, error } = await supabase
+      .from('user_activities')
+      .insert({
+        ...activity,
+        created_at: new Date().toISOString()
+      })
+      .select('*')
+      .single();
+
+    if (error) throw new Error(`Failed to create activity: ${error.message}`);
+    return data;
+  }
+
+  // =====================================================
+  // Social Statistics
+  // =====================================================
+
+  /**
+   * Get social statistics for a user
+   */
+  async getSocialStats(userId: UUID): Promise<SocialStats> {
+    // Use the database function for efficient stats calculation
+    const { data, error } = await supabase
+      .rpc('get_user_social_stats', { user_uuid: userId });
+
+    if (error) throw new Error(`Failed to get social stats: ${error.message}`);
+
+    const stats = data?.[0];
+    
+    // Get privacy-specific trip counts
+    const { data: tripCounts } = await supabase
+      .from('trips')
+      .select('privacy')
+      .eq('user_id', userId);
+
+    const publicTripCount = tripCounts?.filter(t => t.privacy === 'public').length || 0;
+    const contactTripCount = tripCounts?.filter(t => t.privacy === 'contacts').length || 0;
+
+    return {
+      follower_count: stats?.follower_count || 0,
+      following_count: stats?.following_count || 0,
+      trip_count: stats?.trip_count || 0,
+      public_trip_count: publicTripCount,
+      contact_trip_count: contactTripCount
+    };
+  }
+
+  // =====================================================
+  // Helper Methods
+  // =====================================================
+
+  /**
+   * Enhance activity feed items with additional context
+   */
+  private async enhanceActivityFeedItems(activities: ActivityFeedItem[]): Promise<ActivityFeedItem[]> {
+    // Get unique trip and destination IDs
+    const tripIds = Array.from(new Set(activities.map(a => a.metadata.related_trip_id).filter(Boolean)));
+    const destinationIds = Array.from(new Set(activities.map(a => a.metadata.related_destination_id).filter(Boolean)));
+
+    // Fetch trip names
+    const tripNames = new Map();
+    if (tripIds.length > 0) {
+      const { data: trips } = await supabase
+        .from('trips')
+        .select('id, name')
+        .in('id', tripIds);
+      
+      trips?.forEach(trip => {
+        tripNames.set(trip.id, trip.name);
+      });
+    }
+
+    // Fetch destination info
+    const destinationInfo = new Map();
+    if (destinationIds.length > 0) {
+      const { data: destinations } = await supabase
+        .from('destinations')
+        .select('id, name, location')
+        .in('id', destinationIds);
+      
+      destinations?.forEach(dest => {
+        destinationInfo.set(dest.id, { name: dest.name, location: dest.location });
+      });
+    }
+
+    // Enhance activities with additional context
+    return activities.map(activity => ({
+      ...activity,
+      trip_name: activity.metadata.related_trip_id ? 
+        tripNames.get(activity.metadata.related_trip_id) : undefined,
+      destination_name: activity.metadata.related_destination_id ? 
+        destinationInfo.get(activity.metadata.related_destination_id)?.name : undefined,
+      destination_location: activity.metadata.related_destination_id ? 
+        destinationInfo.get(activity.metadata.related_destination_id)?.location : undefined
+    }));
+  }
+
+  // =====================================================
+  // Activity Helpers
+  // =====================================================
+
+  /**
+   * Create trip-related activities
+   */
+  async createTripActivity(
+    activityType: ActivityType.TRIP_CREATED | ActivityType.TRIP_COMPLETED | ActivityType.TRIP_SHARED,
+    tripId: UUID,
+    tripName: string,
+    additionalMetadata: Record<string, any> = {}
+  ): Promise<UserActivity> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const titles = {
+      [ActivityType.TRIP_CREATED]: `Neue Reise "${tripName}" geplant`,
+      [ActivityType.TRIP_COMPLETED]: `Reise "${tripName}" abgeschlossen`,
+      [ActivityType.TRIP_SHARED]: `Reise "${tripName}" geteilt`
+    };
+
+    const descriptions = {
+      [ActivityType.TRIP_CREATED]: `hat eine neue Reise nach ${additionalMetadata.destination || 'unbekanntes Ziel'} geplant`,
+      [ActivityType.TRIP_COMPLETED]: `hat eine Reise erfolgreich abgeschlossen`,
+      [ActivityType.TRIP_SHARED]: `hat eine Reise öffentlich geteilt`
+    };
+
+    return this.createActivity({
+      user_id: user.id,
+      activity_type: activityType,
+      related_trip_id: tripId,
+      title: titles[activityType],
+      description: descriptions[activityType],
+      metadata: {
+        trip_name: tripName,
+        related_trip_id: tripId,
+        ...additionalMetadata
+      }
+    });
+  }
+
+  /**
+   * Create destination-related activities
+   */
+  async createDestinationActivity(
+    activityType: ActivityType.DESTINATION_VISITED | ActivityType.DESTINATION_ADDED,
+    destinationId: UUID,
+    destinationName: string,
+    location?: string,
+    additionalMetadata: Record<string, any> = {}
+  ): Promise<UserActivity> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const titles = {
+      [ActivityType.DESTINATION_VISITED]: `${destinationName} besucht`,
+      [ActivityType.DESTINATION_ADDED]: `Neues Ziel hinzugefügt: ${destinationName}`
+    };
+
+    const descriptions = {
+      [ActivityType.DESTINATION_VISITED]: location ? `war in ${location}` : `hat ein Ziel besucht`,
+      [ActivityType.DESTINATION_ADDED]: location ? `hat ${location} zur Reise hinzugefügt` : `hat ein neues Ziel hinzugefügt`
+    };
+
+    return this.createActivity({
+      user_id: user.id,
+      activity_type: activityType,
+      related_destination_id: destinationId,
+      title: titles[activityType],
+      description: descriptions[activityType],
+      metadata: {
+        destination_name: destinationName,
+        destination_location: location,
+        related_destination_id: destinationId,
+        ...additionalMetadata
+      }
+    });
+  }
+}
+
+// Export singleton instance
+export const socialService = new SocialService();
+export default socialService;

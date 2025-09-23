@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -60,6 +60,7 @@ const PhotosView: React.FC = () => {
   const [privacyFilter, setPrivacyFilter] = useState<'all' | 'private' | 'public'>('all');
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [photoCounts, setPhotoCounts] = useState<Record<string, number>>({});
 
   // Get destinations for current trip, sorted chronologically
   const tripDestinations: DestinationWithPhotos[] = React.useMemo(() => {
@@ -71,9 +72,40 @@ const PhotosView: React.FC = () => {
       .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())
       .map(dest => ({
         ...dest,
-        photoCount: 0, // Will be populated when we load photos
+        photoCount: photoCounts[dest.id] || 0,
         photos: []
       }));
+  }, [currentTrip, destinations, photoCounts]);
+
+  // Load photo counts for all destinations on component mount
+  useEffect(() => {
+    const loadAllPhotoCounts = async () => {
+      if (!currentTrip) return;
+      
+      const counts: Record<string, number> = {};
+      
+      // Get destinations directly without using tripDestinations to avoid circular dependency
+      const destIds = currentTrip.destinations
+        .map(id => destinations.find(dest => dest.id === id))
+        .filter((dest): dest is Destination => dest !== undefined);
+      
+      for (const destination of destIds) {
+        try {
+          const loadedPhotos = await PhotoService.getPhotosForDestinationUnified(
+            destination.id, 
+            currentTrip.id
+          );
+          counts[destination.id] = loadedPhotos.length;
+        } catch (error) {
+          console.error(`Error loading photo count for ${destination.name}:`, error);
+          counts[destination.id] = 0;
+        }
+      }
+      
+      setPhotoCounts(counts);
+    };
+
+    loadAllPhotoCounts();
   }, [currentTrip, destinations]);
 
   // Responsive design is now handled by useResponsive hook
@@ -122,9 +154,20 @@ const PhotosView: React.FC = () => {
       // Convert to DisplayPhoto format
       const displayPhotos = loadedPhotos.map(convertToDisplayPhoto);
       setPhotos(displayPhotos);
+      
+      // Update photo count for this destination
+      setPhotoCounts(prev => ({
+        ...prev,
+        [destinationId]: displayPhotos.length
+      }));
     } catch (error) {
       console.error('Error loading photos:', error);
       setPhotos([]);
+      // Set photo count to 0 on error
+      setPhotoCounts(prev => ({
+        ...prev,
+        [destinationId]: 0
+      }));
     } finally {
       setLoading(false);
     }
@@ -148,7 +191,15 @@ const PhotosView: React.FC = () => {
       
       // Convert to DisplayPhoto format and add to state
       const displayPhotos = uploadedPhotos.map(convertToDisplayPhoto);
-      setPhotos(prev => [...prev, ...displayPhotos]);
+      setPhotos(prev => {
+        const newPhotos = [...prev, ...displayPhotos];
+        // Update photo count for this destination
+        setPhotoCounts(prevCounts => ({
+          ...prevCounts,
+          [selectedDestination]: newPhotos.length
+        }));
+        return newPhotos;
+      });
       
       console.log(`Successfully uploaded ${uploadedPhotos.length} photos`);
     } catch (error) {

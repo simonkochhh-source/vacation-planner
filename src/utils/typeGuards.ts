@@ -126,6 +126,11 @@ export const toSupabaseTripStatus = (status: TripStatus): 'geplant' | 'aktiv' | 
   return tripStatusToSupabase(status) as 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert';
 };
 
+export const toSupabaseTripPrivacy = (privacy: TripPrivacy): 'private' | 'public' | 'contacts' => {
+  // Direct mapping since our enum values match Supabase values
+  return privacy as 'private' | 'public' | 'contacts';
+};
+
 // Generic object type guard
 export const isObject = (value: any): value is Record<string, any> => {
   return value !== null && typeof value === 'object' && !Array.isArray(value);

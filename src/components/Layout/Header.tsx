@@ -5,7 +5,10 @@ import Button from '../Common/Button';
 import HeaderBrand from './HeaderBrand';
 import HeaderNavigation from './HeaderNavigation';
 import HeaderSearch from './HeaderSearch';
+import FollowRequestsDropdown from '../Social/FollowRequestsDropdown';
+import AvatarUpload from '../User/AvatarUpload';
 import { useResponsive } from '../../hooks/useResponsive';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -13,6 +16,7 @@ interface HeaderProps {
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   const { uiState, updateUIState } = useSupabaseApp();
+  const { user, userProfile } = useAuth();
   const { isMobile } = useResponsive();
   const isLargeScreen = !isMobile;
 
@@ -24,16 +28,22 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
     updateUIState({ currentView: 'settings' });
   };
 
+  const handleMyProfileClick = () => {
+    updateUIState({ currentView: 'my-profile' });
+  };
+
   const handleLogoClick = () => {
     updateUIState({ currentView: 'landing' });
   };
 
-  const handleNavigateToItem = (type: 'destination' | 'trip', id: string) => {
+  const handleNavigateToItem = (type: 'destination' | 'trip' | 'user', id: string) => {
     if (type === 'destination') {
       updateUIState({ 
-        currentView: 'timeline',
-        activeView: 'timeline',
-        activeDestination: id
+        currentView: 'search',
+        activeView: 'search',
+        selectedDestinationId: id,
+        showDestinationDetails: true,
+        searchQuery: ''
       });
     } else if (type === 'trip') {
       updateUIState({ 
@@ -41,6 +51,14 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
         activeView: 'search',
         selectedTripId: id,
         showTripDetails: true,
+        searchQuery: ''
+      });
+    } else if (type === 'user') {
+      // Navigate to user profile page
+      updateUIState({ 
+        currentView: 'user-profile',
+        activeView: 'user-profile',
+        selectedUserId: id,
         searchQuery: ''
       });
     }
@@ -106,16 +124,38 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               onViewChange={handleViewChange}
             />
 
-            {/* Settings Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleSettingsClick}
-              className="header-settings-button"
-              title="Einstellungen"
-            >
-              <Settings size={18} />
-            </Button>
+            {/* Follow Requests Dropdown - Only show if user is logged in */}
+            {user && <FollowRequestsDropdown />}
+
+            {/* My Profile Avatar - Only show if user is logged in */}
+            {user && (
+              <button
+                onClick={handleMyProfileClick}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  borderRadius: '50%',
+                  padding: '2px',
+                  transition: 'transform 0.2s, box-shadow 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.05)';
+                  e.currentTarget.style.boxShadow = '0 0 0 2px rgba(255, 255, 255, 0.3)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+                title="Mein Profil & Einstellungen"
+              >
+                <AvatarUpload
+                  currentAvatarUrl={userProfile?.avatar_url}
+                  size="small"
+                  editable={false}
+                />
+              </button>
+            )}
           </div>
         </div>
         

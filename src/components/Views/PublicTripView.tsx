@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
-import { Trip, Destination, DestinationStatus } from '../../types';
+import { Trip, Destination, DestinationStatus, TripPrivacy } from '../../types';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { LatLngExpression, Icon } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -26,7 +26,8 @@ import {
   Camera,
   X,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Lock
 } from 'lucide-react';
 import { 
   formatDate, 
@@ -37,6 +38,49 @@ import {
 } from '../../utils';
 import { PhotoService, TripPhoto } from '../../services/photoService';
 import { anonymizeTripForPublicDisplay } from '../../utils/privacyUtils';
+
+// Helper function to get privacy label and styling
+const getTripPrivacyInfo = (privacy: TripPrivacy | string) => {
+  // Debug logging
+  console.log(`🔍 [getTripPrivacyInfo] Input privacy:`, privacy);
+  console.log(`🔍 [getTripPrivacyInfo] Input type:`, typeof privacy);
+  
+  // Normalize the privacy value - handle both enum and string values
+  const normalizedPrivacy = privacy?.toString().toLowerCase();
+  
+  console.log(`🔍 [getTripPrivacyInfo] Normalized privacy:`, normalizedPrivacy);
+  
+  switch (normalizedPrivacy) {
+    case 'public':
+    case TripPrivacy.PUBLIC:
+      console.log(`🔍 [getTripPrivacyInfo] Matched PUBLIC`);
+      return {
+        label: 'Öffentliche Reise',
+        icon: Globe,
+        backgroundColor: 'rgba(16, 185, 129, 0.9)', // Green
+        color: 'white'
+      };
+    case 'contacts':
+    case TripPrivacy.CONTACTS:
+      console.log(`🔍 [getTripPrivacyInfo] Matched CONTACTS`);
+      return {
+        label: 'Für Kontakte & Freunde',
+        icon: Users,
+        backgroundColor: 'rgba(59, 130, 246, 0.9)', // Blue
+        color: 'white'
+      };
+    case 'private':
+    case TripPrivacy.PRIVATE:
+    default:
+      console.log(`🔍 [getTripPrivacyInfo] Matched PRIVATE (or default)`);
+      return {
+        label: 'Private Reise',
+        icon: Lock,
+        backgroundColor: 'rgba(107, 114, 128, 0.9)', // Gray
+        color: 'white'
+      };
+  }
+};
 
 // Fix Leaflet default markers in React
 delete (Icon.Default.prototype as any)._getIconUrl;
@@ -543,6 +587,13 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
   const [isImporting, setIsImporting] = useState(false);
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
 
+  // Get privacy info for this trip
+  console.log(`🔍 [PublicTripView] Trip "${trip.name}" privacy:`, trip.privacy);
+  console.log(`🔍 [PublicTripView] Trip privacy type:`, typeof trip.privacy);
+  console.log(`🔍 [PublicTripView] TripPrivacy enum values:`, TripPrivacy);
+  const privacyInfo = getTripPrivacyInfo(trip.privacy);
+  console.log(`🔍 [PublicTripView] Privacy info result:`, privacyInfo);
+
   // Get trip destinations and anonymize for public display
   const tripDestinations = useMemo(() => {
     const filteredDestinations = destinations.filter(dest => trip.destinations.includes(dest.id));
@@ -781,17 +832,18 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                 </h1>
                 
                 <div style={{
-                  background: 'rgba(16, 185, 129, 0.9)',
+                  background: privacyInfo.backgroundColor,
                   borderRadius: '8px',
                   padding: '4px 12px',
                   fontSize: '0.875rem',
                   fontWeight: '600',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px'
+                  gap: '6px',
+                  color: privacyInfo.color
                 }}>
-                  <Globe size={16} />
-                  Öffentliche Reise
+                  <privacyInfo.icon size={16} />
+                  {privacyInfo.label}
                 </div>
               </div>
               
