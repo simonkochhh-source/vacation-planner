@@ -117,10 +117,10 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
 
   const getFollowButtonIcon = () => {
     switch (followStatus) {
-      case 'none': return <UserPlus2 size={16} />;
+      case 'none': return <User size={16} />;
       case FollowStatus.PENDING: return <Clock size={16} />;
-      case FollowStatus.ACCEPTED: return <UserCheck2 size={16} />;
-      default: return <UserPlus2 size={16} />;
+      case FollowStatus.ACCEPTED: return <Check size={16} />;
+      default: return <User size={16} />;
     }
   };
 

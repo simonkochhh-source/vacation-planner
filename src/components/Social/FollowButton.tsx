@@ -98,11 +98,11 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     const iconSize = size === 'sm' ? 14 : size === 'lg' ? 18 : 16;
     
     switch (followStatus) {
-      case 'none': return <UserPlus2 size={iconSize} />;
+      case 'none': return <User size={iconSize} />;
       case FollowStatus.PENDING: return <Clock size={iconSize} />;
-      case FollowStatus.ACCEPTED: return <UserCheck2 size={iconSize} />;
-      case FollowStatus.DECLINED: return <UserPlus2 size={iconSize} />;
-      default: return <UserPlus2 size={iconSize} />;
+      case FollowStatus.ACCEPTED: return <Check size={iconSize} />;
+      case FollowStatus.DECLINED: return <User size={iconSize} />;
+      default: return <User size={iconSize} />;
     }
   };
 
