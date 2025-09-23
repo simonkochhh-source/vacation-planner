@@ -233,7 +233,7 @@ class SocialService implements SocialServiceInterface {
 
     if (error) throw new Error(`Failed to get followers: ${error.message}`);
     
-    return (data?.map(f => f.user_profiles).filter(Boolean) || []) as SocialUserProfile[];
+    return (data?.map(f => f.user_profiles).filter(Boolean) || []) as unknown as SocialUserProfile[];
   }
 
   /**
@@ -250,7 +250,7 @@ class SocialService implements SocialServiceInterface {
 
     if (error) throw new Error(`Failed to get following: ${error.message}`);
     
-    return (data?.map(f => f.user_profiles).filter(Boolean) || []) as SocialUserProfile[];
+    return (data?.map(f => f.user_profiles).filter(Boolean) || []) as unknown as SocialUserProfile[];
   }
 
   /**
@@ -316,7 +316,7 @@ class SocialService implements SocialServiceInterface {
     if (error) throw new Error(`Failed to get user activities: ${error.message}`);
 
     return this.enhanceActivityFeedItems(data?.map(activity => ({
-      id: activity.id,
+      activity_id: activity.id,
       user_id: activity.user_id,
       activity_type: activity.activity_type,
       title: activity.title,
