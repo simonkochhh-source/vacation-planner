@@ -56,8 +56,7 @@ const TripSelectionModal: React.FC<TripSelectionModalProps> = ({
         const query = searchQuery.toLowerCase();
         return (
           trip.name.toLowerCase().includes(query) ||
-          trip.description?.toLowerCase().includes(query) ||
-          trip.destinations?.some(d => d.name.toLowerCase().includes(query))
+          trip.description?.toLowerCase().includes(query)
         );
       }
       
