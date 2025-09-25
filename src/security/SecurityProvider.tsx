@@ -63,9 +63,11 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
   const validateEnvironment = () => {
     // Check for development vs production
     const isDevelopment = process.env.NODE_ENV === 'development';
+    const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
-    if (!isDevelopment) {
-      // Production security checks
+    // Only enforce security checks for actual production domains (not localhost)
+    if (!isDevelopment && !isLocalhost) {
+      // Production security checks - but only if we actually have an insecure connection
       if (!isSecureConnection) {
         console.error('🔒 SECURITY WARNING: Application running on insecure connection in production');
         reportViolation({
@@ -74,6 +76,9 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
           timestamp: new Date(),
           severity: 'critical'
         });
+      } else {
+        // Connection is secure, all good
+        console.log('🔒 Production security check passed - HTTPS connection verified');
       }
       
       // Check for exposed debug info
