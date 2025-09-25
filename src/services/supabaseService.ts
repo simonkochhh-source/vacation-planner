@@ -55,7 +55,7 @@ const convertSupabaseToDestination = (dest: SupabaseDestination): Destination =>
   } : undefined,
   notes: dest.notes || '',
   photos: dest.images || [],
-  bookingInfo: dest.booking_info || '',
+  bookingInfo: '',
   status: toDestinationStatus(dest.status),
   tags: dest.tags || [],
   color: dest.color || '#6b7280',
@@ -147,7 +147,6 @@ const convertDestinationToSupabase = async (dest: Partial<Destination>, tripId: 
     coordinates_lng: coordinatesLng,
     notes: dest.notes || null,
     images: dest.photos || null,
-    booking_info: dest.bookingInfo || null,
     // Status field omitted - let database use default value
     // This avoids the destinations_status_check constraint error
     tags: dest.tags || null,
@@ -203,7 +202,7 @@ export class SupabaseService {
       const { data, error } = await supabase
         .from('trips')
         .select('*')
-        .or(`user_id.eq.${userId},participants.cs.{${userId}}`)
+        .eq('user_id', userId)  // TEMPORARY: Only get user's own trips to fix JSON error
         .order('created_at', { ascending: false });
 
       // Handle case where table doesn't exist or data is null
@@ -650,7 +649,7 @@ export class SupabaseService {
     }
     if (updates.notes !== undefined) updateData.notes = updates.notes || null;
     if (updates.photos !== undefined) updateData.images = updates.photos || null;
-    if (updates.bookingInfo !== undefined) updateData.booking_info = updates.bookingInfo || null;
+    // booking_info column no longer exists in database
     // TEMPORARILY SKIP STATUS UPDATES to avoid constraint errors
     // TODO: Implement proper status handling once we know the correct format
     if (updates.status !== undefined) {

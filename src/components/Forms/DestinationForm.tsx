@@ -29,7 +29,7 @@ import {
   Compass,
   AlertCircle
 } from 'lucide-react';
-import LocationSearch from '../UI/LocationSearch';
+import EnhancedPlaceSearch from '../Search/EnhancedPlaceSearch';
 import MapSelectionModal from '../UI/MapSelectionModal';
 import Button from '../Common/Button';
 import Card from '../Common/Card';
@@ -365,19 +365,33 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
 
               {/* Location */}
               <div>
-                <LocationSearch
-                  label="Standort *"
+                <label style={{
+                  display: 'block',
+                  fontSize: '0.875rem',
+                  fontWeight: '500',
+                  color: 'var(--color-text-primary)',
+                  marginBottom: '0.5rem'
+                }}>
+                  Standort *
+                </label>
+                <EnhancedPlaceSearch
                   value={watch('location') || ''}
-                  onChange={(location, coords) => {
-                    setValue('location', location);
-                    if (coords) {
-                      setCoordinates(coords);
+                  onChange={(location) => setValue('location', location)}
+                  onPlaceSelect={(place) => {
+                    setValue('location', place.structured_formatting?.main_text || place.display_name);
+                    if (place.coordinates) {
+                      setCoordinates(place.coordinates);
                     }
                   }}
                   placeholder="z.B. Pariser Platz, 10117 Berlin"
-                  error={errors.location?.message}
-                  required
+                  showCategories={true}
                 />
+                {errors.location && (
+                  <div className="form-error">
+                    <AlertCircle size={14} />
+                    {errors.location.message}
+                  </div>
+                )}
                 
                 {/* Map Selection Button */}
                 <Button

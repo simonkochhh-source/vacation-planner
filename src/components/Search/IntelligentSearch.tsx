@@ -69,7 +69,6 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
       setIsLoadingDestinations(true);
       
       try {
-        console.log(`🔍 [IntelligentSearch] Loading accessible destinations from ${trips.length} trips`);
         
         const accessibleDestIds = new Set<string>();
         
@@ -78,17 +77,14 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
           const hasAccess = await canUserAccessTripAsync(trip, currentUser.id);
           
           if (hasAccess) {
-            console.log(`✅ [IntelligentSearch] Access granted to trip: "${trip.name}" (${trip.destinations.length} destinations)`);
             trip.destinations.forEach(destId => accessibleDestIds.add(destId));
           } else {
-            console.log(`❌ [IntelligentSearch] Access denied to trip: "${trip.name}"`);
           }
         }
         
         // Filter destinations to only include accessible ones
         const accessibleDests = destinations.filter(dest => accessibleDestIds.has(dest.id));
         
-        console.log(`📊 [IntelligentSearch] Accessible destinations: ${accessibleDests.length} of ${destinations.length} total`);
         setAccessibleDestinations(accessibleDests);
         
       } catch (error) {
@@ -123,8 +119,8 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
       }
     };
 
-    // Debounce user search
-    const timeoutId = setTimeout(searchUsers, 300);
+    // Debounce user search - reduced delay for better UX
+    const timeoutId = setTimeout(searchUsers, 150);
     return () => clearTimeout(timeoutId);
   }, [value]);
 
@@ -141,9 +137,6 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
         const searchTerm = value.toLowerCase();
         const matchingTrips: Trip[] = [];
         
-        console.log(`🔍 [Header Search] Searching for trips: "${searchTerm}"`);
-        console.log(`📊 [Header Search] Total trips: ${trips.length}`);
-        console.log(`👤 [Header Search] Current user: ${currentUser.id}`);
         
         // Search through all trips
         for (const trip of trips) {
@@ -155,15 +148,12 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
           
           if (!matchesSearch) continue;
           
-          console.log(`🎯 [Header Search] Found matching trip: "${trip.name}" (privacy: ${trip.privacy}, owner: ${trip.ownerId})`);
           
           // Check permissions
           const hasAccess = await canUserAccessTripAsync(trip, currentUser.id);
-          console.log(`🔐 [Header Search] Access check for "${trip.name}": ${hasAccess}`);
           
           if (hasAccess) {
             matchingTrips.push(trip);
-            console.log(`✅ [Header Search] Added: "${trip.name}"`);
             
             // Limit to 5 trips for performance
             if (matchingTrips.length >= 5) break;
@@ -188,7 +178,6 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
           return 0;
         });
         
-        console.log(`📋 [Header Search] Final trip results: ${sortedTrips.length}`);
         setTripSuggestions(sortedTrips);
       } catch (error) {
         console.error('Trip search failed:', error);
@@ -198,13 +187,16 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
       }
     };
 
-    const timeoutId = setTimeout(searchTrips, 300);
+    const timeoutId = setTimeout(searchTrips, 150);
     return () => clearTimeout(timeoutId);
   }, [value, trips, currentUser]);
 
   // Generate suggestions based on search query
   const generateSuggestions = useCallback((query: string): SearchSuggestion[] => {
-    if (!query.trim()) return [];
+    
+    if (!query.trim()) {
+      return [];
+    }
 
     const searchTerm = query.toLowerCase();
     const results: SearchSuggestion[] = [];
@@ -278,7 +270,13 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     onChange(newValue);
-    setIsOpen(true);
+    
+    // Open dropdown immediately if there's text
+    if (newValue.trim()) {
+      setIsOpen(true);
+    } else {
+      setIsOpen(false);
+    }
   };
 
   // Handle key navigation
@@ -338,14 +336,14 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
     }
   };
 
-  const handleBlur = (e: React.FocusEvent) => {
+  const handleBlur = () => {
     // Delay closing to allow clicks on suggestions
     setTimeout(() => {
       if (!dropdownRef.current?.contains(document.activeElement)) {
         setIsOpen(false);
         setHighlightedIndex(-1);
       }
-    }, 150);
+    }, 300); // Increased delay for better UX
   };
 
   return (

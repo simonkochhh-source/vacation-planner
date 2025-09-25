@@ -16,6 +16,8 @@ import LandingView from './components/Views/LandingView';
 import PhotosView from './components/Views/PhotosView';
 import UserProfileView from './components/Social/UserProfileView';
 import MyProfileView from './components/Profile/MyProfileView';
+import PlaceSearchDemo from './components/Views/PlaceSearchDemo';
+import QuickSearchTest from './components/Debug/QuickSearchTest';
 import { useTheme } from './hooks/useTheme';
 import { Destination } from './types';
 // import './utils/debugDashboard'; // Debug utilities disabled to prevent refresh loops
@@ -70,6 +72,8 @@ const AppContent: React.FC = () => {
         );
       case 'my-profile':
         return <MyProfileView />;
+      case 'place-search-demo':
+        return <PlaceSearchDemo />;
       case 'list':
       default:
         return (
@@ -94,6 +98,7 @@ const AppContent: React.FC = () => {
         </MainLayout>
       </DashboardLayout>
       <CookieConsent />
+      {/* <QuickSearchTest /> */}
     </div>
   );
 };

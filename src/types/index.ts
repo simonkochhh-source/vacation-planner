@@ -202,8 +202,8 @@ export interface SortOptions {
 
 // UI State types
 export interface UIState {
-  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing' | 'photos' | 'user-profile' | 'my-profile' | 'social-feed';
-  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing' | 'photos' | 'user-profile' | 'my-profile' | 'social-feed';
+  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing' | 'photos' | 'user-profile' | 'my-profile' | 'social-feed' | 'place-search-demo';
+  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing' | 'photos' | 'user-profile' | 'my-profile' | 'social-feed' | 'place-search-demo';
   activeDestination?: UUID;
   activeTripId?: UUID;
   filters: DestinationFilters;

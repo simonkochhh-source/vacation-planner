@@ -3,7 +3,7 @@ import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates, getTripPermissions, canUserEditTrip } from '../../types';
-import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
+import EnhancedPlaceSearch from '../Search/EnhancedPlaceSearch';
 import { PlacePrediction } from '../../services/openStreetMapService';
 import LeafletMapOnly from '../Maps/LeafletMapOnly';
 import MapErrorBoundary from '../Maps/MapErrorBoundary';
@@ -154,7 +154,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
   const [showMapPicker, setShowMapPicker] = useState(false);
 
-  // Removed complex search functionality - now using simple OpenStreetMapAutocomplete
+  // Removed complex search functionality - now using simple EnhancedPlaceSearch
   
   // Pre-defined styles for better performance
   const dropZoneStyles = useMemo(() => ({
@@ -2040,15 +2040,14 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   gridTemplateColumns: '1fr 1fr',
                   marginBottom: '1rem'
                 }}>
-                  <OpenStreetMapAutocomplete
-                    value={newDestinationForm.name}
-                    onChange={(value) => setNewDestinationForm(prev => ({ ...prev, name: value }))}
-                    onPlaceSelect={handlePlaceSelect}
-                    placeholder="Suche nach Zielen (z.B. 'Brandenburger Tor')"
-                    style={{
-                      gridColumn: '1 / -1'
-                    }}
-                  />
+                  <div style={{ gridColumn: '1 / -1' }}>
+                    <EnhancedPlaceSearch
+                      value={newDestinationForm.name}
+                      onChange={(value) => setNewDestinationForm(prev => ({ ...prev, name: value }))}
+                      onPlaceSelect={handlePlaceSelect}
+                      placeholder="Suche nach Zielen (z.B. 'Brandenburger Tor')"
+                    />
+                  </div>
                   
                   <div style={{
                     gridColumn: '1 / -1',
@@ -2759,7 +2758,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             />
                           </div>
                           
-                          {/* Search Results Removed - Using OpenStreetMapAutocomplete below */}
+                          {/* Search Results Removed - Using EnhancedPlaceSearch below */}
                           {false && (
                             <div style={{
                               position: 'absolute',
@@ -2839,7 +2838,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             gridColumn: '1 / -1',
                             marginBottom: '0.75rem'
                           }}>
-                            <OpenStreetMapAutocomplete
+                            <EnhancedPlaceSearch
                               value={newDestinationForm.location}
                               onChange={(value) => {
                                 setNewDestinationForm(prev => ({ 
@@ -2869,7 +2868,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 backgroundColor: newDestinationForm.coordinates ? 'var(--color-neutral-cream)' : 'var(--color-neutral-cream)',
                                 borderColor: newDestinationForm.coordinates ? 'var(--color-secondary-sky)' : 'var(--color-neutral-mist)'
                               }}
-                              readOnly={!!newDestinationForm.coordinates}
                             />
                             {/* Home Point Button */}
                             {settings.homePoint && (
@@ -3529,13 +3527,14 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                           gap: '1rem',
                           marginBottom: '1rem'
                         }}>
-                          <OpenStreetMapAutocomplete
-                            value={editForm.name}
-                            onChange={(value) => setEditForm(prev => ({ ...prev, name: value }))}
-                            onPlaceSelect={handleEditPlaceSelect}
-                            placeholder="Ziel-Name"
-                            style={{ gridColumn: '1 / -1' }}
-                          />
+                          <div style={{ gridColumn: '1 / -1' }}>
+                            <EnhancedPlaceSearch
+                              value={editForm.name}
+                              onChange={(value) => setEditForm(prev => ({ ...prev, name: value }))}
+                              onPlaceSelect={handleEditPlaceSelect}
+                              placeholder="Ziel-Name"
+                            />
+                          </div>
                           
                           <div style={{ position: 'relative' }}>
                             <input
@@ -3554,7 +3553,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 backgroundColor: editForm.coordinates ? 'var(--color-neutral-cream)' : 'var(--color-neutral-cream)',
                                 borderColor: editForm.coordinates ? 'var(--color-secondary-sky)' : 'var(--color-neutral-mist)'
                               }}
-                              readOnly={!!editForm.coordinates}
                             />
                             {/* Home Point Button */}
                             {settings.homePoint && (
@@ -4032,7 +4030,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             />
                           </div>
                           
-                          {/* Search Results Removed - Using OpenStreetMapAutocomplete below */}
+                          {/* Search Results Removed - Using EnhancedPlaceSearch below */}
                           {false && (
                             <div style={{
                               position: 'absolute',
@@ -4112,7 +4110,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             gridColumn: '1 / -1',
                             marginBottom: '0.75rem'
                           }}>
-                            <OpenStreetMapAutocomplete
+                            <EnhancedPlaceSearch
                               value={newDestinationForm.location}
                               onChange={(value) => {
                                 setNewDestinationForm(prev => ({ 
@@ -4142,7 +4140,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 backgroundColor: newDestinationForm.coordinates ? 'var(--color-neutral-cream)' : 'var(--color-neutral-cream)',
                                 borderColor: newDestinationForm.coordinates ? 'var(--color-secondary-sky)' : 'var(--color-neutral-mist)'
                               }}
-                              readOnly={!!newDestinationForm.coordinates}
                             />
                             {/* Home Point Button */}
                             {settings.homePoint && (

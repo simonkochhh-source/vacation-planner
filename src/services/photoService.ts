@@ -33,6 +33,7 @@ export interface TripPhoto {
   file_size: number;
   file_type: string;
   storage_path: string;
+  photo_url: string; // Public URL stored in database
   caption?: string;
   location_name?: string;
   coordinates?: Coordinates;
@@ -41,7 +42,7 @@ export interface TripPhoto {
   privacy_approved_at?: string;
   created_at: string;
   updated_at: string;
-  url?: string; // Computed public URL
+  url?: string; // Computed public URL (for backward compatibility)
 }
 
 export interface PhotoUploadOptions {
@@ -393,6 +394,9 @@ export class PhotoService {
         throw new Error(`Failed to upload photo: ${uploadError.message}`);
       }
 
+      // Generate the public URL for the uploaded photo
+      const photoUrl = this.getSupabasePublicUrl(storagePath);
+
       // Create database record
       const photoData = {
         trip_id: tripId,
@@ -402,6 +406,7 @@ export class PhotoService {
         file_size: file.size,
         file_type: file.type,
         storage_path: storagePath,
+        photo_url: photoUrl,
         caption,
         location_name: locationName,
         coordinates: coordinates ? JSON.stringify(coordinates) : null,

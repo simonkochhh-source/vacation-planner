@@ -40,6 +40,11 @@ class OpenStreetMapService {
 
   constructor() {
     this.useMockData = process.env.REACT_APP_USE_MOCK_PLACES === 'true';
+    console.log('🚀 OpenStreetMapService initialized:', {
+      REACT_APP_USE_MOCK_PLACES: process.env.REACT_APP_USE_MOCK_PLACES,
+      useMockData: this.useMockData,
+      NODE_ENV: process.env.NODE_ENV
+    });
   }
 
   // Search for places using Nominatim API
@@ -93,14 +98,19 @@ class OpenStreetMapService {
       });
 
       console.log('openStreetMapService: Response status:', response.status);
+      console.log('openStreetMapService: Response headers:', Object.fromEntries(response.headers.entries()));
       
       if (!response.ok) {
-        console.warn('Nominatim search failed, falling back to mock data');
+        const responseText = await response.text();
+        console.warn('Nominatim search failed:', response.status, response.statusText);
+        console.warn('Response body:', responseText);
+        console.warn('Falling back to mock data');
         return this.getMockPredictions(query);
       }
 
       const data = await response.json();
       console.log('openStreetMapService: Response data:', data);
+      console.log('openStreetMapService: Number of results:', data.length);
       
       return data.map((place: any): PlacePrediction => ({
         place_id: place.place_id.toString(),
@@ -118,7 +128,10 @@ class OpenStreetMapService {
         }
       }));
     } catch (error) {
-      console.warn('Nominatim API error, falling back to mock data:', error);
+      console.error('🚨 Nominatim API error:', error);
+      console.error('Error type:', error instanceof Error ? error.name : typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : error);
+      console.warn('Falling back to mock data for query:', query);
       return this.getMockPredictions(query);
     }
   }

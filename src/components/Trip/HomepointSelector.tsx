@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Home, MapPin, Check, X } from 'lucide-react';
 import { Destination, Coordinates } from '../../types';
-import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
-import { PlacePrediction } from '../../services/openStreetMapService';
+import EnhancedPlaceSearch from '../Search/EnhancedPlaceSearch';
+import { enhancedOpenStreetMapService } from '../../services/enhancedOpenStreetMapService';
 
 interface HomepointSelectorProps {
   /** Optional homepoint destination from copied trip */
@@ -48,8 +48,8 @@ const HomepointSelector: React.FC<HomepointSelectorProps> = ({
     }
   };
 
-  const handleCustomPlaceSelect = (place: PlacePrediction) => {
-    setCustomLocation(place.display_name);
+  const handleCustomPlaceSelect = (place: any) => {
+    setCustomLocation(place.structured_formatting.main_text);
     setCustomCoordinates(place.coordinates);
   };
 
@@ -235,12 +235,13 @@ const HomepointSelector: React.FC<HomepointSelectorProps> = ({
           
           {selectedOption === 'custom' && (
             <div style={{ marginLeft: '2.75rem' }}>
-              <OpenStreetMapAutocomplete
+              <EnhancedPlaceSearch
                 value={customLocation}
                 onChange={setCustomLocation}
                 onPlaceSelect={handleCustomPlaceSelect}
-                placeholder="Suche nach einem Ort..."
-                style={{ width: '100%' }}
+                placeholder="Suche nach Ihrer Adresse..."
+                showCategories={false}
+                className="w-full"
               />
             </div>
           )}

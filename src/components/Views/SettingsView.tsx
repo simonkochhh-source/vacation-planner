@@ -3,8 +3,8 @@ import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { AppSettings, TransportMode, FuelType, Coordinates } from '../../types';
-import OpenStreetMapAutocomplete from '../Forms/OpenStreetMapAutocomplete';
-import { PlacePrediction } from '../../services/openStreetMapService';
+import EnhancedPlaceSearch from '../Search/EnhancedPlaceSearch';
+import { enhancedOpenStreetMapService } from '../../services/enhancedOpenStreetMapService';
 import UserProfileManager from '../User/UserProfileManager';
 import {
   Settings, Globe, Palette, MapPin, Car, Bell, Download,
@@ -1785,10 +1785,10 @@ const HomePointConfigurator: React.FC<{
     coordinates: currentHomePoint?.coordinates
   });
 
-  const handlePlaceSelect = (place: PlacePrediction) => {
+  const handlePlaceSelect = (place: any) => {
     setHomePointForm({
       name: 'Home', // Always name homepoint as "Home" for privacy
-      address: place.display_name,
+      address: place.formattedAddress || place.display_name,
       coordinates: place.coordinates
     });
   };
@@ -1875,12 +1875,13 @@ const HomePointConfigurator: React.FC<{
         }}>
           Adresse oder Ort suchen
         </label>
-        <OpenStreetMapAutocomplete
+        <EnhancedPlaceSearch
           value={homePointForm.address}
           onChange={(value) => setHomePointForm(prev => ({ ...prev, address: value }))}
           onPlaceSelect={handlePlaceSelect}
           placeholder="Suche nach Ihrer Adresse..."
-          style={{ width: '100%' }}
+          showCategories={false}
+          className="w-full"
         />
       </div>
 
