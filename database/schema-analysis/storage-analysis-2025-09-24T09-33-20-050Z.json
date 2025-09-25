@@ -1,0 +1,31 @@
+{
+  "timestamp": "2025-09-24T09:33:19.453Z",
+  "production": {
+    "url": "https://kyzbtkkprvegzgzrlhez.supabase.co",
+    "buckets": [],
+    "rls_policies": [],
+    "error": {
+      "name": "StorageApiError",
+      "message": "Invalid Compact JWS",
+      "status": 400,
+      "statusCode": "403"
+    }
+  },
+  "dev": {
+    "url": "https://lsztvtauiapnhqplapgb.supabase.co",
+    "buckets": [],
+    "rls_policies": [],
+    "error": {
+      "name": "StorageApiError",
+      "message": "Invalid Compact JWS",
+      "status": 400,
+      "statusCode": "403"
+    }
+  },
+  "analysis": {
+    "buckets_match": true,
+    "missing_in_dev": [],
+    "missing_in_prod": [],
+    "policy_differences": []
+  }
+}

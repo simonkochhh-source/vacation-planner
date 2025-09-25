@@ -1,0 +1,72 @@
+# Docker Compose für Vacation Planner Development
+# Dieses Setup ermöglicht lokale Supabase Entwicklung mit vollständiger Kontrolle
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database für lokale Entwicklung
+  postgres:
+    image: postgres:15
+    container_name: vacation-planner-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: vacation_planner
+      POSTGRES_USER: supabase_admin
+      POSTGRES_PASSWORD: your_super_secret_jwt_token_with_at_least_32_characters_long
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database:/docker-entrypoint-initdb.d
+    networks:
+      - vacation-planner-network
+
+  # Supabase API Gateway (optional für vollständige lokale Entwicklung)
+  supabase:
+    image: supabase/gotrue:latest
+    container_name: vacation-planner-auth
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://supabase_admin:your_super_secret_jwt_token_with_at_least_32_characters_long@postgres:5432/vacation_planner?sslmode=disable
+      GOTRUE_SITE_URL: http://localhost:3001
+      GOTRUE_URI_ALLOW_LIST: http://localhost:3001
+      GOTRUE_JWT_SECRET: your_super_secret_jwt_token_with_at_least_32_characters_long
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_EXTERNAL_GOOGLE_ENABLED: true
+      GOTRUE_EXTERNAL_GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOTRUE_EXTERNAL_GOOGLE_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOTRUE_EXTERNAL_GOOGLE_REDIRECT_URI: http://localhost:3001/auth/callback
+    ports:
+      - "9999:9999"
+    networks:
+      - vacation-planner-network
+
+  # Adminer für Database Management (optional)
+  adminer:
+    image: adminer:latest
+    container_name: vacation-planner-adminer
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha
+    ports:
+      - "8080:8080"
+    networks:
+      - vacation-planner-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  vacation-planner-network:
+    driver: bridge

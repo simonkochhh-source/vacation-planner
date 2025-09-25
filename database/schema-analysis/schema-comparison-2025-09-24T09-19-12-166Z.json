@@ -1,0 +1,30 @@
+{
+  "timestamp": "2025-09-24T09:19:12.696Z",
+  "production": {
+    "database": "production",
+    "timestamp": "2025-09-24T09:19:12.177Z",
+    "tables": {},
+    "indexes": [],
+    "policies": [],
+    "functions": [],
+    "storage_buckets": []
+  },
+  "dev": {
+    "database": "dev",
+    "timestamp": "2025-09-24T09:19:12.442Z",
+    "tables": {},
+    "indexes": [],
+    "policies": [],
+    "functions": [],
+    "storage_buckets": []
+  },
+  "differences": {
+    "missing_tables_in_dev": [],
+    "extra_tables_in_dev": [],
+    "table_differences": {},
+    "storage_differences": {
+      "missing_buckets_in_dev": [],
+      "extra_buckets_in_dev": []
+    }
+  }
+}

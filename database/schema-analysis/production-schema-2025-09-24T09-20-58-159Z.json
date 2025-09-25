@@ -1,0 +1,170 @@
+{
+  "database": "production",
+  "timestamp": "2025-09-24T09:20:58.170Z",
+  "tables": {
+    "users": {
+      "row_count": 1,
+      "exists": true,
+      "sample_record": {
+        "id": "2b0d0227-050a-42c2-962c-476274c0a1b7",
+        "email": "simon.koch.hh@googlemail.com",
+        "nickname": "Trailkeeper",
+        "display_name": "Simon Koch",
+        "avatar_url": "https://kyzbtkkprvegzgzrlhez.supabase.co/storage/v1/object/public/avatars/2b0d0227-050a-42c2-962c-476274c0a1b7/1758570460628.JPG",
+        "language": "de",
+        "timezone": "Europe/Berlin",
+        "is_profile_public": true,
+        "allow_friend_requests": true,
+        "allow_trip_invitations": true,
+        "is_active": true,
+        "is_verified": true,
+        "last_seen_at": null,
+        "created_at": "2025-09-21T21:02:30.539242+00:00",
+        "updated_at": "2025-09-23T05:28:42.713233+00:00"
+      },
+      "columns": [
+        "id",
+        "email",
+        "nickname",
+        "display_name",
+        "avatar_url",
+        "language",
+        "timezone",
+        "is_profile_public",
+        "allow_friend_requests",
+        "allow_trip_invitations",
+        "is_active",
+        "is_verified",
+        "last_seen_at",
+        "created_at",
+        "updated_at"
+      ]
+    },
+    "user_profiles": {
+      "row_count": 2,
+      "exists": true,
+      "sample_record": {
+        "id": "9c26f983-07ed-4f5b-a1bd-4c4615480f75",
+        "nickname": "vivienpuetter",
+        "display_name": "Vivien Puetter",
+        "bio": null,
+        "avatar_url": null,
+        "email": "vivienpuetter@gmail.com",
+        "location": null,
+        "website": null,
+        "social_links": {},
+        "is_public_profile": true,
+        "follower_count": 0,
+        "following_count": 0,
+        "trip_count": 0,
+        "created_at": "2025-09-23T06:06:33.232302+00:00",
+        "updated_at": "2025-09-23T06:39:49.573439+00:00",
+        "is_verified": true
+      },
+      "columns": [
+        "id",
+        "nickname",
+        "display_name",
+        "bio",
+        "avatar_url",
+        "email",
+        "location",
+        "website",
+        "social_links",
+        "is_public_profile",
+        "follower_count",
+        "following_count",
+        "trip_count",
+        "created_at",
+        "updated_at",
+        "is_verified"
+      ]
+    },
+    "destinations": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    },
+    "trips": {
+      "row_count": 1,
+      "exists": true,
+      "sample_record": {
+        "id": "b758e9b3-e655-4c94-8da9-c02bda2090f0",
+        "name": "Bretagne",
+        "description": "Eine schöne Tour aus dem Ruhegebiet direkt ins Herzen der Bretagne",
+        "start_date": "2025-08-29",
+        "end_date": "2025-09-14",
+        "budget": 1100,
+        "participants": [],
+        "status": "planned",
+        "created_at": "2025-09-23T19:28:18.863858+00:00",
+        "updated_at": "2025-09-23T19:28:18.863858+00:00",
+        "user_id": "2b0d0227-050a-42c2-962c-476274c0a1b7",
+        "privacy": "private",
+        "owner_id": "2b0d0227-050a-42c2-962c-476274c0a1b7",
+        "tagged_users": [],
+        "tags": []
+      },
+      "columns": [
+        "id",
+        "name",
+        "description",
+        "start_date",
+        "end_date",
+        "budget",
+        "participants",
+        "status",
+        "created_at",
+        "updated_at",
+        "user_id",
+        "privacy",
+        "owner_id",
+        "tagged_users",
+        "tags"
+      ]
+    },
+    "trip_photos": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    },
+    "user_activities": {
+      "row_count": 9,
+      "exists": true,
+      "sample_record": {
+        "id": "21fd8f53-a408-45f8-92c7-7613cbf846a9",
+        "user_id": "2b0d0227-050a-42c2-962c-476274c0a1b7",
+        "activity_type": "trip_created",
+        "related_trip_id": "b758e9b3-e655-4c94-8da9-c02bda2090f0",
+        "related_destination_id": null,
+        "metadata": {
+          "trip_name": "Bretagne",
+          "related_trip_id": "b758e9b3-e655-4c94-8da9-c02bda2090f0"
+        },
+        "title": "Neue Reise \"Bretagne\" geplant",
+        "description": "hat eine neue Reise nach unbekanntes Ziel geplant",
+        "created_at": "2025-09-23T19:28:18.953+00:00"
+      },
+      "columns": [
+        "id",
+        "user_id",
+        "activity_type",
+        "related_trip_id",
+        "related_destination_id",
+        "metadata",
+        "title",
+        "description",
+        "created_at"
+      ]
+    },
+    "follows": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    }
+  },
+  "indexes": [],
+  "policies": [],
+  "functions": [],
+  "storage_buckets": []
+}

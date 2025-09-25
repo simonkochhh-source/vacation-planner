@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-09-24T09:37:24.346Z",
+  "production": {
+    "buckets": [],
+    "bucket_policies": [],
+    "rls_policies": [],
+    "migrations": [],
+    "errors": [
+      "buckets: Invalid API key",
+      "policies: Invalid API key",
+      "rls_policies_exception: client.rpc(...).catch is not a function",
+      "exception: client.from(...).select(...).or(...).catch is not a function"
+    ]
+  },
+  "dev": {
+    "buckets": [],
+    "bucket_policies": [],
+    "rls_policies": [],
+    "migrations": [],
+    "errors": [
+      "buckets: Invalid API key",
+      "policies: Invalid API key",
+      "rls_policies_exception: client.rpc(...).catch is not a function",
+      "exception: client.from(...).select(...).or(...).catch is not a function"
+    ]
+  },
+  "analysis": {
+    "buckets_match": true,
+    "missing_in_dev": [],
+    "missing_in_prod": [],
+    "recommendations": [
+      "No storage buckets found in either environment",
+      "Consider creating common vacation planner buckets: avatars, trip-photos, destination-images, documents"
+    ]
+  }
+}

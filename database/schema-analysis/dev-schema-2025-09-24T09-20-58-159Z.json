@@ -1,0 +1,44 @@
+{
+  "database": "dev",
+  "timestamp": "2025-09-24T09:21:00.155Z",
+  "tables": {
+    "users": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    },
+    "user_profiles": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    },
+    "destinations": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    },
+    "trips": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    },
+    "trip_photos": {
+      "row_count": 0,
+      "exists": true
+    },
+    "user_activities": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    },
+    "follows": {
+      "row_count": 0,
+      "exists": true,
+      "columns": []
+    }
+  },
+  "indexes": [],
+  "policies": [],
+  "functions": [],
+  "storage_buckets": []
+}

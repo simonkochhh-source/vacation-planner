@@ -1,0 +1,12 @@
+
+  
+   Name                   | Table size | Index size | Total size | Estimated row count | Seq scans 
+  ------------------------|------------|------------|------------|---------------------|-----------
+   public.destinations    | 48 kB      | 96 kB      | 144 kB     | 8                   | 7454      
+   public.users           | 16 kB      | 112 kB     | 128 kB     | 1                   | 56        
+   public.trip_photos     | 16 kB      | 112 kB     | 128 kB     | 0                   | 114       
+   public.user_profiles   | 16 kB      | 96 kB      | 112 kB     | 2                   | 227       
+   public.trips           | 16 kB      | 80 kB      | 96 kB      | 1                   | 7278      
+   public.user_activities | 16 kB      | 64 kB      | 80 kB      | 9                   | 15        
+   public.follows         | 0 bytes    | 40 kB      | 40 kB      | 0                   | 16        
+
