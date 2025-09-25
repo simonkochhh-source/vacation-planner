@@ -56,19 +56,22 @@ export const SecurityProvider: React.FC<SecurityProviderProps> = ({ children }) 
     // Log security check
     setLastSecurityCheck(new Date());
     
-    // Additional security validations
-    validateEnvironment();
+    // Additional security validations (pass the current HTTPS state)
+    validateEnvironment(isHTTPS);
   };
 
-  const validateEnvironment = () => {
+  const validateEnvironment = (currentIsHTTPS?: boolean) => {
     // Check for development vs production
     const isDevelopment = process.env.NODE_ENV === 'development';
     const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
     
+    // Use the passed parameter or state (prioritize passed parameter for immediate checks)
+    const actualSecureState = currentIsHTTPS !== undefined ? currentIsHTTPS : isSecureConnection;
+    
     // Only enforce security checks for actual production domains (not localhost)
     if (!isDevelopment && !isLocalhost) {
       // Production security checks - but only if we actually have an insecure connection
-      if (!isSecureConnection) {
+      if (!actualSecureState) {
         console.error('🔒 SECURITY WARNING: Application running on insecure connection in production');
         reportViolation({
           type: 'unauthorized',
