@@ -11,6 +11,7 @@ interface EnhancedPlaceSearchProps {
   searchNear?: Coordinates;
   searchRadius?: number;
   className?: string;
+  style?: React.CSSProperties;
   disabled?: boolean;
   showCategories?: boolean;
   autoFocus?: boolean;
