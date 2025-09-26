@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MapPin, Calendar, Heart, MessageCircle, Plane, Star, Clock, User } from 'lucide-react';
+import { Users, MapPin, Heart, Plane, Star, User } from 'lucide-react';
 import { ActivityFeedItem, ActivityType } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -44,18 +44,28 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
     }
   };
 
+  // Filter out destination/planning activities and focus on sharing
+  const filteredActivities = activities.filter(activity => {
+    const shareableTypes = [
+      ActivityType.TRIP_PUBLISHED,
+      ActivityType.TRIP_SHARED, 
+      ActivityType.TRIP_COMPLETED,
+      ActivityType.PHOTO_UPLOADED,
+      ActivityType.USER_FOLLOWED
+    ];
+    return shareableTypes.includes(activity.activity_type as ActivityType);
+  });
+
   const getActivityIcon = (type: ActivityType) => {
     switch (type) {
-      case ActivityType.TRIP_PLANNED:
-        return <Calendar size={16} style={{ color: '#3b82f6' }} />;
-      case ActivityType.TRIP_STARTED:
+      case ActivityType.TRIP_PUBLISHED:
         return <Plane size={16} style={{ color: '#10b981' }} />;
+      case ActivityType.TRIP_SHARED:
+        return <Users size={16} style={{ color: '#3b82f6' }} />;
       case ActivityType.TRIP_COMPLETED:
         return <Star size={16} style={{ color: '#f59e0b' }} />;
-      case ActivityType.DESTINATION_VISITED:
+      case ActivityType.PHOTO_UPLOADED:
         return <MapPin size={16} style={{ color: '#ef4444' }} />;
-      case ActivityType.DESTINATION_PLANNED:
-        return <MapPin size={16} style={{ color: '#6b7280' }} />;
       case ActivityType.USER_FOLLOWED:
         return <Users size={16} style={{ color: '#8b5cf6' }} />;
       default:
@@ -65,36 +75,31 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
 
   const getActivityText = (activity: ActivityFeedItem) => {
     const userName = activity.user_nickname || 'Ein Nutzer';
+    const tripName = activity.trip_name || activity.related_data?.tripName || 'eine Reise';
     
     switch (activity.activity_type) {
-      case ActivityType.TRIP_PLANNED:
+      case ActivityType.TRIP_PUBLISHED:
         return (
           <span>
-            <strong>{userName}</strong> plant eine Reise nach <strong>{activity.related_data?.tripName || 'unbekanntes Ziel'}</strong>
+            <strong>{userName}</strong> hat die Reise <strong>"{tripName}"</strong> öffentlich gemacht
           </span>
         );
-      case ActivityType.TRIP_STARTED:
+      case ActivityType.TRIP_SHARED:
         return (
           <span>
-            <strong>{userName}</strong> hat die Reise nach <strong>{activity.related_data?.tripName}</strong> begonnen
+            <strong>{userName}</strong> hat die Reise <strong>"{tripName}"</strong> mit Kontakten geteilt
           </span>
         );
       case ActivityType.TRIP_COMPLETED:
         return (
           <span>
-            <strong>{userName}</strong> hat die Reise nach <strong>{activity.related_data?.tripName}</strong> abgeschlossen
+            <strong>{userName}</strong> hat die Reise <strong>"{tripName}"</strong> abgeschlossen
           </span>
         );
-      case ActivityType.DESTINATION_VISITED:
+      case ActivityType.PHOTO_UPLOADED:
         return (
           <span>
-            <strong>{userName}</strong> war in <strong>{activity.related_data?.destinationName}</strong>
-          </span>
-        );
-      case ActivityType.DESTINATION_PLANNED:
-        return (
-          <span>
-            <strong>{userName}</strong> möchte <strong>{activity.related_data?.destinationName}</strong> besuchen
+            <strong>{userName}</strong> hat Fotos von <strong>"{tripName}"</strong> hochgeladen
           </span>
         );
       case ActivityType.USER_FOLLOWED:
@@ -196,14 +201,14 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
             gap: 'var(--space-sm)'
           }}>
             <Users size={compact ? 18 : 20} style={{ color: 'var(--color-primary-ocean)' }} />
-            Community Aktivitäten
+            Geteilte Reisen
           </h3>
           <p style={{
             margin: 'var(--space-xs) 0 0 0',
             fontSize: 'var(--text-sm)',
             color: 'var(--color-text-secondary)'
           }}>
-            Entdecke, was deine Community gerade plant und erlebt
+            Entdecke veröffentlichte Reisen aus deinem Netzwerk
           </p>
         </div>
       )}
@@ -252,7 +257,7 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
               Erneut versuchen
             </button>
           </div>
-        ) : activities.length === 0 ? (
+        ) : filteredActivities.length === 0 ? (
           <div style={{
             padding: compact ? 'var(--space-lg)' : 'var(--space-2xl)',
             textAlign: 'center',
@@ -263,14 +268,14 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
               display: 'block',
               opacity: 0.5
             }} />
-            <p>Noch keine Aktivitäten verfügbar</p>
+            <p>Noch keine geteilten Reisen verfügbar</p>
             <p style={{ fontSize: 'var(--text-sm)', marginTop: 'var(--space-xs)' }}>
-              Folge anderen Nutzern, um ihre Reiseaktivitäten zu sehen
+              Folge anderen Nutzern, um ihre veröffentlichten Reisen zu sehen
             </p>
           </div>
         ) : (
           <div>
-            {activities.map((activity, index) => (
+            {filteredActivities.map((activity, index) => (
               <div
                 key={`${activity.id}-${index}`}
                 onClick={() => handleActivityClick(activity)}

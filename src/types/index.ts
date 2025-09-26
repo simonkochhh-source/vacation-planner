@@ -498,16 +498,20 @@ export enum FollowStatus {
 
 // Activity types for the social feed
 export enum ActivityType {
+  // Sharing-focused activities
+  TRIP_PUBLISHED = 'trip_published', // When someone makes their trip public
+  TRIP_SHARED = 'trip_shared', // When someone shares trip with contacts
+  TRIP_COMPLETED = 'trip_completed', // When someone completes a trip
+  PHOTO_UPLOADED = 'photo_uploaded', // When someone uploads trip photos
+  USER_FOLLOWED = 'user_followed', // When someone follows/gets followed
+  
+  // Legacy - kept for backward compatibility but filtered out
   TRIP_CREATED = 'trip_created',
-  TRIP_PLANNED = 'trip_created', // Alias for trip creation
+  TRIP_PLANNED = 'trip_created',
   TRIP_STARTED = 'trip_started',
-  TRIP_COMPLETED = 'trip_completed',
   DESTINATION_VISITED = 'destination_visited',
-  DESTINATION_PLANNED = 'destination_added', // Alias for destination planning
-  DESTINATION_ADDED = 'destination_added',
-  PHOTO_UPLOADED = 'photo_uploaded',
-  TRIP_SHARED = 'trip_shared',
-  USER_FOLLOWED = 'user_followed'
+  DESTINATION_PLANNED = 'destination_added',
+  DESTINATION_ADDED = 'destination_added'
 }
 
 // Follow relationship interface

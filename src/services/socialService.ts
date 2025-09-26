@@ -558,6 +558,46 @@ class SocialService implements SocialServiceInterface {
       }
     });
   }
+
+  /**
+   * Create sharing-focused activities (new approach)
+   * This is the new method for creating trip sharing activities that focus on publication/sharing events
+   */
+  async createTripSharingActivity(
+    activityType: ActivityType.TRIP_PUBLISHED | ActivityType.TRIP_SHARED | ActivityType.TRIP_COMPLETED,
+    tripId: UUID,
+    tripName: string,
+    additionalMetadata: Record<string, any> = {}
+  ): Promise<UserActivity> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    const titles = {
+      [ActivityType.TRIP_PUBLISHED]: `"${tripName}" veröffentlicht`,
+      [ActivityType.TRIP_SHARED]: `"${tripName}" geteilt`,
+      [ActivityType.TRIP_COMPLETED]: `"${tripName}" abgeschlossen`
+    };
+
+    const descriptions = {
+      [ActivityType.TRIP_PUBLISHED]: `hat die Reise öffentlich gemacht`,
+      [ActivityType.TRIP_SHARED]: `hat die Reise mit Kontakten geteilt`, 
+      [ActivityType.TRIP_COMPLETED]: `hat die Reise erfolgreich abgeschlossen`
+    };
+
+    return this.createActivity({
+      user_id: user.id,
+      activity_type: activityType,
+      related_trip_id: tripId,
+      title: titles[activityType],
+      description: descriptions[activityType],
+      metadata: {
+        trip_name: tripName,
+        related_trip_id: tripId,
+        privacy_change: activityType === ActivityType.TRIP_PUBLISHED,
+        ...additionalMetadata
+      }
+    });
+  }
 }
 
 // Export singleton instance
