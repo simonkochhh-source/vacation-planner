@@ -203,11 +203,11 @@ class EnhancedOpenStreetMapService {
 
       // Filter by category if specified
       if (options.category) {
-        enhancedResults = enhancedResults.filter(result => result.category === options.category);
+        enhancedResults = enhancedResults.filter((result: EnhancedPlacePrediction) => result.category === options.category);
       }
 
       // Sort by relevance and distance
-      enhancedResults.sort((a, b) => {
+      enhancedResults.sort((a: EnhancedPlacePrediction, b: EnhancedPlacePrediction) => {
         // Prioritize relevance score
         const relevanceDiff = (b.relevance_score || 0) - (a.relevance_score || 0);
         if (Math.abs(relevanceDiff) > 0.1) {
@@ -357,7 +357,7 @@ class EnhancedOpenStreetMapService {
     // Query words match
     const queryWords = queryLower.split(' ');
     const nameWords = name.split(' ');
-    const matchingWords = queryWords.filter(qw => nameWords.some(nw => nw.includes(qw))).length;
+    const matchingWords = queryWords.filter((qw: string) => nameWords.some((nw: string) => nw.includes(qw))).length;
     score += matchingWords * 20;
     
     // Importance boost (from OSM data)
@@ -595,11 +595,11 @@ class EnhancedOpenStreetMapService {
   // Cleanup method to clear old cache entries
   private cleanupCache() {
     const now = Date.now();
-    for (const [key, value] of this.requestCache.entries()) {
+    this.requestCache.forEach((value, key) => {
       if (now - value.timestamp > this.cacheTimeout) {
         this.requestCache.delete(key);
       }
-    }
+    });
   }
 }
 

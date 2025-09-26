@@ -24,6 +24,7 @@ export interface PlacePrediction {
   type: string;
   class: string;
   coordinates: Coordinates;
+  importance?: number;
 }
 
 export interface SearchOptions {
