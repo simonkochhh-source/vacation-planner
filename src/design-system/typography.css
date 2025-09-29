@@ -1,0 +1,292 @@
+/**
+ * Typography System
+ * Based on SF Pro (iOS) / Roboto (Android) / Segoe UI (Windows)
+ * Following Material 3 and Apple HIG guidelines
+ */
+
+/* ===== FONT LOADING ===== */
+
+/* SF Pro Display for Apple-like experience */
+@font-face {
+  font-family: 'SF Pro Display';
+  src: local('SF Pro Display'), local('SFProDisplay-Regular');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: local('SF Pro Display Medium'), local('SFProDisplay-Medium');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'SF Pro Display';
+  src: local('SF Pro Display Semibold'), local('SFProDisplay-Semibold');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ===== TYPOGRAPHY SCALE ===== */
+
+/* Display Styles - Large headlines */
+.text-display-large {
+  font-family: var(--font-family-system);
+  font-size: clamp(36px, 4vw, 57px);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-tight);
+  letter-spacing: -0.25px;
+  color: var(--color-on-surface);
+}
+
+.text-display-medium {
+  font-family: var(--font-family-system);
+  font-size: clamp(32px, 3.5vw, 45px);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-tight);
+  letter-spacing: 0px;
+  color: var(--color-on-surface);
+}
+
+.text-display-small {
+  font-family: var(--font-family-system);
+  font-size: clamp(28px, 3vw, 36px);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-snug);
+  letter-spacing: 0px;
+  color: var(--color-on-surface);
+}
+
+/* Headline Styles - Section headers */
+.text-headline-large {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: 0px;
+  color: var(--color-on-surface);
+}
+
+.text-headline-medium {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-snug);
+  letter-spacing: 0px;
+  color: var(--color-on-surface);
+}
+
+.text-headline-small {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-snug);
+  letter-spacing: 0px;
+  color: var(--color-on-surface);
+}
+
+/* Title Styles - Card headers, dialog titles */
+.text-title-large {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--line-height-normal);
+  letter-spacing: 0px;
+  color: var(--color-on-surface);
+}
+
+.text-title-medium {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  letter-spacing: 0.15px;
+  color: var(--color-on-surface);
+}
+
+.text-title-small {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  letter-spacing: 0.1px;
+  color: var(--color-on-surface);
+}
+
+/* Body Styles - Main content */
+.text-body-large {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-relaxed);
+  letter-spacing: 0.5px;
+  color: var(--color-on-surface);
+}
+
+.text-body-medium {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  letter-spacing: 0.25px;
+  color: var(--color-on-surface);
+}
+
+.text-body-small {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  letter-spacing: 0.4px;
+  color: var(--color-on-surface-variant);
+}
+
+/* Label Styles - Buttons, form labels */
+.text-label-large {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  letter-spacing: 0.1px;
+  color: var(--color-on-surface);
+}
+
+.text-label-medium {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-normal);
+  letter-spacing: 0.5px;
+  color: var(--color-on-surface);
+}
+
+.text-label-small {
+  font-family: var(--font-family-system);
+  font-size: 11px;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-tight);
+  letter-spacing: 0.5px;
+  color: var(--color-on-surface-variant);
+}
+
+/* ===== SEMANTIC TEXT STYLES ===== */
+
+.text-error {
+  color: var(--color-error-50);
+}
+
+.text-success {
+  color: var(--color-success-50);
+}
+
+.text-warning {
+  color: var(--color-warning-50);
+}
+
+.text-muted {
+  color: var(--color-on-surface-variant);
+}
+
+.text-primary {
+  color: var(--color-primary);
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+.text-center {
+  text-align: center;
+}
+
+.text-left {
+  text-align: left;
+}
+
+.text-right {
+  text-align: right;
+}
+
+.text-uppercase {
+  text-transform: uppercase;
+}
+
+.text-lowercase {
+  text-transform: lowercase;
+}
+
+.text-capitalize {
+  text-transform: capitalize;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-break {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+/* ===== RESPONSIVE TEXT SCALING ===== */
+
+/* Adjust font sizes for smaller screens */
+@media (max-width: 768px) {
+  .text-display-large {
+    font-size: clamp(28px, 6vw, 40px);
+  }
+  
+  .text-display-medium {
+    font-size: clamp(24px, 5vw, 32px);
+  }
+  
+  .text-display-small {
+    font-size: clamp(20px, 4vw, 28px);
+  }
+  
+  .text-headline-large {
+    font-size: clamp(24px, 4vw, 28px);
+  }
+  
+  .text-headline-medium {
+    font-size: clamp(20px, 3.5vw, 24px);
+  }
+}
+
+/* ===== ACCESSIBILITY ENHANCEMENTS ===== */
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .text-body-large,
+  .text-body-medium,
+  .text-title-large,
+  .text-title-medium,
+  .text-headline-large,
+  .text-headline-medium {
+    color: var(--color-on-surface);
+    font-weight: var(--font-weight-semibold);
+  }
+}
+
+/* Large text support */
+@media (min-resolution: 2dppx) {
+  .text-body-large,
+  .text-body-medium,
+  .text-body-small {
+    letter-spacing: 0.25px;
+  }
+}

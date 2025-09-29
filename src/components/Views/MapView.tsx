@@ -5,13 +5,10 @@ import { LatLngExpression, Icon } from 'leaflet';
 import RoutingMachine from '../Maps/RoutingMachine';
 import MobileTimeline from '../Maps/MobileTimeline';
 import MapLayerControl, { DynamicTileLayer } from '../Maps/MapLayerControl';
-import OptimizedDestinationCluster from '../Maps/OptimizedDestinationCluster';
-import VirtualizedMarkers from '../Maps/VirtualizedMarkers';
 import MapMeasurement from '../Maps/MapMeasurement';
 import MobileMapControls from '../Maps/MobileMapControls';
 import TripRouteVisualizer from '../Maps/TripRouteVisualizer';
 import { useResponsive } from '../../hooks/useResponsive';
-import { useMapPerformance } from '../../hooks/useMapPerformance';
 import { Destination } from '../../types';
 import { MapPin } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -45,25 +42,16 @@ const MapView: React.FC = () => {
   const [currentZoom, setCurrentZoom] = useState(isMobile ? 8 : 10);
   const [showTripRoutes, setShowTripRoutes] = useState(false); // Hide routes by default for cleaner initial view
 
-  // Performance monitoring and optimization
-  const {
-    isOptimizing,
-    createDebouncedHandler,
-    getAdaptiveSettings,
-    updateMarkerCount
-  } = useMapPerformance(mapRef, {
-    enableMetrics: true,
-    targetFps: isMobile ? 20 : 30,
-    maxMarkers: isMobile ? 50 : 100
-  });
-
-  // Adaptive settings based on performance
-  const adaptiveSettings = useMemo(() => getAdaptiveSettings(), [getAdaptiveSettings]);
+  // Simplified settings for mobile optimization
+  const adaptiveSettings = useMemo(() => ({
+    maxMarkers: isMobile ? 50 : 100,
+    enableClustering: isMobile
+  }), [isMobile]);
 
   // Performance-optimized clustering decision
   const useOptimizedClustering = useMemo(() => {
-    return showClustering || adaptiveSettings.clusteringEnabled || isOptimizing;
-  }, [showClustering, adaptiveSettings.clusteringEnabled, isOptimizing]);
+    return showClustering || adaptiveSettings.enableClustering;
+  }, [showClustering, adaptiveSettings.enableClustering]);
 
   // Get current trip destinations with coordinates - using same logic as EnhancedTimelineView
   const currentDestinations = currentTrip 
@@ -104,10 +92,10 @@ const MapView: React.FC = () => {
     }
   }, []);
 
-  // Update marker count for performance monitoring
+  // Track marker count
   useEffect(() => {
-    updateMarkerCount(currentDestinations.length);
-  }, [currentDestinations.length, updateMarkerCount]);
+    console.log('Markers updated:', currentDestinations.length);
+  }, [currentDestinations.length]);
 
   // Auto-fit map to show all destinations on initial load
   useEffect(() => {
@@ -135,31 +123,7 @@ const MapView: React.FC = () => {
     }
   }, [mapRef, currentDestinations, isMobile]);
 
-  // Debounced event handlers for better performance
-  const handleDebouncedZoomIn = createDebouncedHandler('zoomIn', () => {
-    if (mapRef) {
-      mapRef.zoomIn();
-    }
-  }, 200);
-
-  const handleDebouncedZoomOut = createDebouncedHandler('zoomOut', () => {
-    if (mapRef) {
-      mapRef.zoomOut();
-    }
-  }, 200);
-
-  const handleDebouncedReset = createDebouncedHandler('reset', () => {
-    if (mapRef) {
-      mapRef.setView(getMapCenter(), 10);
-    }
-  }, 300);
-
-  const handleDebouncedLocate = createDebouncedHandler('locate', () => {
-    if (mapRef && userLocation) {
-      mapRef.setView(userLocation, 15);
-    }
-  }, 300);
-
+  // Standard event handlers
   const handleZoomIn = () => {
     if (mapRef) {
       mapRef.zoomIn();
@@ -172,6 +136,17 @@ const MapView: React.FC = () => {
     }
   };
 
+  const handleReset = () => {
+    if (mapRef) {
+      mapRef.setView(getMapCenter(), 10);
+    }
+  };
+
+  const handleLocate = () => {
+    if (mapRef && userLocation) {
+      mapRef.setView(userLocation, 15);
+    }
+  };
 
   const handleTimelineDestinationSelect = (destination: Destination) => {
     setSelectedDestination(destination);
@@ -244,24 +219,22 @@ const MapView: React.FC = () => {
           </Marker>
         )}
 
-        {/* Performance-optimized destination markers */}
-        {useOptimizedClustering ? (
-          <OptimizedDestinationCluster
-            destinations={currentDestinations}
-            zoom={currentZoom}
-            onDestinationClick={handleTimelineDestinationSelect}
-            maxClusterRadius={adaptiveSettings.enableAnimations ? 80 : 120}
-            minPointsToCluster={isOptimizing ? 3 : 2}
-            isMobile={isMobile}
-          />
-        ) : (
-          <VirtualizedMarkers
-            destinations={currentDestinations}
-            onDestinationClick={handleTimelineDestinationSelect}
-            maxVisibleMarkers={adaptiveSettings.maxVisibleMarkers}
-            isMobile={isMobile}
-          />
-        )}
+        {/* Standard destination markers */}
+        {currentDestinations.map(dest => (
+          dest.coordinates ? (
+            <Marker
+              key={dest.id}
+              position={[dest.coordinates.lat, dest.coordinates.lng]}
+              eventHandlers={{
+                click: () => handleTimelineDestinationSelect(dest)
+              }}
+            >
+              <Popup>
+                <div className="font-medium">{dest.name}</div>
+              </Popup>
+            </Marker>
+          ) : null
+        ))}
 
         {/* Trip Route Visualizer - Shows routes between destinations */}
         <TripRouteVisualizer
@@ -287,10 +260,10 @@ const MapView: React.FC = () => {
       </MapContainer>
 
       <MobileMapControls
-        onZoomIn={adaptiveSettings.enableAnimations ? handleZoomIn : handleDebouncedZoomIn}
-        onZoomOut={adaptiveSettings.enableAnimations ? handleZoomOut : handleDebouncedZoomOut}
-        onReset={handleDebouncedReset}
-        onLocate={handleDebouncedLocate}
+        onZoomIn={handleZoomIn}
+        onZoomOut={handleZoomOut}
+        onReset={handleReset}
+        onLocate={handleLocate}
         showRouting={showRouting}
         onToggleRouting={() => {
           console.log('🔘 MapView: Toggle routing CALLED!');

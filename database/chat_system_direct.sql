@@ -1,0 +1,480 @@
+-- Direct application of chat system - safe to run multiple times
+-- This script will only create what doesn't already exist
+
+-- Check if chat tables exist, create only if needed
+DO $$
+BEGIN
+  -- Create user_status table if not exists
+  IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_status') THEN
+    CREATE TABLE user_status (
+      user_id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+      status VARCHAR(20) NOT NULL DEFAULT 'offline' CHECK (status IN ('online', 'offline', 'away')),
+      last_seen_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      status_message TEXT,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    
+    -- Enable RLS
+    ALTER TABLE user_status ENABLE ROW LEVEL SECURITY;
+    
+    -- Create index
+    CREATE INDEX idx_user_status_status ON user_status(status);
+    CREATE INDEX idx_user_status_last_seen ON user_status(last_seen_at DESC);
+    
+    RAISE NOTICE 'Created user_status table';
+  END IF;
+  
+  -- Create chat_rooms table if not exists
+  IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_rooms') THEN
+    CREATE TABLE chat_rooms (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name VARCHAR(255),
+      description TEXT,
+      type VARCHAR(20) NOT NULL DEFAULT 'direct' CHECK (type IN ('direct', 'group', 'trip')),
+      trip_id UUID REFERENCES trips(id) ON DELETE CASCADE,
+      is_private BOOLEAN NOT NULL DEFAULT true,
+      max_participants INTEGER DEFAULT 50,
+      created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      CONSTRAINT trip_chat_constraint CHECK (
+        (type = 'trip' AND trip_id IS NOT NULL) OR 
+        (type != 'trip' AND trip_id IS NULL)
+      )
+    );
+    
+    -- Enable RLS
+    ALTER TABLE chat_rooms ENABLE ROW LEVEL SECURITY;
+    
+    -- Create indexes
+    CREATE INDEX idx_chat_rooms_type ON chat_rooms(type);
+    CREATE INDEX idx_chat_rooms_trip_id ON chat_rooms(trip_id) WHERE trip_id IS NOT NULL;
+    CREATE INDEX idx_chat_rooms_created_by ON chat_rooms(created_by);
+    
+    RAISE NOTICE 'Created chat_rooms table';
+  END IF;
+  
+  -- Create chat_participants table if not exists
+  IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_participants') THEN
+    CREATE TABLE chat_participants (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      chat_room_id UUID NOT NULL REFERENCES chat_rooms(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      role VARCHAR(20) NOT NULL DEFAULT 'member' CHECK (role IN ('owner', 'admin', 'member')),
+      can_send_messages BOOLEAN NOT NULL DEFAULT true,
+      can_add_participants BOOLEAN NOT NULL DEFAULT false,
+      joined_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      last_read_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      notifications_enabled BOOLEAN NOT NULL DEFAULT true,
+      notification_sound BOOLEAN NOT NULL DEFAULT true,
+      UNIQUE(chat_room_id, user_id)
+    );
+    
+    -- Enable RLS
+    ALTER TABLE chat_participants ENABLE ROW LEVEL SECURITY;
+    
+    -- Create indexes
+    CREATE INDEX idx_chat_participants_user_id ON chat_participants(user_id);
+    CREATE INDEX idx_chat_participants_chat_room_id ON chat_participants(chat_room_id);
+    CREATE INDEX idx_chat_participants_active ON chat_participants(is_active) WHERE is_active = true;
+    
+    RAISE NOTICE 'Created chat_participants table';
+  END IF;
+  
+  -- Create chat_messages table if not exists
+  IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_messages') THEN
+    CREATE TABLE chat_messages (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      chat_room_id UUID NOT NULL REFERENCES chat_rooms(id) ON DELETE CASCADE,
+      sender_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      content TEXT NOT NULL,
+      message_type VARCHAR(20) NOT NULL DEFAULT 'text' CHECK (message_type IN ('text', 'image', 'file', 'location', 'system')),
+      metadata JSONB DEFAULT '{}',
+      is_edited BOOLEAN NOT NULL DEFAULT false,
+      edited_at TIMESTAMP WITH TIME ZONE,
+      is_deleted BOOLEAN NOT NULL DEFAULT false,
+      deleted_at TIMESTAMP WITH TIME ZONE,
+      reply_to UUID REFERENCES chat_messages(id) ON DELETE SET NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    );
+    
+    -- Enable RLS
+    ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+    
+    -- Create indexes
+    CREATE INDEX idx_chat_messages_chat_room_id ON chat_messages(chat_room_id);
+    CREATE INDEX idx_chat_messages_sender_id ON chat_messages(sender_id);
+    CREATE INDEX idx_chat_messages_created_at ON chat_messages(created_at DESC);
+    CREATE INDEX idx_chat_messages_reply_to ON chat_messages(reply_to) WHERE reply_to IS NOT NULL;
+    
+    RAISE NOTICE 'Created chat_messages table';
+  END IF;
+  
+  -- Create chat_notifications table if not exists
+  IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_notifications') THEN
+    CREATE TABLE chat_notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      chat_room_id UUID NOT NULL REFERENCES chat_rooms(id) ON DELETE CASCADE,
+      message_id UUID NOT NULL REFERENCES chat_messages(id) ON DELETE CASCADE,
+      is_read BOOLEAN NOT NULL DEFAULT false,
+      read_at TIMESTAMP WITH TIME ZONE,
+      is_push_sent BOOLEAN NOT NULL DEFAULT false,
+      is_email_sent BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE(user_id, message_id)
+    );
+    
+    -- Enable RLS
+    ALTER TABLE chat_notifications ENABLE ROW LEVEL SECURITY;
+    
+    -- Create indexes
+    CREATE INDEX idx_chat_notifications_user_id ON chat_notifications(user_id);
+    CREATE INDEX idx_chat_notifications_unread ON chat_notifications(user_id, is_read) WHERE is_read = false;
+    CREATE INDEX idx_chat_notifications_chat_room ON chat_notifications(chat_room_id);
+    
+    RAISE NOTICE 'Created chat_notifications table';
+  END IF;
+  
+  -- Create message_reactions table if not exists
+  IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'message_reactions') THEN
+    CREATE TABLE message_reactions (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      message_id UUID NOT NULL REFERENCES chat_messages(id) ON DELETE CASCADE,
+      user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      emoji VARCHAR(10) NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      UNIQUE(message_id, user_id, emoji)
+    );
+    
+    -- Enable RLS
+    ALTER TABLE message_reactions ENABLE ROW LEVEL SECURITY;
+    
+    RAISE NOTICE 'Created message_reactions table';
+  END IF;
+
+END $$;
+
+-- Create or replace functions
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE OR REPLACE FUNCTION create_chat_notification()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO chat_notifications (user_id, chat_room_id, message_id)
+  SELECT 
+    cp.user_id,
+    NEW.chat_room_id,
+    NEW.id
+  FROM chat_participants cp
+  WHERE cp.chat_room_id = NEW.chat_room_id
+    AND cp.user_id != NEW.sender_id
+    AND cp.is_active = true
+    AND cp.notifications_enabled = true;
+  
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE OR REPLACE FUNCTION update_last_read()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE chat_participants 
+  SET last_read_at = NOW()
+  WHERE chat_room_id = NEW.chat_room_id 
+    AND user_id = NEW.user_id;
+  
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE OR REPLACE FUNCTION get_unread_message_count(user_uuid UUID)
+RETURNS TABLE(chat_room_id UUID, unread_count BIGINT) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    cn.chat_room_id,
+    COUNT(*) as unread_count
+  FROM chat_notifications cn
+  WHERE cn.user_id = user_uuid 
+    AND cn.is_read = false
+  GROUP BY cn.chat_room_id;
+END;
+$$ language 'plpgsql';
+
+CREATE OR REPLACE FUNCTION get_user_chat_rooms(user_uuid UUID)
+RETURNS TABLE(
+  room_id UUID,
+  room_name VARCHAR,
+  room_type VARCHAR,
+  trip_id UUID,
+  latest_message TEXT,
+  latest_message_at TIMESTAMP WITH TIME ZONE,
+  unread_count BIGINT,
+  participant_count BIGINT
+) AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    cr.id as room_id,
+    cr.name as room_name,
+    cr.type as room_type,
+    cr.trip_id,
+    cm.content as latest_message,
+    cm.created_at as latest_message_at,
+    COALESCE(unread.unread_count, 0) as unread_count,
+    COUNT(cp.user_id) as participant_count
+  FROM chat_rooms cr
+  JOIN chat_participants cp ON cr.id = cp.chat_room_id
+  LEFT JOIN LATERAL (
+    SELECT content, created_at
+    FROM chat_messages
+    WHERE chat_room_id = cr.id
+    ORDER BY created_at DESC
+    LIMIT 1
+  ) cm ON true
+  LEFT JOIN LATERAL (
+    SELECT COUNT(*) as unread_count
+    FROM chat_notifications
+    WHERE chat_room_id = cr.id 
+      AND user_id = user_uuid 
+      AND is_read = false
+  ) unread ON true
+  WHERE cp.user_id = user_uuid 
+    AND cp.is_active = true
+  GROUP BY cr.id, cr.name, cr.type, cr.trip_id, cm.content, cm.created_at, unread.unread_count
+  ORDER BY cm.created_at DESC NULLS LAST;
+END;
+$$ language 'plpgsql';
+
+-- Create/recreate triggers safely
+DO $$
+BEGIN
+  -- Drop existing triggers if they exist
+  DROP TRIGGER IF EXISTS update_user_status_updated_at ON user_status;
+  DROP TRIGGER IF EXISTS update_chat_rooms_updated_at ON chat_rooms;
+  DROP TRIGGER IF EXISTS update_chat_messages_updated_at ON chat_messages;
+  DROP TRIGGER IF EXISTS create_message_notification ON chat_messages;
+  DROP TRIGGER IF EXISTS update_participant_last_read ON chat_notifications;
+  
+  -- Create triggers
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_status') THEN
+    CREATE TRIGGER update_user_status_updated_at 
+      BEFORE UPDATE ON user_status 
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+  
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_rooms') THEN
+    CREATE TRIGGER update_chat_rooms_updated_at 
+      BEFORE UPDATE ON chat_rooms 
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+  
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_messages') THEN
+    CREATE TRIGGER update_chat_messages_updated_at 
+      BEFORE UPDATE ON chat_messages 
+      FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+      
+    CREATE TRIGGER create_message_notification 
+      AFTER INSERT ON chat_messages 
+      FOR EACH ROW EXECUTE FUNCTION create_chat_notification();
+  END IF;
+  
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_notifications') THEN
+    CREATE TRIGGER update_participant_last_read 
+      AFTER UPDATE ON chat_notifications 
+      FOR EACH ROW 
+      WHEN (OLD.is_read = false AND NEW.is_read = true)
+      EXECUTE FUNCTION update_last_read();
+  END IF;
+END $$;
+
+-- Create/update RLS policies
+DO $$
+BEGIN
+  -- User Status Policies
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'user_status') THEN
+    DROP POLICY IF EXISTS "Users can view all user statuses" ON user_status;
+    DROP POLICY IF EXISTS "Users can update their own status" ON user_status;
+    
+    CREATE POLICY "Users can view all user statuses" ON user_status
+      FOR SELECT USING (true);
+
+    CREATE POLICY "Users can update their own status" ON user_status
+      FOR ALL USING (auth.uid() = user_id);
+  END IF;
+  
+  -- Chat Rooms Policies
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_rooms') THEN
+    DROP POLICY IF EXISTS "Users can view rooms they participate in" ON chat_rooms;
+    DROP POLICY IF EXISTS "Users can create chat rooms" ON chat_rooms;
+    DROP POLICY IF EXISTS "Room admins can update rooms" ON chat_rooms;
+    
+    CREATE POLICY "Users can view rooms they participate in" ON chat_rooms
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM chat_participants 
+          WHERE chat_room_id = id 
+          AND user_id = auth.uid() 
+          AND is_active = true
+        )
+      );
+
+    CREATE POLICY "Users can create chat rooms" ON chat_rooms
+      FOR INSERT WITH CHECK (auth.uid() = created_by);
+
+    CREATE POLICY "Room admins can update rooms" ON chat_rooms
+      FOR UPDATE USING (
+        EXISTS (
+          SELECT 1 FROM chat_participants 
+          WHERE chat_room_id = id 
+          AND user_id = auth.uid() 
+          AND role IN ('owner', 'admin')
+          AND is_active = true
+        )
+      );
+  END IF;
+  
+  -- Other policies...
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_participants') THEN
+    DROP POLICY IF EXISTS "Users can view participants in their rooms" ON chat_participants;
+    DROP POLICY IF EXISTS "Users can join rooms they're invited to" ON chat_participants;
+    DROP POLICY IF EXISTS "Users can update their own participation" ON chat_participants;
+    
+    CREATE POLICY "Users can view participants in their rooms" ON chat_participants
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM chat_participants cp 
+          WHERE cp.chat_room_id = chat_room_id 
+          AND cp.user_id = auth.uid() 
+          AND cp.is_active = true
+        )
+      );
+
+    CREATE POLICY "Users can join rooms they're invited to" ON chat_participants
+      FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+    CREATE POLICY "Users can update their own participation" ON chat_participants
+      FOR UPDATE USING (auth.uid() = user_id);
+  END IF;
+  
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_messages') THEN
+    DROP POLICY IF EXISTS "Users can view messages in their rooms" ON chat_messages;
+    DROP POLICY IF EXISTS "Users can send messages to their rooms" ON chat_messages;
+    DROP POLICY IF EXISTS "Users can edit their own messages" ON chat_messages;
+    
+    CREATE POLICY "Users can view messages in their rooms" ON chat_messages
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM chat_participants 
+          WHERE chat_room_id = chat_messages.chat_room_id 
+          AND user_id = auth.uid() 
+          AND is_active = true
+        )
+      );
+
+    CREATE POLICY "Users can send messages to their rooms" ON chat_messages
+      FOR INSERT WITH CHECK (
+        auth.uid() = sender_id AND
+        EXISTS (
+          SELECT 1 FROM chat_participants 
+          WHERE chat_room_id = chat_messages.chat_room_id 
+          AND user_id = auth.uid() 
+          AND is_active = true 
+          AND can_send_messages = true
+        )
+      );
+
+    CREATE POLICY "Users can edit their own messages" ON chat_messages
+      FOR UPDATE USING (auth.uid() = sender_id);
+  END IF;
+  
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'chat_notifications') THEN
+    DROP POLICY IF EXISTS "Users can view their own notifications" ON chat_notifications;
+    DROP POLICY IF EXISTS "Users can update their own notifications" ON chat_notifications;
+    
+    CREATE POLICY "Users can view their own notifications" ON chat_notifications
+      FOR SELECT USING (auth.uid() = user_id);
+
+    CREATE POLICY "Users can update their own notifications" ON chat_notifications
+      FOR UPDATE USING (auth.uid() = user_id);
+  END IF;
+  
+  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'message_reactions') THEN
+    DROP POLICY IF EXISTS "Users can view reactions in their rooms" ON message_reactions;
+    DROP POLICY IF EXISTS "Users can manage their own reactions" ON message_reactions;
+    
+    CREATE POLICY "Users can view reactions in their rooms" ON message_reactions
+      FOR SELECT USING (
+        EXISTS (
+          SELECT 1 FROM chat_messages cm
+          JOIN chat_participants cp ON cm.chat_room_id = cp.chat_room_id
+          WHERE cm.id = message_reactions.message_id 
+          AND cp.user_id = auth.uid() 
+          AND cp.is_active = true
+        )
+      );
+
+    CREATE POLICY "Users can manage their own reactions" ON message_reactions
+      FOR ALL USING (auth.uid() = user_id);
+  END IF;
+END $$;
+
+-- Grant permissions
+DO $$
+BEGIN
+  GRANT SELECT, INSERT, UPDATE ON user_status TO authenticated;
+  GRANT SELECT, INSERT, UPDATE ON chat_rooms TO authenticated;
+  GRANT SELECT, INSERT, UPDATE ON chat_participants TO authenticated;
+  GRANT SELECT, INSERT, UPDATE ON chat_messages TO authenticated;
+  GRANT SELECT, INSERT, UPDATE, DELETE ON message_reactions TO authenticated;
+  GRANT SELECT, UPDATE ON chat_notifications TO authenticated;
+  GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO authenticated;
+EXCEPTION
+  WHEN insufficient_privilege THEN
+    NULL; -- Ignore if already granted
+END $$;
+
+-- Create user status entries for existing users
+INSERT INTO user_status (user_id, status, last_seen_at)
+SELECT id, 'offline', NOW()
+FROM auth.users
+ON CONFLICT (user_id) DO NOTHING;
+
+-- Enable real-time (ignore errors if already enabled)
+DO $$
+BEGIN
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE chat_rooms;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;
+  END;
+  
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE chat_messages;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;
+  END;
+  
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE chat_participants;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;
+  END;
+  
+  BEGIN
+    ALTER PUBLICATION supabase_realtime ADD TABLE user_status;
+  EXCEPTION
+    WHEN duplicate_object THEN NULL;
+  END;
+END $$;
+
+SELECT 'Chat system setup completed successfully!' as result;

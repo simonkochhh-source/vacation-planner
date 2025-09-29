@@ -16,7 +16,8 @@ import {
   SortDirection,
   AppSettings,
   TransportMode,
-  FuelType
+  FuelType,
+  TripStatus
 } from '../types';
 import { 
   getCurrentDateString,
@@ -466,7 +467,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
     try {
       const tripData = {
         ...data,
-        status: 'planned' as any,
+        status: TripStatus.PLANNING, // Fixed: Use enum value that matches DB constraint
         ownerId: await getCurrentUserId() || 'anonymous',
         privacy: data.privacy || 'private' as any,
         taggedUsers: data.taggedUsers || [],
@@ -493,7 +494,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           budget: data.budget,
           actualCost: 0,
           participants: data.participants || [],
-          status: 'planned' as any,
+          status: TripStatus.PLANNING, // Fixed: Use enum value that matches DB constraint
           destinations: [],
           tags: data.tags || [],
           privacy: data.privacy || 'private' as any,

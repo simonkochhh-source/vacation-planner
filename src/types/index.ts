@@ -26,7 +26,7 @@ export enum DestinationCategory {
 }
 
 export enum TripStatus {
-  PLANNED = 'planned',
+  PLANNING = 'planning', // Fixed: Match DB constraint
   ACTIVE = 'active',
   COMPLETED = 'completed',
   CANCELLED = 'cancelled'
@@ -202,8 +202,8 @@ export interface SortOptions {
 
 // UI State types
 export interface UIState {
-  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing' | 'photos' | 'user-profile' | 'my-profile' | 'social-feed' | 'place-search-demo';
-  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing' | 'photos' | 'user-profile' | 'my-profile' | 'social-feed' | 'place-search-demo';
+  currentView: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing' | 'photos' | 'user-profile' | 'my-profile' | 'social-feed' | 'place-search-demo' | 'design-demo';
+  activeView?: 'list' | 'map' | 'timeline' | 'budget' | 'settings' | 'discovery' | 'search' | 'landing' | 'photos' | 'user-profile' | 'my-profile' | 'social-feed' | 'place-search-demo' | 'design-demo';
   activeDestination?: UUID;
   activeTripId?: UUID;
   filters: DestinationFilters;

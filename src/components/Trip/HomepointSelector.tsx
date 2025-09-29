@@ -304,7 +304,7 @@ const HomepointSelector: React.FC<HomepointSelectorProps> = ({
         >
           {loading ? (
             <>
-              <div className="animate-spin rounded-full border-b-2 border-white" style={{ width: '14px', height: '14px' }} />
+              <div className="animate-spin rounded-full" style={{ width: '14px', height: '14px', borderBottomWidth: '2px', borderBottomColor: 'white', borderBottomStyle: 'solid' }} />
               Übernehmen...
             </>
           ) : (

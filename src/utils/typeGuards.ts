@@ -50,13 +50,14 @@ const statusToSupabase = (status: DestinationStatus): string => {
 };
 
 const tripStatusToSupabase = (status: TripStatus): string => {
+  // DB constraint expects English values: ('planning', 'active', 'completed', 'cancelled')
   const mapping: Record<TripStatus, string> = {
-    [TripStatus.PLANNED]: 'geplant',
-    [TripStatus.ACTIVE]: 'aktiv',
-    [TripStatus.COMPLETED]: 'abgeschlossen',
-    [TripStatus.CANCELLED]: 'storniert'
+    [TripStatus.PLANNING]: 'planning', // Fixed: DB expects English values
+    [TripStatus.ACTIVE]: 'active',
+    [TripStatus.COMPLETED]: 'completed',
+    [TripStatus.CANCELLED]: 'cancelled'
   };
-  return mapping[status] || 'geplant';
+  return mapping[status] || 'planning';
 };
 
 // Reverse mapping from Supabase categories to our enum values
@@ -102,7 +103,7 @@ export const toDestinationStatus = (value: any): DestinationStatus => {
 };
 
 export const toTripStatus = (value: any): TripStatus => {
-  return isTripStatus(value) ? value : TripStatus.PLANNED;
+  return isTripStatus(value) ? value : TripStatus.PLANNING; // Fixed: Use PLANNING instead of PLANNED
 };
 
 export const toTripPrivacy = (value: any): TripPrivacy => {
@@ -122,8 +123,8 @@ export const toSupabaseStatus = (status: DestinationStatus): "geplant" | "besuch
   return statusToSupabase(status) as "geplant" | "besucht" | "uebersprungen" | "in_bearbeitung";
 };
 
-export const toSupabaseTripStatus = (status: TripStatus): 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' => {
-  return tripStatusToSupabase(status) as 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert';
+export const toSupabaseTripStatus = (status: TripStatus): 'planning' | 'active' | 'completed' | 'cancelled' => {
+  return tripStatusToSupabase(status) as 'planning' | 'active' | 'completed' | 'cancelled';
 };
 
 export const toSupabaseTripPrivacy = (privacy: TripPrivacy): 'private' | 'public' | 'contacts' => {

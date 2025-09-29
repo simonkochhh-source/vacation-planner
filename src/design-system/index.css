@@ -1,0 +1,371 @@
+/**
+ * Modern Design System
+ * Silicon Valley Standard Implementation
+ * 
+ * Based on:
+ * - Material 3 (Google)
+ * - Apple Human Interface Guidelines
+ * - Microsoft Fluent 2
+ * - WCAG 2.2 AA Standards
+ */
+
+/* Import design system layers */
+@import './tokens.css';
+@import './typography.css';
+@import './layout.css';
+@import './components.css';
+
+/* ===== BASE STYLES ===== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  /* Enable smooth scrolling */
+  scroll-behavior: smooth;
+  
+  /* Optimize text rendering */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  
+  /* Improve touch scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  font-family: var(--font-family-system);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-normal);
+  line-height: var(--line-height-normal);
+  color: var(--color-on-surface);
+  background-color: var(--color-surface);
+  
+  /* Prevent horizontal scroll */
+  overflow-x: hidden;
+  
+  /* Improve text rendering */
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* ===== ACCESSIBILITY IMPROVEMENTS ===== */
+
+/* Focus outline reset */
+*:focus {
+  outline: none;
+}
+
+/* Enhanced focus styles using design tokens */
+*:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+  transition: outline-color var(--motion-duration-short) var(--motion-easing-standard);
+}
+
+/* High contrast focus styles */
+@media (prefers-contrast: high) {
+  *:focus-visible {
+    outline-color: var(--focus-ring-color-high-contrast);
+    outline-width: var(--high-contrast-outline-width);
+  }
+}
+
+/* Interactive element focus styles */
+button:focus-visible,
+[role="button"]:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+a:focus-visible,
+[tabindex]:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  transition: outline-color var(--motion-duration-short) var(--motion-easing-standard);
+}
+
+/* Button specific focus enhancement */
+button:focus-visible {
+  box-shadow: 0 0 0 var(--focus-ring-offset) var(--color-surface), 
+              0 0 0 calc(var(--focus-ring-offset) + var(--focus-ring-width)) var(--focus-ring-color);
+  outline: none; /* Use box-shadow instead for buttons */
+}
+
+/* Card and container focus styles */
+[role="button"]:focus-visible,
+.card:focus-visible,
+.interactive:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* Skip link for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 6px;
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+  padding: 8px;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  z-index: 100;
+  transition: top var(--motion-duration-short) var(--motion-easing-standard);
+}
+
+.skip-link:focus {
+  top: 6px;
+}
+
+/* Screen reader only content */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===== HIGH CONTRAST MODE ===== */
+@media (prefers-contrast: high) {
+  :root {
+    --color-outline: var(--color-neutral-0);
+    --color-outline-variant: var(--color-neutral-20);
+  }
+  
+  [data-theme="dark"] {
+    --color-outline: var(--color-neutral-100);
+    --color-outline-variant: var(--color-neutral-80);
+  }
+}
+
+/* ===== THEME SWITCHING ===== */
+
+[data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  
+  /* Dark theme overrides */
+  --color-surface: var(--color-neutral-10);
+  --color-surface-dim: var(--color-neutral-10);
+  --color-surface-bright: var(--color-neutral-20);
+  --color-surface-container-lowest: var(--color-neutral-0);
+  --color-surface-container-low: var(--color-neutral-10);
+  --color-surface-container: var(--color-neutral-20);
+  --color-surface-container-high: var(--color-neutral-30);
+  --color-surface-container-highest: var(--color-neutral-40);
+
+  --color-on-surface: var(--color-neutral-90);
+  --color-on-surface-variant: var(--color-neutral-70);
+  --color-outline: var(--color-neutral-60);
+  --color-outline-variant: var(--color-neutral-30);
+
+  --color-primary: var(--color-primary-80);
+  --color-on-primary: var(--color-primary-20);
+  --color-primary-container: var(--color-primary-30);
+  --color-on-primary-container: var(--color-primary-90);
+}
+
+/* Auto dark mode detection */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    
+    --color-surface: var(--color-neutral-10);
+    --color-surface-dim: var(--color-neutral-10);
+    --color-surface-bright: var(--color-neutral-20);
+    --color-surface-container-lowest: var(--color-neutral-0);
+    --color-surface-container-low: var(--color-neutral-10);
+    --color-surface-container: var(--color-neutral-20);
+    --color-surface-container-high: var(--color-neutral-30);
+    --color-surface-container-highest: var(--color-neutral-40);
+
+    --color-on-surface: var(--color-neutral-90);
+    --color-on-surface-variant: var(--color-neutral-70);
+    --color-outline: var(--color-neutral-60);
+    --color-outline-variant: var(--color-neutral-30);
+
+    --color-primary: var(--color-primary-80);
+    --color-on-primary: var(--color-primary-20);
+    --color-primary-container: var(--color-primary-30);
+    --color-on-primary-container: var(--color-primary-90);
+  }
+}
+
+/* ===== SELECTION STYLES ===== */
+
+::selection {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  color: var(--color-on-surface);
+}
+
+::-moz-selection {
+  background-color: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  color: var(--color-on-surface);
+}
+
+/* ===== SCROLLBAR STYLES ===== */
+
+/* Webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-container);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-outline);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline-variant);
+}
+
+/* Firefox */
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-outline) var(--color-surface-container);
+}
+
+/* ===== PERFORMANCE OPTIMIZATIONS ===== */
+
+/* GPU acceleration for transforms */
+.gpu-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Contain layout for performance */
+.layout-contained {
+  contain: layout style paint;
+}
+
+/* Optimize for animations */
+.animate-optimized {
+  will-change: transform, opacity;
+}
+
+.animate-optimized.finished {
+  will-change: auto;
+}
+
+/* ===== PRINT STYLES ===== */
+
+@media print {
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    color: black !important;
+    box-shadow: none !important;
+  }
+  
+  body {
+    font-size: 12pt;
+    line-height: 1.4;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* ===== UTILITY CLASSES ===== */
+
+/* Layout utilities */
+.full-height { min-height: 100vh; }
+.full-width { width: 100%; }
+.max-width { max-width: 100%; }
+
+/* Interaction utilities */
+.pointer-events-none { pointer-events: none; }
+.pointer-events-auto { pointer-events: auto; }
+.cursor-pointer { cursor: pointer; }
+.cursor-not-allowed { cursor: not-allowed; }
+.cursor-grab { cursor: grab; }
+.cursor-grabbing { cursor: grabbing; }
+
+/* Background utilities */
+.bg-surface { background-color: var(--color-surface); }
+.bg-surface-container { background-color: var(--color-surface-container); }
+.bg-primary { background-color: var(--color-primary); }
+.bg-transparent { background-color: transparent; }
+
+/* Border utilities */
+.border { border: 1px solid var(--color-outline-variant); }
+.border-t { border-top: 1px solid var(--color-outline-variant); }
+.border-b { border-bottom: 1px solid var(--color-outline-variant); }
+.border-l { border-left: 1px solid var(--color-outline-variant); }
+.border-r { border-right: 1px solid var(--color-outline-variant); }
+.border-none { border: none; }
+
+/* Rounded corners */
+.rounded { border-radius: var(--radius-md); }
+.rounded-sm { border-radius: var(--radius-sm); }
+.rounded-lg { border-radius: var(--radius-lg); }
+.rounded-xl { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* Shadow utilities */
+.shadow { box-shadow: var(--elevation-1); }
+.shadow-md { box-shadow: var(--elevation-2); }
+.shadow-lg { box-shadow: var(--elevation-3); }
+.shadow-xl { box-shadow: var(--elevation-4); }
+.shadow-2xl { box-shadow: var(--elevation-5); }
+.shadow-none { box-shadow: none; }
+
+/* Focus utilities */
+.focus-ring:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.focus-within:focus-within {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.no-focus:focus,
+.no-focus:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+/* Touch target utilities for accessibility */
+.touch-target {
+  min-height: var(--min-touch-target);
+  min-width: var(--min-touch-target);
+}
+
+.touch-target-comfortable {
+  min-height: var(--comfortable-touch-target);
+  min-width: var(--comfortable-touch-target);
+}

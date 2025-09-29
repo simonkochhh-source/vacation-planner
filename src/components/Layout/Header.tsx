@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { Settings, Menu } from 'lucide-react';
-import Button from '../Common/Button';
+import ModernButton from '../UI/ModernButton';
 import HeaderBrand from './HeaderBrand';
 import HeaderNavigation from './HeaderNavigation';
 import HeaderSearch from './HeaderSearch';
@@ -85,9 +85,11 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
   });
 
   return (
-    <header className="bg-gradient-primary" style={{
+    <header className={`bg-gradient-primary ${isMobile ? 'header-mobile' : ''}`} style={{
       color: 'white',
-      padding: 'var(--space-md) 0',
+      padding: isMobile 
+        ? `calc(var(--space-2) + var(--safe-area-inset-top, 0px)) 0 var(--space-2) 0` 
+        : 'var(--space-md) 0',
       boxShadow: 'var(--shadow-md)',
       position: 'sticky',
       top: 0,
@@ -99,15 +101,20 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           <div className="flex items-center gap-4">
             {/* Mobile Menu Button */}
             {onMenuClick && (
-              <Button
-                variant="ghost"
+              <ModernButton
+                variant="text"
                 size="sm"
                 onClick={onMenuClick}
                 className="header-menu-button"
                 title="Menu öffnen"
+                leftIcon={<Menu size={20} />}
+                style={{ 
+                  color: 'white',
+                  minWidth: 'var(--touch-target-min-size)'
+                }}
               >
-                <Menu size={20} />
-              </Button>
+                Menu
+              </ModernButton>
             )}
             
             {/* Brand Component */}
@@ -136,7 +143,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   border: 'none',
                   cursor: 'pointer',
                   borderRadius: '50%',
-                  padding: '2px',
+                  padding: 'var(--space-1)',
                   transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
                 onMouseEnter={(e) => {
@@ -147,6 +154,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                   e.currentTarget.style.transform = 'scale(1)';
                   e.currentTarget.style.boxShadow = 'none';
                 }}
+                aria-label="Mein Profil & Einstellungen"
                 title="Mein Profil & Einstellungen"
               >
                 <AvatarUpload

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import TripForm from '../Forms/TripForm';
-import Button from '../Common/Button';
+import ModernButton from '../UI/ModernButton';
 import Card from '../Common/Card';
 import { 
   Plus,
@@ -241,14 +241,15 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
               </div>
             </div>
             
-            <Button 
-              variant="ghost" 
+            <ModernButton 
+              variant="text" 
               size="sm"
               onClick={handleShowEditTripForm}
               title="Reise bearbeiten"
+              leftIcon={<Edit3 size={16} />}
             >
-              <Edit3 size={16} />
-            </Button>
+              Bearbeiten
+            </ModernButton>
           </div>
 
           {/* Trip Stats */}
@@ -443,14 +444,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
             }}>
               Keine aktive Reise
             </p>
-            <Button 
-              variant="primary" 
-              size="sm"
+            <ModernButton 
+              variant="filled" 
+              size="default"
               onClick={handleShowTripForm}
               leftIcon={<Plus size={16} />}
             >
               Neue Reise planen
-            </Button>
+            </ModernButton>
           </div>
         </Card>
       )}
@@ -484,9 +485,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
 
         {showTrips && (
           <div style={{ marginTop: 'var(--space-md)' }}>
-            <Button
-              variant="secondary"
-              size="sm"
+            <ModernButton
+              variant="outlined"
+              size="default"
               onClick={handleShowTripForm}
               leftIcon={<Plus size={16} />}
               style={{ 
@@ -496,7 +497,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
               }}
             >
               Neue Reise erstellen
-            </Button>
+            </ModernButton>
 
             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
               {trips.map((trip) => (
@@ -654,6 +655,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
         )}
       </Card>
 
+
+
       {/* Trip Form Modal */}
       {showTripForm && (
         <div style={{
@@ -789,14 +792,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
               gap: 'var(--space-md)',
               justifyContent: 'flex-end'
             }}>
-              <Button
-                variant="secondary"
+              <ModernButton
+                variant="outlined"
                 onClick={() => setTripToDelete(null)}
               >
                 Abbrechen
-              </Button>
-              <Button
-                variant="primary"
+              </ModernButton>
+              <ModernButton
+                variant="filled"
                 onClick={() => handleDeleteTrip(tripToDelete)}
                 style={{
                   backgroundColor: 'var(--color-error)',
@@ -804,7 +807,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
                 }}
               >
                 Löschen
-              </Button>
+              </ModernButton>
             </div>
           </div>
         </div>

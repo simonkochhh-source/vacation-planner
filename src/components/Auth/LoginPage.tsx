@@ -119,7 +119,7 @@ const LoginPage: React.FC = () => {
     return (
       <div className="app-container min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-md">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderColor: 'var(--color-primary-ocean)' }}></div>
+          <div className="animate-spin rounded-full h-12 w-12" style={{ borderBottomWidth: '2px', borderBottomColor: 'var(--color-primary-ocean)', borderBottomStyle: 'solid' }}></div>
           <p className="text-secondary">Loading...</p>
         </div>
       </div>
