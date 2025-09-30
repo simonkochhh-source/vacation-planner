@@ -120,6 +120,9 @@ export interface Destination {
   // Enhanced timeline features
   startTime?: TimeString; // HH:MM format for daily schedule
   endTime?: TimeString; // HH:MM format for daily schedule
+  visitDate?: DateString; // Actual visit date (can differ from planned startDate)
+  description?: string; // Detailed description for the destination
+  rating?: number; // User rating 1-5 stars
   
   weatherInfo?: WeatherInfo;
   transportToNext?: TransportInfo;
