@@ -16,7 +16,7 @@ import {
   ChevronRight,
   FolderOpen,
   Filter,
-  Grid3x3,
+  Grid3X3,
   List,
   Search,
   Tag,
@@ -314,7 +314,7 @@ const AllPhotosView: React.FC = () => {
             variant={viewMode === 'grid' ? "filled" : "outlined"}
             size="sm"
             onClick={() => setViewMode('grid')}
-            leftIcon={<Grid3x3 size={16} />}
+            leftIcon={<Grid3X3 size={16} />}
           >
             {!isMobile && 'Grid'}
           </ModernButton>
