@@ -37,9 +37,9 @@ const MobileDestinationCard: React.FC<MobileDestinationCardProps> = ({
 
   const getStatusIcon = (status: DestinationStatus) => {
     switch (status) {
-      case 'visited':
+      case DestinationStatus.VISITED:
         return <CheckCircle size={20} style={{ color: 'var(--color-success-50)' }} />;
-      case 'skipped':
+      case DestinationStatus.SKIPPED:
         return <AlertCircle size={20} style={{ color: 'var(--color-error-50)' }} />;
       default:
         return <Circle size={20} style={{ color: 'var(--color-outline)' }} />;
@@ -48,9 +48,9 @@ const MobileDestinationCard: React.FC<MobileDestinationCardProps> = ({
 
   const getStatusColor = (status: DestinationStatus) => {
     switch (status) {
-      case 'visited':
+      case DestinationStatus.VISITED:
         return 'var(--color-success-90)';
-      case 'skipped':
+      case DestinationStatus.SKIPPED:
         return 'var(--color-error-90)';
       default:
         return 'var(--color-surface-container)';
@@ -117,7 +117,7 @@ const MobileDestinationCard: React.FC<MobileDestinationCardProps> = ({
             onClick={(e) => {
               e.stopPropagation();
               if (onStatusChange) {
-                const newStatus = destination.status === 'visited' ? 'planned' : 'visited';
+                const newStatus = destination.status === DestinationStatus.VISITED ? DestinationStatus.PLANNED : DestinationStatus.VISITED;
                 onStatusChange(newStatus);
               }
             }}
