@@ -526,8 +526,11 @@ const AllRoutesMapView: React.FC = () => {
         isMobile={isMobile || isTablet}
         // Hide routing specific controls for global view
         showRouting={false}
+        onToggleRouting={() => {}} // No-op for global view
         showTimeline={false}
+        onToggleTimeline={() => {}} // No-op for global view
         showClustering={false}
+        onToggleClustering={() => {}} // No-op for global view
         showTripRoutes={false}
       />
 
