@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useDebouncedCallback, useOptimizedCallback } from '../../hooks/useOptimizedCallback';
-import { performanceMonitor } from '../../utils/performanceMonitoring';
+import { performanceMonitor } from '../../utils/performance';
 
 interface DebouncedInputProps {
   value: string;

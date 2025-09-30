@@ -77,7 +77,7 @@ class PerformanceMonitor {
     });
   }
 
-  private recordMetric(name: string, value: number) {
+  recordMetric(name: string, value: number) {
     const metric: PerformanceMetric = {
       name,
       value,
@@ -130,6 +130,9 @@ export const getPerformanceMetrics = () => {
 export const clearPerformanceMetrics = () => {
   performanceMonitor.clearMetrics();
 };
+
+// Export the performance monitor instance
+export { performanceMonitor };
 
 // Performance budget checker
 export const checkPerformanceBudget = () => {
