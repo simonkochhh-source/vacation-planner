@@ -144,7 +144,15 @@ const MobileDestinationCard: React.FC<MobileDestinationCardProps> = ({
               gap: 'var(--space-2)',
               marginBottom: 'var(--space-1)'
             }}>
-              <CategoryIcon size={16} style={{ color: 'var(--color-primary)' }} />
+              <span style={{ 
+                fontSize: '16px', 
+                color: 'var(--color-primary)',
+                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+                {CategoryIcon}
+              </span>
               <span style={{
                 fontSize: 'var(--mobile-text-xs)',
                 color: 'var(--color-on-surface-variant)',
