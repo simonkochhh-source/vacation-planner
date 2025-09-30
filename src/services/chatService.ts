@@ -355,17 +355,17 @@ class ChatService {
             message_type: 'text',
             metadata: {},
             is_edited: false,
-            edited_at: null,
+            edited_at: undefined,
             is_deleted: false,
-            deleted_at: null,
-            reply_to: null,
+            deleted_at: undefined,
+            reply_to: undefined,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
             sender: {
               id: 'mock-user-1',
               nickname: 'Test User',
               display_name: 'Test User',
-              avatar_url: null
+              avatar_url: undefined
             },
             reply_message: undefined
           },
@@ -377,17 +377,17 @@ class ChatService {
             message_type: 'text',
             metadata: {},
             is_edited: false,
-            edited_at: null,
+            edited_at: undefined,
             is_deleted: false,
-            deleted_at: null,
-            reply_to: null,
+            deleted_at: undefined,
+            reply_to: undefined,
             created_at: new Date(Date.now() + 1000).toISOString(),
             updated_at: new Date(Date.now() + 1000).toISOString(),
             sender: {
               id: 'mock-user-2',
               nickname: 'Demo User',
               display_name: 'Demo User', 
-              avatar_url: null
+              avatar_url: undefined
             },
             reply_message: undefined
           }
@@ -404,7 +404,7 @@ class ChatService {
             id: msg.sender_id,
             nickname: 'User',
             display_name: 'User',
-            avatar_url: null
+            avatar_url: undefined
           },
           reply_message: msg.reply_to ? {
             id: msg.reply_to,
