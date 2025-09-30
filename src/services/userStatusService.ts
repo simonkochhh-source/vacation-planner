@@ -374,7 +374,7 @@ class UserStatusService {
       if (!user) return;
 
       // Try to use sendBeacon for reliable delivery
-      if (navigator.sendBeacon) {
+      if ('sendBeacon' in navigator && typeof navigator.sendBeacon === 'function') {
         const data = JSON.stringify({
           user_id: user.id,
           status: 'offline',
