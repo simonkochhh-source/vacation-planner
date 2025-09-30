@@ -66,7 +66,7 @@ const AllPhotosView: React.FC = () => {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(photo => 
         photo.caption?.toLowerCase().includes(query) ||
-        photo.fileName.toLowerCase().includes(query) ||
+        photo.file_name.toLowerCase().includes(query) ||
         photo.tripName?.toLowerCase().includes(query) ||
         photo.destinationName?.toLowerCase().includes(query)
       );
@@ -156,7 +156,7 @@ const AllPhotosView: React.FC = () => {
     try {
       const link = document.createElement('a');
       link.href = photo.url;
-      link.download = photo.fileName;
+      link.download = photo.file_name;
       link.target = '_blank';
       document.body.appendChild(link);
       link.click();
@@ -414,7 +414,7 @@ const AllPhotosView: React.FC = () => {
                     }}>
                       <img
                         src={photo.url}
-                        alt={photo.caption || photo.fileName}
+                        alt={photo.caption || photo.file_name}
                         style={{
                           position: 'absolute',
                           top: 0,
@@ -438,7 +438,7 @@ const AllPhotosView: React.FC = () => {
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
                       }}>
-                        {photo.caption || photo.fileName}
+                        {photo.caption || photo.file_name}
                       </h4>
                       
                       <div style={{
@@ -494,7 +494,7 @@ const AllPhotosView: React.FC = () => {
                   }}>
                     <img
                       src={photo.url}
-                      alt={photo.caption || photo.fileName}
+                      alt={photo.caption || photo.file_name}
                       style={{
                         width: '80px',
                         height: '80px',
@@ -516,7 +516,7 @@ const AllPhotosView: React.FC = () => {
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
                       }}>
-                        {photo.caption || photo.fileName}
+                        {photo.caption || photo.file_name}
                       </h4>
                       
                       <div style={{
@@ -595,7 +595,7 @@ const AllPhotosView: React.FC = () => {
             {/* Image */}
             <img
               src={selectedPhoto.url}
-              alt={selectedPhoto.caption || selectedPhoto.fileName}
+              alt={selectedPhoto.caption || selectedPhoto.file_name}
               style={{
                 maxWidth: '100%',
                 maxHeight: '70vh',
@@ -619,7 +619,7 @@ const AllPhotosView: React.FC = () => {
                 marginBottom: 'var(--space-md)',
                 color: 'var(--color-text-primary)'
               }}>
-                {selectedPhoto.caption || selectedPhoto.fileName}
+                {selectedPhoto.caption || selectedPhoto.file_name}
               </h3>
 
               <div style={{
