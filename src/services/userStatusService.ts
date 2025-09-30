@@ -166,7 +166,7 @@ class UserStatusService {
         return [];
       }
 
-      return (data || []).map(item => ({
+      return (data || []).map((item: any) => ({
         id: item.user_id,
         nickname: item.users?.nickname,
         display_name: item.users?.display_name,
@@ -208,7 +208,7 @@ class UserStatusService {
         return [];
       }
 
-      return (data || []).map(item => ({
+      return (data || []).map((item: any) => ({
         id: item.user_id,
         nickname: item.users?.nickname,
         display_name: item.users?.display_name,
