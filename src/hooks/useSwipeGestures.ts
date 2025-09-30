@@ -42,7 +42,7 @@ export const useSwipeGestures = (
   const [swipeDirection, setSwipeDirection] = useState<SwipeDirection | null>(null);
   const touchStartRef = useRef<Touch | null>(null);
   const touchStartTimeRef = useRef<number>(0);
-  const elementRef = useRef<HTMLElement | null>(null);
+  const elementRef = useRef<HTMLDivElement | null>(null);
 
   const calculateDirection = (
     startX: number,
@@ -206,7 +206,7 @@ export const useSwipeGestures = (
     isSwiping,
     swipeDirection,
     // Helper methods
-    attachSwipeListeners: (element: HTMLElement) => {
+    attachSwipeListeners: (element: HTMLDivElement) => {
       elementRef.current = element;
     },
     detachSwipeListeners: () => {
