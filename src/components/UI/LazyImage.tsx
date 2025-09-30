@@ -44,7 +44,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
   const [isError, setIsError] = useState(false);
   const [currentSrc, setCurrentSrc] = useState(placeholder || '');
   const imgRef = useRef<HTMLImageElement>(null);
-  const observerRef = useRef<IntersectionObserver>();
+  const observerRef = useRef<IntersectionObserver | null>(null);
 
   // Create intersection observer for lazy loading
   useEffect(() => {
