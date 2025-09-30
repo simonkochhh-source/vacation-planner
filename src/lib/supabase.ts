@@ -8,14 +8,19 @@ const isPlaceholder =
   !supabaseUrl || 
   !supabaseAnonKey || 
   supabaseUrl.includes('your-project-ref') ||
-  supabaseAnonKey.includes('your_supabase_anon_key');
+  supabaseAnonKey.includes('your_supabase_anon_key') ||
+  supabaseUrl === '' ||
+  supabaseAnonKey === '';
 
 if (isPlaceholder) {
   console.warn('⚠️ Supabase: Using placeholder credentials. App will fallback to LocalStorage.');
+  console.log('ℹ️ Environment variables status:');
+  console.log('  - REACT_APP_SUPABASE_URL:', supabaseUrl ? '✅ Set' : '❌ Missing');
+  console.log('  - REACT_APP_SUPABASE_ANON_KEY:', supabaseAnonKey ? '✅ Set' : '❌ Missing');
   console.log('ℹ️ To enable Supabase integration:');
-  console.log('1. Create a Supabase project at https://supabase.com');
-  console.log('2. Update .env file with real credentials');
-  console.log('3. Restart the development server');
+  console.log('1. Set Environment Variables in Vercel Dashboard');
+  console.log('2. Redeploy the application');
+  console.log('3. Check Supabase Auth URLs');
 }
 
 // Create Supabase client - use placeholder values if real credentials are not available
