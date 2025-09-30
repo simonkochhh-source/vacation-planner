@@ -7,7 +7,7 @@ import MapMeasurement from '../Maps/MapMeasurement';
 import MobileMapControls from '../Maps/MobileMapControls';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Trip, Destination, TripStatus, DestinationStatus } from '../../types';
-import { MapPin, Route, Calendar, CheckCircle2, Clock, AlertCircle } from 'lucide-react';
+import { MapPin, Route, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 // Fix Leaflet default markers in React
@@ -61,7 +61,7 @@ const AllRoutesMapView: React.FC = () => {
     const stats = {
       totalTrips: trips.length,
       completedTrips: trips.filter(trip => trip.status === TripStatus.COMPLETED).length,
-      plannedTrips: trips.filter(trip => trip.status === TripStatus.PLANNED).length,
+      plannedTrips: trips.filter(trip => trip.status === TripStatus.PLANNING).length,
       activeTrips: trips.filter(trip => trip.status === TripStatus.ACTIVE).length,
       totalDestinations: 0,
       visitedDestinations: 0
@@ -123,7 +123,7 @@ const AllRoutesMapView: React.FC = () => {
     return allRoutes.filter(route => {
       if (route.trip.status === TripStatus.COMPLETED && !showCompleted) return false;
       if (route.trip.status === TripStatus.ACTIVE && !showActive) return false;
-      if (route.trip.status === TripStatus.PLANNED && !showPlanned) return false;
+      if (route.trip.status === TripStatus.PLANNING && !showPlanned) return false;
       return true;
     });
   }, [allRoutes, showCompleted, showPlanned, showActive]);
@@ -381,7 +381,7 @@ const AllRoutesMapView: React.FC = () => {
                 transition: 'all var(--transition-fast)'
               }}
             >
-              <CheckCircle2 size={12} />
+              <CheckCircle size={12} />
               Abgeschlossen
             </button>
 

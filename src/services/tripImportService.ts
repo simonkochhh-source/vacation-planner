@@ -47,7 +47,7 @@ export class TripImportService {
         budget: options.copyBudgets ? originalTrip.budget : undefined,
         actualCost: 0,
         participants: [], // Start with empty participants for imported trip
-        status: TripStatus.PLANNED,
+        status: TripStatus.PLANNING,
         tags: options.copyTags ? [...(originalTrip.tags || [])] : [],
         coverImage: undefined,
         privacy: options.privacy,

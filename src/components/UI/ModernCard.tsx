@@ -5,6 +5,7 @@ type CardVariant = 'elevated' | 'filled' | 'outlined';
 interface ModernCardProps {
   variant?: CardVariant;
   className?: string;
+  style?: React.CSSProperties;
   children: React.ReactNode;
   header?: React.ReactNode;
   footer?: React.ReactNode;
@@ -27,6 +28,7 @@ interface ModernCardProps {
 const ModernCard: React.FC<ModernCardProps> = ({
   variant = 'elevated',
   className = '',
+  style,
   children,
   header,
   footer,
@@ -73,6 +75,7 @@ const ModernCard: React.FC<ModernCardProps> = ({
   
   const cardProps = {
     className: getCardClasses(),
+    style,
     onClick,
     role: onClick ? (role || 'button') : role,
     tabIndex: isInteractive ? 0 : -1,

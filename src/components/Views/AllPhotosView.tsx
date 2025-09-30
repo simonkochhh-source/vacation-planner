@@ -33,6 +33,10 @@ interface GlobalPhoto extends TripPhoto {
   destinationName?: string;
   tripId?: string;
   destinationId?: string;
+  // Additional properties for compatibility
+  uploadedAt?: string;
+  size?: number;
+  type?: string;
 }
 
 type ViewMode = 'grid' | 'list';
@@ -143,7 +147,7 @@ const AllPhotosView: React.FC = () => {
     }
 
     try {
-      await PhotoService.deletePhoto(photo.id);
+      PhotoService.deletePhoto(photo.destination_id, photo.id);
       setPhotos(prev => prev.filter(p => p.id !== photo.id));
       setSelectedPhoto(null);
     } catch (error) {
@@ -590,6 +594,7 @@ const AllPhotosView: React.FC = () => {
               }}
               leftIcon={<X size={20} />}
             >
+              Schließen
             </ModernButton>
 
             {/* Image */}
