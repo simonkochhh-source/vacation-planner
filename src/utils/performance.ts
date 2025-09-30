@@ -28,7 +28,8 @@ class PerformanceMonitor {
         new PerformanceObserver((list) => {
           for (const entry of list.getEntries()) {
             if (entry.entryType === 'first-input') {
-              this.recordMetric('FID', entry.processingStart - entry.startTime);
+              const firstInputEntry = entry as any; // Cast to access processingStart
+              this.recordMetric('FID', firstInputEntry.processingStart - entry.startTime);
             }
           }
         }).observe({ entryTypes: ['first-input'] });
@@ -44,8 +45,9 @@ class PerformanceMonitor {
         new PerformanceObserver((list) => {
           let clsValue = 0;
           for (const entry of list.getEntries()) {
-            if (!entry.hadRecentInput) {
-              clsValue += (entry as any).value;
+            const layoutShiftEntry = entry as any; // Cast to access hadRecentInput
+            if (!layoutShiftEntry.hadRecentInput) {
+              clsValue += layoutShiftEntry.value;
             }
           }
           this.recordMetric('CLS', clsValue);
