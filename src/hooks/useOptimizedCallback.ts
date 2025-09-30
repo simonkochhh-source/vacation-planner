@@ -1,4 +1,4 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 
 // Performance-optimized callback hook with debouncing and memoization
 export const useOptimizedCallback = <T extends (...args: any[]) => any>(
@@ -38,5 +38,44 @@ export const useOptimizedCallback = <T extends (...args: any[]) => any>(
       }
     }) as T,
     deps
+  );
+};
+
+// Debounced callback hook
+export const useDebouncedCallback = <T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number,
+  deps: React.DependencyList
+): T => {
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const callbackRef = useRef(callback);
+
+  // Update callback reference when dependencies change
+  useEffect(() => {
+    callbackRef.current = callback;
+  }, deps);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  return useCallback(
+    ((...args: Parameters<T>) => {
+      // Clear existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Set new timeout
+      timeoutRef.current = setTimeout(() => {
+        callbackRef.current(...args);
+      }, delay);
+    }) as T,
+    [delay]
   );
 };
