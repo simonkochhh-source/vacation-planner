@@ -80,7 +80,7 @@ const AllPhotosView: React.FC = () => {
     switch (filterType) {
       case 'recent':
         filtered = filtered.sort((a, b) => 
-          new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+          new Date(b.uploadedAt || b.created_at || 0).getTime() - new Date(a.uploadedAt || a.created_at || 0).getTime()
         ).slice(0, 50);
         break;
       case 'favorites':
@@ -89,7 +89,7 @@ const AllPhotosView: React.FC = () => {
       default:
         // Sort by upload date (newest first)
         filtered = filtered.sort((a, b) => 
-          new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime()
+          new Date(b.uploadedAt || b.created_at || 0).getTime() - new Date(a.uploadedAt || a.created_at || 0).getTime()
         );
     }
 
@@ -118,11 +118,33 @@ const AllPhotosView: React.FC = () => {
               const destinationPhotos = await PhotoService.getPhotosForDestination(destination.id);
               
               const photosWithContext: GlobalPhoto[] = destinationPhotos.map(photo => ({
-                ...photo,
+                // TripPhoto interface properties
+                id: photo.id,
+                trip_id: trip.id,
+                destination_id: destination.id,
+                user_id: 'current-user', // TODO: Get from auth context
+                file_name: photo.name,
+                file_size: photo.size,
+                file_type: photo.type,
+                storage_path: '',
+                photo_url: photo.url,
+                caption: photo.caption,
+                location_name: undefined,
+                coordinates: photo.location ? { lat: photo.location.lat, lng: photo.location.lng } : undefined,
+                taken_at: photo.metadata?.dateTaken,
+                privacy: 'private' as const,
+                privacy_approved_at: undefined,
+                created_at: photo.uploadedAt || new Date().toISOString(),
+                updated_at: photo.uploadedAt || new Date().toISOString(),
+                url: photo.url,
+                // GlobalPhoto additional properties
                 tripName: trip.name,
                 destinationName: destination.name,
                 tripId: trip.id,
-                destinationId: destination.id
+                destinationId: destination.id,
+                uploadedAt: photo.uploadedAt,
+                size: photo.size,
+                type: photo.type
               }));
 
               allPhotos.push(...photosWithContext);
@@ -159,7 +181,7 @@ const AllPhotosView: React.FC = () => {
   const handleDownloadPhoto = async (photo: GlobalPhoto) => {
     try {
       const link = document.createElement('a');
-      link.href = photo.url;
+      link.href = photo.url || photo.photo_url;
       link.download = photo.file_name;
       link.target = '_blank';
       document.body.appendChild(link);
@@ -172,7 +194,7 @@ const AllPhotosView: React.FC = () => {
 
   const getPhotoStats = () => {
     const totalPhotos = photos.length;
-    const totalSize = photos.reduce((sum, photo) => sum + (photo.size || 0), 0);
+    const totalSize = photos.reduce((sum, photo) => sum + (photo.size || photo.file_size || 0), 0);
     const uniqueTrips = new Set(photos.map(p => p.tripId)).size;
     const uniqueDestinations = new Set(photos.map(p => p.destinationId)).size;
 
@@ -417,7 +439,7 @@ const AllPhotosView: React.FC = () => {
                       overflow: 'hidden'
                     }}>
                       <img
-                        src={photo.url}
+                        src={photo.url || photo.photo_url}
                         alt={photo.caption || photo.file_name}
                         style={{
                           position: 'absolute',
@@ -471,7 +493,7 @@ const AllPhotosView: React.FC = () => {
                         color: 'var(--color-text-secondary)'
                       }}>
                         <Calendar size={12} />
-                        <span>{formatDate(photo.uploadedAt)}</span>
+                        <span>{formatDate(photo.uploadedAt || photo.created_at)}</span>
                       </div>
                     </div>
                   </div>
@@ -497,7 +519,7 @@ const AllPhotosView: React.FC = () => {
                     gap: 'var(--space-lg)'
                   }}>
                     <img
-                      src={photo.url}
+                      src={photo.url || photo.photo_url}
                       alt={photo.caption || photo.file_name}
                       style={{
                         width: '80px',
@@ -537,7 +559,7 @@ const AllPhotosView: React.FC = () => {
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                           <Calendar size={14} />
-                          <span>{formatDate(photo.uploadedAt)}</span>
+                          <span>{formatDate(photo.uploadedAt || photo.created_at)}</span>
                         </div>
                       </div>
                       
@@ -545,7 +567,7 @@ const AllPhotosView: React.FC = () => {
                         fontSize: 'var(--text-xs)',
                         color: 'var(--color-text-secondary)'
                       }}>
-                        {((photo.size || 0) / (1024 * 1024)).toFixed(1)} MB • {photo.type}
+                        {((photo.size || photo.file_size || 0) / (1024 * 1024)).toFixed(1)} MB • {photo.type || photo.file_type}
                       </div>
                     </div>
                     
@@ -599,7 +621,7 @@ const AllPhotosView: React.FC = () => {
 
             {/* Image */}
             <img
-              src={selectedPhoto.url}
+              src={selectedPhoto.url || selectedPhoto.photo_url}
               alt={selectedPhoto.caption || selectedPhoto.file_name}
               style={{
                 maxWidth: '100%',
@@ -641,11 +663,11 @@ const AllPhotosView: React.FC = () => {
                 <span style={{ color: 'var(--color-text-primary)' }}>{selectedPhoto.destinationName}</span>
                 
                 <span style={{ color: 'var(--color-text-secondary)' }}>Datum:</span>
-                <span style={{ color: 'var(--color-text-primary)' }}>{formatDate(selectedPhoto.uploadedAt)}</span>
+                <span style={{ color: 'var(--color-text-primary)' }}>{formatDate(selectedPhoto.uploadedAt || selectedPhoto.created_at)}</span>
                 
                 <span style={{ color: 'var(--color-text-secondary)' }}>Größe:</span>
                 <span style={{ color: 'var(--color-text-primary)' }}>
-                  {((selectedPhoto.size || 0) / (1024 * 1024)).toFixed(1)} MB
+                  {((selectedPhoto.size || selectedPhoto.file_size || 0) / (1024 * 1024)).toFixed(1)} MB
                 </span>
               </div>
 
