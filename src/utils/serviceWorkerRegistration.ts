@@ -270,7 +270,7 @@ export class BackgroundSync {
   static async register(tag: string): Promise<void> {
     if ('serviceWorker' in navigator && 'sync' in window.ServiceWorkerRegistration.prototype) {
       const registration = await navigator.serviceWorker.ready;
-      await registration.sync.register(tag);
+      await (registration as any).sync.register(tag); // Cast for experimental Background Sync API
       console.log(`Background sync registered: ${tag}`);
     } else {
       console.warn('Background sync not supported');
