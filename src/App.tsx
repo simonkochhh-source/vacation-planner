@@ -6,6 +6,18 @@ import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardLayout from './components/Layout/DashboardLayout';
 import { SupabaseAppProvider, useSupabaseApp } from './stores/SupabaseAppContext';
 import MainLayout from './components/Layout/MainLayout';
+import { useTheme } from './hooks/useTheme';
+import { useOptimizedCallback } from './hooks/useOptimizedCallback';
+import { initPerformanceMonitoring } from './utils/performance';
+import PerformanceBudget from './components/Performance/PerformanceBudget';
+import PerformanceValidator from './components/Performance/PerformanceValidator';
+import { Destination } from './types';
+// import './utils/debugDashboard'; // Debug utilities disabled to prevent refresh loops
+import './design-system/index.css';
+import './App.css';
+import './styles/responsive.css';
+import './styles/components.css';
+import './styles/mobile.css';
 // Lazy loaded components with performance optimizations and preloading
 const EnhancedTimelineView = React.lazy(() => 
   import(/* webpackChunkName: "timeline" */ './components/Scheduling/EnhancedTimelineView')
@@ -46,18 +58,6 @@ const PlaceSearchDemo = React.lazy(() =>
 const ModernDesignDemo = React.lazy(() => 
   import(/* webpackChunkName: "design-demo" */ './components/Demo/ModernDesignDemo')
 );
-import { useTheme } from './hooks/useTheme';
-import { useOptimizedCallback } from './hooks/useOptimizedCallback';
-import { initPerformanceMonitoring } from './utils/performance';
-import PerformanceBudget from './components/Performance/PerformanceBudget';
-import PerformanceValidator from './components/Performance/PerformanceValidator';
-import { Destination } from './types';
-// import './utils/debugDashboard'; // Debug utilities disabled to prevent refresh loops
-import './design-system/index.css';
-import './App.css';
-import './styles/responsive.css';
-import './styles/components.css';
-import './styles/mobile.css';
 
 // Preload critical routes based on user behavior
 const preloadRoute = (routeName: string) => {
