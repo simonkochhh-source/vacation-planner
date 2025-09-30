@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { performanceMonitor } from '../../utils/performanceMonitoring';
+import { performanceMonitor } from '../../utils/performance';
 
 interface LazyImageProps {
   src: string;
