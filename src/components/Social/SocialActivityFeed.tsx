@@ -527,9 +527,9 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                             onClick={(e) => handlePhotoClick(activity, e)}
                             style={{
                               width: '100%',
-                              maxWidth: compact ? '300px' : '500px',
+                              maxWidth: compact ? '400px' : '600px',
                               height: 'auto',
-                              maxHeight: compact ? '150px' : '250px',
+                              maxHeight: compact ? '200px' : '350px',
                               objectFit: 'contain',
                               cursor: 'pointer',
                               transition: 'opacity var(--transition-normal)',
