@@ -30,6 +30,7 @@ import { PhotoService, TripPhoto } from '../../services/photoService';
 import ModernButton from '../UI/ModernButton';
 import ModernCard from '../UI/ModernCard';
 import PhotoShareModal from '../Social/PhotoShareModal';
+import { socialService } from '../../services/socialService';
 
 // Global photo interface for all trips
 interface GlobalPhoto extends TripPhoto {
@@ -940,14 +941,20 @@ const AllPhotosView: React.FC = () => {
           onShare={async (data) => {
             try {
               console.log('Sharing photos from AllPhotosView:', data);
+              
+              // Create photo share in Supabase
+              const result = await socialService.sharePhoto(data);
+              console.log('Photo share created successfully:', result);
+              
               setShowPhotoShareModal(false);
               setSelectionMode(false);
               setSelectedPhotos(new Set());
+              
               // Show success message
               alert('Fotos erfolgreich geteilt!');
             } catch (error) {
               console.error('Error sharing photos:', error);
-              alert('Fehler beim Teilen der Fotos');
+              alert(`Fehler beim Teilen der Fotos: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
             }
           }}
           trip={undefined} // AllPhotosView spans multiple trips
