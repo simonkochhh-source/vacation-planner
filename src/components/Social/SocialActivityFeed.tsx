@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image, X, Download, Trash2, MessageCircle, ArrowUp } from 'lucide-react';
+import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image, X, Download, Trash2, MessageCircle, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
 import { ActivityFeedItem, ActivityType } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -25,6 +25,7 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhotoActivity, setSelectedPhotoActivity] = useState<ActivityFeedItem | null>(null);
+  const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(0);
   const [newComment, setNewComment] = useState('');
@@ -261,6 +262,7 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
   const handlePhotoClick = async (activity: ActivityFeedItem, event: React.MouseEvent) => {
     event.stopPropagation();
     setSelectedPhotoActivity(activity);
+    setCurrentPhotoIndex(0); // Reset to first photo
     
     // Load photo share data if available
     if (activity.metadata?.photo_share_id) {
@@ -318,10 +320,25 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
 
   const closePhotoModal = () => {
     setSelectedPhotoActivity(null);
+    setCurrentPhotoIndex(0);
     setIsLiked(false);
     setLikeCount(0);
     setNewComment('');
     setComments([]);
+  };
+
+  const nextPhoto = () => {
+    if (selectedPhotoActivity?.metadata?.photos) {
+      setCurrentPhotoIndex(prev => (prev + 1) % selectedPhotoActivity.metadata.photos.length);
+    }
+  };
+
+  const prevPhoto = () => {
+    if (selectedPhotoActivity?.metadata?.photos) {
+      setCurrentPhotoIndex(prev => 
+        (prev - 1 + selectedPhotoActivity.metadata.photos.length) % selectedPhotoActivity.metadata.photos.length
+      );
+    }
   };
 
   if (!user) {
@@ -669,17 +686,101 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
               Schließen
             </ModernButton>
 
-            {/* Image */}
-            <img
-              src={selectedPhotoActivity.metadata?.photo_url}
-              alt={selectedPhotoActivity.metadata?.caption || 'Geteiltes Foto'}
-              style={{
-                maxWidth: '100%',
-                maxHeight: '70vh',
-                objectFit: 'contain',
-                borderRadius: 'var(--radius-md)'
-              }}
-            />
+            {/* Image Carousel */}
+            <div style={{ position: 'relative' }}>
+              <img
+                src={
+                  selectedPhotoActivity.metadata?.photos && selectedPhotoActivity.metadata.photos.length > 0
+                    ? selectedPhotoActivity.metadata.photos[currentPhotoIndex]?.url
+                    : selectedPhotoActivity.metadata?.photo_url
+                }
+                alt={selectedPhotoActivity.metadata?.caption || 'Geteiltes Foto'}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '70vh',
+                  objectFit: 'contain',
+                  borderRadius: 'var(--radius-md)'
+                }}
+              />
+
+              {/* Navigation arrows for multi-photo */}
+              {selectedPhotoActivity.metadata?.photos && selectedPhotoActivity.metadata.photos.length > 1 && (
+                <>
+                  <button
+                    onClick={prevPhoto}
+                    style={{
+                      position: 'absolute',
+                      left: 'var(--space-md)',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '48px',
+                      height: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: 'white',
+                      transition: 'all var(--transition-normal)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
+                    }}
+                  >
+                    <ChevronLeft size={24} />
+                  </button>
+                  
+                  <button
+                    onClick={nextPhoto}
+                    style={{
+                      position: 'absolute',
+                      right: 'var(--space-md)',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'rgba(0, 0, 0, 0.7)',
+                      border: 'none',
+                      borderRadius: '50%',
+                      width: '48px',
+                      height: '48px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      cursor: 'pointer',
+                      color: 'white',
+                      transition: 'all var(--transition-normal)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.9)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(0, 0, 0, 0.7)';
+                    }}
+                  >
+                    <ChevronRight size={24} />
+                  </button>
+
+                  {/* Photo counter */}
+                  <div style={{
+                    position: 'absolute',
+                    top: 'var(--space-md)',
+                    right: 'var(--space-md)',
+                    background: 'rgba(0, 0, 0, 0.8)',
+                    color: 'white',
+                    padding: 'var(--space-xs) var(--space-sm)',
+                    borderRadius: 'var(--radius-full)',
+                    fontSize: 'var(--text-sm)',
+                    fontWeight: 'var(--font-weight-medium)'
+                  }}>
+                    {currentPhotoIndex + 1} / {selectedPhotoActivity.metadata.photos.length}
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Photo Info */}
             <div style={{
@@ -728,6 +829,38 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                 <span style={{ color: 'var(--color-text-secondary)' }}>Geteilt:</span>
                 <span style={{ color: 'var(--color-text-primary)' }}>{formatDate(selectedPhotoActivity.created_at)}</span>
               </div>
+
+              {/* Prominent Location Display */}
+              {(selectedPhotoActivity.destination_location || selectedPhotoActivity.related_data?.location) && (
+                <div style={{
+                  background: 'var(--color-neutral-mist)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: 'var(--space-md)',
+                  marginBottom: 'var(--space-lg)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-sm)'
+                }}>
+                  <MapPin size={20} style={{ color: 'var(--color-primary-ocean)' }} />
+                  <div>
+                    <div style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)',
+                      marginBottom: '2px'
+                    }}>
+                      📍 Aufgenommen in
+                    </div>
+                    <div style={{
+                      fontSize: 'var(--text-base)',
+                      color: 'var(--color-text-primary)',
+                      fontWeight: 'var(--font-weight-semibold)'
+                    }}>
+                      {selectedPhotoActivity.destination_location || selectedPhotoActivity.related_data?.location}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Photo Reactions Section */}
               <div style={{

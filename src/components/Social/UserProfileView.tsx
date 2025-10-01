@@ -22,6 +22,7 @@ import {
   UUID, 
   FollowStatus, 
   ActivityFeedItem, 
+  ActivityType,
   Trip,
   TripPrivacy,
   getSocialTripPermissions
@@ -30,6 +31,7 @@ import { socialService } from '../../services/socialService';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { formatDate } from '../../utils';
 import AvatarUpload from '../User/AvatarUpload';
+import SocialActivityFeed from './SocialActivityFeed';
 
 interface UserProfileViewProps {
   userId: UUID;
@@ -43,16 +45,22 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
   const [profile, setProfile] = useState<SocialUserProfile | null>(null);
   const [followStatus, setFollowStatus] = useState<FollowStatus | 'none'>('none');
   const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
+  const [userPosts, setUserPosts] = useState<ActivityFeedItem[]>([]);
   const [userTrips, setUserTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'trips' | 'activity' | 'about'>('trips');
-
+  
   const isOwnProfile = currentUser?.id === userId;
+  const [activeTab, setActiveTab] = useState<'posts' | 'trips' | 'activity' | 'about'>('trips');
 
   useEffect(() => {
     loadUserProfile();
   }, [userId]);
+
+  useEffect(() => {
+    // Set default tab based on profile type
+    setActiveTab(isOwnProfile ? 'posts' : 'trips');
+  }, [isOwnProfile]);
 
   const loadUserProfile = async () => {
     try {
@@ -71,6 +79,55 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
       // Load user activities
       const userActivities = await socialService.getUserActivityFeed(userId, 20);
       setActivities(userActivities);
+
+      // Load user posts (photo shares and other posts) - chronological
+      if (isOwnProfile || followStatus === FollowStatus.ACCEPTED) {
+        try {
+          // Load photo shares
+          const photoShares = await socialService.getUserPhotoShares(userId, 50);
+          
+          // Convert photo shares to activity format for posts feed
+          const photoActivities: ActivityFeedItem[] = photoShares.map(photo => ({
+            id: photo.id,
+            activity_id: photo.id,
+            user_id: photo.user_id,
+            user_nickname: photo.user_nickname,
+            user_avatar_url: photo.user_avatar_url,
+            activity_type: ActivityType.PHOTO_SHARED,
+            title: photo.caption || 'Foto geteilt',
+            trip_name: photo.trip_name,
+            destination_name: photo.destination_name,
+            destination_location: photo.destination_location,
+            metadata: {
+              photo_url: photo.photo_url,
+              photos: photo.photos,
+              photo_count: photo.photo_count,
+              caption: photo.caption,
+              privacy: photo.privacy,
+              like_count: photo.like_count,
+              user_liked: photo.user_liked,
+              photo_share_id: photo.id
+            },
+            related_data: {
+              tripId: photo.trip_id,
+              tripName: photo.trip_name,
+              destinationId: photo.destination_id,
+              destinationName: photo.destination_name,
+              location: photo.destination_location
+            },
+            created_at: photo.created_at
+          }));
+          
+          // Combine with other activities and sort chronologically
+          const allPosts = [...photoActivities, ...userActivities]
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          
+          setUserPosts(allPosts);
+        } catch (error) {
+          console.error('Failed to load user posts:', error);
+          setUserPosts([]);
+        }
+      }
 
       // TODO: Load user's public/contact trips based on privacy settings
       // This would require expanding the trip service to include privacy filtering
@@ -390,7 +447,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
           borderBottom: '2px solid #e5e7eb',
           marginBottom: '32px'
         }}>
-          {['trips', 'activity', 'about'].map((tab) => (
+          {(isOwnProfile ? ['posts', 'trips', 'activity', 'about'] : ['trips', 'activity', 'about']).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab as any)}
@@ -406,6 +463,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                 transition: 'all 0.2s'
               }}
             >
+              {tab === 'posts' && 'Meine Posts'}
               {tab === 'trips' && 'Reisen'}
               {tab === 'activity' && 'Aktivitäten'}
               {tab === 'about' && 'Über mich'}
@@ -414,6 +472,161 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
         </div>
 
         {/* Tab Content */}
+        {activeTab === 'posts' && (
+          <div>
+            <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+              Meine Posts
+            </h3>
+            
+            {userPosts.length === 0 ? (
+              <div style={{
+                textAlign: 'center',
+                padding: '60px 20px',
+                background: 'white',
+                borderRadius: '12px',
+                border: '1px solid #e5e7eb'
+              }}>
+                <Heart size={48} style={{ color: '#9ca3af', margin: '0 auto 16px' }} />
+                <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-text-secondary)' }}>
+                  Noch keine Posts
+                </h3>
+                <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
+                  Du hast noch keine Fotos oder Reise-Updates geteilt.
+                </p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {userPosts.map(post => (
+                  <div
+                    key={`${post.activity_type}-${post.activity_id}`}
+                    style={{
+                      background: 'white',
+                      borderRadius: '12px',
+                      padding: '24px',
+                      border: '1px solid #e5e7eb',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                    }}
+                  >
+                    <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                      <AvatarUpload
+                        currentAvatarUrl={post.user_avatar_url}
+                        size="small"
+                        editable={false}
+                      />
+                      
+                      <div style={{ flex: 1 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+                            {post.user_nickname || 'Du'}
+                          </h4>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
+                            {formatDate(post.created_at)}
+                          </span>
+                        </div>
+                        
+                        <p style={{ margin: '4px 0', color: 'var(--color-text-primary)', fontSize: '0.875rem' }}>
+                          {post.title}
+                        </p>
+                        
+                        {post.destination_name && (
+                          <div style={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            gap: '4px',
+                            fontSize: '0.75rem',
+                            color: 'var(--color-text-secondary)',
+                            marginTop: '4px'
+                          }}>
+                            <MapPin size={12} />
+                            {post.destination_location ? 
+                              `${post.destination_name}, ${post.destination_location}` : 
+                              post.destination_name
+                            }
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Photo Display for Photo Posts */}
+                    {post.activity_type === ActivityType.PHOTO_SHARED && post.metadata?.photo_url && (
+                      <div style={{
+                        marginBottom: '16px',
+                        borderRadius: '8px',
+                        overflow: 'hidden',
+                        border: '1px solid var(--color-border)'
+                      }}>
+                        <img
+                          src={post.metadata.photo_url}
+                          alt={post.metadata?.caption || 'Geteiltes Foto'}
+                          style={{
+                            width: '100%',
+                            height: 'auto',
+                            maxHeight: '400px',
+                            objectFit: 'cover',
+                            cursor: 'pointer'
+                          }}
+                          onClick={() => {
+                            // TODO: Open photo modal similar to SocialActivityFeed
+                            console.log('Open photo modal for:', post);
+                          }}
+                        />
+                        
+                        {post.metadata?.caption && (
+                          <div style={{
+                            padding: 'var(--space-sm)',
+                            background: 'var(--color-bg-secondary)',
+                            fontSize: 'var(--text-sm)',
+                            color: 'var(--color-text-primary)'
+                          }}>
+                            {post.metadata.caption}
+                          </div>
+                        )}
+                        
+                        {post.metadata.photo_count && post.metadata.photo_count > 1 && (
+                          <div style={{
+                            padding: 'var(--space-xs) var(--space-sm)',
+                            background: 'var(--color-bg-secondary)',
+                            fontSize: 'var(--text-xs)',
+                            color: 'var(--color-text-secondary)',
+                            borderTop: '1px solid var(--color-border)'
+                          }}>
+                            📸 {post.metadata.photo_count} Fotos
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Engagement Stats */}
+                    {post.metadata?.like_count !== undefined && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '16px',
+                        fontSize: '0.75rem',
+                        color: 'var(--color-text-secondary)',
+                        borderTop: '1px solid #e5e7eb',
+                        paddingTop: '12px'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <Heart size={12} style={{ color: '#ef4444' }} />
+                          {post.metadata.like_count} Like{post.metadata.like_count === 1 ? '' : 's'}
+                        </div>
+                        
+                        {post.trip_name && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <Calendar size={12} />
+                            {post.trip_name}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         {activeTab === 'trips' && (
           <div>
             <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
