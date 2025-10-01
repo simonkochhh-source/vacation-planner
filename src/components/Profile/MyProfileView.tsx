@@ -30,7 +30,7 @@ const MyProfileView: React.FC = () => {
   const [myActivities, setMyActivities] = useState<ActivityFeedItem[]>([]);
   const [myPosts, setMyPosts] = useState<ActivityFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'overview' | 'trips' | 'activities' | 'privacy'>('posts');
+  const [activeTab, setActiveTab] = useState<'posts' | 'overview' | 'trips' | 'privacy'>('posts');
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -180,25 +180,6 @@ const MyProfileView: React.FC = () => {
     }
   };
 
-  const getActivityIcon = (activity: ActivityFeedItem) => {
-    // Reuse the same icons from SocialActivityFeed
-    switch (activity.activity_type) {
-      case ActivityType.TRIP_CREATED:
-        return <Calendar size={16} style={{ color: '#3b82f6' }} />;
-      case ActivityType.TRIP_STARTED:
-        return <MapPin size={16} style={{ color: '#10b981' }} />;
-      case ActivityType.TRIP_COMPLETED:
-        return <TrendingUp size={16} style={{ color: '#f59e0b' }} />;
-      case ActivityType.DESTINATION_VISITED:
-        return <MapPin size={16} style={{ color: '#ef4444' }} />;
-      case ActivityType.DESTINATION_ADDED:
-        return <MapPin size={16} style={{ color: 'var(--color-text-secondary)' }} />;
-      case ActivityType.USER_FOLLOWED:
-        return <Users size={16} style={{ color: '#8b5cf6' }} />;
-      default:
-        return <Activity size={16} style={{ color: 'var(--color-text-secondary)' }} />;
-    }
-  };
 
   if (loading) {
     return (
@@ -384,7 +365,6 @@ const MyProfileView: React.FC = () => {
             { id: 'posts', label: 'Meine Posts', icon: Share },
             { id: 'overview', label: 'Übersicht', icon: User },
             { id: 'trips', label: 'Meine Reisen', icon: MapPin },
-            { id: 'activities', label: 'Aktivitäten', icon: Activity },
             { id: 'privacy', label: 'Privatsphäre', icon: Shield }
           ].map(tab => (
             <button
@@ -905,82 +885,6 @@ const MyProfileView: React.FC = () => {
                     opacity: 0.5 
                   }} />
                   <p>Du hast noch keine Reisen erstellt.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'activities' && (
-            <div>
-              <h3 style={{
-                fontSize: 'var(--text-lg)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)',
-                margin: '0 0 var(--space-lg) 0'
-              }}>
-                Deine öffentlichen Aktivitäten
-              </h3>
-
-              {myActivities.length > 0 ? (
-                <div>
-                  {myActivities.map((activity, index) => (
-                    <div
-                      key={`${activity.id}-${index}`}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'flex-start',
-                        gap: 'var(--space-md)',
-                        padding: 'var(--space-md)',
-                        borderBottom: index < myActivities.length - 1 ? '1px solid var(--color-border)' : 'none'
-                      }}
-                    >
-                      <div style={{ flexShrink: 0, paddingTop: '2px' }}>
-                        {getActivityIcon(activity)}
-                      </div>
-                      
-                      <div style={{ flex: 1 }}>
-                        <p style={{
-                          margin: 0,
-                          fontSize: 'var(--text-base)',
-                          color: 'var(--color-text-primary)',
-                          lineHeight: 1.4
-                        }}>
-                          {activity.title}
-                        </p>
-                        
-                        {activity.description && (
-                          <p style={{
-                            margin: 'var(--space-xs) 0 0 0',
-                            fontSize: 'var(--text-sm)',
-                            color: 'var(--color-text-secondary)'
-                          }}>
-                            {activity.description}
-                          </p>
-                        )}
-                        
-                        <div style={{
-                          fontSize: 'var(--text-xs)',
-                          color: 'var(--color-text-secondary)',
-                          marginTop: 'var(--space-xs)'
-                        }}>
-                          {formatDate(activity.created_at)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div style={{
-                  textAlign: 'center',
-                  padding: 'var(--space-2xl)',
-                  color: 'var(--color-text-secondary)'
-                }}>
-                  <Activity size={48} style={{ 
-                    margin: '0 auto var(--space-md)', 
-                    display: 'block', 
-                    opacity: 0.5 
-                  }} />
-                  <p>Du hast noch keine öffentlichen Aktivitäten.</p>
                 </div>
               )}
             </div>

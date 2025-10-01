@@ -110,8 +110,8 @@ const MapView: React.FC = () => {
       try {
         // Fit map to show all destinations with some padding
         mapRef.fitBounds(bounds, {
-          padding: [20, 20], // Add some padding around the bounds
-          maxZoom: isMobile ? 12 : 14 // Limit max zoom to avoid being too close
+          padding: [20, 20] // Add some padding around the bounds
+          // Remove maxZoom restriction to allow manual zooming after auto-fit
         });
         console.log(`🗺️ Auto-fitted map to ${bounds.length} destinations`);
       } catch (error) {
@@ -181,12 +181,14 @@ const MapView: React.FC = () => {
       <MapContainer
         center={getMapCenter()}
         zoom={currentDestinations.length > 0 ? (isMobile ? 8 : 10) : (isMobile ? 4 : 5)}
+        minZoom={2} // Allow zooming out to see the world
+        maxZoom={18} // Allow zooming in to street level
         style={{ height: '100%', width: '100%' }}
         ref={setMapRef}
-        // Mobile optimizations
-        touchZoom={isTouchDevice}
-        doubleClickZoom={!isTouchDevice}
-        scrollWheelZoom={!isTouchDevice}
+        // Zoom optimizations - allow multiple zoom methods
+        touchZoom={true} // Always enable touch zoom
+        doubleClickZoom={true} // Always enable double-click zoom
+        scrollWheelZoom={true} // Always enable scroll wheel zoom
         dragging={true}
         zoomControl={false} // We'll use custom controls
         attributionControl={!isMobile} // Hide on mobile to save space
