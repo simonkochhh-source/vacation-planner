@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image } from 'lucide-react';
+import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image, X, Download, Trash2, MessageCircle, ArrowUp } from 'lucide-react';
 import { ActivityFeedItem, ActivityType } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import AvatarUpload from '../User/AvatarUpload';
 import { formatDate } from '../../utils';
+import ModernButton from '../UI/ModernButton';
 
 interface SocialActivityFeedProps {
   maxItems?: number;
@@ -23,6 +24,11 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
   const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPhotoActivity, setSelectedPhotoActivity] = useState<ActivityFeedItem | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
 
   useEffect(() => {
     if (user) {
@@ -252,6 +258,72 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
     });
   };
 
+  const handlePhotoClick = async (activity: ActivityFeedItem, event: React.MouseEvent) => {
+    event.stopPropagation();
+    setSelectedPhotoActivity(activity);
+    
+    // Load photo share data if available
+    if (activity.metadata?.photo_share_id) {
+      setIsLiked(activity.metadata.user_liked || false);
+      setLikeCount(activity.metadata.like_count || 0);
+      setComments([]);
+    }
+  };
+
+  const handleLikePhoto = async () => {
+    if (!selectedPhotoActivity?.metadata?.photo_share_id) return;
+
+    try {
+      if (isLiked) {
+        await socialService.unlikePhoto(selectedPhotoActivity.metadata.photo_share_id);
+        setIsLiked(false);
+        setLikeCount(prev => prev - 1);
+      } else {
+        await socialService.likePhoto(selectedPhotoActivity.metadata.photo_share_id);
+        setIsLiked(true);
+        setLikeCount(prev => prev + 1);
+      }
+      
+      // Update the activity in the list
+      setActivities(prev => prev.map(activity => 
+        activity.id === selectedPhotoActivity.id 
+          ? { 
+              ...activity, 
+              metadata: { 
+                ...activity.metadata, 
+                user_liked: !isLiked,
+                like_count: isLiked ? (activity.metadata?.like_count || 1) - 1 : (activity.metadata?.like_count || 0) + 1
+              }
+            }
+          : activity
+      ));
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('Fehler beim Liken des Fotos');
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim() || !selectedPhotoActivity?.metadata?.photo_share_id) return;
+
+    try {
+      // Note: This would require a comments table and service method
+      alert('Kommentar-Funktion wird in Kürze verfügbar sein!');
+      setNewComment('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Fehler beim Hinzufügen des Kommentars');
+    }
+  };
+
+  const closePhotoModal = () => {
+    setSelectedPhotoActivity(null);
+    setIsLiked(false);
+    setLikeCount(0);
+    setNewComment('');
+    setComments([]);
+  };
+
   if (!user) {
     return (
       <div style={{
@@ -435,10 +507,19 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                           <img
                             src={activity.metadata.photo_url}
                             alt="Geteiltes Foto"
+                            onClick={(e) => handlePhotoClick(activity, e)}
                             style={{
                               width: '100%',
                               height: compact ? '120px' : '150px',
-                              objectFit: 'cover'
+                              objectFit: 'cover',
+                              cursor: 'pointer',
+                              transition: 'opacity var(--transition-normal)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.opacity = '0.8';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.opacity = '1';
                             }}
                           />
                           {(activity.metadata?.caption || activity.destination_location || activity.related_data?.location) && (
@@ -546,6 +627,197 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
           >
             Mehr anzeigen
           </button>
+        </div>
+      )}
+
+      {/* Photo Detail Modal */}
+      {selectedPhotoActivity && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.9)',
+          zIndex: 1000,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 'var(--space-lg)'
+        }}>
+          <div style={{
+            position: 'relative',
+            maxWidth: '90vw',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            {/* Close Button */}
+            <ModernButton
+              variant="text"
+              size="sm"
+              onClick={closePhotoModal}
+              style={{
+                position: 'absolute',
+                top: '-50px',
+                right: 0,
+                color: 'white',
+                zIndex: 1001
+              }}
+              leftIcon={<X size={20} />}
+            >
+              Schließen
+            </ModernButton>
+
+            {/* Image */}
+            <img
+              src={selectedPhotoActivity.metadata?.photo_url}
+              alt={selectedPhotoActivity.metadata?.caption || 'Geteiltes Foto'}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '70vh',
+                objectFit: 'contain',
+                borderRadius: 'var(--radius-md)'
+              }}
+            />
+
+            {/* Photo Info */}
+            <div style={{
+              background: 'var(--color-surface)',
+              borderRadius: 'var(--radius-md)',
+              padding: 'var(--space-lg)',
+              marginTop: 'var(--space-md)',
+              maxWidth: '500px'
+            }}>
+              <h3 style={{
+                fontSize: 'var(--text-lg)',
+                fontWeight: 'var(--font-weight-semibold)',
+                margin: 0,
+                marginBottom: 'var(--space-md)',
+                color: 'var(--color-text-primary)'
+              }}>
+                {selectedPhotoActivity.metadata?.caption || 'Geteiltes Foto'}
+              </h3>
+
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'auto 1fr',
+                gap: 'var(--space-sm) var(--space-md)',
+                fontSize: 'var(--text-sm)',
+                marginBottom: 'var(--space-lg)'
+              }}>
+                <span style={{ color: 'var(--color-text-secondary)' }}>Von:</span>
+                <span style={{ color: 'var(--color-text-primary)' }}>{selectedPhotoActivity.user_nickname}</span>
+                
+                {selectedPhotoActivity.destination_name && (
+                  <>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Ziel:</span>
+                    <span style={{ color: 'var(--color-text-primary)' }}>{selectedPhotoActivity.destination_name}</span>
+                  </>
+                )}
+                
+                {(selectedPhotoActivity.destination_location || selectedPhotoActivity.related_data?.location) && (
+                  <>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Ort:</span>
+                    <span style={{ color: 'var(--color-text-primary)' }}>
+                      {selectedPhotoActivity.destination_location || selectedPhotoActivity.related_data?.location}
+                    </span>
+                  </>
+                )}
+                
+                <span style={{ color: 'var(--color-text-secondary)' }}>Geteilt:</span>
+                <span style={{ color: 'var(--color-text-primary)' }}>{formatDate(selectedPhotoActivity.created_at)}</span>
+              </div>
+
+              {/* Photo Reactions Section */}
+              <div style={{
+                borderTop: '1px solid var(--color-border)',
+                paddingTop: 'var(--space-lg)',
+                marginBottom: 'var(--space-lg)'
+              }}>
+                {/* Like and Comment Buttons */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-lg)',
+                  marginBottom: 'var(--space-md)'
+                }}>
+                  <ModernButton
+                    variant="text"
+                    size="sm"
+                    onClick={handleLikePhoto}
+                    leftIcon={
+                      <Heart 
+                        size={20} 
+                        style={{ 
+                          color: isLiked ? 'var(--color-error)' : 'var(--color-text-secondary)',
+                          fill: isLiked ? 'var(--color-error)' : 'none'
+                        }} 
+                      />
+                    }
+                    style={{
+                      color: isLiked ? 'var(--color-error)' : 'var(--color-text-secondary)',
+                      fontWeight: isLiked ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)'
+                    }}
+                  >
+                    {likeCount > 0 ? `${likeCount} Like${likeCount === 1 ? '' : 's'}` : 'Like'}
+                  </ModernButton>
+
+                  <ModernButton
+                    variant="text"
+                    size="sm"
+                    leftIcon={<MessageCircle size={20} />}
+                    style={{ color: 'var(--color-text-secondary)' }}
+                  >
+                    {comments.length > 0 ? `${comments.length} Kommentar${comments.length === 1 ? '' : 'e'}` : 'Kommentieren'}
+                  </ModernButton>
+                </div>
+
+                {/* Comment Input */}
+                <div style={{
+                  display: 'flex',
+                  gap: 'var(--space-sm)',
+                  alignItems: 'center'
+                }}>
+                  <input
+                    type="text"
+                    placeholder="Kommentar hinzufügen..."
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        handleAddComment();
+                      }
+                    }}
+                    style={{
+                      flex: 1,
+                      padding: 'var(--space-sm) var(--space-md)',
+                      border: '1px solid var(--color-border)',
+                      borderRadius: 'var(--radius-full)',
+                      fontSize: 'var(--text-sm)',
+                      fontFamily: 'var(--font-family-system)',
+                      background: 'var(--color-surface)',
+                      color: 'var(--color-text-primary)'
+                    }}
+                  />
+                  <ModernButton
+                    variant="text"
+                    size="sm"
+                    onClick={handleAddComment}
+                    disabled={!newComment.trim()}
+                    leftIcon={<ArrowUp size={16} />}
+                    style={{
+                      minWidth: 'auto',
+                      padding: 'var(--space-sm)',
+                      color: newComment.trim() ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)'
+                    }}
+                  >
+                    Senden
+                  </ModernButton>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>
