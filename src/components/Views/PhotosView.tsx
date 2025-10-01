@@ -18,6 +18,7 @@ import {
   FolderOpen,
   Lock,
   Unlock,
+  Share,
   Check,
   Filter,
   Shield,
@@ -386,11 +387,22 @@ const PhotosView: React.FC = () => {
   }
 
   return (
-    <div style={{ 
-      padding: isMobile ? '1rem' : '1.5rem',
-      maxWidth: '1200px',
-      margin: '0 auto'
-    }}>
+    <>
+      <style>
+        {`
+          @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% { transform: translateY(0); }
+            40%, 43% { transform: translateY(-8px); }
+            70% { transform: translateY(-4px); }
+            90% { transform: translateY(-2px); }
+          }
+        `}
+      </style>
+      <div style={{ 
+        padding: isMobile ? '1rem' : '1.5rem',
+        maxWidth: '1200px',
+        margin: '0 auto'
+      }}>
       {/* Header */}
       <div style={{
         marginBottom: '2rem'
@@ -561,49 +573,133 @@ const PhotosView: React.FC = () => {
                 Fotos ({photos.length})
               </h3>
               
-              {/* Upload Button */}
-              <label style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                padding: isMobile ? '0.6rem 0.8rem' : '0.75rem 1rem',
-                background: 'var(--color-primary-ocean)',
-                color: 'white',
-                borderRadius: isMobile ? '6px' : '8px',
-                cursor: uploading ? 'not-allowed' : 'pointer',
-                fontSize: isMobile ? '0.8rem' : '0.875rem',
-                fontWeight: '500',
-                opacity: uploading ? 0.6 : 1,
-                width: isMobile ? '100%' : 'auto',
-                justifyContent: isMobile ? 'center' : 'flex-start'
+              <div style={{ 
+                display: 'flex', 
+                gap: isMobile ? '0.5rem' : '0.75rem',
+                flexDirection: isMobile ? 'column' : 'row',
+                width: isMobile ? '100%' : 'auto'
               }}>
-                {uploading ? (
-                  <>
+                {/* Upload Button */}
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: isMobile ? '0.6rem 0.8rem' : '0.75rem 1rem',
+                  background: 'var(--color-primary-ocean)',
+                  color: 'white',
+                  borderRadius: isMobile ? '6px' : '8px',
+                  cursor: uploading ? 'not-allowed' : 'pointer',
+                  fontSize: isMobile ? '0.8rem' : '0.875rem',
+                  fontWeight: '500',
+                  opacity: uploading ? 0.6 : 1,
+                  flex: isMobile ? '1' : 'none',
+                  justifyContent: 'center'
+                }}>
+                  {uploading ? (
+                    <>
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        border: '2px solid rgba(255,255,255,0.3)',
+                        borderTop: '2px solid white',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                      }} />
+                      Lädt hoch...
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={16} />
+                      Fotos hinzufügen
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={(e) => e.target.files && handlePhotoUpload(e.target.files)}
+                    disabled={uploading}
+                  />
+                </label>
+
+                {/* Multi-Photo Share Button */}
+                <button
+                  onClick={() => {
+                    if (photos.length === 0) {
+                      alert('Laden Sie zuerst Fotos hoch, bevor Sie sie teilen können!');
+                      return;
+                    }
+                    // Import and open PhotoShareModal with destination photos
+                    import('../Social/PhotoShareModal').then(({ default: PhotoShareModal }) => {
+                      // We'll implement the modal opening logic here
+                      console.log('Opening PhotoShareModal with photos:', photos);
+                      alert('Photo Sharing Modal wird geöffnet... (Implementation folgt)');
+                    });
+                  }}
+                  disabled={photos.length === 0}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    padding: isMobile ? '0.6rem 0.8rem' : '0.75rem 1rem',
+                    background: photos.length === 0 
+                      ? 'rgba(6, 182, 212, 0.3)' 
+                      : 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                    color: 'white',
+                    border: '2px solid white',
+                    borderRadius: isMobile ? '6px' : '8px',
+                    cursor: photos.length === 0 ? 'not-allowed' : 'pointer',
+                    fontSize: isMobile ? '0.8rem' : '0.875rem',
+                    fontWeight: '500',
+                    flex: isMobile ? '1' : 'none',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    boxShadow: photos.length > 0 
+                      ? '0 4px 12px rgba(6, 182, 212, 0.4)' 
+                      : 'none',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (photos.length > 0) {
+                      e.currentTarget.style.transform = 'scale(1.05)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(6, 182, 212, 0.6)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (photos.length > 0) {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(6, 182, 212, 0.4)';
+                    }
+                  }}
+                  title={photos.length === 0 
+                    ? 'Laden Sie zuerst Fotos hoch um sie zu teilen' 
+                    : '📸 Multi-Photo Sharing - Teile mehrere Fotos als einen Post!'}
+                >
+                  <Share size={16} />
+                  Fotos teilen
+                  
+                  {/* "NEW" Badge */}
+                  {photos.length > 0 && (
                     <div style={{
-                      width: '16px',
-                      height: '16px',
-                      border: '2px solid rgba(255,255,255,0.3)',
-                      borderTop: '2px solid white',
-                      borderRadius: '50%',
-                      animation: 'spin 1s linear infinite'
-                    }} />
-                    Lädt hoch...
-                  </>
-                ) : (
-                  <>
-                    <Plus size={16} />
-                    Fotos hinzufügen
-                  </>
-                )}
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  onChange={(e) => e.target.files && handlePhotoUpload(e.target.files)}
-                  disabled={uploading}
-                />
-              </label>
+                      position: 'absolute',
+                      top: '-8px',
+                      right: '-8px',
+                      background: 'linear-gradient(45deg, #ef4444, #dc2626)',
+                      color: 'white',
+                      fontSize: '9px',
+                      fontWeight: 'bold',
+                      padding: '2px 4px',
+                      borderRadius: '4px',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                      border: '1px solid white',
+                      animation: 'bounce 2s infinite'
+                    }}>
+                      NEW
+                    </div>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* Photos Grid */}
@@ -1077,7 +1173,8 @@ const PhotosView: React.FC = () => {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
