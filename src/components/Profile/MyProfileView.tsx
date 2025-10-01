@@ -12,7 +12,9 @@ import {
   Edit3,
   Shield,
   Share,
-  TrendingUp
+  TrendingUp,
+  Trash2,
+  X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
@@ -29,6 +31,8 @@ const MyProfileView: React.FC = () => {
   const [myPosts, setMyPosts] = useState<ActivityFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'posts' | 'overview' | 'trips' | 'activities' | 'privacy'>('posts');
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -106,6 +110,40 @@ const MyProfileView: React.FC = () => {
 
   const handleEditProfile = () => {
     updateUIState({ currentView: 'settings' });
+  };
+
+  const handleDeletePost = async (post: ActivityFeedItem) => {
+    if (!user) return;
+    
+    try {
+      setDeleting(post.activity_id);
+      
+      // Only delete photo shares for now, as other activities might be system-generated
+      if (post.activity_type === ActivityType.PHOTO_SHARED && post.metadata?.photo_share_id) {
+        await socialService.deletePhotoShare(post.metadata.photo_share_id);
+        
+        // Remove from local state
+        setMyPosts(prev => prev.filter(p => p.activity_id !== post.activity_id));
+        setMyActivities(prev => prev.filter(a => a.activity_id !== post.activity_id));
+        
+        // Close confirmation modal
+        setDeleteConfirm(null);
+      }
+      
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      // Could add toast notification here
+    } finally {
+      setDeleting(null);
+    }
+  };
+
+  const confirmDelete = (post: ActivityFeedItem) => {
+    setDeleteConfirm(post.activity_id);
+  };
+
+  const cancelDelete = () => {
+    setDeleteConfirm(null);
   };
 
   const getPublicTrips = () => {
@@ -422,13 +460,48 @@ const MyProfileView: React.FC = () => {
                         />
                         
                         <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                            <h4 style={{ margin: 0, fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                              {post.user_nickname || 'Du'}
-                            </h4>
-                            <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
-                              {formatDate(post.created_at)}
-                            </span>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                              <h4 style={{ margin: 0, fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
+                                {post.user_nickname || 'Du'}
+                              </h4>
+                              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+                                {formatDate(post.created_at)}
+                              </span>
+                            </div>
+                            
+                            {/* Delete button - only show for photo shares for now */}
+                            {post.activity_type === ActivityType.PHOTO_SHARED && (
+                              <button
+                                onClick={() => confirmDelete(post)}
+                                disabled={deleting === post.activity_id}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  padding: 'var(--space-xs)',
+                                  borderRadius: 'var(--radius-sm)',
+                                  color: 'var(--color-text-secondary)',
+                                  cursor: deleting === post.activity_id ? 'not-allowed' : 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  opacity: deleting === post.activity_id ? 0.5 : 1,
+                                  transition: 'all var(--transition-normal)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (deleting !== post.activity_id) {
+                                    e.currentTarget.style.background = 'var(--color-error-light)';
+                                    e.currentTarget.style.color = 'var(--color-error)';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent';
+                                  e.currentTarget.style.color = 'var(--color-text-secondary)';
+                                }}
+                                title="Post löschen"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            )}
                           </div>
                           
                           <p style={{ margin: 'var(--space-xs) 0', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>
@@ -1055,6 +1128,134 @@ const MyProfileView: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: 'var(--color-surface)',
+            borderRadius: 'var(--radius-lg)',
+            padding: 'var(--space-xl)',
+            maxWidth: '400px',
+            width: '90%',
+            border: '1px solid var(--color-border)',
+            boxShadow: '0 10px 25px rgba(0, 0, 0, 0.15)'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginBottom: 'var(--space-lg)'
+            }}>
+              <h3 style={{
+                margin: 0,
+                fontSize: 'var(--text-lg)',
+                fontWeight: 'var(--font-weight-semibold)',
+                color: 'var(--color-text-primary)'
+              }}>
+                Post löschen
+              </h3>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 'var(--space-xs)',
+                  borderRadius: 'var(--radius-sm)',
+                  color: 'var(--color-text-secondary)',
+                  cursor: 'pointer'
+                }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <p style={{
+              margin: '0 0 var(--space-lg) 0',
+              color: 'var(--color-text-secondary)',
+              lineHeight: 1.5
+            }}>
+              Möchtest du diesen Post wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+            </p>
+            
+            <div style={{
+              display: 'flex',
+              gap: 'var(--space-md)',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                onClick={cancelDelete}
+                style={{
+                  background: 'var(--color-neutral-mist)',
+                  color: 'var(--color-text-primary)',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: 'var(--space-sm) var(--space-lg)',
+                  fontSize: 'var(--text-sm)',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-normal)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--color-border)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--color-neutral-mist)';
+                }}
+              >
+                Abbrechen
+              </button>
+              
+              <button
+                onClick={() => {
+                  const postToDelete = myPosts.find(p => p.activity_id === deleteConfirm);
+                  if (postToDelete) {
+                    handleDeletePost(postToDelete);
+                  }
+                }}
+                disabled={deleting === deleteConfirm}
+                style={{
+                  background: 'var(--color-error)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 'var(--radius-md)',
+                  padding: 'var(--space-sm) var(--space-lg)',
+                  fontSize: 'var(--text-sm)',
+                  cursor: deleting === deleteConfirm ? 'not-allowed' : 'pointer',
+                  opacity: deleting === deleteConfirm ? 0.6 : 1,
+                  transition: 'all var(--transition-normal)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-xs)'
+                }}
+                onMouseEnter={(e) => {
+                  if (deleting !== deleteConfirm) {
+                    e.currentTarget.style.background = '#dc2626';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (deleting !== deleteConfirm) {
+                    e.currentTarget.style.background = 'var(--color-error)';
+                  }
+                }}
+              >
+                <Trash2 size={16} />
+                {deleting === deleteConfirm ? 'Lösche...' : 'Löschen'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
