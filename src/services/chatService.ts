@@ -537,8 +537,11 @@ class ChatService {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Update notifications as read
-      const { error: notifError } = await supabase
+      // Update notifications as read - try with read_at, fallback without it
+      let notifError = null;
+      
+      // First attempt with read_at (for newer schema)
+      const updateWithReadAt = await supabase
         .from('chat_notifications')
         .update({
           is_read: true,
@@ -547,6 +550,23 @@ class ChatService {
         .eq('user_id', user.id)
         .eq('chat_room_id', chatRoomId)
         .eq('is_read', false);
+
+      if (updateWithReadAt.error && updateWithReadAt.error.message?.includes('read_at')) {
+        // Fallback for older schema without read_at column
+        console.log('🔄 Chat: Fallback to update without read_at column');
+        const updateWithoutReadAt = await supabase
+          .from('chat_notifications')
+          .update({
+            is_read: true
+          })
+          .eq('user_id', user.id)
+          .eq('chat_room_id', chatRoomId)
+          .eq('is_read', false);
+        
+        notifError = updateWithoutReadAt.error;
+      } else {
+        notifError = updateWithReadAt.error;
+      }
 
       if (notifError) {
         console.error('❌ Chat: Error marking notifications as read:', notifError);
