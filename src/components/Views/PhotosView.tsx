@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
+import PhotoShareModal from '../Social/PhotoShareModal';
 import { Destination } from '../../types';
 import { 
   Camera, 
@@ -62,6 +63,7 @@ const PhotosView: React.FC = () => {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [photoCounts, setPhotoCounts] = useState<Record<string, number>>({});
+  const [showPhotoShareModal, setShowPhotoShareModal] = useState(false);
 
   // Get destinations for current trip, sorted chronologically
   const tripDestinations: DestinationWithPhotos[] = React.useMemo(() => {
@@ -630,12 +632,7 @@ const PhotosView: React.FC = () => {
                       alert('Laden Sie zuerst Fotos hoch, bevor Sie sie teilen können!');
                       return;
                     }
-                    // Import and open PhotoShareModal with destination photos
-                    import('../Social/PhotoShareModal').then(({ default: PhotoShareModal }) => {
-                      // We'll implement the modal opening logic here
-                      console.log('Opening PhotoShareModal with photos:', photos);
-                      alert('Photo Sharing Modal wird geöffnet... (Implementation folgt)');
-                    });
+                    setShowPhotoShareModal(true);
                   }}
                   disabled={photos.length === 0}
                   style={{
@@ -1172,6 +1169,27 @@ const PhotosView: React.FC = () => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Photo Share Modal */}
+      {showPhotoShareModal && (
+        <PhotoShareModal
+          isOpen={showPhotoShareModal}
+          onClose={() => setShowPhotoShareModal(false)}
+          onShare={async (data) => {
+            try {
+              console.log('Sharing photos:', data);
+              // The socialService.sharePhoto will be called within the modal
+              // We just need to close the modal after successful share
+              setShowPhotoShareModal(false);
+            } catch (error) {
+              console.error('Error sharing photos:', error);
+            }
+          }}
+          trip={currentTrip}
+          destination={destinations.find(d => d.id === selectedDestination)}
+          initialPhotos={photos.map(photo => photo.url)}
+        />
       )}
       </div>
     </>
