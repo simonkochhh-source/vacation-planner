@@ -97,7 +97,14 @@ const AllPhotosView: React.FC = () => {
   }, [photos, searchQuery, filterType]);
 
   const loadAllPhotos = async () => {
+    console.log('AllPhotosView - loadAllPhotos called', { 
+      user: !!user, 
+      trips: trips?.length, 
+      destinations: destinations?.length 
+    });
+    
     if (!user || !trips?.length) {
+      console.log('AllPhotosView - No user or trips, stopping load');
       setLoading(false);
       return;
     }

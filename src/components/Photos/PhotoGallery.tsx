@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { PhotoService, PhotoInfo } from '../../services/photoService';
+import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { socialService } from '../../services/socialService';
+import PhotoShareModal from '../Social/PhotoShareModal';
+import { Destination, Trip, CreatePhotoShareData } from '../../types';
 import {
   X,
   Edit3,
@@ -10,7 +14,8 @@ import {
   Grid3X3,
   Move3D,
   Search,
-  Camera
+  Camera,
+  Share
 } from 'lucide-react';
 
 interface PhotoGalleryProps {
@@ -20,6 +25,8 @@ interface PhotoGalleryProps {
   isOpen: boolean;
   onClose: () => void;
   initialPhotoIndex?: number;
+  destination?: Destination;
+  trip?: Trip;
 }
 
 const PhotoGallery: React.FC<PhotoGalleryProps> = ({
@@ -28,12 +35,16 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   onPhotosChange,
   isOpen,
   onClose,
-  initialPhotoIndex = 0
+  initialPhotoIndex = 0,
+  destination,
+  trip
 }) => {
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(initialPhotoIndex);
   const [viewMode, setViewMode] = useState<'grid' | 'slideshow'>('slideshow');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingPhoto, setEditingPhoto] = useState<PhotoInfo | null>(null);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [sharingPhoto, setSharingPhoto] = useState<PhotoInfo | null>(null);
   const [editCaption, setEditCaption] = useState('');
   const [editTags, setEditTags] = useState('');
 
@@ -107,6 +118,24 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     }
   };
 
+  const handleSharePhoto = (photo: PhotoInfo) => {
+    setSharingPhoto(photo);
+    setShowShareModal(true);
+  };
+
+  const handlePhotoShare = async (data: CreatePhotoShareData) => {
+    try {
+      await socialService.sharePhoto(data);
+      setShowShareModal(false);
+      setSharingPhoto(null);
+      // Could show a success message here
+      console.log('Photo shared successfully!');
+    } catch (error) {
+      console.error('Failed to share photo:', error);
+      throw error; // Let the modal handle the error
+    }
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (!isOpen) return;
     
@@ -126,21 +155,29 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.9)',
-        zIndex: 1000,
-        display: 'flex',
-        flexDirection: 'column'
-      }}
-      onKeyDown={handleKeyPress}
-      tabIndex={0}
-    >
+    <>
+      <style>
+        {`
+          .photo-grid-item:hover .photo-actions {
+            opacity: 1 !important;
+          }
+        `}
+      </style>
+      <div
+        style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.9)',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+        onKeyDown={handleKeyPress}
+        tabIndex={0}
+      >
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -389,6 +426,21 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                   </button>
                   
                   <button
+                    onClick={() => handleSharePhoto(currentPhoto)}
+                    style={{
+                      background: 'rgba(6, 182, 212, 0.2)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '0.5rem',
+                      color: '#67e8f9',
+                      cursor: 'pointer'
+                    }}
+                    title="Foto teilen"
+                  >
+                    <Share size={14} />
+                  </button>
+                  
+                  <button
                     onClick={() => handleDeletePhoto(currentPhoto.id)}
                     style={{
                       background: 'rgba(239, 68, 68, 0.2)',
@@ -504,6 +556,7 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
             {filteredPhotos.map((photo, index) => (
               <div
                 key={photo.id}
+                className="photo-grid-item"
                 style={{
                   position: 'relative',
                   aspectRatio: '1',
@@ -533,6 +586,40 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                   }}
                 />
                 
+                {/* Action Buttons */}
+                <div style={{
+                  position: 'absolute',
+                  top: '0.5rem',
+                  right: '0.5rem',
+                  display: 'flex',
+                  gap: '0.5rem',
+                  opacity: 0,
+                  transition: 'opacity 0.2s'
+                }}
+                className="photo-actions"
+                >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSharePhoto(photo);
+                    }}
+                    style={{
+                      background: 'rgba(6, 182, 212, 0.9)',
+                      border: 'none',
+                      borderRadius: '6px',
+                      padding: '0.5rem',
+                      color: 'white',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    title="Foto teilen"
+                  >
+                    <Share size={14} />
+                  </button>
+                </div>
+
                 {/* Overlay */}
                 <div style={{
                   position: 'absolute',
@@ -691,7 +778,21 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           </div>
         </div>
       )}
-    </div>
+
+      {/* Photo Share Modal */}
+      <PhotoShareModal
+        isOpen={showShareModal}
+        onClose={() => {
+          setShowShareModal(false);
+          setSharingPhoto(null);
+        }}
+        onShare={handlePhotoShare}
+        trip={trip}
+        destination={destination}
+        initialPhoto={sharingPhoto?.url}
+      />
+      </div>
+    </>
   );
 };
 
