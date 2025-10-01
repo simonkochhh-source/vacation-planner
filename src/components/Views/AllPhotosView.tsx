@@ -21,7 +21,9 @@ import {
   Search,
   Tag,
   Clock,
-  Share
+  Share,
+  CheckCircle,
+  Circle
 } from 'lucide-react';
 import { formatDate } from '../../utils';
 import { PhotoService, TripPhoto } from '../../services/photoService';
@@ -58,6 +60,8 @@ const AllPhotosView: React.FC = () => {
   const [selectedPhoto, setSelectedPhoto] = useState<GlobalPhoto | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPhotoShareModal, setShowPhotoShareModal] = useState(false);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
 
   const loadAllPhotos = useCallback(async () => {
     console.log('AllPhotosView - loadAllPhotos called', { 
@@ -202,6 +206,45 @@ const AllPhotosView: React.FC = () => {
     setFilteredPhotos(filtered);
   }, [photos, searchQuery, filterType]);
 
+  const toggleSelectionMode = () => {
+    setSelectionMode(!selectionMode);
+    setSelectedPhotos(new Set());
+  };
+
+  const togglePhotoSelection = (photoId: string) => {
+    const newSelected = new Set(selectedPhotos);
+    if (newSelected.has(photoId)) {
+      newSelected.delete(photoId);
+    } else {
+      newSelected.add(photoId);
+    }
+    setSelectedPhotos(newSelected);
+  };
+
+  const selectAllPhotos = () => {
+    if (selectedPhotos.size === filteredPhotos.length) {
+      setSelectedPhotos(new Set());
+    } else {
+      setSelectedPhotos(new Set(filteredPhotos.map(photo => photo.id)));
+    }
+  };
+
+  const handlePhotoClick = (photo: GlobalPhoto) => {
+    if (selectionMode) {
+      togglePhotoSelection(photo.id);
+    } else {
+      setSelectedPhoto(photo);
+    }
+  };
+
+  const shareSelectedPhotos = () => {
+    if (selectedPhotos.size === 0) {
+      alert('Bitte wählen Sie mindestens ein Foto zum Teilen aus!');
+      return;
+    }
+    setShowPhotoShareModal(true);
+  };
+
   const handleDeletePhoto = async (photo: GlobalPhoto) => {
     if (!window.confirm('Möchten Sie dieses Foto wirklich löschen?')) {
       return;
@@ -308,40 +351,71 @@ const AllPhotosView: React.FC = () => {
         <div style={{
           display: 'flex',
           gap: 'var(--space-md)',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexWrap: 'wrap'
         }}>
-          <ModernButton
-            variant="filled"
-            size="default"
-            onClick={() => setShowUploadModal(true)}
-            leftIcon={<Plus size={20} />}
-          >
-            Fotos hinzufügen
-          </ModernButton>
-          
-          <ModernButton
-            variant="outlined"
-            size="default"
-            onClick={() => {
-              if (filteredPhotos.length === 0) {
-                alert('Laden Sie zuerst Fotos hoch, bevor Sie sie teilen können!');
-                return;
-              }
-              setShowPhotoShareModal(true);
-            }}
-            leftIcon={<Share size={20} />}
-            disabled={filteredPhotos.length === 0}
-            style={{
-              borderColor: filteredPhotos.length > 0 ? 'var(--color-primary-ocean)' : 'var(--color-border)',
-              color: filteredPhotos.length > 0 ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
-              opacity: filteredPhotos.length > 0 ? 1 : 0.6
-            }}
-            title={filteredPhotos.length === 0 
-              ? 'Laden Sie zuerst Fotos hoch um sie zu teilen' 
-              : '📸 Multi-Photo Sharing - Teile mehrere Fotos als einen Post!'}
-          >
-            Fotos teilen
-          </ModernButton>
+          {!selectionMode ? (
+            <>
+              <ModernButton
+                variant="filled"
+                size="default"
+                onClick={() => setShowUploadModal(true)}
+                leftIcon={<Plus size={20} />}
+              >
+                Fotos hinzufügen
+              </ModernButton>
+              
+              <ModernButton
+                variant="outlined"
+                size="default"
+                onClick={toggleSelectionMode}
+                leftIcon={<CheckCircle size={20} />}
+                disabled={filteredPhotos.length === 0}
+                style={{
+                  borderColor: filteredPhotos.length > 0 ? 'var(--color-primary-ocean)' : 'var(--color-border)',
+                  color: filteredPhotos.length > 0 ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
+                  opacity: filteredPhotos.length > 0 ? 1 : 0.6
+                }}
+                title="Fotos zum Teilen auswählen"
+              >
+                Fotos auswählen
+              </ModernButton>
+            </>
+          ) : (
+            <>
+              <ModernButton
+                variant="outlined"
+                size="default"
+                onClick={toggleSelectionMode}
+                leftIcon={<X size={20} />}
+              >
+                Abbrechen
+              </ModernButton>
+              
+              <ModernButton
+                variant="outlined"
+                size="default"
+                onClick={selectAllPhotos}
+                leftIcon={selectedPhotos.size === filteredPhotos.length ? <Circle size={20} /> : <CheckCircle size={20} />}
+              >
+                {selectedPhotos.size === filteredPhotos.length ? 'Alle abwählen' : 'Alle auswählen'}
+              </ModernButton>
+              
+              <ModernButton
+                variant="filled"
+                size="default"
+                onClick={shareSelectedPhotos}
+                leftIcon={<Share size={20} />}
+                disabled={selectedPhotos.size === 0}
+                style={{
+                  backgroundColor: selectedPhotos.size > 0 ? 'var(--color-primary-ocean)' : 'var(--color-border)',
+                  opacity: selectedPhotos.size > 0 ? 1 : 0.6
+                }}
+              >
+                {selectedPhotos.size > 0 ? `${selectedPhotos.size} Foto${selectedPhotos.size === 1 ? '' : 's'} teilen` : 'Fotos teilen'}
+              </ModernButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -487,16 +561,16 @@ const AllPhotosView: React.FC = () => {
                 <ModernButton
                   variant="outlined"
                   size="default"
-                  leftIcon={<Share size={20} />}
+                  leftIcon={<CheckCircle size={20} />}
                   disabled
                   style={{
                     borderColor: 'var(--color-border)',
                     color: 'var(--color-text-secondary)',
                     opacity: 0.6
                   }}
-                  title="Laden Sie zuerst Fotos hoch um sie zu teilen"
+                  title="Laden Sie zuerst Fotos hoch um sie auszuwählen und zu teilen"
                 >
-                  Fotos teilen
+                  Fotos auswählen
                 </ModernButton>
               </div>
             )}
@@ -516,12 +590,17 @@ const AllPhotosView: React.FC = () => {
                 <ModernCard
                   key={photo.id}
                   interactive
-                  onClick={() => setSelectedPhoto(photo)}
+                  onClick={() => handlePhotoClick(photo)}
                   className="photo-card"
                   style={{
                     cursor: 'pointer',
                     overflow: 'hidden',
-                    background: 'var(--color-surface)'
+                    background: 'var(--color-surface)',
+                    border: selectionMode && selectedPhotos.has(photo.id) 
+                      ? '3px solid var(--color-primary-ocean)' 
+                      : '1px solid var(--color-border)',
+                    transform: selectionMode && selectedPhotos.has(photo.id) ? 'scale(0.95)' : 'scale(1)',
+                    transition: 'all var(--transition-normal)'
                   }}
                 >
                   <div style={{ padding: 0 }}>
@@ -543,6 +622,34 @@ const AllPhotosView: React.FC = () => {
                         }}
                         loading="lazy"
                       />
+                      
+                      {/* Selection checkbox */}
+                      {selectionMode && (
+                        <div style={{
+                          position: 'absolute',
+                          top: 'var(--space-sm)',
+                          right: 'var(--space-sm)',
+                          background: 'rgba(255, 255, 255, 0.9)',
+                          borderRadius: 'var(--radius-full)',
+                          padding: 'var(--space-xs)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          transition: 'all var(--transition-normal)',
+                          border: '2px solid var(--color-border)',
+                          ...(selectedPhotos.has(photo.id) && {
+                            background: 'var(--color-primary-ocean)',
+                            borderColor: 'var(--color-primary-ocean)'
+                          })
+                        }}>
+                          {selectedPhotos.has(photo.id) ? (
+                            <CheckCircle size={20} style={{ color: 'white' }} />
+                          ) : (
+                            <Circle size={20} style={{ color: 'var(--color-text-secondary)' }} />
+                          )}
+                        </div>
+                      )}
                     </div>
                     
                     <div style={{ padding: 'var(--space-md)' }}>
@@ -598,10 +705,15 @@ const AllPhotosView: React.FC = () => {
                 <ModernCard
                   key={photo.id}
                   interactive
-                  onClick={() => setSelectedPhoto(photo)}
+                  onClick={() => handlePhotoClick(photo)}
                   style={{
                     cursor: 'pointer',
-                    background: 'var(--color-surface)'
+                    background: 'var(--color-surface)',
+                    border: selectionMode && selectedPhotos.has(photo.id) 
+                      ? '3px solid var(--color-primary-ocean)' 
+                      : '1px solid var(--color-border)',
+                    transform: selectionMode && selectedPhotos.has(photo.id) ? 'scale(0.98)' : 'scale(1)',
+                    transition: 'all var(--transition-normal)'
                   }}
                 >
                   <div style={{
@@ -610,6 +722,32 @@ const AllPhotosView: React.FC = () => {
                     alignItems: 'center',
                     gap: 'var(--space-lg)'
                   }}>
+                    {/* Selection checkbox for list view */}
+                    {selectionMode && (
+                      <div style={{
+                        background: 'rgba(255, 255, 255, 0.9)',
+                        borderRadius: 'var(--radius-full)',
+                        padding: 'var(--space-xs)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'all var(--transition-normal)',
+                        border: '2px solid var(--color-border)',
+                        flexShrink: 0,
+                        ...(selectedPhotos.has(photo.id) && {
+                          background: 'var(--color-primary-ocean)',
+                          borderColor: 'var(--color-primary-ocean)'
+                        })
+                      }}>
+                        {selectedPhotos.has(photo.id) ? (
+                          <CheckCircle size={20} style={{ color: 'white' }} />
+                        ) : (
+                          <Circle size={20} style={{ color: 'var(--color-text-secondary)' }} />
+                        )}
+                      </div>
+                    )}
+                    
                     <img
                       src={photo.url || photo.photo_url}
                       alt={photo.caption || photo.file_name}
@@ -803,6 +941,8 @@ const AllPhotosView: React.FC = () => {
             try {
               console.log('Sharing photos from AllPhotosView:', data);
               setShowPhotoShareModal(false);
+              setSelectionMode(false);
+              setSelectedPhotos(new Set());
               // Show success message
               alert('Fotos erfolgreich geteilt!');
             } catch (error) {
@@ -812,7 +952,12 @@ const AllPhotosView: React.FC = () => {
           }}
           trip={undefined} // AllPhotosView spans multiple trips
           destination={undefined} // AllPhotosView spans multiple destinations
-          initialPhotos={filteredPhotos.map(photo => photo.url || photo.photo_url)}
+          initialPhotos={selectionMode && selectedPhotos.size > 0 
+            ? filteredPhotos
+                .filter(photo => selectedPhotos.has(photo.id))
+                .map(photo => photo.url || photo.photo_url)
+            : filteredPhotos.map(photo => photo.url || photo.photo_url)
+          }
         />
       )}
     </div>
