@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -59,10 +59,113 @@ const AllPhotosView: React.FC = () => {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showPhotoShareModal, setShowPhotoShareModal] = useState(false);
 
+  const loadAllPhotos = useCallback(async () => {
+    console.log('AllPhotosView - loadAllPhotos called', { 
+      user: !!user, 
+      trips: trips?.length, 
+      destinations: destinations?.length 
+    });
+    
+    if (!user || !trips?.length) {
+      console.log('AllPhotosView - No user or trips, stopping load');
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const allPhotos: GlobalPhoto[] = [];
+
+      // Load photos from all trips and destinations
+      for (const trip of trips) {
+        if (trip.destinations && destinations) {
+          const tripDestinations = destinations.filter(dest => 
+            trip.destinations!.includes(dest.id)
+          );
+
+          for (const destination of tripDestinations) {
+            try {
+              console.log(`Loading photos for destination: ${destination.name} (${destination.id}) in trip: ${trip.name}`);
+              const destinationPhotos = await PhotoService.getPhotosForDestinationUnified(destination.id, trip.id);
+              console.log(`Found ${destinationPhotos.length} photos for destination ${destination.name}:`, destinationPhotos);
+              
+              const photosWithContext: GlobalPhoto[] = destinationPhotos.map(photo => {
+                // Handle both PhotoInfo and TripPhoto interfaces
+                const isPhotoInfo = 'name' in photo && 'uploadedAt' in photo;
+                const isTripPhoto = 'file_name' in photo && 'photo_url' in photo;
+                
+                if (isPhotoInfo) {
+                  // PhotoInfo from localStorage
+                  const photoInfo = photo as any;
+                  return {
+                    id: photoInfo.id,
+                    trip_id: trip.id,
+                    destination_id: destination.id,
+                    user_id: user?.id || 'current-user',
+                    file_name: photoInfo.name,
+                    file_size: photoInfo.size,
+                    file_type: photoInfo.type,
+                    storage_path: '',
+                    photo_url: photoInfo.url || '',
+                    caption: photoInfo.caption,
+                    location_name: undefined,
+                    coordinates: photoInfo.location ? { lat: photoInfo.location.lat, lng: photoInfo.location.lng } : undefined,
+                    taken_at: photoInfo.metadata?.dateTaken,
+                    privacy: 'private' as const,
+                    privacy_approved_at: undefined,
+                    created_at: photoInfo.uploadedAt || new Date().toISOString(),
+                    updated_at: photoInfo.uploadedAt || new Date().toISOString(),
+                    url: photoInfo.url,
+                    tripName: trip.name,
+                    destinationName: destination.name,
+                    tripId: trip.id,
+                    destinationId: destination.id,
+                    uploadedAt: photoInfo.uploadedAt,
+                    size: photoInfo.size,
+                    type: photoInfo.type
+                  };
+                } else if (isTripPhoto) {
+                  // TripPhoto from Supabase
+                  const tripPhoto = photo as any;
+                  return {
+                    ...tripPhoto,
+                    tripName: trip.name,
+                    destinationName: destination.name,
+                    tripId: trip.id,
+                    destinationId: destination.id,
+                    uploadedAt: tripPhoto.created_at,
+                    size: tripPhoto.file_size,
+                    type: tripPhoto.file_type,
+                    url: tripPhoto.photo_url
+                  };
+                } else {
+                  // Fallback handling
+                  console.warn('Unknown photo format:', photo);
+                  return null;
+                }
+              }).filter(Boolean) as GlobalPhoto[];
+
+              allPhotos.push(...photosWithContext);
+            } catch (error) {
+              console.error(`Error loading photos for destination ${destination.name}:`, error);
+            }
+          }
+        }
+      }
+
+      console.log(`Total photos loaded: ${allPhotos.length}`, allPhotos);
+      setPhotos(allPhotos);
+    } catch (error) {
+      console.error('Error loading all photos:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [user, trips, destinations]);
+
   // Load all photos from all trips
   useEffect(() => {
     loadAllPhotos();
-  }, [trips, destinations, user]);
+  }, [loadAllPhotos]);
 
   // Filter photos based on search and filter type
   useEffect(() => {
@@ -98,80 +201,6 @@ const AllPhotosView: React.FC = () => {
 
     setFilteredPhotos(filtered);
   }, [photos, searchQuery, filterType]);
-
-  const loadAllPhotos = async () => {
-    console.log('AllPhotosView - loadAllPhotos called', { 
-      user: !!user, 
-      trips: trips?.length, 
-      destinations: destinations?.length 
-    });
-    
-    if (!user || !trips?.length) {
-      console.log('AllPhotosView - No user or trips, stopping load');
-      setLoading(false);
-      return;
-    }
-
-    try {
-      setLoading(true);
-      const allPhotos: GlobalPhoto[] = [];
-
-      // Load photos from all trips and destinations
-      for (const trip of trips) {
-        if (trip.destinations && destinations) {
-          const tripDestinations = destinations.filter(dest => 
-            trip.destinations!.includes(dest.id)
-          );
-
-          for (const destination of tripDestinations) {
-            try {
-              const destinationPhotos = await PhotoService.getPhotosForDestination(destination.id);
-              
-              const photosWithContext: GlobalPhoto[] = destinationPhotos.map(photo => ({
-                // TripPhoto interface properties
-                id: photo.id,
-                trip_id: trip.id,
-                destination_id: destination.id,
-                user_id: 'current-user', // TODO: Get from auth context
-                file_name: photo.name,
-                file_size: photo.size,
-                file_type: photo.type,
-                storage_path: '',
-                photo_url: photo.url,
-                caption: photo.caption,
-                location_name: undefined,
-                coordinates: photo.location ? { lat: photo.location.lat, lng: photo.location.lng } : undefined,
-                taken_at: photo.metadata?.dateTaken,
-                privacy: 'private' as const,
-                privacy_approved_at: undefined,
-                created_at: photo.uploadedAt || new Date().toISOString(),
-                updated_at: photo.uploadedAt || new Date().toISOString(),
-                url: photo.url,
-                // GlobalPhoto additional properties
-                tripName: trip.name,
-                destinationName: destination.name,
-                tripId: trip.id,
-                destinationId: destination.id,
-                uploadedAt: photo.uploadedAt,
-                size: photo.size,
-                type: photo.type
-              }));
-
-              allPhotos.push(...photosWithContext);
-            } catch (error) {
-              console.error(`Error loading photos for destination ${destination.name}:`, error);
-            }
-          }
-        }
-      }
-
-      setPhotos(allPhotos);
-    } catch (error) {
-      console.error('Error loading all photos:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleDeletePhoto = async (photo: GlobalPhoto) => {
     if (!window.confirm('Möchten Sie dieses Foto wirklich löschen?')) {
