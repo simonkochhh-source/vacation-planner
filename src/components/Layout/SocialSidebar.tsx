@@ -1261,10 +1261,10 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
               }}
               onClick={() => {
                 // TODO: Implement follow functionality
-                alert(`${suggestion.name} folgen - Feature kommt bald!`);
+                alert(`Mit ${suggestion.name} connecten - Feature kommt bald!`);
               }}
             >
-              Folgen
+              Connect
             </button>
           </div>
         )))}

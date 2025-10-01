@@ -165,10 +165,10 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
 
   const getFollowButtonText = () => {
     switch (followStatus) {
-      case 'none': return 'Folgen';
+      case 'none': return 'Connect';
       case FollowStatus.PENDING: return 'Angefragt';
-      case FollowStatus.ACCEPTED: return 'Entfolgen';
-      default: return 'Folgen';
+      case FollowStatus.ACCEPTED: return 'Connected';
+      default: return 'Connect';
     }
   };
 

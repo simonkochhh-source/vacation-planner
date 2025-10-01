@@ -86,11 +86,11 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     }
 
     switch (followStatus) {
-      case 'none': return 'Folgen';
+      case 'none': return 'Connect';
       case FollowStatus.PENDING: return 'Angefragt';
-      case FollowStatus.ACCEPTED: return 'Entfolgen';
-      case FollowStatus.DECLINED: return 'Folgen';
-      default: return 'Folgen';
+      case FollowStatus.ACCEPTED: return 'Connected';
+      case FollowStatus.DECLINED: return 'Connect';
+      default: return 'Connect';
     }
   };
 
@@ -160,11 +160,11 @@ const FollowButton: React.FC<FollowButtonProps> = ({
 
   const getTooltipText = () => {
     switch (followStatus) {
-      case 'none': return 'Diesem Nutzer folgen';
-      case FollowStatus.PENDING: return 'Follow-Anfrage gesendet';
-      case FollowStatus.ACCEPTED: return 'Nicht mehr folgen';
-      case FollowStatus.DECLINED: return 'Erneut folgen';
-      default: return 'Folgen';
+      case 'none': return 'Mit diesem Nutzer vernetzen';
+      case FollowStatus.PENDING: return 'Verbindungsanfrage gesendet';
+      case FollowStatus.ACCEPTED: return 'Verbindung trennen';
+      case FollowStatus.DECLINED: return 'Erneut vernetzen';
+      default: return 'Connect';
     }
   };
 

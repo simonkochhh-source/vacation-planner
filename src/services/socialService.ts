@@ -220,7 +220,154 @@ class SocialService implements SocialServiceInterface {
   }
 
   // =====================================================
-  // Follow Relationships
+  // Friendship Management (Bidirectional)
+  // =====================================================
+
+  /**
+   * Send a friend request (creates follow relationship)
+   */
+  async sendFriendRequest(targetUserId: UUID): Promise<Follow> {
+    return this.followUser(targetUserId);
+  }
+
+  /**
+   * Accept a friend request (creates bidirectional friendship)
+   */
+  async acceptFriendRequest(requesterId: UUID): Promise<{ accepted: Follow; reciprocal: Follow }> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Accept the incoming request
+    const accepted = await this.acceptFollowRequest(requesterId);
+
+    // Create reciprocal follow relationship to establish friendship
+    let reciprocal: Follow;
+    try {
+      reciprocal = await this.followUser(requesterId);
+      // Immediately accept the reciprocal relationship
+      const { data } = await supabase
+        .from('follows')
+        .update({ status: FollowStatus.ACCEPTED })
+        .eq('follower_id', user.id)
+        .eq('following_id', requesterId)
+        .select('*')
+        .single();
+      
+      if (data) reciprocal = data;
+    } catch (error) {
+      // If reciprocal relationship already exists, just accept it
+      const { data } = await supabase
+        .from('follows')
+        .update({ status: FollowStatus.ACCEPTED })
+        .eq('follower_id', user.id)
+        .eq('following_id', requesterId)
+        .select('*')
+        .single();
+      
+      if (!data) throw new Error('Failed to create or update reciprocal relationship');
+      reciprocal = data;
+    }
+
+    return { accepted, reciprocal };
+  }
+
+  /**
+   * Get user's friends (bidirectional accepted follows)
+   */
+  async getFriends(userId?: UUID): Promise<SocialUserProfile[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+    
+    const targetUserId = userId || user.id;
+
+    const { data, error } = await supabase
+      .from('friendships')
+      .select(`
+        user1_id,
+        user2_id,
+        friendship_created_at
+      `)
+      .or(`user1_id.eq.${targetUserId},user2_id.eq.${targetUserId}`);
+
+    if (error) throw new Error(`Failed to get friends: ${error.message}`);
+
+    // Get friend user IDs
+    const friendIds = data.map(f => 
+      f.user1_id === targetUserId ? f.user2_id : f.user1_id
+    );
+
+    if (friendIds.length === 0) return [];
+
+    // Get friend profiles
+    const { data: profiles, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .in('id', friendIds);
+
+    if (profileError) throw new Error(`Failed to get friend profiles: ${profileError.message}`);
+
+    return profiles || [];
+  }
+
+  /**
+   * Check if two users are friends
+   */
+  async areFriends(userId1: UUID, userId2: UUID): Promise<boolean> {
+    const { data, error } = await supabase
+      .rpc('are_users_friends', {
+        user1: userId1,
+        user2: userId2
+      });
+
+    if (error) {
+      console.warn('Error checking friendship:', error);
+      return false;
+    }
+
+    return data || false;
+  }
+
+  /**
+   * Remove friendship (removes both follow relationships)
+   */
+  async removeFriend(friendUserId: UUID): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Remove both follow relationships
+    await Promise.all([
+      supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', user.id)
+        .eq('following_id', friendUserId),
+      supabase
+        .from('follows')
+        .delete()
+        .eq('follower_id', friendUserId)
+        .eq('following_id', user.id)
+    ]);
+  }
+
+  // =====================================================
+  // Chat Integration (Uses existing chatService)
+  // =====================================================
+
+  /**
+   * Create a 1:1 chat room with a friend (uses existing chat system)
+   */
+  async createFriendChatRoom(friendUserId: UUID): Promise<string> {
+    const { data, error } = await supabase
+      .rpc('get_or_create_friend_chat', {
+        friend_user_id: friendUserId
+      });
+
+    if (error) throw new Error(`Failed to create friend chat: ${error.message}`);
+    return data;
+  }
+
+  // =====================================================
+  // Follow Relationships (Legacy)
   // =====================================================
 
   /**
@@ -491,7 +638,7 @@ class SocialService implements SocialServiceInterface {
    * Create trip-related activities
    */
   async createTripActivity(
-    activityType: ActivityType.TRIP_CREATED | ActivityType.TRIP_COMPLETED | ActivityType.TRIP_SHARED,
+    activityType: ActivityType.TRIP_CREATED | ActivityType.TRIP_COMPLETED | ActivityType.TRIP_SHARED | ActivityType.TRIP_STARTED,
     tripId: UUID,
     tripName: string,
     additionalMetadata: Record<string, any> = {}
@@ -501,12 +648,14 @@ class SocialService implements SocialServiceInterface {
 
     const titles = {
       [ActivityType.TRIP_CREATED]: `Neue Reise "${tripName}" geplant`,
+      [ActivityType.TRIP_STARTED]: `Reise "${tripName}" gestartet`,
       [ActivityType.TRIP_COMPLETED]: `Reise "${tripName}" abgeschlossen`,
       [ActivityType.TRIP_SHARED]: `Reise "${tripName}" geteilt`
     };
 
     const descriptions = {
       [ActivityType.TRIP_CREATED]: `hat eine neue Reise nach ${additionalMetadata.destination || 'unbekanntes Ziel'} geplant`,
+      [ActivityType.TRIP_STARTED]: `ist aufgebrochen - die Reise hat begonnen!`,
       [ActivityType.TRIP_COMPLETED]: `hat eine Reise erfolgreich abgeschlossen`,
       [ActivityType.TRIP_SHARED]: `hat eine Reise öffentlich geteilt`
     };

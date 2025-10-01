@@ -174,7 +174,7 @@ const MyProfileView: React.FC = () => {
       case TripPrivacy.PUBLIC:
         return 'Öffentlich';
       case TripPrivacy.CONTACTS:
-        return 'Nur Follower';
+        return 'Nur Freunde';
       case TripPrivacy.PRIVATE:
         return 'Privat';
     }
@@ -926,7 +926,7 @@ const MyProfileView: React.FC = () => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
                       <Users size={16} style={{ color: '#f59e0b' }} />
-                      <strong>Nur Follower:</strong> Nur für Nutzer sichtbar, die dir folgen
+                      <strong>Nur Freunde:</strong> Nur für Nutzer sichtbar, die mit dir befreundet sind
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
                       <Lock size={16} style={{ color: 'var(--color-text-secondary)' }} />
