@@ -47,22 +47,13 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
         activity_id: photo.id,
         user_id: photo.user_id,
         user_nickname: photo.user_nickname,
-        user_display_name: photo.user_display_name,
         user_avatar_url: photo.user_avatar_url,
         activity_type: ActivityType.PHOTO_SHARED,
         title: photo.caption || 'Foto geteilt',
-        trip_id: photo.trip_id,
         trip_name: photo.trip_name,
-        destination_id: photo.destination_id,
         destination_name: photo.destination_name,
+        destination_location: photo.destination_location,
         metadata: {
-          photo_url: photo.photo_url,
-          photos: photo.photos,
-          photo_count: photo.photo_count,
-          caption: photo.caption,
-          privacy: photo.privacy
-        },
-        related_data: {
           photo_url: photo.photo_url,
           photos: photo.photos,
           photo_count: photo.photo_count,
@@ -71,8 +62,14 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
           like_count: photo.like_count,
           user_liked: photo.user_liked
         },
-        created_at: photo.created_at,
-        updated_at: photo.updated_at
+        related_data: {
+          tripId: photo.trip_id,
+          tripName: photo.trip_name,
+          destinationId: photo.destination_id,
+          destinationName: photo.destination_name,
+          location: photo.destination_location
+        },
+        created_at: photo.created_at
       }));
       
       // Combine and sort by creation date
