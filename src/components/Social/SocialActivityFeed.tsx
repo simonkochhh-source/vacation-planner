@@ -34,8 +34,53 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
     try {
       setLoading(true);
       setError(null);
-      const feedData = await socialService.getActivityFeed(maxItems);
-      setActivities(feedData);
+      
+      // Load both activity feed and photo shares
+      const [feedData, photoShares] = await Promise.all([
+        socialService.getActivityFeed(maxItems).catch(() => []),
+        socialService.getPhotoShares(maxItems).catch(() => [])
+      ]);
+      
+      // Convert photo shares to activity items
+      const photoActivities: ActivityFeedItem[] = photoShares.map(photo => ({
+        id: photo.id,
+        activity_id: photo.id,
+        user_id: photo.user_id,
+        user_nickname: photo.user_nickname,
+        user_display_name: photo.user_display_name,
+        user_avatar_url: photo.user_avatar_url,
+        activity_type: ActivityType.PHOTO_SHARED,
+        title: photo.caption || 'Foto geteilt',
+        trip_id: photo.trip_id,
+        trip_name: photo.trip_name,
+        destination_id: photo.destination_id,
+        destination_name: photo.destination_name,
+        metadata: {
+          photo_url: photo.photo_url,
+          photos: photo.photos,
+          photo_count: photo.photo_count,
+          caption: photo.caption,
+          privacy: photo.privacy
+        },
+        related_data: {
+          photo_url: photo.photo_url,
+          photos: photo.photos,
+          photo_count: photo.photo_count,
+          caption: photo.caption,
+          privacy: photo.privacy,
+          like_count: photo.like_count,
+          user_liked: photo.user_liked
+        },
+        created_at: photo.created_at,
+        updated_at: photo.updated_at
+      }));
+      
+      // Combine and sort by creation date
+      const allActivities = [...feedData, ...photoActivities]
+        .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+        .slice(0, maxItems);
+      
+      setActivities(allActivities);
     } catch (error) {
       console.error('Failed to load activity feed:', error);
       setError('Feed konnte nicht geladen werden');
@@ -51,6 +96,7 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
       ActivityType.TRIP_SHARED, 
       ActivityType.TRIP_COMPLETED,
       ActivityType.PHOTO_UPLOADED,
+      ActivityType.PHOTO_SHARED,
       ActivityType.USER_FOLLOWED
     ];
     return shareableTypes.includes(activity.activity_type as ActivityType);
