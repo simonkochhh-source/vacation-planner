@@ -158,8 +158,22 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
     <>
       <style>
         {`
-          .photo-grid-item:hover .photo-actions {
+          .photo-actions {
             opacity: 1 !important;
+          }
+          .photo-grid-item:hover .photo-actions button {
+            animation: pulse 1.5s infinite;
+          }
+          @keyframes pulse {
+            0% { box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4), 0 0 0 3px rgba(6, 182, 212, 0.2); }
+            50% { box-shadow: 0 6px 20px rgba(6, 182, 212, 0.8), 0 0 0 5px rgba(6, 182, 212, 0.4); }
+            100% { box-shadow: 0 4px 12px rgba(6, 182, 212, 0.4), 0 0 0 3px rgba(6, 182, 212, 0.2); }
+          }
+          @keyframes bounce {
+            0%, 20%, 53%, 80%, 100% { transform: translateY(0); }
+            40%, 43% { transform: translateY(-8px); }
+            70% { transform: translateY(-4px); }
+            90% { transform: translateY(-2px); }
           }
         `}
       </style>
@@ -548,6 +562,25 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
           padding: '2rem',
           overflowY: 'auto'
         }}>
+          {/* Info Banner für Multi-Photo Sharing */}
+          <div style={{
+            background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+            color: 'white',
+            padding: '1rem',
+            marginBottom: '2rem',
+            borderRadius: '12px',
+            textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(6, 182, 212, 0.3)',
+            border: '2px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <div style={{ fontSize: '1.1rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>
+              🎉 Neu: Multi-Photo Sharing!
+            </div>
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>
+              Klicke auf den <Share size={16} style={{ display: 'inline', verticalAlign: 'middle', margin: '0 4px' }} /> Button auf jedem Foto um mehrere Fotos als einen Post zu teilen!
+            </div>
+          </div>
+          
           <div style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
@@ -586,15 +619,15 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                   }}
                 />
                 
-                {/* Action Buttons */}
+                {/* Action Buttons - Always Visible with Highlight */}
                 <div style={{
                   position: 'absolute',
                   top: '0.5rem',
                   right: '0.5rem',
                   display: 'flex',
                   gap: '0.5rem',
-                  opacity: 0,
-                  transition: 'opacity 0.2s'
+                  opacity: 1, // Always visible
+                  transition: 'transform 0.2s, box-shadow 0.2s'
                 }}
                 className="photo-actions"
                 >
@@ -604,20 +637,49 @@ const PhotoGallery: React.FC<PhotoGalleryProps> = ({
                       handleSharePhoto(photo);
                     }}
                     style={{
-                      background: 'rgba(6, 182, 212, 0.9)',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '0.5rem',
+                      background: 'linear-gradient(135deg, #06b6d4, #0891b2)',
+                      border: '2px solid white',
+                      borderRadius: '8px',
+                      padding: '0.6rem',
                       color: 'white',
                       cursor: 'pointer',
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      boxShadow: '0 4px 12px rgba(6, 182, 212, 0.4), 0 0 0 3px rgba(6, 182, 212, 0.2)',
+                      transform: 'scale(1)',
+                      transition: 'all 0.2s ease'
                     }}
-                    title="Foto teilen"
+                    title="📸 Multi-Photo Sharing - Teile mehrere Fotos als einen Post!"
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                      e.currentTarget.style.boxShadow = '0 6px 20px rgba(6, 182, 212, 0.6), 0 0 0 4px rgba(6, 182, 212, 0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'scale(1)';
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(6, 182, 212, 0.4), 0 0 0 3px rgba(6, 182, 212, 0.2)';
+                    }}
                   >
-                    <Share size={14} />
+                    <Share size={16} />
                   </button>
+                  
+                  {/* "NEW" Badge für Multi-Photo Feature */}
+                  <div style={{
+                    position: 'absolute',
+                    top: '-8px',
+                    right: '-8px',
+                    background: 'linear-gradient(45deg, #ef4444, #dc2626)',
+                    color: 'white',
+                    fontSize: '9px',
+                    fontWeight: 'bold',
+                    padding: '2px 4px',
+                    borderRadius: '4px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    border: '1px solid white',
+                    animation: 'bounce 2s infinite'
+                  }}>
+                    NEW
+                  </div>
                 </div>
 
                 {/* Overlay */}
