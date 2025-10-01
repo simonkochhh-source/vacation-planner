@@ -7,7 +7,7 @@ import EnhancedPlaceSearch from '../Search/EnhancedPlaceSearch';
 import { enhancedOpenStreetMapService } from '../../services/enhancedOpenStreetMapService';
 import UserProfileManager from '../User/UserProfileManager';
 import {
-  Settings, Globe, Palette, MapPin, Car, Bell, Download,
+  Settings, Globe, Palette, MapPin, Car,
   Shield, HardDrive, RotateCcw, AlertTriangle,
   Moon, Sun, Monitor, Languages, DollarSign, Clock, Home, User, Power
 } from 'lucide-react';
@@ -465,98 +465,7 @@ const renderMobileSettingsContent = (
         </div>
       );
 
-    case 'notifications':
-      return (
-        <div style={mobileStyle.section}>
-          {/* Enable Notifications */}
-          <div>
-            <label style={mobileStyle.label}>
-              <Bell size={18} />
-              Benachrichtigungen
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
-              <input
-                type="checkbox"
-                checked={settings.enableNotifications}
-                onChange={(e) => onSettingChange('enableNotifications', e.target.checked)}
-                style={{ width: '20px', height: '20px' }}
-              />
-              Benachrichtigungen aktivieren
-            </label>
-          </div>
-          
-          {/* Reminder Time */}
-          {settings.enableNotifications && (
-            <div>
-              <label style={mobileStyle.label}>
-                <Clock size={18} />
-                Erinnerungszeit (Minuten vor Termin)
-              </label>
-              <input
-                type="number"
-                value={settings.reminderTime}
-                onChange={(e) => onSettingChange('reminderTime', parseInt(e.target.value) || 0)}
-                min="0"
-                max="120"
-                style={mobileStyle.input}
-                placeholder="30"
-              />
-            </div>
-          )}
-        </div>
-      );
 
-    case 'export':
-      return (
-        <div style={mobileStyle.section}>
-          {/* Default Export Format */}
-          <div>
-            <label style={mobileStyle.label}>
-              <Download size={18} />
-              Standard-Exportformat
-            </label>
-            <select
-              value={settings.defaultExportFormat}
-              onChange={(e) => onSettingChange('defaultExportFormat', e.target.value as any)}
-              style={mobileStyle.select}
-            >
-              <option value="json">JSON</option>
-              <option value="csv">CSV</option>
-              <option value="gpx">GPX</option>
-              <option value="kml">KML</option>
-            </select>
-          </div>
-
-          {/* Export Options */}
-          <div>
-            <label style={mobileStyle.label}>
-              <Settings size={18} />
-              Export-Optionen
-            </label>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
-                <input
-                  type="checkbox"
-                  checked={settings.includePhotosInExport}
-                  onChange={(e) => onSettingChange('includePhotosInExport', e.target.checked)}
-                  style={{ width: '20px', height: '20px' }}
-                />
-                Fotos in Export einschließen
-              </label>
-              
-              <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1rem' }}>
-                <input
-                  type="checkbox"
-                  checked={settings.includeNotesInExport}
-                  onChange={(e) => onSettingChange('includeNotesInExport', e.target.checked)}
-                  style={{ width: '20px', height: '20px' }}
-                />
-                Notizen in Export einschließen
-              </label>
-            </div>
-          </div>
-        </div>
-      );
 
     case 'privacy':
       return (
@@ -600,15 +509,13 @@ const renderMobileSettingsContent = (
 
 // First, define the mobile settings list component
 const MobileSettingsList: React.FC<{
-  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy') => void;
+  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'privacy') => void;
 }> = ({ setActiveTab }) => {
   const tabs = [
     { id: 'account', label: 'Account', icon: User, description: 'Profile und Anmeldung' },
     { id: 'general', label: 'Allgemein', icon: Settings, description: 'Sprache, Design, Währung' },
     { id: 'map', label: 'Karte', icon: MapPin, description: 'Kartenanbieter, Zoom, Features' },
     { id: 'travel', label: 'Reise', icon: Car, description: 'Transport, Kraftstoff, Home-Point' },
-    { id: 'notifications', label: 'Benachrichtigungen', icon: Bell, description: 'Erinnerungen und Alerts' },
-    { id: 'export', label: 'Export', icon: Download, description: 'Exportformate und Optionen' },
     { id: 'privacy', label: 'Datenschutz', icon: Shield, description: 'Standort und Tracking' }
   ];
 
@@ -730,7 +637,7 @@ const MobileSettingsList: React.FC<{
 // Mobile settings category component  
 const MobileSettingsCategory: React.FC<{
   activeTab: string;
-  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy') => void;
+  setActiveTab: (tab: 'list' | 'account' | 'general' | 'map' | 'travel' | 'privacy') => void;
   settings: AppSettings;
   onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
   user: any;
@@ -754,8 +661,6 @@ const MobileSettingsCategory: React.FC<{
     general: { title: 'Allgemein', icon: Settings },
     map: { title: 'Karte', icon: MapPin },
     travel: { title: 'Reise', icon: Car },
-    notifications: { title: 'Benachrichtigungen', icon: Bell },
-    export: { title: 'Export', icon: Download },
     privacy: { title: 'Datenschutz', icon: Shield }
   };
 
@@ -824,7 +729,7 @@ const MobileSettingsCategory: React.FC<{
 const SettingsView: React.FC = () => {
   const { settings, updateSettings } = useSupabaseApp();
   const { user, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState<'list' | 'account' | 'general' | 'map' | 'travel' | 'notifications' | 'export' | 'privacy'>('list');
+  const [activeTab, setActiveTab] = useState<'list' | 'account' | 'general' | 'map' | 'travel' | 'privacy'>('list');
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   const handleSettingChange = <K extends keyof AppSettings>(
@@ -855,14 +760,6 @@ const SettingsView: React.FC = () => {
       fuelType: FuelType.E10,
       fuelConsumption: 9.0,
       
-      // Notification Settings
-      enableNotifications: true,
-      reminderTime: 30,
-      
-      // Export Settings
-      defaultExportFormat: 'json',
-      includePhotosInExport: true,
-      includeNotesInExport: true,
       
       // Privacy Settings
       shareLocation: false,
@@ -882,8 +779,6 @@ const SettingsView: React.FC = () => {
     { id: 'general', label: 'Allgemein', icon: Settings },
     { id: 'map', label: 'Karte', icon: MapPin },
     { id: 'travel', label: 'Reise', icon: Car },
-    { id: 'notifications', label: 'Benachrichtigungen', icon: Bell },
-    { id: 'export', label: 'Export', icon: Download },
     { id: 'privacy', label: 'Datenschutz', icon: Shield }
   ];
 
@@ -1075,12 +970,6 @@ const SettingsView: React.FC = () => {
           )}
           {activeTab === 'travel' && (
             <TravelSettings settings={settings} onSettingChange={handleSettingChange} />
-          )}
-          {activeTab === 'notifications' && (
-            <NotificationSettings settings={settings} onSettingChange={handleSettingChange} />
-          )}
-          {activeTab === 'export' && (
-            <ExportSettings settings={settings} onSettingChange={handleSettingChange} />
           )}
           {activeTab === 'privacy' && (
             <PrivacySettings settings={settings} onSettingChange={handleSettingChange} />
@@ -1622,124 +1511,7 @@ const TravelSettings: React.FC<{
   </div>
 );
 
-const NotificationSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
-      Benachrichtigungseinstellungen
-    </h2>
-    
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-        <input
-          type="checkbox"
-          checked={settings.enableNotifications}
-          onChange={(e) => onSettingChange('enableNotifications', e.target.checked)}
-        />
-        Benachrichtigungen aktivieren
-      </label>
-      
-      {settings.enableNotifications && (
-        <div>
-          <label style={{ 
-            fontSize: '1rem',
-            fontWeight: '500',
-            marginBottom: '0.5rem',
-            color: 'var(--color-text-primary)',
-            display: 'block'
-          }}>
-            Erinnerungszeit (Minuten vor Termin)
-          </label>
-          <input
-            type="number"
-            value={settings.reminderTime}
-            onChange={(e) => onSettingChange('reminderTime', parseInt(e.target.value) || 0)}
-            min="0"
-            max="120"
-            style={{
-              padding: '0.5rem',
-              borderRadius: '6px',
-              border: '1px solid #d1d5db',
-              background: 'var(--color-neutral-cream)',
-              minWidth: '200px'
-            }}
-          />
-        </div>
-      )}
-    </div>
-  </div>
-);
 
-const ExportSettings: React.FC<{
-  settings: AppSettings;
-  onSettingChange: <K extends keyof AppSettings>(key: K, value: AppSettings[K]) => void;
-}> = ({ settings, onSettingChange }) => (
-  <div>
-    <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1.5rem', color: 'var(--color-text-primary)' }}>
-      Export-Einstellungen
-    </h2>
-    
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      {/* Default Export Format */}
-      <div>
-        <label style={{ 
-          fontSize: '1rem',
-          fontWeight: '500',
-          marginBottom: '0.5rem',
-          color: 'var(--color-text-primary)',
-          display: 'block'
-        }}>
-          Standard-Exportformat
-        </label>
-        <select
-          value={settings.defaultExportFormat}
-          onChange={(e) => onSettingChange('defaultExportFormat', e.target.value as any)}
-          style={{
-            padding: '0.5rem',
-            borderRadius: '6px',
-            border: '1px solid #d1d5db',
-            background: 'var(--color-neutral-cream)',
-            minWidth: '200px'
-          }}
-        >
-          <option value="json">JSON</option>
-          <option value="csv">CSV</option>
-          <option value="gpx">GPX</option>
-          <option value="kml">KML</option>
-        </select>
-      </div>
-
-      {/* Export Options */}
-      <div>
-        <h3 style={{ fontSize: '1.125rem', fontWeight: '500', marginBottom: '1rem', color: 'var(--color-text-primary)' }}>
-          Export-Optionen
-        </h3>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={settings.includePhotosInExport}
-              onChange={(e) => onSettingChange('includePhotosInExport', e.target.checked)}
-            />
-            Fotos in Export einschließen
-          </label>
-          
-          <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={settings.includeNotesInExport}
-              onChange={(e) => onSettingChange('includeNotesInExport', e.target.checked)}
-            />
-            Notizen in Export einschließen
-          </label>
-        </div>
-      </div>
-    </div>
-  </div>
-);
 
 const PrivacySettings: React.FC<{
   settings: AppSettings;

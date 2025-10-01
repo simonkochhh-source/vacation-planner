@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useResponsive } from '../../hooks/useResponsive';
-import { ChatInterface } from '../Chat';
 import { chatService } from '../../services/chatService';
 import { 
   Calendar,
@@ -55,11 +54,9 @@ const tripTabs: TripTabConfig[] = [
 ];
 
 const TripsView: React.FC = () => {
-  const { currentTrip } = useSupabaseApp();
+  const { currentTrip, updateUIState } = useSupabaseApp();
   const { isMobile } = useResponsive();
   const [activeTab, setActiveTab] = useState<TripSubTab>('timeline');
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [tripChatRoomId, setTripChatRoomId] = useState<string | undefined>();
   const [isCreatingChat, setIsCreatingChat] = useState(false);
 
   const handleReorderDestinations = async (reorderedDestinations: any[]) => {
@@ -87,8 +84,10 @@ const TripsView: React.FC = () => {
         participantIds
       );
 
-      setTripChatRoomId(tripChatRoom.id);
-      setIsChatOpen(true);
+      updateUIState({ 
+        chatOpen: true,
+        selectedChatRoomId: tripChatRoom.id 
+      });
     } catch (error) {
       console.error('Failed to create trip chat:', error);
       alert('Fehler beim Erstellen des Reisechats. Bitte versuchen Sie es erneut.');
@@ -97,10 +96,6 @@ const TripsView: React.FC = () => {
     }
   };
 
-  const handleCloseChat = () => {
-    setIsChatOpen(false);
-    setTripChatRoomId(undefined);
-  };
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -357,14 +352,6 @@ const TripsView: React.FC = () => {
           )}
         </div>
 
-        {/* Trip Chat Interface Modal */}
-        {isChatOpen && (
-          <ChatInterface
-            isOpen={isChatOpen}
-            onClose={handleCloseChat}
-            initialRoomId={tripChatRoomId}
-          />
-        )}
     </div>
   );
 };

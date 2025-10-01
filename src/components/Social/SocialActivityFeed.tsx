@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MapPin, Heart, Plane, Star, User, Clock } from 'lucide-react';
+import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image } from 'lucide-react';
 import { ActivityFeedItem, ActivityType } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -66,10 +66,14 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
         return <Star size={16} style={{ color: '#f59e0b' }} />;
       case ActivityType.PHOTO_UPLOADED:
         return <MapPin size={16} style={{ color: '#ef4444' }} />;
+      case ActivityType.PHOTO_SHARED:
+        return <Camera size={16} style={{ color: '#06b6d4' }} />;
+      case ActivityType.PHOTO_LIKED:
+        return <Heart size={16} style={{ color: '#ef4444' }} />;
       case ActivityType.USER_FOLLOWED:
         return <Users size={16} style={{ color: '#8b5cf6' }} />;
       default:
-        return <User size={16} style={{ color: '#6b7280' }} />;
+        return <User size={16} style={{ color: 'var(--color-text-secondary)' }} />;
     }
   };
 
@@ -100,6 +104,37 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
         return (
           <span>
             <strong>{userName}</strong> hat Fotos von <strong>"{tripName}"</strong> hochgeladen
+          </span>
+        );
+      case ActivityType.PHOTO_SHARED:
+        const destinationName = activity.destination_name || activity.related_data?.destinationName;
+        const location = activity.destination_location || activity.related_data?.location;
+        
+        if (destinationName) {
+          return (
+            <span>
+              <strong>{userName}</strong> hat ein Foto von <strong>"{destinationName}"</strong>
+              {location && ` in ${location}`} geteilt
+            </span>
+          );
+        } else if (tripName) {
+          return (
+            <span>
+              <strong>{userName}</strong> hat ein Foto von der Reise <strong>"{tripName}"</strong> geteilt
+            </span>
+          );
+        } else {
+          return (
+            <span>
+              <strong>{userName}</strong> hat ein Foto geteilt
+            </span>
+          );
+        }
+      case ActivityType.PHOTO_LIKED:
+        const photoOwner = activity.related_data?.targetUserName;
+        return (
+          <span>
+            <strong>{userName}</strong> gefällt {photoOwner ? `${photoOwner}s` : 'ein'} Foto
           </span>
         );
       case ActivityType.USER_FOLLOWED:
@@ -133,6 +168,22 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
         activeView: 'user-profile',
         selectedUserId: activity.user_id
       });
+    } else if (activity.activity_type === ActivityType.PHOTO_SHARED || activity.activity_type === ActivityType.PHOTO_LIKED) {
+      // For photo activities, navigate to destination or trip
+      if (activity.related_data?.destinationId) {
+        updateUIState({
+          currentView: 'timeline',
+          activeView: 'timeline',
+          activeDestination: activity.related_data.destinationId
+        });
+      } else if (activity.related_data?.tripId) {
+        updateUIState({
+          currentView: 'search',
+          activeView: 'search',
+          selectedTripId: activity.related_data.tripId,
+          showTripDetails: true
+        });
+      }
     } else if (activity.related_data?.tripId) {
       updateUIState({
         currentView: 'search',
@@ -328,6 +379,37 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                       }}>
                         {getActivityText(activity)}
                       </p>
+
+                      {/* Photo Preview for Photo Activities */}
+                      {(activity.activity_type === ActivityType.PHOTO_SHARED || activity.activity_type === ActivityType.PHOTO_LIKED) && 
+                       activity.metadata?.photo_url && (
+                        <div style={{
+                          marginTop: 'var(--space-md)',
+                          borderRadius: '8px',
+                          overflow: 'hidden',
+                          border: '1px solid var(--color-border)'
+                        }}>
+                          <img
+                            src={activity.metadata.photo_url}
+                            alt="Geteiltes Foto"
+                            style={{
+                              width: '100%',
+                              height: compact ? '120px' : '150px',
+                              objectFit: 'cover'
+                            }}
+                          />
+                          {activity.metadata?.caption && (
+                            <div style={{
+                              padding: 'var(--space-sm)',
+                              background: 'var(--color-bg-secondary)',
+                              fontSize: 'var(--text-sm)',
+                              color: 'var(--color-text-primary)'
+                            }}>
+                              {activity.metadata.caption}
+                            </div>
+                          )}
+                        </div>
+                      )}
                       
                       <div style={{
                         display: 'flex',

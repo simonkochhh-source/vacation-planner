@@ -48,7 +48,9 @@ const HeaderSearch = ({
             border: 'none',
             background: 'rgba(255, 255, 255, 0.95)',
             fontSize: getResponsiveTextSize('sm', isMobile),
-            fontWeight: 'var(--font-weight-normal)'
+            fontWeight: 'var(--font-weight-normal)',
+            color: '#1f2937', // Dunklerer Text für besseren Kontrast
+            padding: '12px 16px 12px 48px' // Explizites Padding
           }}
         />
       </div>
@@ -76,7 +78,9 @@ const HeaderSearch = ({
             borderRadius: 'var(--radius-full)',
             border: 'none',
             background: 'rgba(255, 255, 255, 0.95)',
-            fontSize: getResponsiveTextSize('sm', isMobile)
+            fontSize: getResponsiveTextSize('sm', isMobile),
+            color: '#1f2937', // Dunklerer Text für besseren Kontrast
+            padding: '12px 16px 12px 48px' // Explizites Padding
           }}
           isMobile={true}
         />

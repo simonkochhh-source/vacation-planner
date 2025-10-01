@@ -3,7 +3,6 @@ import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { TripStatus } from '../../types';
-import { ChatInterface } from '../Chat';
 import { userStatusService } from '../../services/userStatusService';
 import { chatService, ChatRoomWithInfo } from '../../services/chatService';
 import { 
@@ -57,8 +56,6 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
   const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [nextTrip, setNextTrip] = useState<any>(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [selectedChatRoomId, setSelectedChatRoomId] = useState<string | undefined>();
   const [realUsers, setRealUsers] = useState<MockUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [chatRooms, setChatRooms] = useState<ChatRoomWithInfo[]>([]);
@@ -176,11 +173,11 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
       // Immediately update local state to provide instant feedback
       setChatRooms(prevRooms => prevRooms.filter(room => room.id !== roomId));
       
-      // Close chat if currently selected room was deleted
-      if (selectedChatRoomId === roomId) {
-        setSelectedChatRoomId(undefined);
-        setIsChatOpen(false);
-      }
+      // Close chat if currently selected room was deleted  
+      updateUIState({ 
+        chatOpen: false,
+        selectedChatRoomId: undefined 
+      });
       
       // Refresh from service to ensure consistency
       setTimeout(async () => {
@@ -270,14 +267,12 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
   };
 
   const handleOpenChat = (roomId?: string) => {
-    setSelectedChatRoomId(roomId);
-    setIsChatOpen(true);
+    updateUIState({ 
+      chatOpen: true,
+      selectedChatRoomId: roomId 
+    });
   };
 
-  const handleCloseChat = () => {
-    setIsChatOpen(false);
-    setSelectedChatRoomId(undefined);
-  };
 
   const handleStartDirectChat = async (userId: string) => {
     try {
@@ -814,7 +809,7 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
         { id: 'chat', label: 'Chat', icon: MessageCircle },
         { id: 'friends', label: 'Freunde', icon: Users },
         { id: 'activity', label: 'Aktivität', icon: Bell },
-        { id: 'suggestions', label: 'Vorschläge', icon: Plus }
+        { id: 'suggestions', label: 'Tips', icon: Plus }
       ].map(tab => {
         const Icon = tab.icon;
         const isActive = activeTab === tab.id;
@@ -833,17 +828,28 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
               fontWeight: 'var(--font-weight-medium)',
               color: isActive ? 'var(--color-primary-sage)' : 'var(--color-text-secondary)',
               borderBottomWidth: '2px',
-            borderBottomStyle: 'solid',
-            borderBottomColor: isActive ? 'var(--color-primary-sage)' : 'transparent',
+              borderBottomStyle: 'solid',
+              borderBottomColor: isActive ? 'var(--color-primary-sage)' : 'transparent',
               transition: 'all var(--motion-duration-short) var(--motion-easing-standard)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: 'var(--space-1)'
+              gap: 'var(--space-1)',
+              minWidth: 0,
+              overflow: 'hidden'
             }}
           >
             <Icon size={16} />
-            {!isMobile && tab.label}
+            {!isMobile && (
+              <span style={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                minWidth: 0
+              }}>
+                {tab.label}
+              </span>
+            )}
           </button>
         );
       })}
@@ -1286,39 +1292,6 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
         flexDirection: 'column',
         gap: 'var(--space-3)'
       }}>
-        {/* Open Full Chat Button */}
-        <button
-          onClick={() => handleOpenChat()}
-          style={{
-            width: '100%',
-            padding: 'var(--space-3)',
-            borderRadius: 'var(--radius-md)',
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: 'var(--color-primary-sage)',
-            background: 'var(--color-primary-sage)',
-            color: 'white',
-            fontSize: 'var(--text-sm)',
-            fontWeight: 'var(--font-weight-medium)',
-            cursor: 'pointer',
-            transition: 'all var(--motion-duration-short) var(--motion-easing-standard)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 'var(--space-2)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'var(--color-primary-ocean)';
-            e.currentTarget.style.borderColor = 'var(--color-primary-ocean)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = 'var(--color-primary-sage)';
-            e.currentTarget.style.borderColor = 'var(--color-primary-sage)';
-          }}
-        >
-          <MessageCircle size={16} />
-          Chat öffnen
-        </button>
 
         {/* Chat Rooms List */}
         {loadingChatRooms ? (
@@ -1366,8 +1339,10 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
                   e.currentTarget.style.background = 'transparent';
                 }}
                 onClick={() => {
-                  setSelectedChatRoomId(room.id);
-                  setIsChatOpen(true);
+                  updateUIState({ 
+                    chatOpen: true,
+                    selectedChatRoomId: room.id 
+                  });
                 }}
               >
                 {/* Room Icon */}
@@ -1612,14 +1587,6 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
         </div>
       </div>
 
-      {/* Chat Interface Modal */}
-      {isChatOpen && (
-        <ChatInterface
-          isOpen={isChatOpen}
-          onClose={handleCloseChat}
-          initialRoomId={selectedChatRoomId}
-        />
-      )}
     </>
   );
 };

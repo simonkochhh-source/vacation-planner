@@ -147,7 +147,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
         baseStyle.color = 'white';
         break;
       case FollowStatus.DECLINED:
-        baseStyle.background = '#6b7280';
+        baseStyle.background = 'var(--color-text-secondary)';
         baseStyle.color = 'white';
         break;
       default:

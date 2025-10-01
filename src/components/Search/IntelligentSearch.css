@@ -1,0 +1,13 @@
+/* Better contrast for search input */
+.intelligent-search-input {
+  color: #1f2937 !important;
+}
+
+.intelligent-search-input::placeholder {
+  color: #9ca3af !important;
+  opacity: 1;
+}
+
+.intelligent-search-input:focus::placeholder {
+  color: #d1d5db !important;
+}

@@ -165,7 +165,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
         gap: '1rem'
       }}>
         <div style={{ fontSize: '3rem' }}>😕</div>
-        <h2 style={{ margin: 0, color: '#6b7280' }}>Nutzer nicht gefunden</h2>
+        <h2 style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Nutzer nicht gefunden</h2>
         <p style={{ margin: 0, color: '#9ca3af' }}>
           Dieser Nutzer existiert nicht oder ist privat.
         </p>
@@ -400,8 +400,8 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                 border: 'none',
                 fontSize: '1rem',
                 fontWeight: '600',
-                color: activeTab === tab ? '#3b82f6' : '#6b7280',
-                borderBottom: activeTab === tab ? '2px solid #3b82f6' : '2px solid transparent',
+                color: activeTab === tab ? '#2563eb' : 'var(--color-text-secondary)',
+                borderBottom: activeTab === tab ? '2px solid #2563eb' : '2px solid transparent',
                 cursor: 'pointer',
                 transition: 'all 0.2s'
               }}
@@ -416,7 +416,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
         {/* Tab Content */}
         {activeTab === 'trips' && (
           <div>
-            <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: '600' }}>
+            <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
               Öffentliche Reisen
             </h3>
             
@@ -429,10 +429,10 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                 border: '1px solid #e5e7eb'
               }}>
                 <Globe size={48} style={{ color: '#9ca3af', margin: '0 auto 16px' }} />
-                <h3 style={{ margin: '0 0 8px 0', color: '#6b7280' }}>
+                <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-text-secondary)' }}>
                   Keine öffentlichen Reisen
                 </h3>
-                <p style={{ margin: 0, color: '#9ca3af' }}>
+                <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
                   {isOwnProfile ? 'Du' : `@${profile.nickname}`} hat noch keine öffentlichen Reisen geteilt.
                 </p>
               </div>
@@ -464,11 +464,11 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                       e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
                     }}
                   >
-                    <h4 style={{ margin: '0 0 8px 0', fontSize: '1.125rem', fontWeight: '600' }}>
+                    <h4 style={{ margin: '0 0 8px 0', fontSize: '1.125rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
                       {trip.name}
                     </h4>
                     {trip.description && (
-                      <p style={{ margin: '0 0 12px 0', color: '#6b7280', fontSize: '0.875rem' }}>
+                      <p style={{ margin: '0 0 12px 0', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
                         {trip.description}
                       </p>
                     )}
@@ -477,7 +477,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                       justifyContent: 'space-between', 
                       alignItems: 'center',
                       fontSize: '0.75rem',
-                      color: '#9ca3af'
+                      color: 'var(--color-text-secondary)'
                     }}>
                       <span>{formatDate(trip.startDate)} - {formatDate(trip.endDate)}</span>
                       <span>{trip.destinations?.length || 0} Ziele</span>
@@ -491,7 +491,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
 
         {activeTab === 'activity' && (
           <div>
-            <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: '600' }}>
+            <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
               Aktivitäten
             </h3>
             
@@ -504,10 +504,10 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                 border: '1px solid #e5e7eb'
               }}>
                 <Calendar size={48} style={{ color: '#9ca3af', margin: '0 auto 16px' }} />
-                <h3 style={{ margin: '0 0 8px 0', color: '#6b7280' }}>
+                <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-text-secondary)' }}>
                   Keine Aktivitäten
                 </h3>
-                <p style={{ margin: 0, color: '#9ca3af' }}>
+                <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
                   {isOwnProfile ? 'Du hast' : `@${profile.nickname} hat`} noch keine Aktivitäten.
                 </p>
               </div>
@@ -541,15 +541,15 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                       </div>
                       
                       <div style={{ flex: 1 }}>
-                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', fontWeight: '600' }}>
+                        <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
                           {activity.title}
                         </h4>
                         {activity.description && (
-                          <p style={{ margin: '0 0 8px 0', color: '#6b7280', fontSize: '0.875rem' }}>
+                          <p style={{ margin: '0 0 8px 0', color: 'var(--color-text-secondary)', fontSize: '0.875rem' }}>
                             {activity.description}
                           </p>
                         )}
-                        <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                           {formatDate(activity.created_at)}
                         </div>
                       </div>
@@ -563,7 +563,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
 
         {activeTab === 'about' && (
           <div>
-            <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: '600' }}>
+            <h3 style={{ margin: '0 0 24px 0', fontSize: '1.25rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
               Über {isOwnProfile ? 'mich' : `@${profile.nickname}`}
             </h3>
             
@@ -575,27 +575,27 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
               boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
             }}>
               {profile.bio ? (
-                <p style={{ margin: '0 0 20px 0', lineHeight: 1.6 }}>
+                <p style={{ margin: '0 0 20px 0', lineHeight: 1.6, color: 'var(--color-text-primary)' }}>
                   {profile.bio}
                 </p>
               ) : (
-                <p style={{ margin: '0 0 20px 0', color: '#9ca3af', fontStyle: 'italic' }}>
+                <p style={{ margin: '0 0 20px 0', color: 'var(--color-text-secondary)', fontStyle: 'italic' }}>
                   {isOwnProfile ? 'Du hast noch keine Bio hinzugefügt.' : 'Keine Bio verfügbar.'}
                 </p>
               )}
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <Calendar size={16} style={{ color: '#6b7280' }} />
-                  <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                  <Calendar size={16} style={{ color: 'var(--color-text-secondary)' }} />
+                  <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                     Mitglied seit {formatDate(profile.created_at)}
                   </span>
                 </div>
                 
                 {profile.location && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <MapPin size={16} style={{ color: '#6b7280' }} />
-                    <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                    <MapPin size={16} style={{ color: 'var(--color-text-secondary)' }} />
+                    <span style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                       {profile.location}
                     </span>
                   </div>
@@ -603,14 +603,14 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                 
                 {profile.website && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Link size={16} style={{ color: '#6b7280' }} />
+                    <Link size={16} style={{ color: 'var(--color-text-secondary)' }} />
                     <a 
                       href={profile.website}
                       target="_blank"
                       rel="noopener noreferrer"
                       style={{ 
                         fontSize: '0.875rem', 
-                        color: '#3b82f6',
+                        color: '#2563eb',
                         textDecoration: 'none'
                       }}
                     >

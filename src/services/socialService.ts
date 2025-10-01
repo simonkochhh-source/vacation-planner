@@ -14,7 +14,11 @@ import {
   UserSearchResult,
   ActivityFeedItem,
   SocialStats,
-  SocialServiceInterface
+  SocialServiceInterface,
+  PhotoShare,
+  PhotoLike,
+  PhotoShareWithDetails,
+  CreatePhotoShareData
 } from '../types';
 
 class SocialService implements SocialServiceInterface {
@@ -597,6 +601,228 @@ class SocialService implements SocialServiceInterface {
         ...additionalMetadata
       }
     });
+  }
+
+  // =====================================================
+  // Photo Sharing
+  // =====================================================
+
+  /**
+   * Share a photo from a trip or destination
+   */
+  async sharePhoto(data: CreatePhotoShareData): Promise<PhotoShare> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { data: photoShare, error } = await supabase
+      .from('photo_shares')
+      .insert({
+        user_id: user.id,
+        trip_id: data.trip_id,
+        destination_id: data.destination_id,
+        caption: data.caption,
+        privacy: data.privacy,
+        // Handle both single photo and multi-photo
+        photo_url: data.photo_url || (data.photos && data.photos[0]?.url) || '',
+        photos: data.photos || (data.photo_url ? [{ url: data.photo_url, order: 0 }] : []),
+        photo_count: data.photos ? data.photos.length : 1
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create activity for photo share
+    try {
+      // Get destination/trip details for activity
+      let destinationName = '';
+      let tripName = '';
+      let location = '';
+
+      if (data.destination_id) {
+        const { data: destination } = await supabase
+          .from('destinations')
+          .select('name, location')
+          .eq('id', data.destination_id)
+          .single();
+        
+        if (destination) {
+          destinationName = destination.name;
+          location = destination.location;
+        }
+      }
+
+      if (data.trip_id) {
+        const { data: trip } = await supabase
+          .from('trips')
+          .select('name')
+          .eq('id', data.trip_id)
+          .single();
+        
+        if (trip) {
+          tripName = trip.name;
+        }
+      }
+
+      await this.createActivity({
+        user_id: user.id,
+        activity_type: ActivityType.PHOTO_SHARED,
+        related_trip_id: data.trip_id,
+        related_destination_id: data.destination_id,
+        title: 'hat ein Foto geteilt',
+        description: destinationName ? 
+          `hat ein Foto von ${destinationName} geteilt` :
+          `hat ein Foto geteilt`,
+        metadata: {
+          photo_url: data.photo_url,
+          caption: data.caption,
+          destination_name: destinationName,
+          location: location,
+          trip_name: tripName,
+          photo_share_id: photoShare.id
+        }
+      });
+    } catch (error) {
+      console.error('Failed to create photo share activity:', error);
+      // Don't fail the whole operation if activity creation fails
+    }
+
+    return photoShare;
+  }
+
+  /**
+   * Get photo shares with details
+   */
+  async getPhotoShares(limit = 20): Promise<PhotoShareWithDetails[]> {
+    const { data, error } = await supabase
+      .from('photo_shares_with_details')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  /**
+   * Get photo shares for a specific user
+   */
+  async getUserPhotoShares(userId: UUID, limit = 20): Promise<PhotoShareWithDetails[]> {
+    const { data, error } = await supabase
+      .from('photo_shares_with_details')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  /**
+   * Like a photo
+   */
+  async likePhoto(photoShareId: UUID): Promise<PhotoLike> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Check if already liked
+    const { data: existingLike } = await supabase
+      .from('photo_likes')
+      .select('id')
+      .eq('photo_share_id', photoShareId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingLike) {
+      throw new Error('Photo already liked');
+    }
+
+    const { data: like, error } = await supabase
+      .from('photo_likes')
+      .insert({
+        photo_share_id: photoShareId,
+        user_id: user.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create activity for like (only if it's not the user's own photo)
+    try {
+      // Get photo share details
+      const { data: photoShare } = await supabase
+        .from('photo_shares_with_details')
+        .select('*')
+        .eq('id', photoShareId)
+        .single();
+
+      if (photoShare && photoShare.user_id !== user.id) {
+        // Get current user's profile for the activity
+        const { data: currentUser } = await supabase
+          .from('user_profiles')
+          .select('nickname')
+          .eq('id', user.id)
+          .single();
+
+        await this.createActivity({
+          user_id: photoShare.user_id, // Activity goes to photo owner
+          activity_type: ActivityType.PHOTO_LIKED,
+          related_destination_id: photoShare.destination_id,
+          related_trip_id: photoShare.trip_id,
+          title: 'Foto wurde geliked',
+          description: `${currentUser?.nickname || 'Jemand'} gefällt Ihr Foto`,
+          metadata: {
+            photo_url: photoShare.photo_url,
+            caption: photoShare.caption,
+            destination_name: photoShare.destination_name,
+            location: photoShare.destination_location,
+            trip_name: photoShare.trip_name,
+            photo_share_id: photoShareId,
+            liker_user_id: user.id,
+            targetUserName: photoShare.user_nickname
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to create like activity:', error);
+      // Don't fail the whole operation if activity creation fails
+    }
+
+    return like;
+  }
+
+  /**
+   * Unlike a photo
+   */
+  async unlikePhoto(photoShareId: UUID): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+      .from('photo_likes')
+      .delete()
+      .eq('photo_share_id', photoShareId)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+  }
+
+  /**
+   * Delete a photo share
+   */
+  async deletePhotoShare(photoShareId: UUID): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+      .from('photo_shares')
+      .delete()
+      .eq('id', photoShareId)
+      .eq('user_id', user.id); // Only owner can delete
+
+    if (error) throw error;
   }
 }
 

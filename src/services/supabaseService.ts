@@ -20,6 +20,46 @@ import { socialService } from './socialService';
 type SupabaseDestination = Tables<'destinations'>;
 type SupabaseTrip = Tables<'trips'>;
 
+// Simple cache to avoid redundant queries
+class DataCache {
+  private trips: Map<string, { data: Trip[]; timestamp: number }> = new Map();
+  private destinations: Map<string, { data: Destination[]; timestamp: number }> = new Map();
+  private readonly CACHE_TTL = 30000; // 30 seconds
+
+  getTrips(userId: string): Trip[] | null {
+    const cached = this.trips.get(userId);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      console.log('🔥 Using cached trips data');
+      return cached.data;
+    }
+    return null;
+  }
+
+  setTrips(userId: string, data: Trip[]): void {
+    this.trips.set(userId, { data, timestamp: Date.now() });
+  }
+
+  getDestinations(key: string): Destination[] | null {
+    const cached = this.destinations.get(key);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_TTL) {
+      console.log('🔥 Using cached destinations data');
+      return cached.data;
+    }
+    return null;
+  }
+
+  setDestinations(key: string, data: Destination[]): void {
+    this.destinations.set(key, { data, timestamp: Date.now() });
+  }
+
+  clear(): void {
+    this.trips.clear();
+    this.destinations.clear();
+  }
+}
+
+const cache = new DataCache();
+
 // Helper function to get current user ID
 const getCurrentUserId = async (): Promise<string | null> => {
   if (isUsingPlaceholderCredentials) {
@@ -190,52 +230,95 @@ const convertSupabaseToTrip = (trip: SupabaseTrip): Trip => ({
 export { getCurrentUserId };
 
 export class SupabaseService {
+  // Cache management
+  static clearCache(): void {
+    cache.clear();
+    console.log('🧹 SupabaseService cache cleared');
+  }
+
   // Trip operations
   static async getTrips(): Promise<Trip[]> {
     const userId = await getCurrentUserId();
+    console.log('🔍 getTrips called with userId:', userId);
     if (!userId) {
       console.warn('❌ SupabaseService: No user ID available for getTrips');
       return [];
     }
 
+    // Check cache first
     try {
-      const { data, error } = await supabase
-        .from('trips')
-        .select('*')
-        .eq('user_id', userId)  // TEMPORARY: Only get user's own trips to fix JSON error
-        .order('created_at', { ascending: false });
+      const cachedTrips = cache.getTrips(userId);
+      if (cachedTrips) {
+        console.log('🔥 Using cached trips data');
+        return cachedTrips;
+      }
+    } catch (error) {
+      console.warn('⚠️ Cache error, fetching fresh data:', error);
+    }
+    console.log('🔍 Fetching fresh trips data from database');
 
-      // Handle case where table doesn't exist or data is null
-      if (error) {
-        console.error('Supabase getTrips error:', error);
-        // Return empty array instead of throwing
+    try {
+      // Optimized: Get all trips and their destination IDs in two queries instead of N+1
+      const [tripsResult, destinationsResult] = await Promise.all([
+        supabase
+          .from('trips')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('destinations')
+          .select('id, trip_id')
+          .eq('user_id', userId)
+      ]);
+
+      if (tripsResult.error) {
+        console.error('Supabase getTrips error:', tripsResult.error);
         return [];
       }
       
-      if (!data) {
+      if (!tripsResult.data) {
         console.warn('No trips data returned from Supabase');
         return [];
       }
 
-      // Get all destinations to populate trip.destinations arrays
-      console.log('🔗 Populating trips with destination IDs...');
+      // Check for destinations query errors
+      if (destinationsResult.error) {
+        console.error('Supabase getDestinations mapping error:', destinationsResult.error);
+        // Continue without destinations mapping rather than failing completely
+      }
+
+      // Create a map of trip ID to destination IDs for fast lookup
+      const tripDestinationsMap = new Map<string, string[]>();
+      destinationsResult.data?.forEach(dest => {
+        if (!tripDestinationsMap.has(dest.trip_id)) {
+          tripDestinationsMap.set(dest.trip_id, []);
+        }
+        tripDestinationsMap.get(dest.trip_id)!.push(dest.id);
+      });
       
-      const tripsWithDestinations = [];
-      for (const trip of data) {
-        // Get destination IDs for this trip
-        const { data: rawDestinations } = await supabase
-          .from('destinations')
-          .select('id, trip_id')
-          .eq('trip_id', trip.id);
-        
-        const tripDestinations = rawDestinations?.map(dest => dest.id) || [];
-        
-        console.log(`🎯 Trip "${trip.name}" has ${tripDestinations.length} destinations:`, tripDestinations);
-        
-        tripsWithDestinations.push({
-          ...convertSupabaseToTrip(trip),
-          destinations: tripDestinations
-        });
+      console.log('🔗 Optimized trips population - loaded all destination mappings in single query');
+      console.log(`📊 Trip query results: ${tripsResult.data.length} trips found`);
+      console.log(`📊 Destination mapping results: ${destinationsResult.data?.length || 0} destination mappings found`);
+      
+      // Build trips with their destination IDs
+      const tripsWithDestinations = tripsResult.data.map(trip => ({
+        ...convertSupabaseToTrip(trip),
+        destinations: tripDestinationsMap.get(trip.id) || []
+      }));
+      
+      console.log(`📊 Final trips with destinations: ${tripsWithDestinations.length} trips processed`);
+      console.log('📊 Sample trip:', tripsWithDestinations[0] ? {
+        id: tripsWithDestinations[0].id,
+        name: tripsWithDestinations[0].name,
+        destinationCount: tripsWithDestinations[0].destinations.length
+      } : 'No trips');
+      
+      // Cache the result
+      try {
+        cache.setTrips(userId, tripsWithDestinations);
+        console.log('✅ Trips cached successfully');
+      } catch (error) {
+        console.warn('⚠️ Failed to cache trips:', error);
       }
       
       return tripsWithDestinations;
@@ -509,6 +592,13 @@ export class SupabaseService {
       return [];
     }
     
+    // Check cache first
+    const cacheKey = tripId ? `${userId}-${tripId}` : userId;
+    const cachedDestinations = cache.getDestinations(cacheKey);
+    if (cachedDestinations) {
+      return cachedDestinations;
+    }
+    
     try {
       let query = supabase
         .from('destinations')
@@ -550,6 +640,9 @@ export class SupabaseService {
       if (converted.length > 0) {
         console.log('🎯 First converted destination:', converted[0]);
       }
+      
+      // Cache the result
+      cache.setDestinations(cacheKey, converted);
       
       return converted;
     } catch (error) {
@@ -720,64 +813,74 @@ export class SupabaseService {
 
   // Real-time subscriptions
   static subscribeToTrips(callback: (trips: Trip[]) => void) {
-    return supabase
-      .channel('trips-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'trips'
-        },
-        async () => {
-          try {
-            const trips = await this.getTrips();
-            callback(trips);
-          } catch (error) {
-            console.error('Error in trips subscription:', error);
-            // Don't break the subscription, just log the error
+    try {
+      return supabase
+        .channel('trips-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'trips'
+          },
+          async () => {
+            try {
+              const trips = await this.getTrips();
+              callback(trips);
+            } catch (error) {
+              console.error('Error in trips subscription callback:', error);
+              // Don't break the subscription, just log the error
+            }
           }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log('✅ Trips subscription established');
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error('❌ Trips subscription error');
-        }
-      });
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Trips subscription established');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Trips subscription error - continuing without real-time updates');
+          }
+        });
+    } catch (error) {
+      console.error('❌ Failed to setup trips subscription:', error);
+      return null;
+    }
   }
 
   static subscribeToDestinations(callback: (destinations: Destination[]) => void, tripId?: string) {
     const channelName = tripId ? `destinations-changes-${tripId}` : 'destinations-changes';
     
-    return supabase
-      .channel(channelName)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'destinations',
-          ...(tripId && { filter: `trip_id=eq.${tripId}` })
-        },
-        async () => {
-          try {
-            const destinations = await this.getDestinations(tripId);
-            callback(destinations);
-          } catch (error) {
-            console.error('Error in destinations subscription:', error);
-            // Don't break the subscription, just log the error
+    try {
+      return supabase
+        .channel(channelName)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'destinations',
+            ...(tripId && { filter: `trip_id=eq.${tripId}` })
+          },
+          async () => {
+            try {
+              const destinations = await this.getDestinations(tripId);
+              callback(destinations);
+            } catch (error) {
+              console.error('Error in destinations subscription callback:', error);
+              // Don't break the subscription, just log the error
+            }
           }
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          console.log(`✅ Destinations subscription established${tripId ? ` for trip ${tripId}` : ''}`);
-        } else if (status === 'CHANNEL_ERROR') {
-          console.error(`❌ Destinations subscription error${tripId ? ` for trip ${tripId}` : ''}`);
-        }
-      });
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log(`✅ Destinations subscription established${tripId ? ` for trip ${tripId}` : ''}`);
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error(`❌ Destinations subscription error${tripId ? ` for trip ${tripId}` : ''} - continuing without real-time updates`);
+          }
+        });
+    } catch (error) {
+      console.error('❌ Failed to setup destinations subscription:', error);
+      return null;
+    }
   }
 
   // Destination copy operations

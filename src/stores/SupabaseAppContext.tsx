@@ -432,19 +432,22 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
     let destinationsSubscription: any = null;
     
     try {
-      // Subscribe to trips changes
+      // Subscribe to trips changes - non-blocking
       tripsSubscription = SupabaseService.subscribeToTrips((trips) => {
         console.log('📡 Real-time trips update:', trips.length);
         dispatch({ type: 'SET_TRIPS', payload: trips });
       });
 
-      // Subscribe to destinations changes
+      // Subscribe to destinations changes - non-blocking
       destinationsSubscription = SupabaseService.subscribeToDestinations((destinations) => {
         console.log('📡 Real-time destinations update:', destinations.length);
         dispatch({ type: 'SET_DESTINATIONS', payload: destinations });
       });
+      
+      console.log('🔄 Real-time subscriptions set up (non-blocking)');
     } catch (error) {
-      console.error('❌ Failed to set up subscriptions:', error);
+      console.error('❌ Failed to set up subscriptions (continuing without real-time updates):', error);
+      // Continue without subscriptions - don't block the app
     }
 
     return () => {
@@ -629,28 +632,20 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           const newDestination = await SupabaseService.createDestination(destinationData, fallbackTripId);
           console.log('✅ Destination created in Supabase:', newDestination);
           
+          // Clear cache to ensure fresh data on next load
+          SupabaseService.clearCache();
+          
           dispatch({ type: 'ADD_DESTINATION', payload: newDestination });
           
-          // Add a small delay to ensure database consistency
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Update fallback trip's destination list efficiently  
+          dispatch({ type: 'UPDATE_TRIP', payload: { 
+            id: fallbackTripId, 
+            data: { 
+              destinations: [...(state.trips.find(t => t.id === fallbackTripId)?.destinations || []), newDestination.id] 
+            } 
+          }});
           
-          // Reload trips and destinations to ensure data consistency
-          console.log('🔄 Reloading trips and destinations after creation (fallback)...');
-          const [updatedTrips, updatedDestinations] = await Promise.all([
-            SupabaseService.getTrips(),
-            SupabaseService.getDestinations()
-          ]);
-          
-          dispatch({ type: 'SET_TRIPS', payload: updatedTrips });
-          dispatch({ type: 'SET_DESTINATIONS', payload: updatedDestinations });
-          
-          // Update current trip if needed
-          const updatedCurrentTrip = updatedTrips.find(t => t.id === fallbackTripId);
-          if (updatedCurrentTrip) {
-            dispatch({ type: 'SET_CURRENT_TRIP', payload: updatedCurrentTrip.id });
-          }
-          
-          console.log('✅ Data reloaded successfully (fallback)');
+          console.log('✅ Destination added efficiently without full reload (fallback)');
           return newDestination;
         } else {
           throw new Error('No active trip selected. Please select a trip before creating destinations.');
@@ -672,28 +667,20 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
       const newDestination = await SupabaseService.createDestination(destinationData, activeTripId);
       console.log('✅ Destination created in Supabase:', newDestination);
       
+      // Clear cache to ensure fresh data on next load
+      SupabaseService.clearCache();
+      
       dispatch({ type: 'ADD_DESTINATION', payload: newDestination });
       
+      // Update trip's destination list efficiently
+      dispatch({ type: 'UPDATE_TRIP', payload: { 
+        id: activeTripId, 
+        data: { 
+          destinations: [...(state.currentTrip?.destinations || []), newDestination.id] 
+        } 
+      }});
       
-      // Reload trips and destinations to ensure data consistency
-      console.log('🔄 Reloading trips and destinations after creation...');
-      const [updatedTrips, updatedDestinations] = await Promise.all([
-        SupabaseService.getTrips(),
-        SupabaseService.getDestinations()
-      ]);
-      
-      dispatch({ type: 'SET_TRIPS', payload: updatedTrips });
-      dispatch({ type: 'SET_DESTINATIONS', payload: updatedDestinations });
-      
-      // Update current trip if needed
-      if (state.currentTrip?.id === activeTripId) {
-        const updatedCurrentTrip = updatedTrips.find(t => t.id === activeTripId);
-        if (updatedCurrentTrip) {
-          dispatch({ type: 'SET_CURRENT_TRIP', payload: updatedCurrentTrip.id });
-        }
-      }
-      
-      console.log('✅ Data reloaded successfully');
+      console.log('✅ Destination added efficiently without full reload');
       return newDestination;
     } catch (error) {
       console.error('❌ Error creating destination:', error);

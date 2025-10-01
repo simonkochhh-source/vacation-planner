@@ -1,0 +1,99 @@
+/* Chat Dark Mode Styles */
+
+/* CSS Variables for Dark Mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Chat background colors */
+    --chat-bg: #1f2937;
+    --chat-header-bg: linear-gradient(135deg, #374151 0%, #1f2937 100%);
+    --chat-input-container-bg: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    --chat-input-bg: #374151;
+    --chat-input-field-bg: #374151;
+    
+    /* Chat border colors */
+    --chat-border: #4b5563;
+    --chat-border-light: #4b5563;
+    
+    /* Chat text colors */
+    --chat-text-primary: #f9fafb;
+    --chat-text-secondary: #d1d5db;
+    
+    /* Chat button colors */
+    --chat-button-bg: #4b5563;
+    --chat-button-text: #d1d5db;
+    --chat-button-hover-bg: #6b7280;
+    --chat-button-hover-text: #f9fafb;
+    
+    /* Chat close button colors */
+    --chat-close-bg: #7f1d1d;
+    --chat-close-text: #fca5a5;
+    --chat-close-hover-bg: #991b1b;
+    --chat-close-hover-text: #f87171;
+  }
+  
+  /* Target the main chat container by its fixed positioning */
+  div[style*="position: fixed"][style*="width: 300px"],
+  div[style*="position: fixed"][style*="width: 400px"],
+  div[style*="position: fixed"][style*="left: var(--social-sidebar-width"] {
+    background: var(--chat-bg) !important;
+    border-color: var(--chat-border) !important;
+  }
+  
+  /* Chat header styling */
+  div[style*="borderBottom: '1px solid var(--chat-border-light"] {
+    background: var(--chat-header-bg) !important;
+    border-color: var(--chat-border) !important;
+  }
+  
+  /* All text within chat interface */
+  div[style*="position: fixed"][style*="left: var(--social-sidebar-width"] *,
+  div[style*="position: fixed"][style*="width: 300px"] *,
+  div[style*="position: fixed"][style*="width: 400px"] * {
+    color: var(--chat-text-primary) !important;
+  }
+  
+  /* Chat input containers */
+  div[style*="borderTop: '1px solid var(--chat-border"] {
+    background: var(--chat-input-container-bg) !important;
+    border-color: var(--chat-border) !important;
+  }
+  
+  /* Chat buttons */
+  div[style*="position: fixed"] button {
+    background: var(--chat-button-bg) !important;
+    color: var(--chat-button-text) !important;
+  }
+  
+  /* Chat input fields */
+  div[style*="position: fixed"] input,
+  div[style*="position: fixed"] textarea {
+    background: var(--chat-input-bg) !important;
+    color: var(--chat-text-primary) !important;
+    border-color: var(--chat-border) !important;
+  }
+  
+  /* Placeholder text in dark mode */
+  div[style*="position: fixed"] input::placeholder,
+  div[style*="position: fixed"] textarea::placeholder {
+    color: #9ca3af !important;
+    opacity: 1;
+  }
+  
+  /* Scrollbar styling for chat */
+  div[style*="position: fixed"] ::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  div[style*="position: fixed"] ::-webkit-scrollbar-track {
+    background: #374151;
+  }
+  
+  div[style*="position: fixed"] ::-webkit-scrollbar-thumb {
+    background: #6b7280;
+    border-radius: 3px;
+  }
+  
+  div[style*="position: fixed"] ::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+  }
+}

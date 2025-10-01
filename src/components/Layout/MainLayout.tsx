@@ -3,7 +3,6 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import SocialSidebar from './SocialSidebar';
 import MobileBottomNav from '../Navigation/MobileBottomNav';
-import { ChatInterface } from '../Chat';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useResponsive } from '../../hooks/useResponsive';
 
@@ -15,8 +14,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isMobile } = useResponsive();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [socialSidebarOpen, setSocialSidebarOpen] = useState(false);
-  const [mobileChatOpen, setMobileChatOpen] = useState(false);
-  const { uiState } = useSupabaseApp();
+  const { uiState, updateUIState } = useSupabaseApp();
 
   // Determine which sidebar should be shown based on current view
   const currentView = uiState.currentView || uiState.activeView;
@@ -116,19 +114,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       {/* Mobile Bottom Navigation */}
       {isMobile && (
         <MobileBottomNav 
-          onChatToggle={() => setMobileChatOpen(true)}
+          onChatToggle={() => updateUIState({ chatOpen: true })}
           showChatBadge={false} // TODO: Add unread message logic
         />
-      )}
-      
-      {/* Mobile Chat Interface */}
-      {isMobile && mobileChatOpen && (
-        <div className="mobile-chat">
-          <ChatInterface
-            isOpen={mobileChatOpen}
-            onClose={() => setMobileChatOpen(false)}
-          />
-        </div>
       )}
     </div>
   );

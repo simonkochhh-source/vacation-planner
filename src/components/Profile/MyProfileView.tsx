@@ -79,7 +79,7 @@ const MyProfileView: React.FC = () => {
       case TripPrivacy.CONTACTS:
         return <Users size={14} style={{ color: '#f59e0b' }} />;
       case TripPrivacy.PRIVATE:
-        return <Lock size={14} style={{ color: '#6b7280' }} />;
+        return <Lock size={14} style={{ color: 'var(--color-text-secondary)' }} />;
     }
   };
 
@@ -106,11 +106,11 @@ const MyProfileView: React.FC = () => {
       case ActivityType.DESTINATION_VISITED:
         return <MapPin size={16} style={{ color: '#ef4444' }} />;
       case ActivityType.DESTINATION_ADDED:
-        return <MapPin size={16} style={{ color: '#6b7280' }} />;
+        return <MapPin size={16} style={{ color: 'var(--color-text-secondary)' }} />;
       case ActivityType.USER_FOLLOWED:
         return <Users size={16} style={{ color: '#8b5cf6' }} />;
       default:
-        return <Activity size={16} style={{ color: '#6b7280' }} />;
+        return <Activity size={16} style={{ color: 'var(--color-text-secondary)' }} />;
     }
   };
 
@@ -586,7 +586,7 @@ const MyProfileView: React.FC = () => {
                     alignItems: 'center',
                     gap: 'var(--space-sm)'
                   }}>
-                    <Lock size={16} style={{ color: '#6b7280' }} />
+                    <Lock size={16} style={{ color: 'var(--color-text-secondary)' }} />
                     Private Reisen ({getPrivateTrips().length})
                   </h4>
                   <div style={{
@@ -742,7 +742,7 @@ const MyProfileView: React.FC = () => {
                       <strong>Nur Follower:</strong> Nur für Nutzer sichtbar, die dir folgen
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                      <Lock size={16} style={{ color: '#6b7280' }} />
+                      <Lock size={16} style={{ color: 'var(--color-text-secondary)' }} />
                       <strong>Privat:</strong> Nur für dich sichtbar
                     </div>
                   </div>
@@ -802,7 +802,7 @@ const MyProfileView: React.FC = () => {
                       <div style={{
                         fontSize: 'var(--text-xl)',
                         fontWeight: 'var(--font-weight-bold)',
-                        color: '#6b7280',
+                        color: 'var(--color-text-secondary)',
                         marginBottom: 'var(--space-xs)'
                       }}>
                         {getPrivateTrips().length}

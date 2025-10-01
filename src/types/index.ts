@@ -225,6 +225,9 @@ export interface UIState {
   // Social navigation states
   selectedUserId?: UUID; // For opening specific user profiles
   showUserProfile?: boolean; // Flag to show user profile view
+  // Chat states
+  chatOpen?: boolean; // Flag to show chat interface
+  selectedChatRoomId?: string; // For opening specific chat room
 }
 
 // Settings types
@@ -254,14 +257,6 @@ export interface AppSettings {
     coordinates: Coordinates;
   };
   
-  // Notification Settings
-  enableNotifications: boolean;
-  reminderTime: number; // minutes before event
-  
-  // Export Settings
-  defaultExportFormat: 'json' | 'csv' | 'gpx' | 'kml';
-  includePhotosInExport: boolean;
-  includeNotesInExport: boolean;
   
   // Privacy Settings
   shareLocation: boolean;
@@ -506,6 +501,8 @@ export enum ActivityType {
   TRIP_SHARED = 'trip_shared', // When someone shares trip with contacts
   TRIP_COMPLETED = 'trip_completed', // When someone completes a trip
   PHOTO_UPLOADED = 'photo_uploaded', // When someone uploads trip photos
+  PHOTO_SHARED = 'photo_shared', // When someone shares a photo from trip/destination
+  PHOTO_LIKED = 'photo_liked', // When someone likes a photo
   USER_FOLLOWED = 'user_followed', // When someone follows/gets followed
   
   // Legacy - kept for backward compatibility but filtered out
@@ -680,6 +677,56 @@ export const getSocialTripPermissions = (
   };
 };
 
+// Photo sharing interfaces
+// Photo object for multi-photo posts
+export interface PhotoObject {
+  url: string;
+  order: number;
+  caption?: string;
+}
+
+export interface PhotoShare {
+  id: UUID;
+  user_id: UUID;
+  trip_id?: UUID;
+  destination_id?: UUID;
+  photo_url: string; // Kept for backward compatibility
+  photos: PhotoObject[]; // New: array of photos for multi-photo posts
+  photo_count: number; // Number of photos in this share
+  caption?: string;
+  privacy: 'public' | 'contacts' | 'private';
+  created_at: DateString;
+  updated_at: DateString;
+}
+
+export interface PhotoLike {
+  id: UUID;
+  photo_share_id: UUID;
+  user_id: UUID;
+  created_at: DateString;
+}
+
+export interface PhotoShareWithDetails extends PhotoShare {
+  user_nickname: string;
+  user_display_name?: string;
+  user_avatar_url?: string;
+  trip_name?: string;
+  destination_name?: string;
+  destination_location?: string;
+  destination_coordinates?: Coordinates;
+  like_count: number;
+  user_liked: boolean;
+}
+
+export interface CreatePhotoShareData {
+  trip_id?: UUID;
+  destination_id?: UUID;
+  photo_url?: string; // Single photo (backward compatibility)
+  photos?: PhotoObject[]; // Multi-photo posts
+  caption?: string;
+  privacy: 'public' | 'contacts' | 'private';
+}
+
 // Social service interface types
 export interface SocialServiceInterface {
   // Follow management
@@ -702,6 +749,14 @@ export interface SocialServiceInterface {
   getActivityFeed: (limit?: number) => Promise<ActivityFeedItem[]>;
   getUserActivityFeed: (userId: UUID, limit?: number) => Promise<ActivityFeedItem[]>;
   createActivity: (activity: Omit<UserActivity, 'id' | 'created_at'>) => Promise<UserActivity>;
+  
+  // Photo sharing
+  sharePhoto: (data: CreatePhotoShareData) => Promise<PhotoShare>;
+  getPhotoShares: (limit?: number) => Promise<PhotoShareWithDetails[]>;
+  getUserPhotoShares: (userId: UUID, limit?: number) => Promise<PhotoShareWithDetails[]>;
+  likePhoto: (photoShareId: UUID) => Promise<PhotoLike>;
+  unlikePhoto: (photoShareId: UUID) => Promise<void>;
+  deletePhotoShare: (photoShareId: UUID) => Promise<void>;
   
   // Social stats
   getSocialStats: (userId: UUID) => Promise<SocialStats>;

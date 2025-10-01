@@ -75,18 +75,47 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
       // For direct messages, this would ideally show the other person's avatar
       // For now, we'll show a generic avatar
       return (
-        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center relative">
+        <div style={{
+          width: '40px',
+          height: '40px',
+          background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+          borderRadius: '50%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
+          border: '2px solid #ffffff',
+          boxShadow: '0 2px 8px rgba(37, 99, 235, 0.3)'
+        }}>
           <MessageCircle className="w-5 h-5 text-white" />
           {/* Status indicator would go here for direct messages */}
         </div>
       );
     }
 
+    const getAvatarGradient = () => {
+      switch (room.type) {
+        case 'trip':
+          return 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+        case 'group':
+          return 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)';
+        default:
+          return 'linear-gradient(135deg, #6b7280 0%, #4b5563 100%)';
+      }
+    };
+
     return (
-      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-        room.type === 'trip' ? 'bg-green-500' : 'bg-purple-500'
-      }`}>
-        {getRoomIcon(room)}
+      <div style={{
+        width: '40px',
+        height: '40px',
+        borderRadius: '50%',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: getAvatarGradient(),
+        border: '2px solid #ffffff',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)'
+      }}>
         <div className="text-white">
           {room.type === 'trip' ? (
             <Plane className="w-5 h-5" />
@@ -125,61 +154,177 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
   };
 
   return (
-    <div className="w-80 bg-gray-50 border-r border-gray-200 flex flex-col">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-200 bg-white">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-lg font-semibold text-gray-900">Chats</h2>
-          <div className="flex space-x-1">
+    <div style={{
+      width: '320px',
+      background: 'var(--chat-bg, linear-gradient(135deg, #ffffff 0%, #f8fafc 100%))',
+      borderRight: '1px solid var(--chat-border, #e5e7eb)',
+      display: 'flex',
+      flexDirection: 'column',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)'
+    }}>
+      {/* Modern Header */}
+      <div style={{
+        padding: '20px',
+        borderBottom: '1px solid var(--chat-border, #e5e7eb)',
+        background: 'var(--chat-header-bg, linear-gradient(135deg, #ffffff 0%, #f8fafc 100%))'
+      }}>
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginBottom: '16px'
+        }}>
+          <h2 style={{
+            fontSize: '20px',
+            fontWeight: '600',
+            color: 'var(--chat-text-primary, #111827)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px'
+          }}>
+            <span style={{ color: '#2563eb', fontSize: '24px' }}>💬</span>
+            Chats
+          </h2>
+          <div style={{ display: 'flex', gap: '8px' }}>
             {onNewChat && (
               <button
                 onClick={onNewChat}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                style={{
+                  padding: '10px',
+                  border: 'none',
+                  background: '#f3f4f6',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  color: 'var(--chat-button-text, #6b7280)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '40px',
+                  minHeight: '40px',
+                  transition: 'all 0.2s ease-out'
+                }}
                 title="Neuer Chat"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'var(--chat-button-hover-bg, #e5e7eb)';
+                  e.currentTarget.style.color = 'var(--chat-button-hover-text, #374151)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'var(--chat-button-bg, #f3f4f6)';
+                  e.currentTarget.style.color = 'var(--chat-button-text, #6b7280)';
+                }}
               >
-                <MessageCircle className="w-5 h-5 text-gray-600" />
+                <MessageCircle className="w-5 h-5" />
               </button>
             )}
             {onNewGroup && (
               <button
                 onClick={onNewGroup}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                style={{
+                  padding: '10px',
+                  border: 'none',
+                  background: '#dbeafe',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  color: '#2563eb',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minWidth: '40px',
+                  minHeight: '40px',
+                  transition: 'all 0.2s ease-out'
+                }}
                 title="Neue Gruppe"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#bfdbfe';
+                  e.currentTarget.style.color = '#1d4ed8';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = '#dbeafe';
+                  e.currentTarget.style.color = '#2563eb';
+                }}
               >
-                <Plus className="w-5 h-5 text-gray-600" />
+                <Plus className="w-5 h-5" />
               </button>
             )}
           </div>
         </div>
 
-        {/* Search */}
+        {/* Modern Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input
             type="text"
-            placeholder="Chats durchsuchen..."
+            placeholder="🔍 Chats durchsuchen..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            style={{
+              width: '100%',
+              paddingLeft: '40px',
+              paddingRight: '16px',
+              paddingTop: '12px',
+              paddingBottom: '12px',
+              border: '2px solid #e5e7eb',
+              borderRadius: '16px',
+              fontSize: '14px',
+              background: '#ffffff',
+              transition: 'all 0.2s ease-out',
+              outline: 'none'
+            }}
+            onFocus={(e) => {
+              e.target.style.borderColor = '#2563eb';
+              e.target.style.boxShadow = '0 0 0 3px rgba(37, 99, 235, 0.1)';
+            }}
+            onBlur={(e) => {
+              e.target.style.borderColor = '#e5e7eb';
+              e.target.style.boxShadow = 'none';
+            }}
           />
         </div>
 
-        {/* Filter tabs */}
-        <div className="flex space-x-1 mt-3">
+        {/* Modern Filter tabs */}
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          marginTop: '16px',
+          background: '#f3f4f6',
+          padding: '4px',
+          borderRadius: '12px'
+        }}>
           {[
-            { key: 'all', label: 'Alle' },
-            { key: 'direct', label: 'Direkt' },
-            { key: 'group', label: 'Gruppen' },
-            { key: 'trip', label: 'Reisen' }
+            { key: 'all', label: '📋 Alle' },
+            { key: 'direct', label: '👤 Direkt' },
+            { key: 'group', label: '👥 Gruppen' },
+            { key: 'trip', label: '✈️ Reisen' }
           ].map((tab) => (
             <button
               key={tab.key}
               onClick={() => setFilter(tab.key as typeof filter)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-                filter === tab.key
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+              style={{
+                padding: '8px 12px',
+                border: 'none',
+                borderRadius: '8px',
+                fontSize: '12px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease-out',
+                background: filter === tab.key 
+                  ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+                  : 'transparent',
+                color: filter === tab.key ? '#ffffff' : '#6b7280',
+                boxShadow: filter === tab.key ? '0 2px 8px rgba(37, 99, 235, 0.3)' : 'none'
+              }}
+              onMouseEnter={(e) => {
+                if (filter !== tab.key) {
+                  e.currentTarget.style.background = '#ffffff';
+                  e.currentTarget.style.color = '#374151';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (filter !== tab.key) {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.color = '#6b7280';
+                }
+              }}
             >
               {tab.label}
             </button>
@@ -187,100 +332,206 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
         </div>
       </div>
 
-      {/* Room list */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Modern Room list */}
+      <div style={{
+        flex: 1,
+        overflowY: 'auto',
+        padding: '8px'
+      }}>
         {loading ? (
-          <div className="p-4 text-center text-gray-500">
-            Lade Chats...
+          <div style={{
+            padding: '32px 16px',
+            textAlign: 'center',
+            color: '#6b7280'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              marginBottom: '8px'
+            }}>
+              <div style={{
+                width: '16px',
+                height: '16px',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                borderRadius: '50%',
+                animation: 'pulse 1.5s ease-in-out infinite'
+              }} />
+              <span>Lade Chats...</span>
+            </div>
           </div>
         ) : filteredRooms.length === 0 ? (
-          <div className="p-4 text-center text-gray-500">
+          <div style={{
+            padding: '32px 16px',
+            textAlign: 'center',
+            color: '#6b7280'
+          }}>
             {searchQuery ? (
               <div>
-                <div className="text-sm">Keine Ergebnisse gefunden</div>
-                <div className="text-xs mt-1">Versuchen Sie einen anderen Suchbegriff</div>
+                <div style={{ fontSize: '16px', marginBottom: '8px' }}>🔍</div>
+                <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>Keine Ergebnisse gefunden</div>
+                <div style={{ fontSize: '12px' }}>Versuchen Sie einen anderen Suchbegriff</div>
               </div>
             ) : (
               <div>
-                <div className="text-sm">Keine Chats vorhanden</div>
-                <div className="text-xs mt-1">Starten Sie eine Unterhaltung!</div>
+                <div style={{ fontSize: '24px', marginBottom: '8px' }}>💬</div>
+                <div style={{ fontSize: '14px', fontWeight: '500', marginBottom: '4px' }}>Keine Chats vorhanden</div>
+                <div style={{ fontSize: '12px' }}>Starten Sie eine Unterhaltung!</div>
               </div>
             )}
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
             {filteredRooms.map((room) => (
               <button
                 key={room.id}
                 onClick={() => onRoomSelect(room.id)}
-                className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
-                  activeRoomId === room.id ? 'bg-blue-50 border-r-2 border-blue-600' : ''
-                }`}
+                style={{
+                  width: '100%',
+                  padding: '16px',
+                  textAlign: 'left',
+                  border: 'none',
+                  borderRadius: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease-out',
+                  background: activeRoomId === room.id 
+                    ? 'linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)'
+                    : '#ffffff',
+                  borderLeft: activeRoomId === room.id ? '4px solid #2563eb' : '4px solid transparent',
+                  boxShadow: activeRoomId === room.id 
+                    ? '0 4px 12px rgba(37, 99, 235, 0.15)'
+                    : '0 2px 4px rgba(0, 0, 0, 0.05)'
+                }}
+                onMouseEnter={(e) => {
+                  if (activeRoomId !== room.id) {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.1)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (activeRoomId !== room.id) {
+                    e.currentTarget.style.background = '#ffffff';
+                    e.currentTarget.style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.05)';
+                  }
+                }}
               >
-                <div className="flex items-start space-x-3">
-                  {/* Avatar */}
-                  <div className="relative flex-shrink-0">
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                  {/* Modern Avatar */}
+                  <div style={{ position: 'relative', flexShrink: 0 }}>
                     {getRoomAvatar(room)}
                     
-                    {/* Trip indicator */}
+                    {/* Modern Trip indicator */}
                     {room.type === 'trip' && (
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
+                      <div style={{
+                        position: 'absolute',
+                        bottom: '-2px',
+                        right: '-2px',
+                        width: '20px',
+                        height: '20px',
+                        background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        border: '2px solid #ffffff',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)'
+                      }}>
                         <Plane className="w-3 h-3 text-white" />
                       </div>
                     )}
                   </div>
 
-                  {/* Room info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <h3 className={`font-medium truncate ${
-                        room.unread_count > 0 ? 'text-gray-900' : 'text-gray-700'
-                      }`}>
+                  {/* Modern Room info */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <h3 style={{
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        color: room.unread_count > 0 ? '#111827' : '#374151'
+                      }}>
                         {getRoomDisplayName(room)}
                       </h3>
                       
-                      <div className="flex items-center space-x-2 flex-shrink-0">
-                        {/* Timestamp */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                        {/* Modern Timestamp */}
                         {room.latest_message_at && (
-                          <span className="text-xs text-gray-500">
+                          <span style={{
+                            fontSize: '11px',
+                            color: '#9ca3af',
+                            fontWeight: '500'
+                          }}>
                             {formatLatestMessageTime(room.latest_message_at)}
                           </span>
                         )}
                         
-                        {/* Unread badge */}
+                        {/* Modern Unread badge */}
                         {room.unread_count > 0 && (
-                          <span className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 min-w-[1.25rem] h-5 flex items-center justify-center">
+                          <span style={{
+                            background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                            color: '#ffffff',
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            borderRadius: '12px',
+                            padding: '2px 8px',
+                            minWidth: '20px',
+                            height: '20px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.4)'
+                          }}>
                             {room.unread_count > 99 ? '99+' : room.unread_count}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    {/* Latest message preview */}
+                    {/* Modern Latest message preview */}
                     {room.latest_message && (
-                      <p className={`text-sm mt-1 truncate ${
-                        room.unread_count > 0 ? 'font-medium text-gray-900' : 'text-gray-500'
-                      }`}>
+                      <p style={{
+                        fontSize: '13px',
+                        marginTop: '4px',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        fontWeight: room.unread_count > 0 ? '500' : 'normal',
+                        color: room.unread_count > 0 ? '#374151' : '#6b7280'
+                      }}>
                         {room.latest_message}
                       </p>
                     )}
 
-                    {/* Room meta info */}
-                    <div className="flex items-center justify-between mt-2">
-                      <div className="flex items-center space-x-2">
-                        {/* Room type indicator */}
-                        <div className="flex items-center space-x-1 text-xs text-gray-400">
+                    {/* Modern Room meta info */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        {/* Modern Room type indicator */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '11px',
+                          color: '#9ca3af',
+                          fontWeight: '500'
+                        }}>
                           {getRoomIcon(room)}
-                          <span className="capitalize">
+                          <span>
                             {room.type === 'direct' ? 'Direkt' : 
                              room.type === 'group' ? 'Gruppe' : 
                              room.type === 'trip' ? 'Reise' : room.type}
                           </span>
                         </div>
 
-                        {/* Participant count for groups/trips */}
+                        {/* Modern Participant count for groups/trips */}
                         {(room.type === 'group' || room.type === 'trip') && (
-                          <span className="text-xs text-gray-400">
+                          <span style={{
+                            fontSize: '11px',
+                            color: '#9ca3af',
+                            fontWeight: '500'
+                          }}>
                             · {room.participant_count} Teilnehmer
                           </span>
                         )}
@@ -294,14 +545,23 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
         )}
       </div>
 
-      {/* Footer with stats */}
+      {/* Modern Footer with stats */}
       {!loading && filteredRooms.length > 0 && (
-        <div className="p-3 border-t border-gray-200 bg-gray-50">
-          <div className="text-xs text-gray-500 text-center">
-            {filteredRooms.length} von {rooms.length} Chats
+        <div style={{
+          padding: '12px 20px',
+          borderTop: '1px solid #e5e7eb',
+          background: 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)'
+        }}>
+          <div style={{
+            fontSize: '11px',
+            color: '#6b7280',
+            textAlign: 'center',
+            fontWeight: '500'
+          }}>
+            📊 {filteredRooms.length} von {rooms.length} Chats
             {rooms.reduce((sum, room) => sum + room.unread_count, 0) > 0 && (
-              <span className="ml-2">
-                · {rooms.reduce((sum, room) => sum + room.unread_count, 0)} ungelesen
+              <span style={{ marginLeft: '8px' }}>
+                · {rooms.reduce((sum, room) => sum + room.unread_count, 0)} 🔴 ungelesen
               </span>
             )}
           </div>

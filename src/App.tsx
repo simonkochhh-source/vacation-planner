@@ -18,6 +18,7 @@ import './App.css';
 import './styles/responsive.css';
 import './styles/components.css';
 import './styles/mobile.css';
+import { ChatInterface } from './components/Chat';
 // Lazy loaded components with performance optimizations and preloading
 const EnhancedTimelineView = React.lazy(() => 
   import(/* webpackChunkName: "timeline" */ './components/Scheduling/EnhancedTimelineView')
@@ -194,6 +195,15 @@ const AppContent: React.FC = () => {
       <PerformanceBudget />
       <PerformanceValidator />
       {/* <QuickSearchTest /> */}
+      
+      {/* Global Chat Interface */}
+      {uiState.chatOpen && (
+        <ChatInterface
+          isOpen={uiState.chatOpen}
+          onClose={() => updateUIState({ chatOpen: false })}
+          initialRoomId={uiState.selectedChatRoomId}
+        />
+      )}
     </div>
   );
 };

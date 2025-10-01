@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { Search, MapPin, Globe, Users, Calendar, ArrowRight, User } from 'lucide-react';
 import { formatDate, getCategoryIcon } from '../../utils';
 import { socialService } from '../../services/socialService';
+import './IntelligentSearch.css';
 
 interface SearchSuggestion {
   type: 'destination' | 'trip' | 'user';
@@ -353,10 +354,10 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
         size={isMobile ? 16 : 18}
         style={{
           position: 'absolute',
-          left: isMobile ? 'var(--space-sm)' : 'var(--space-md)',
+          left: isMobile ? '12px' : '16px',
           top: '50%',
           transform: 'translateY(-50%)',
-          color: 'var(--color-text-secondary)',
+          color: '#6b7280', // Explizit grauer Farbton für bessere Sichtbarkeit
           zIndex: 2
         }}
       />
@@ -371,10 +372,10 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
         onKeyDown={handleKeyDown}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        className={className}
+        className={`${className || ''} intelligent-search-input`.trim()}
         style={{
           ...style,
-          paddingLeft: isMobile ? '2.5rem' : '3rem',
+          paddingLeft: isMobile ? '2.5rem' : '3rem'
         }}
       />
 

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MessageSquare, Edit3, Trash2, MoreHorizontal } from 'lucide-react';
 import { ChatMessageWithSender, chatService } from '../../services/chatService';
 import { useAuth } from '../../contexts/AuthContext';
+import LocationMessage from './LocationMessage';
 
 interface ChatMessagesProps {
   chatRoomId: string;
@@ -10,91 +10,33 @@ interface ChatMessagesProps {
   hasMore?: boolean;
   loading?: boolean;
   onReplyToMessage?: (message: ChatMessageWithSender) => void;
+  avatarSize?: 'sm' | 'md' | 'lg';
 }
 
-interface MessageMenuProps {
-  message: ChatMessageWithSender;
-  isOwnMessage: boolean;
-  onReply: () => void;
-  onEdit?: () => void;
-  onDelete?: () => void;
-  onClose: () => void;
-}
-
-const MessageMenu: React.FC<MessageMenuProps> = ({
-  message,
-  isOwnMessage,
-  onReply,
-  onEdit,
-  onDelete,
-  onClose
-}) => {
-  const menuRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-        onClose();
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [onClose]);
-
-  return (
-    <div 
-      ref={menuRef}
-      className="absolute right-0 top-6 bg-white border border-gray-200 rounded-lg shadow-lg py-1 z-10 min-w-32"
-    >
-      <button
-        onClick={onReply}
-        className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-      >
-        <MessageSquare className="w-4 h-4" />
-        <span>Antworten</span>
-      </button>
-      
-      {isOwnMessage && !message.is_deleted && (
-        <>
-          {onEdit && (
-            <button
-              onClick={onEdit}
-              className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              <Edit3 className="w-4 h-4" />
-              <span>Bearbeiten</span>
-            </button>
-          )}
-          {onDelete && (
-            <button
-              onClick={onDelete}
-              className="flex items-center space-x-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span>Löschen</span>
-            </button>
-          )}
-        </>
-      )}
-    </div>
-  );
-};
 
 const ChatMessages: React.FC<ChatMessagesProps> = ({
-  chatRoomId,
+  chatRoomId: _chatRoomId,
   messages,
   onLoadMore,
   hasMore = false,
   loading = false,
-  onReplyToMessage
+  onReplyToMessage,
+  avatarSize = 'md'
 }) => {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [editingMessage, setEditingMessage] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
+
+  // Avatar size configuration
+  const avatarSizes = {
+    sm: { size: 24, className: 'w-6 h-6' },
+    md: { size: 32, className: 'w-8 h-8' },
+    lg: { size: 40, className: 'w-10 h-10' }
+  };
+  
+  const currentAvatarSize = avatarSizes[avatarSize];
 
   useEffect(() => {
     scrollToBottom();
@@ -113,20 +55,6 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     }
   };
 
-  const handleMessageMenu = (messageId: string) => {
-    setActiveMenu(activeMenu === messageId ? null : messageId);
-  };
-
-  const handleReply = (message: ChatMessageWithSender) => {
-    onReplyToMessage?.(message);
-    setActiveMenu(null);
-  };
-
-  const handleEdit = (message: ChatMessageWithSender) => {
-    setEditingMessage(message.id);
-    setEditContent(message.content);
-    setActiveMenu(null);
-  };
 
   const handleSaveEdit = async (messageId: string) => {
     if (!editContent.trim()) return;
@@ -145,32 +73,43 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
     setEditContent('');
   };
 
-  const handleDelete = async (messageId: string) => {
-    if (window.confirm('Möchten Sie diese Nachricht wirklich löschen?')) {
-      try {
-        await chatService.deleteMessage(messageId);
-        setActiveMenu(null);
-      } catch (error) {
-        console.error('Error deleting message:', error);
-      }
-    }
-  };
 
   const getMessageDisplayName = (message: ChatMessageWithSender): string => {
-    return message.sender.nickname || 
-           message.sender.display_name || 
+    // For current user's messages, prioritize their profile data from context
+    if (message.sender_id === user?.id) {
+      // Try userProfile from context first, then sender data, then email fallbacks
+      return userProfile?.nickname || 
+             userProfile?.display_name ||
+             message.sender?.nickname || 
+             message.sender?.display_name || 
+             message.sender?.email?.split('@')[0] ||
+             user?.email?.split('@')[0] || 
+             'Sie';
+    }
+    
+    // For other users, use profile data with email fallback
+    return message.sender?.nickname || 
+           message.sender?.display_name || 
+           message.sender?.email?.split('@')[0] ||
            'Unbekannter Benutzer';
   };
 
   const getMessageAvatar = (message: ChatMessageWithSender): string => {
+    // For current user, prioritize avatar from userProfile context
+    if (message.sender_id === user?.id && userProfile?.avatar_url) {
+      return userProfile.avatar_url;
+    }
+    
+    // Use avatar from message sender data
     if (message.sender.avatar_url) {
       return message.sender.avatar_url;
     }
     
+    // Generate SVG avatar with first letter of display name
     const name = getMessageDisplayName(message);
     return `data:image/svg+xml;base64,${btoa(`
       <svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="16" cy="16" r="16" fill="#3B82F6"/>
+        <circle cx="16" cy="16" r="16" fill="#4A90A4"/>
         <text x="16" y="20" text-anchor="middle" fill="white" font-family="Arial" font-size="12" font-weight="bold">
           ${name.charAt(0).toUpperCase()}
         </text>
@@ -228,20 +167,45 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   return (
     <div 
       ref={messagesContainerRef}
-      className="flex-1 overflow-y-auto p-4 space-y-4"
+      style={{ 
+        height: '100%',
+        overflowY: 'auto',
+        padding: '16px 16px 0',
+        background: 'var(--chat-bg, #ffffff)',
+        scrollBehavior: 'smooth'
+      }}
       onScroll={handleScroll}
     >
-      {/* Load more indicator */}
+      {/* Modern Load more indicator */}
       {hasMore && (
-        <div className="text-center py-2">
+        <div className="text-center py-3">
           {loading ? (
-            <div className="text-gray-500">Lade weitere Nachrichten...</div>
+            <div 
+              className="px-4 py-2 rounded-full inline-block text-sm"
+              style={{
+                color: 'var(--color-text-secondary)',
+                backgroundColor: 'var(--color-neutral-mist)'
+              }}
+            >
+              ⏳ Lade weitere Nachrichten...
+            </div>
           ) : (
             <button
               onClick={onLoadMore}
-              className="text-blue-600 hover:text-blue-800 text-sm"
+              className="px-4 py-2 rounded-full text-sm font-medium transition-all duration-200"
+              style={{
+                backgroundColor: 'var(--color-neutral-cream)',
+                color: 'var(--color-primary-ocean)',
+                border: '1px solid var(--color-border)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--color-neutral-cream)';
+              }}
             >
-              Weitere Nachrichten laden
+              📜 Weitere Nachrichten laden
             </button>
           )}
         </div>
@@ -250,10 +214,17 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
       {/* Message groups by date */}
       {messageGroups.map(({ date, messages: groupMessages }, groupIndex) => (
         <div key={groupIndex}>
-          {/* Date separator */}
-          <div className="flex items-center justify-center my-4">
-            <div className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
-              {date}
+          {/* Modern Date separator */}
+          <div className="flex items-center justify-center my-6">
+            <div 
+              className="text-xs px-4 py-2 rounded-full shadow-sm font-medium"
+              style={{
+                background: 'linear-gradient(135deg, var(--color-neutral-cream) 0%, var(--color-neutral-mist) 100%)',
+                color: 'var(--color-text-secondary)',
+                border: '1px solid var(--color-border)'
+              }}
+            >
+              📅 {date}
             </div>
           </div>
 
@@ -262,8 +233,9 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
             const isOwnMessage = message.sender_id === user?.id;
             const prevMessage = messageIndex > 0 ? groupMessages[messageIndex - 1] : undefined;
             const isConsecutive = isConsecutiveMessage(message, prevMessage);
-            const showAvatar = !isConsecutive;
-            const showSender = !isConsecutive && !isOwnMessage;
+            // Always show avatar and sender name for all messages
+            const showAvatar = true;
+            const showSender = true;
 
             return (
               <div
@@ -273,35 +245,60 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                 }`}
               >
                 <div className={`flex ${isOwnMessage ? 'flex-row-reverse' : 'flex-row'} max-w-[70%]`}>
-                  {/* Avatar */}
-                  <div className={`${isOwnMessage ? 'ml-2' : 'mr-2'}`}>
+                  {/* Modern Avatar */}
+                  <div className={`${isOwnMessage ? 'ml-3' : 'mr-3'}`}>
                     {showAvatar ? (
                       <img
                         src={getMessageAvatar(message)}
                         alt={getMessageDisplayName(message)}
-                        className="w-8 h-8 rounded-full object-cover"
+                        className={`${currentAvatarSize.className} rounded-full object-cover shadow-md`}
+                        style={{ 
+                          border: '2px solid var(--color-surface)',
+                          backgroundColor: 'var(--color-surface)',
+                          width: `${currentAvatarSize.size}px`,
+                          height: `${currentAvatarSize.size}px`,
+                          minWidth: `${currentAvatarSize.size}px`,
+                          minHeight: `${currentAvatarSize.size}px`,
+                          maxWidth: `${currentAvatarSize.size}px`,
+                          maxHeight: `${currentAvatarSize.size}px`
+                        }}
                       />
                     ) : (
-                      <div className="w-8 h-8" />
+                      <div className={currentAvatarSize.className} />
                     )}
                   </div>
 
                   {/* Message content */}
                   <div className="flex flex-col">
-                    {/* Sender name */}
+                    {/* Modern Sender name */}
                     {showSender && (
-                      <div className="text-xs text-gray-500 mb-1 px-2">
+                      <div 
+                        className="text-xs mb-2 px-3 font-medium"
+                        style={{ color: 'var(--color-text-secondary)' }}
+                      >
                         {getMessageDisplayName(message)}
                       </div>
                     )}
 
-                    {/* Reply preview */}
+                    {/* Modern Reply preview */}
                     {message.reply_message && (
-                      <div className="mx-2 mb-1 p-2 bg-gray-100 border-l-2 border-gray-300 rounded text-sm">
-                        <div className="text-xs text-gray-500 font-semibold">
-                          {message.reply_message.sender_nickname || 'Unbekannt'}
+                      <div 
+                        className="mx-3 mb-2 p-3 rounded-lg text-sm shadow-sm"
+                        style={{
+                          background: 'linear-gradient(135deg, var(--color-neutral-cream) 0%, var(--color-neutral-mist) 100%)',
+                          borderLeft: '4px solid var(--color-primary-ocean)'
+                        }}
+                      >
+                        <div 
+                          className="text-xs font-semibold mb-1"
+                          style={{ color: 'var(--color-primary-ocean)' }}
+                        >
+                          💬 {message.reply_message.sender_nickname || 'Unbekannt'}
                         </div>
-                        <div className="text-gray-700 truncate">
+                        <div 
+                          className="truncate"
+                          style={{ color: 'var(--color-text-primary)' }}
+                        >
                           {message.reply_message.content}
                         </div>
                       </div>
@@ -310,32 +307,69 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                     {/* Message bubble */}
                     <div className="relative group">
                       <div
-                        className={`px-3 py-2 rounded-lg ${
-                          isOwnMessage
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-200 text-gray-900'
-                        } ${message.is_deleted ? 'italic opacity-60' : ''}`}
+                        className={`${message.message_type === 'location' ? 'p-0' : 'px-4 py-3'} rounded-2xl shadow-sm ${message.is_deleted ? 'italic opacity-60' : ''}`}
+                        style={{
+                          maxWidth: message.message_type === 'location' ? '350px' : '400px',
+                          wordBreak: 'break-word',
+                          lineHeight: '1.5',
+                          ...(message.message_type === 'location' ? {
+                            backgroundColor: 'transparent',
+                            border: 'none'
+                          } : isOwnMessage ? {
+                            background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%)',
+                            color: 'var(--color-surface)'
+                          } : {
+                            backgroundColor: 'var(--color-surface)',
+                            color: 'var(--color-text-primary)',
+                            border: '1px solid var(--color-border)'
+                          })
+                        }}
                       >
                         {/* Message content */}
-                        {editingMessage === message.id ? (
+                        {editingMessage === message.id && message.message_type !== 'location' ? (
                           <div className="space-y-2">
                             <textarea
                               value={editContent}
                               onChange={(e) => setEditContent(e.target.value)}
-                              className="w-full p-2 border border-gray-300 rounded text-gray-900 text-sm resize-none"
+                              className="w-full p-2 rounded text-sm resize-none"
+                              style={{
+                                border: '1px solid var(--color-border)',
+                                backgroundColor: 'var(--color-surface)',
+                                color: 'var(--color-text-primary)'
+                              }}
                               rows={2}
                               autoFocus
                             />
                             <div className="flex space-x-2">
                               <button
                                 onClick={() => handleSaveEdit(message.id)}
-                                className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                className="text-xs px-2 py-1 rounded"
+                                style={{
+                                  backgroundColor: 'var(--color-primary-ocean)',
+                                  color: 'var(--color-surface)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'var(--color-secondary-forest)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'var(--color-primary-ocean)';
+                                }}
                               >
                                 Speichern
                               </button>
                               <button
                                 onClick={handleCancelEdit}
-                                className="text-xs bg-gray-500 text-white px-2 py-1 rounded hover:bg-gray-600"
+                                className="text-xs px-2 py-1 rounded"
+                                style={{
+                                  backgroundColor: 'var(--color-neutral-stone)',
+                                  color: 'var(--color-surface)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'var(--color-neutral-charcoal)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'var(--color-neutral-stone)';
+                                }}
                               >
                                 Abbrechen
                               </button>
@@ -348,6 +382,19 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                               <div className="text-center text-sm font-medium">
                                 {message.content}
                               </div>
+                            ) : message.message_type === 'location' ? (
+                              /* Location messages */
+                              <LocationMessage
+                                location={{
+                                  latitude: message.metadata?.latitude || 0,
+                                  longitude: message.metadata?.longitude || 0,
+                                  accuracy: message.metadata?.accuracy,
+                                  address: message.metadata?.address,
+                                  timestamp: message.metadata?.timestamp || new Date(message.created_at).getTime()
+                                }}
+                                isOwnMessage={isOwnMessage}
+                                senderName={getMessageDisplayName(message)}
+                              />
                             ) : (
                               <>
                                 {/* Regular message content */}
@@ -366,31 +413,13 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
                           </>
                         )}
 
-                        {/* Message actions menu button */}
-                        {message.message_type !== 'system' && editingMessage !== message.id && (
-                          <button
-                            onClick={() => handleMessageMenu(message.id)}
-                            className="absolute -right-8 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-gray-100 rounded"
-                          >
-                            <MoreHorizontal className="w-4 h-4 text-gray-500" />
-                          </button>
-                        )}
-
-                        {/* Message menu */}
-                        {activeMenu === message.id && (
-                          <MessageMenu
-                            message={message}
-                            isOwnMessage={isOwnMessage}
-                            onReply={() => handleReply(message)}
-                            onEdit={!message.is_deleted ? () => handleEdit(message) : undefined}
-                            onDelete={!message.is_deleted ? () => handleDelete(message.id) : undefined}
-                            onClose={() => setActiveMenu(null)}
-                          />
-                        )}
                       </div>
 
                       {/* Timestamp and edit indicator */}
-                      <div className={`text-xs text-gray-400 mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}>
+                      <div 
+                        className={`text-xs mt-1 ${isOwnMessage ? 'text-right' : 'text-left'}`}
+                        style={{ color: 'var(--color-text-secondary)' }}
+                      >
                         {formatMessageTime(message.created_at)}
                         {message.is_edited && ' (bearbeitet)'}
                       </div>
@@ -405,14 +434,17 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
 
       {/* Empty state */}
       {messages.length === 0 && !loading && (
-        <div className="text-center text-gray-500 py-8">
+        <div 
+          className="text-center py-8"
+          style={{ color: 'var(--color-text-secondary)' }}
+        >
           <div className="text-lg mb-2">Noch keine Nachrichten</div>
           <div className="text-sm">Beginnen Sie ein Gespräch!</div>
         </div>
       )}
 
       {/* Scroll anchor */}
-      <div ref={messagesEndRef} />
+      <div ref={messagesEndRef} style={{ height: '16px' }} />
     </div>
   );
 };

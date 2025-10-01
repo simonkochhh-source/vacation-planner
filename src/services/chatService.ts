@@ -54,6 +54,7 @@ export interface ChatMessageWithSender extends ChatMessage {
     nickname?: string;
     display_name?: string;
     avatar_url?: string;
+    email?: string;
   };
   reply_message?: {
     id: string;
@@ -327,7 +328,7 @@ class ChatService {
    */
   async getMessages(chatRoomId: string, limit: number = 50, before?: string): Promise<ChatMessageWithSender[]> {
     try {
-      // First try to get messages from database
+      // First try to get messages from database (simple query first)
       let query = supabase
         .from('chat_messages')
         .select('*')
@@ -397,22 +398,44 @@ class ChatService {
       // Transform real data if available
       const messages: ChatMessageWithSender[] = [];
       
+      // Get unique sender IDs
+      const senderIds = Array.from(new Set((data || []).map(msg => msg.sender_id)));
+      
+      // Fetch user profiles for all senders
+      const { data: profiles, error: profilesError } = await supabase
+        .from('user_profiles')
+        .select('id, nickname, display_name, avatar_url, email')
+        .in('id', senderIds);
+        
+      if (profilesError) {
+        console.warn('⚠️ Chat: Could not load user profiles:', profilesError.message);
+      }
+      
+      // Create a lookup map for profiles
+      const profileMap = new Map();
+      (profiles || []).forEach(profile => {
+        profileMap.set(profile.id, profile);
+      });
+      
       for (const msg of data || []) {
-        messages.push({
+        const senderProfile = profileMap.get(msg.sender_id);
+        
+        const transformedMessage = {
           ...msg,
-          sender: {
+          sender: senderProfile || {
             id: msg.sender_id,
-            nickname: 'User',
-            display_name: 'User',
-            avatar_url: undefined
+            nickname: null,
+            display_name: null,
+            avatar_url: null
           },
           reply_message: msg.reply_to ? {
             id: msg.reply_to,
             content: 'Replied message',
             sender_id: msg.sender_id,
-            sender_nickname: 'User'
+            sender_nickname: senderProfile?.nickname || senderProfile?.display_name || 'Unbekannt'
           } : undefined
-        });
+        };
+        messages.push(transformedMessage);
       }
 
       return messages.reverse();

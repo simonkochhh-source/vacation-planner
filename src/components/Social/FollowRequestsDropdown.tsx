@@ -191,7 +191,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
               <div style={{
                 padding: '40px 20px',
                 textAlign: 'center',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 <div style={{
                   width: '24px',
@@ -208,7 +208,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
               <div style={{
                 padding: '40px 20px',
                 textAlign: 'center',
-                color: '#6b7280'
+                color: 'var(--color-text-secondary)'
               }}>
                 <Bell size={32} style={{ 
                   margin: '0 auto 12px',
@@ -254,7 +254,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
                       {(request as any).user_profiles?.display_name && (
                         <div style={{
                           fontSize: '0.75rem',
-                          color: '#6b7280',
+                          color: 'var(--color-text-secondary)',
                           marginBottom: '4px'
                         }}>
                           {(request as any).user_profiles?.display_name}
@@ -262,7 +262,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
                       )}
                       <div style={{
                         fontSize: '0.75rem',
-                        color: '#9ca3af'
+                        color: 'var(--color-text-secondary)'
                       }}>
                         vor {getTimeAgo(request.created_at)}
                       </div>

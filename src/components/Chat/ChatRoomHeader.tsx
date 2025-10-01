@@ -11,6 +11,7 @@ interface ChatRoomHeaderProps {
   onCallClick?: () => void;
   onVideoClick?: () => void;
   onMenuClick?: () => void;
+  avatarSize?: 'sm' | 'md' | 'lg';
 }
 
 const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
@@ -19,8 +20,18 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
   onSettingsClick,
   onCallClick,
   onVideoClick,
-  onMenuClick
+  onMenuClick,
+  avatarSize = 'md'
 }) => {
+  // Avatar size configuration
+  const avatarSizes = {
+    sm: { size: 24, className: 'w-6 h-6', iconSize: 'w-3 h-3', textSize: 'text-xs' },
+    md: { size: 32, className: 'w-8 h-8', iconSize: 'w-3.5 h-3.5', textSize: 'text-xs' },
+    lg: { size: 40, className: 'w-10 h-10', iconSize: 'w-5 h-5', textSize: 'text-sm' }
+  };
+  
+  const currentAvatarSize = avatarSizes[avatarSize];
+
   const getRoomDisplayName = (): string => {
     if (room.name) {
       return room.name;
@@ -72,25 +83,54 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
   };
 
   return (
-    <div className="bg-white border-b border-gray-200 px-4 py-3">
+    <div style={{
+      background: 'var(--chat-header-bg, #ffffff)',
+      borderBottom: '1px solid var(--chat-border-light, #e5e7eb)',
+      padding: '12px 16px'
+    }}>
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           {/* Avatar or Icon */}
-          <div className="relative">
+          <div className="relative" style={{ width: `${currentAvatarSize.size}px`, height: `${currentAvatarSize.size}px`, flexShrink: 0 }}>
             {getAvatarUrl() ? (
               <img
                 src={getAvatarUrl()}
                 alt={getRoomDisplayName()}
-                className="w-10 h-10 rounded-full object-cover"
+                className={`${currentAvatarSize.className} rounded-full object-cover`}
+                style={{
+                  width: `${currentAvatarSize.size}px`,
+                  height: `${currentAvatarSize.size}px`,
+                  minWidth: `${currentAvatarSize.size}px`,
+                  minHeight: `${currentAvatarSize.size}px`,
+                  maxWidth: `${currentAvatarSize.size}px`,
+                  maxHeight: `${currentAvatarSize.size}px`
+                }}
               />
             ) : (
-              <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+              <div 
+              className={`${currentAvatarSize.className} rounded-full flex items-center justify-center`}
+              style={{ 
+                backgroundColor: 'var(--color-primary-ocean, #4A90A4)',
+                width: `${currentAvatarSize.size}px`,
+                height: `${currentAvatarSize.size}px`,
+                minWidth: `${currentAvatarSize.size}px`,
+                minHeight: `${currentAvatarSize.size}px`,
+                maxWidth: `${currentAvatarSize.size}px`,
+                maxHeight: `${currentAvatarSize.size}px`
+              }}
+            >
                 {room.type === 'direct' ? (
-                  <span className="text-white font-semibold text-sm">
+                  <span 
+                    className={`font-semibold ${currentAvatarSize.textSize}`}
+                    style={{ color: 'var(--color-surface, #FFFFFF)' }}
+                  >
                     {getRoomDisplayName().charAt(0).toUpperCase()}
                   </span>
                 ) : (
-                  <Users className="w-5 h-5 text-white" />
+                  <Users 
+                    className={currentAvatarSize.iconSize} 
+                    style={{ color: 'var(--color-surface, #FFFFFF)' }}
+                  />
                 )}
               </div>
             )}
@@ -109,14 +149,28 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
 
           {/* Room Info */}
           <div>
-            <h3 className="font-semibold text-gray-900">
+            <h3 style={{
+              fontWeight: '600',
+              color: 'var(--chat-text-primary, #111827)',
+              fontSize: '16px',
+              margin: 0
+            }}>
               {getRoomDisplayName()}
             </h3>
-            <p className="text-sm text-gray-500">
+            <p style={{
+              fontSize: '14px',
+              color: 'var(--chat-text-secondary, #6b7280)',
+              margin: 0
+            }}>
               {getRoomSubtitle()}
             </p>
             {room.description && (
-              <p className="text-xs text-gray-400 mt-1">
+              <p style={{
+                fontSize: '12px',
+                color: 'var(--chat-text-secondary, #9ca3af)',
+                marginTop: '4px',
+                margin: 0
+              }}>
                 {room.description}
               </p>
             )}
@@ -129,11 +183,25 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
           {room.type === 'direct' && onCallClick && (
             <button
               onClick={onCallClick}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              style={{
+                padding: '8px',
+                background: 'var(--chat-button-bg, #f3f4f6)',
+                borderRadius: '50%',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--chat-button-text, #6b7280)',
+                transition: 'all 0.2s ease-out'
+              }}
               aria-label="Anrufen"
               title="Anrufen"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--chat-button-hover-bg, #e5e7eb)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--chat-button-bg, #f3f4f6)';
+              }}
             >
-              <Phone className="w-5 h-5 text-gray-600" />
+              <Phone className="w-5 h-5" />
             </button>
           )}
 
@@ -141,11 +209,25 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
           {onVideoClick && (
             <button
               onClick={onVideoClick}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              style={{
+                padding: '8px',
+                background: 'var(--chat-button-bg, #f3f4f6)',
+                borderRadius: '50%',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--chat-button-text, #6b7280)',
+                transition: 'all 0.2s ease-out'
+              }}
               aria-label="Videoanruf"
               title="Videoanruf"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--chat-button-hover-bg, #e5e7eb)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--chat-button-bg, #f3f4f6)';
+              }}
             >
-              <Video className="w-5 h-5 text-gray-600" />
+              <Video className="w-5 h-5" />
             </button>
           )}
 
@@ -153,11 +235,25 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
           {onSettingsClick && (
             <button
               onClick={onSettingsClick}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              style={{
+                padding: '8px',
+                background: 'var(--chat-button-bg, #f3f4f6)',
+                borderRadius: '50%',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--chat-button-text, #6b7280)',
+                transition: 'all 0.2s ease-out'
+              }}
               aria-label="Chat-Einstellungen"
               title="Einstellungen"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--chat-button-hover-bg, #e5e7eb)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--chat-button-bg, #f3f4f6)';
+              }}
             >
-              <Settings className="w-5 h-5 text-gray-600" />
+              <Settings className="w-5 h-5" />
             </button>
           )}
 
@@ -165,11 +261,25 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
           {onMenuClick && (
             <button
               onClick={onMenuClick}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              style={{
+                padding: '8px',
+                background: 'var(--chat-button-bg, #f3f4f6)',
+                borderRadius: '50%',
+                border: 'none',
+                cursor: 'pointer',
+                color: 'var(--chat-button-text, #6b7280)',
+                transition: 'all 0.2s ease-out'
+              }}
               aria-label="Weitere Optionen"
               title="Mehr"
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'var(--chat-button-hover-bg, #e5e7eb)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'var(--chat-button-bg, #f3f4f6)';
+              }}
             >
-              <MoreHorizontal className="w-5 h-5 text-gray-600" />
+              <MoreHorizontal className="w-5 h-5" />
             </button>
           )}
         </div>
@@ -185,11 +295,35 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
                   <img
                     src={participant.avatar_url}
                     alt={participant.nickname || participant.display_name}
-                    className="w-6 h-6 rounded-full border-2 border-white object-cover"
+                    className="w-6 h-6 rounded-full border-2 object-cover"
+                    style={{ 
+                      borderColor: 'var(--color-surface, #FFFFFF)',
+                      width: '24px',
+                      height: '24px',
+                      minWidth: '24px',
+                      minHeight: '24px',
+                      maxWidth: '24px',
+                      maxHeight: '24px'
+                    }}
                   />
                 ) : (
-                  <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-400 flex items-center justify-center">
-                    <span className="text-xs font-semibold text-white">
+                  <div 
+                    className="w-6 h-6 rounded-full border-2 flex items-center justify-center"
+                    style={{ 
+                      borderColor: 'var(--color-surface, #FFFFFF)',
+                      backgroundColor: 'var(--color-neutral-stone, #8B8680)',
+                      width: '24px',
+                      height: '24px',
+                      minWidth: '24px',
+                      minHeight: '24px',
+                      maxWidth: '24px',
+                      maxHeight: '24px'
+                    }}
+                  >
+                    <span 
+                      className="text-xs font-semibold"
+                      style={{ color: 'var(--color-surface, #FFFFFF)' }}
+                    >
                       {(participant.nickname || participant.display_name || '?').charAt(0).toUpperCase()}
                     </span>
                   </div>
@@ -204,14 +338,32 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
               </div>
             ))}
             {participants.length > 5 && (
-              <div className="w-6 h-6 rounded-full border-2 border-white bg-gray-300 flex items-center justify-center">
-                <span className="text-xs font-semibold text-gray-600">
+              <div 
+                className="w-6 h-6 rounded-full border-2 flex items-center justify-center"
+                style={{ 
+                  borderColor: 'var(--color-surface, #FFFFFF)',
+                  backgroundColor: 'var(--color-neutral-mist, #E6E4E1)',
+                  width: '24px',
+                  height: '24px',
+                  minWidth: '24px',
+                  minHeight: '24px',
+                  maxWidth: '24px',
+                  maxHeight: '24px'
+                }}
+              >
+                <span 
+                  className="text-xs font-semibold"
+                  style={{ color: 'var(--color-text-secondary, #8B8680)' }}
+                >
                   +{participants.length - 5}
                 </span>
               </div>
             )}
           </div>
-          <span className="text-xs text-gray-500">
+          <span 
+            className="text-xs"
+            style={{ color: 'var(--color-text-secondary, #8B8680)' }}
+          >
             {participants.length} Teilnehmer
           </span>
         </div>

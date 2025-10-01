@@ -1,0 +1,296 @@
+/* Chat Theme Variables for Light and Dark Mode */
+
+/* Light Mode (Default) - Using Trailkeeper Design System */
+:root {
+  /* Chat Background Colors */
+  --chat-bg: var(--color-surface);
+  --chat-header-bg: linear-gradient(135deg, var(--color-neutral-cream) 0%, var(--color-surface) 100%);
+  --chat-input-container-bg: linear-gradient(135deg, var(--color-surface) 0%, var(--color-neutral-cream) 100%);
+  --chat-input-bg: var(--color-surface);
+  --chat-input-field-bg: var(--color-surface);
+  --chat-menu-bg: var(--color-surface);
+  --chat-status-bg: linear-gradient(135deg, var(--color-neutral-mist) 0%, var(--color-surface) 100%);
+  
+  /* Chat Border Colors */
+  --chat-border: var(--color-border);
+  --chat-border-light: var(--color-neutral-mist);
+  --chat-input-border: var(--color-border);
+  --chat-input-focus-border: var(--color-primary-ocean);
+  
+  /* Chat Text Colors */
+  --chat-text-primary: var(--color-text-primary);
+  --chat-text-secondary: var(--color-text-secondary);
+  --chat-menu-text: var(--color-text-primary);
+  --chat-reply-text: var(--color-primary-ocean);
+  --chat-send-text: var(--color-surface);
+  
+  /* Chat Button Colors */
+  --chat-button-bg: var(--color-neutral-mist);
+  --chat-button-text: var(--color-text-secondary);
+  --chat-button-hover-bg: var(--color-border);
+  --chat-button-hover-text: var(--color-text-primary);
+  --chat-button-disabled-bg: var(--color-neutral-mist);
+  --chat-button-disabled-text: var(--color-neutral-stone);
+  --chat-menu-hover-bg: var(--color-neutral-mist);
+  
+  /* Chat Close Button Colors */
+  --chat-close-bg: var(--color-secondary-sunset);
+  --chat-close-text: var(--color-surface);
+  --chat-close-hover-bg: var(--color-accent-campfire);
+  --chat-close-hover-text: var(--color-surface);
+  
+  /* Chat Special Colors */
+  --chat-reply-bg: linear-gradient(135deg, var(--color-secondary-sky) 0%, var(--color-primary-ocean) 100%);
+  --chat-pulse-bg: linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%);
+  
+  /* Chat Focus Effects */
+  --chat-input-focus-shadow: 0 0 0 3px rgba(74, 144, 164, 0.1);
+}
+
+/* Dark Mode - Using Trailkeeper Design System */
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* Chat Background Colors */
+    --chat-bg: var(--color-surface);
+    --chat-header-bg: linear-gradient(135deg, var(--color-neutral-cream) 0%, var(--color-surface) 100%);
+    --chat-input-container-bg: linear-gradient(135deg, var(--color-surface) 0%, var(--color-neutral-cream) 100%);
+    --chat-input-bg: var(--color-surface);
+    --chat-input-field-bg: var(--color-surface);
+    --chat-menu-bg: var(--color-surface);
+    --chat-status-bg: linear-gradient(135deg, var(--color-neutral-mist) 0%, var(--color-surface) 100%);
+    
+    /* Chat Border Colors */
+    --chat-border: var(--color-border);
+    --chat-border-light: var(--color-neutral-mist);
+    --chat-input-border: var(--color-border);
+    --chat-input-focus-border: var(--color-primary-ocean);
+    
+    /* Chat Text Colors */
+    --chat-text-primary: var(--color-text-primary);
+    --chat-text-secondary: var(--color-text-secondary);
+    --chat-menu-text: var(--color-text-primary);
+    --chat-reply-text: var(--color-primary-ocean);
+    --chat-send-text: var(--color-surface);
+    
+    /* Chat Button Colors */
+    --chat-button-bg: var(--color-neutral-mist);
+    --chat-button-text: var(--color-text-secondary);
+    --chat-button-hover-bg: var(--color-border);
+    --chat-button-hover-text: var(--color-text-primary);
+    --chat-button-disabled-bg: var(--color-neutral-mist);
+    --chat-button-disabled-text: var(--color-neutral-stone);
+    --chat-menu-hover-bg: var(--color-neutral-mist);
+    
+    /* Chat Close Button Colors */
+    --chat-close-bg: var(--color-secondary-sunset);
+    --chat-close-text: var(--color-surface);
+    --chat-close-hover-bg: var(--color-accent-campfire);
+    --chat-close-hover-text: var(--color-surface);
+    
+    /* Chat Special Colors */
+    --chat-reply-bg: linear-gradient(135deg, var(--color-secondary-sky) 0%, var(--color-primary-ocean) 100%);
+    --chat-pulse-bg: linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%);
+    
+    /* Chat Focus Effects - Using exact Trailkeeper ocean color with transparency */
+    --chat-input-focus-shadow: 0 0 0 3px rgba(74, 144, 164, 0.2);
+  }
+}
+
+/* CSS animations for pulse effect */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Dark mode specific adjustments */
+@media (prefers-color-scheme: dark) {
+  .chat-interface {
+    /* Ensure proper contrast in dark mode */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), 0 4px 10px rgba(0, 0, 0, 0.2) !important;
+  }
+}
+
+/* Light mode specific adjustments */
+@media (prefers-color-scheme: light) {
+  .chat-interface {
+    /* Subtle shadows for light mode */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.05) !important;
+  }
+}
+
+/* Force Dark Mode for Chat Interface - Using Trailkeeper Design System */
+[data-theme="dark"] {
+  /* Chat Background Colors */
+  --chat-bg: var(--color-surface) !important;
+  --chat-header-bg: linear-gradient(135deg, var(--color-neutral-cream) 0%, var(--color-surface) 100%) !important;
+  --chat-input-container-bg: linear-gradient(135deg, var(--color-surface) 0%, var(--color-neutral-cream) 100%) !important;
+  --chat-input-bg: var(--color-surface) !important;
+  --chat-input-field-bg: var(--color-surface) !important;
+  --chat-menu-bg: var(--color-surface) !important;
+  --chat-status-bg: linear-gradient(135deg, var(--color-neutral-mist) 0%, var(--color-surface) 100%) !important;
+  
+  /* Chat Border Colors */
+  --chat-border: var(--color-border) !important;
+  --chat-border-light: var(--color-neutral-mist) !important;
+  --chat-input-border: var(--color-border) !important;
+  --chat-input-focus-border: var(--color-primary-ocean) !important;
+  
+  /* Chat Text Colors */
+  --chat-text-primary: var(--color-text-primary) !important;
+  --chat-text-secondary: var(--color-text-secondary) !important;
+  --chat-menu-text: var(--color-text-primary) !important;
+  --chat-reply-text: var(--color-primary-ocean) !important;
+  --chat-send-text: var(--color-surface) !important;
+  
+  /* Chat Button Colors */
+  --chat-button-bg: var(--color-neutral-mist) !important;
+  --chat-button-text: var(--color-text-secondary) !important;
+  --chat-button-hover-bg: var(--color-border) !important;
+  --chat-button-hover-text: var(--color-text-primary) !important;
+  --chat-button-disabled-bg: var(--color-neutral-mist) !important;
+  --chat-button-disabled-text: var(--color-neutral-stone) !important;
+  --chat-menu-hover-bg: var(--color-neutral-mist) !important;
+  
+  /* Chat Close Button Colors */
+  --chat-close-bg: var(--color-secondary-sunset) !important;
+  --chat-close-text: var(--color-surface) !important;
+  --chat-close-hover-bg: var(--color-accent-campfire) !important;
+  --chat-close-hover-text: var(--color-surface) !important;
+  
+  /* Chat Special Colors */
+  --chat-reply-bg: linear-gradient(135deg, var(--color-secondary-sky) 0%, var(--color-primary-ocean) 100%) !important;
+  --chat-pulse-bg: linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%) !important;
+  
+  /* Chat Focus Effects */
+  --chat-input-focus-shadow: 0 0 0 3px rgba(74, 144, 164, 0.2) !important;
+}
+
+/* Direct Dark Mode Override for all Chat Elements - Using Trailkeeper Design System */
+.chat-interface,
+.chat-interface *,
+[data-theme="dark"],
+[data-theme="dark"] * {
+  /* Chat Background Colors */
+  --chat-bg: var(--color-surface) !important;
+  --chat-header-bg: linear-gradient(135deg, var(--color-neutral-cream) 0%, var(--color-surface) 100%) !important;
+  --chat-input-container-bg: linear-gradient(135deg, var(--color-surface) 0%, var(--color-neutral-cream) 100%) !important;
+  --chat-input-bg: var(--color-surface) !important;
+  --chat-input-field-bg: var(--color-surface) !important;
+  --chat-menu-bg: var(--color-surface) !important;
+  --chat-status-bg: linear-gradient(135deg, var(--color-neutral-mist) 0%, var(--color-surface) 100%) !important;
+  
+  /* Chat Border Colors */
+  --chat-border: var(--color-border) !important;
+  --chat-border-light: var(--color-neutral-mist) !important;
+  --chat-input-border: var(--color-border) !important;
+  --chat-input-focus-border: var(--color-primary-ocean) !important;
+  
+  /* Chat Text Colors */
+  --chat-text-primary: var(--color-text-primary) !important;
+  --chat-text-secondary: var(--color-text-secondary) !important;
+  --chat-menu-text: var(--color-text-primary) !important;
+  --chat-reply-text: var(--color-primary-ocean) !important;
+  --chat-send-text: var(--color-surface) !important;
+  
+  /* Chat Button Colors */
+  --chat-button-bg: var(--color-neutral-mist) !important;
+  --chat-button-text: var(--color-text-secondary) !important;
+  --chat-button-hover-bg: var(--color-border) !important;
+  --chat-button-hover-text: var(--color-text-primary) !important;
+  --chat-button-disabled-bg: var(--color-neutral-mist) !important;
+  --chat-button-disabled-text: var(--color-neutral-stone) !important;
+  --chat-menu-hover-bg: var(--color-neutral-mist) !important;
+  
+  /* Chat Close Button Colors */
+  --chat-close-bg: var(--color-secondary-sunset) !important;
+  --chat-close-text: var(--color-surface) !important;
+  --chat-close-hover-bg: var(--color-accent-campfire) !important;
+  --chat-close-hover-text: var(--color-surface) !important;
+  
+  /* Chat Special Colors */
+  --chat-reply-bg: linear-gradient(135deg, var(--color-secondary-sky) 0%, var(--color-primary-ocean) 100%) !important;
+  --chat-pulse-bg: linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%) !important;
+  
+  /* Chat Focus Effects */
+  --chat-input-focus-shadow: 0 0 0 3px rgba(74, 144, 164, 0.2) !important;
+}
+
+/* Apply dark theme automatically when system prefers dark - Using Trailkeeper Design System */
+@media (prefers-color-scheme: dark) {
+  .chat-interface,
+  [class*="chat"] {
+    /* Chat Background Colors */
+    --chat-bg: var(--color-surface) !important;
+    --chat-header-bg: linear-gradient(135deg, var(--color-neutral-cream) 0%, var(--color-surface) 100%) !important;
+    --chat-input-container-bg: linear-gradient(135deg, var(--color-surface) 0%, var(--color-neutral-cream) 100%) !important;
+    --chat-input-bg: var(--color-surface) !important;
+    --chat-input-field-bg: var(--color-surface) !important;
+    --chat-menu-bg: var(--color-surface) !important;
+    --chat-status-bg: linear-gradient(135deg, var(--color-neutral-mist) 0%, var(--color-surface) 100%) !important;
+    
+    /* Chat Border Colors */
+    --chat-border: var(--color-border) !important;
+    --chat-border-light: var(--color-neutral-mist) !important;
+    --chat-input-border: var(--color-border) !important;
+    --chat-input-focus-border: var(--color-primary-ocean) !important;
+    
+    /* Chat Text Colors */
+    --chat-text-primary: var(--color-text-primary) !important;
+    --chat-text-secondary: var(--color-text-secondary) !important;
+    --chat-menu-text: var(--color-text-primary) !important;
+    --chat-reply-text: var(--color-primary-ocean) !important;
+    --chat-send-text: var(--color-surface) !important;
+    
+    /* Chat Button Colors */
+    --chat-button-bg: var(--color-neutral-mist) !important;
+    --chat-button-text: var(--color-text-secondary) !important;
+    --chat-button-hover-bg: var(--color-border) !important;
+    --chat-button-hover-text: var(--color-text-primary) !important;
+    --chat-button-disabled-bg: var(--color-neutral-mist) !important;
+    --chat-button-disabled-text: var(--color-neutral-stone) !important;
+    --chat-menu-hover-bg: var(--color-neutral-mist) !important;
+    
+    /* Chat Close Button Colors */
+    --chat-close-bg: var(--color-secondary-sunset) !important;
+    --chat-close-text: var(--color-surface) !important;
+    --chat-close-hover-bg: var(--color-accent-campfire) !important;
+    --chat-close-hover-text: var(--color-surface) !important;
+    
+    /* Chat Special Colors */
+    --chat-reply-bg: linear-gradient(135deg, var(--color-secondary-sky) 0%, var(--color-primary-ocean) 100%) !important;
+    --chat-pulse-bg: linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%) !important;
+    
+    /* Chat Focus Effects */
+    --chat-input-focus-shadow: 0 0 0 3px rgba(74, 144, 164, 0.2) !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --chat-border: #000000 !important;
+    --chat-text-primary: #000000 !important;
+    --chat-text-secondary: #333333 !important;
+  }
+}
+
+@media (prefers-contrast: high) and (prefers-color-scheme: dark) {
+  :root {
+    --chat-border: #ffffff !important;
+    --chat-text-primary: #ffffff !important;
+    --chat-text-secondary: #cccccc !important;
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

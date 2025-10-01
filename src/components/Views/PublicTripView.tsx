@@ -126,9 +126,9 @@ const TripMapView: React.FC<TripMapViewProps> = ({ trip, destinations }) => {
         padding: '40px',
         textAlign: 'center'
       }}>
-        <MapPin size={48} style={{ color: '#9ca3af', margin: '0 auto 16px' }} />
-        <h3 style={{ margin: '0 0 8px 0', color: '#6b7280' }}>Keine Koordinaten verfügbar</h3>
-        <p style={{ margin: '0', color: '#9ca3af' }}>
+        <MapPin size={48} style={{ color: 'var(--color-text-secondary)', margin: '0 auto 16px' }} />
+        <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-text-secondary)' }}>Keine Koordinaten verfügbar</h3>
+        <p style={{ margin: '0', color: 'var(--color-text-secondary)' }}>
           Für diese Reise sind keine Kartenkoordinaten hinterlegt.
         </p>
       </div>
@@ -181,7 +181,7 @@ const TripMapView: React.FC<TripMapViewProps> = ({ trip, destinations }) => {
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '1rem', fontWeight: '600' }}>
                   {index + 1}. {destination.name}
                 </h4>
-                <p style={{ margin: '0 0 4px 0', fontSize: '0.875rem', color: '#6b7280' }}>
+                <p style={{ margin: '0 0 4px 0', fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                   📍 {destination.location}
                 </p>
                 {destination.budget && (
@@ -274,7 +274,7 @@ const PublicPhotoGallery: React.FC<PublicPhotoGalleryProps> = ({ tripId, destina
           animation: 'spin 1s linear infinite',
           margin: '0 auto 16px'
         }} />
-        <p style={{ margin: 0, color: '#6b7280' }}>Lade Fotos...</p>
+        <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>Lade Fotos...</p>
       </div>
     );
   }
@@ -290,7 +290,7 @@ const PublicPhotoGallery: React.FC<PublicPhotoGalleryProps> = ({ tripId, destina
       }}>
         <AlertCircle size={48} style={{ color: '#ef4444', margin: '0 auto 16px' }} />
         <h3 style={{ margin: '0 0 8px 0', color: '#ef4444' }}>Fehler beim Laden</h3>
-        <p style={{ margin: '0 0 16px 0', color: '#6b7280' }}>{error}</p>
+        <p style={{ margin: '0 0 16px 0', color: 'var(--color-text-secondary)' }}>{error}</p>
         <button
           onClick={loadPublicPhotos}
           style={{
@@ -318,9 +318,9 @@ const PublicPhotoGallery: React.FC<PublicPhotoGalleryProps> = ({ tripId, destina
         textAlign: 'center',
         border: '1px solid #e5e7eb'
       }}>
-        <Camera size={48} style={{ color: '#9ca3af', margin: '0 auto 16px' }} />
-        <h3 style={{ margin: '0 0 8px 0', color: '#6b7280' }}>Keine öffentlichen Fotos</h3>
-        <p style={{ margin: '0', color: '#9ca3af' }}>
+        <Camera size={48} style={{ color: 'var(--color-text-secondary)', margin: '0 auto 16px' }} />
+        <h3 style={{ margin: '0 0 8px 0', color: 'var(--color-text-secondary)' }}>Keine öffentlichen Fotos</h3>
+        <p style={{ margin: '0', color: 'var(--color-text-secondary)' }}>
           Für diese Reise wurden noch keine Fotos öffentlich freigegeben.
         </p>
       </div>
@@ -691,7 +691,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
               background: '#f3f4f6',
               borderRadius: '6px',
               padding: '4px',
-              color: '#6b7280'
+              color: 'var(--color-text-secondary)'
             }}>
               {getCategoryIcon(destination.category)}
             </div>
@@ -703,7 +703,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
           
           <div style={{ 
             fontSize: '0.875rem',
-            color: '#6b7280',
+            color: 'var(--color-text-secondary)',
             marginBottom: '8px',
             display: 'flex',
             alignItems: 'center',
@@ -720,7 +720,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
             fontSize: '0.875rem'
           }}>
             <div>
-              <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Datum</div>
+              <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem' }}>Datum</div>
               <div style={{ fontWeight: '500', color: '#1f2937' }}>
                 {formatDate(destination.startDate)}
                 {destination.endDate !== destination.startDate && (
@@ -731,7 +731,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
             
             {destination.budget && (
               <div>
-                <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Budget</div>
+                <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem' }}>Budget</div>
                 <div style={{ fontWeight: '500', color: '#1f2937' }}>
                   €{destination.budget}
                 </div>
@@ -739,7 +739,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
             )}
             
             <div>
-              <div style={{ color: '#6b7280', fontSize: '0.75rem' }}>Kategorie</div>
+              <div style={{ color: 'var(--color-text-secondary)', fontSize: '0.75rem' }}>Kategorie</div>
               <div style={{ fontWeight: '500', color: '#1f2937' }}>
                 {getCategoryLabel(destination.category)}
               </div>
@@ -753,7 +753,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
               background: '#f9fafb',
               borderRadius: '6px',
               fontSize: '0.875rem',
-              color: '#6b7280',
+              color: 'var(--color-text-secondary)',
               lineHeight: '1.4'
             }}>
               {destination.notes}
@@ -950,13 +950,13 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                 <Calendar size={24} />
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '500' }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
                   Reisedauer
                 </div>
                 <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>
                   {tripStats.duration} Tag{tripStats.duration !== 1 ? 'e' : ''}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                   {formatDate(trip.startDate)} - {formatDate(trip.endDate)}
                 </div>
               </div>
@@ -983,13 +983,13 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                 <MapPin size={24} />
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '500' }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
                   Ziele
                 </div>
                 <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>
                   {tripStats.destinationCount}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                   {tripStats.completedDestinations} besucht ({Math.round(tripStats.completionRate)}%)
                 </div>
               </div>
@@ -1016,13 +1016,13 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                 <Euro size={24} />
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '500' }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
                   Budget
                 </div>
                 <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>
                   €{tripStats.totalBudget || trip.budget || 0}
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                   Geplantes Gesamtbudget
                 </div>
               </div>
@@ -1049,13 +1049,13 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                 <Route size={24} />
               </div>
               <div>
-                <div style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '500' }}>
+                <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)', fontWeight: '500' }}>
                   Geschätzte Strecke
                 </div>
                 <div style={{ fontSize: '1.5rem', fontWeight: '700', color: '#1f2937' }}>
                   {tripStats.totalDistance} km
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--color-text-secondary)' }}>
                   Zwischen Zielen
                 </div>
               </div>
@@ -1101,7 +1101,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   background: activeTab === 'list' ? 'white' : 'transparent',
-                  color: activeTab === 'list' ? '#1f2937' : '#6b7280',
+                  color: activeTab === 'list' ? '#1f2937' : 'var(--color-text-secondary)',
                   boxShadow: activeTab === 'list' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'
                 }}
               >
@@ -1122,7 +1122,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   background: activeTab === 'map' ? 'white' : 'transparent',
-                  color: activeTab === 'map' ? '#1f2937' : '#6b7280',
+                  color: activeTab === 'map' ? '#1f2937' : 'var(--color-text-secondary)',
                   boxShadow: activeTab === 'map' ? '0 1px 3px rgba(0, 0, 0, 0.1)' : 'none'
                 }}
               >
@@ -1177,7 +1177,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
               <div style={{ marginBottom: '16px' }}>
                 <div style={{ 
                   fontSize: '0.875rem',
-                  color: '#6b7280',
+                  color: 'var(--color-text-secondary)',
                   fontWeight: '500',
                   marginBottom: '8px'
                 }}>
@@ -1189,7 +1189,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                       key={index}
                       style={{
                         background: '#f3f4f6',
-                        color: '#374151',
+                        color: 'var(--color-text-secondary)',
                         borderRadius: '6px',
                         padding: '4px 8px',
                         fontSize: '0.875rem',
@@ -1207,7 +1207,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
               <div>
                 <div style={{ 
                   fontSize: '0.875rem',
-                  color: '#6b7280',
+                  color: 'var(--color-text-secondary)',
                   fontWeight: '500',
                   marginBottom: '8px'
                 }}>
@@ -1270,7 +1270,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
             <p style={{ 
               margin: '0 0 20px 0',
               fontSize: '0.875rem',
-              color: '#6b7280',
+              color: 'var(--color-text-secondary)',
               lineHeight: '1.5'
             }}>
               Möchtest du "{trip.name}" zu deiner persönlichen Reisesammlung hinzufügen? 
@@ -1283,7 +1283,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
               padding: '12px',
               marginBottom: '20px'
             }}>
-              <div style={{ fontSize: '0.875rem', color: '#374151' }}>
+              <div style={{ fontSize: '0.875rem', color: 'var(--color-text-secondary)' }}>
                 <strong>Wird importiert:</strong>
                 <ul style={{ margin: '8px 0', paddingLeft: '20px' }}>
                   <li>{tripStats.destinationCount} Ziele</li>
@@ -1300,7 +1300,7 @@ const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportT
                 disabled={isImporting}
                 style={{
                   background: '#f3f4f6',
-                  color: '#6b7280',
+                  color: 'var(--color-text-secondary)',
                   border: 'none',
                   borderRadius: '8px',
                   padding: '10px 16px',

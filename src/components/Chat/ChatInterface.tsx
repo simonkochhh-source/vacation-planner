@@ -261,38 +261,44 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const currentWidth = isSmallMode ? smallWidth : largeWidth;
     
     if (isMobile) {
-      // Full-screen mobile chat with safe area support
+      // Full-screen mobile chat with modern bright design
       return {
         position: 'fixed' as const,
-        top: 'max(var(--header-height, 64px), env(safe-area-inset-top))',
+        top: `${headerHeight}px`,
         left: 0,
         right: 0,
-        bottom: 'max(var(--mobile-bottom-nav-height, 64px), env(safe-area-inset-bottom))',
-        background: 'var(--color-surface)',
-        zIndex: 1000, // High z-index for mobile overlay
+        bottom: 0,
+        background: 'var(--chat-bg, #ffffff)', // Adaptive background
+        zIndex: 1000,
         display: 'flex',
         flexDirection: 'column' as const,
-        borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0',
-        transition: 'transform var(--motion-duration-medium)',
-        boxShadow: 'var(--elevation-5)'
+        borderRadius: '20px 20px 0 0', // Rounder top corners
+        transition: 'transform 0.3s ease-out',
+        boxShadow: '0 -4px 25px rgba(0, 0, 0, 0.1), 0 -2px 10px rgba(0, 0, 0, 0.05)',
+        paddingBottom: 'env(safe-area-inset-bottom)', // Safe area für iOS
+        maxHeight: `calc(100vh - ${headerHeight}px)`, // Verhindert Überlauf
+        overflow: 'hidden' // Wichtig für das interne Flex-Layout
       };
     }
     
-    // Desktop chat positioning
+    // Desktop chat positioning with modern styling
     return {
       position: 'fixed' as const,
-      top: `${headerHeight}px`, // Dynamic header height
-      left: 'var(--social-sidebar-width, 320px)', // Use CSS custom property for sidebar width
+      top: `${headerHeight}px`,
+      left: 'var(--social-sidebar-width, 320px)',
       bottom: 0,
       width: `${currentWidth}px`,
-      background: 'var(--color-surface)',
-      zIndex: 800, // Lower than search results (1000) and modals
+      background: 'var(--chat-bg, #ffffff)', // Adaptive background
+      zIndex: 800,
       display: 'flex',
       flexDirection: 'column' as const,
-      border: '1px solid var(--color-outline-variant)',
-      borderLeft: '2px solid var(--color-primary)',
-      transition: 'width var(--motion-duration-medium)',
-      boxShadow: 'var(--elevation-3)'
+      border: '1px solid var(--chat-border, #e5e7eb)', // Adaptive border
+      borderLeft: '3px solid #2563eb', // Blue accent border
+      borderRadius: '16px 0 0 0', // Rounded top-left corner
+      transition: 'width 0.3s ease-out, box-shadow 0.2s ease-out',
+      boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1), 0 4px 10px rgba(0, 0, 0, 0.05)',
+      maxHeight: `calc(100vh - ${headerHeight}px)`, // Verhindert Überlauf
+      overflow: 'hidden' // Wichtig für das interne Flex-Layout
     };
   };
 
@@ -314,105 +320,134 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div style={getChatStyle()}>
-      {/* Mobile Chat Header or Desktop Controls Bar */}
+    <div 
+      className="chat-interface" 
+      data-theme="dark" 
+      style={{
+        ...getChatStyle(),
+        // Zusätzliche Styles für bessere Mobile-Unterstützung
+        ...(isMobile && {
+          height: '100dvh', // Dynamic viewport height für moderne Browser (Fallback: 100vh)
+          maxHeight: '100dvh'
+        })
+      }}
+    >
+      {/* Modern Chat Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        padding: isMobile ? 'var(--space-3) var(--space-4)' : 'var(--space-2) var(--space-3)',
-        borderBottom: '1px solid var(--color-border)',
-        background: 'var(--color-surface)',
-        minHeight: isMobile ? 'var(--mobile-button-height)' : '48px',
-        gap: isMobile ? 'var(--space-3)' : '8px'
+        padding: isMobile ? '16px 20px' : '12px 16px',
+        borderBottom: '1px solid var(--chat-border-light, #f3f4f6)', // Adaptive light border
+        background: 'var(--chat-header-bg, linear-gradient(135deg, #f8fafc 0%, #ffffff 100%))', // Adaptive gradient
+        minHeight: isMobile ? '60px' : '56px',
+        gap: isMobile ? '12px' : '10px',
+        borderRadius: isMobile ? '20px 20px 0 0' : '16px 0 0 0' // Match container radius
       }}>
         {/* Mobile back button or desktop room title */}
         {isMobile ? (
           <button
             onClick={onClose}
             style={{
-              padding: 'var(--space-2)',
+              padding: '8px',
               border: 'none',
-              background: 'transparent',
-              borderRadius: '50%',
+              background: 'var(--chat-button-bg, #f3f4f6)', // Adaptive button background
+              borderRadius: '12px', // More rounded
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: 'var(--color-primary)',
-              minWidth: 'var(--mobile-button-height)',
-              minHeight: 'var(--mobile-button-height)'
+              color: 'var(--chat-button-text, #374151)', // Adaptive text color
+              minWidth: '40px',
+              minHeight: '40px',
+              transition: 'all 0.2s ease-out'
             }}
             aria-label="Chat schließen"
           >
-            <ArrowLeft size={24} />
+            <ArrowLeft size={20} />
           </button>
         ) : null}
 
-        {/* Room Title */}
+        {/* Modern Room Title */}
         <div style={{
           flex: 1,
-          fontSize: isMobile ? 'var(--mobile-text-lg)' : '14px',
-          fontWeight: isMobile ? 'var(--font-weight-bold)' : '500',
-          color: 'var(--color-text-primary)',
+          fontSize: isMobile ? '18px' : '16px', // Larger, more readable
+          fontWeight: '600', // Bolder for better hierarchy
+          color: 'var(--chat-text-primary, #111827)', // Adaptive primary text
           whiteSpace: 'nowrap',
           overflow: 'hidden',
-          textOverflow: 'ellipsis'
+          textOverflow: 'ellipsis',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
         }}>
+          <span style={{ 
+            color: '#2563eb', 
+            fontSize: '20px',
+            lineHeight: '1'
+          }}>💬</span>
           {activeRoom ? (activeRoom.name || `Chat ${activeRoom.id.slice(0, 8)}`) : 'Chat'}
         </div>
 
-        {/* Desktop Window Controls - Hidden on mobile */}
+        {/* Modern Desktop Controls - Hidden on mobile */}
         {!isMobile && (
-          <div style={{ display: 'flex', gap: '4px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             {/* Size Toggle Button */}
             <button
               onClick={handleToggleSize}
               style={{
-                padding: 'var(--space-1)',
+                padding: '8px',
                 border: 'none',
-                background: 'transparent',
-                borderRadius: 'var(--radius-sm)',
+                background: 'var(--chat-button-bg, #f3f4f6)',
+                borderRadius: '10px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--color-text-secondary)'
+                color: 'var(--chat-button-text, #6b7280)',
+                minWidth: '36px',
+                minHeight: '36px',
+                transition: 'all 0.2s ease-out'
               }}
               aria-label={isSmallMode ? "Chat vergrößern" : "Chat verkleinern"}
               title={isSmallMode ? "Chat vergrößern" : "Chat verkleinern"}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--color-neutral-mist)';
+                e.currentTarget.style.background = 'var(--chat-button-hover-bg, #e5e7eb)';
+                e.currentTarget.style.color = 'var(--chat-button-hover-text, #374151)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.background = 'var(--chat-button-bg, #f3f4f6)';
+                e.currentTarget.style.color = 'var(--chat-button-text, #6b7280)';
               }}
             >
               {isSmallMode ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
             </button>
 
-            {/* Close Button */}
+            {/* Modern Close Button */}
             <button
               onClick={onClose}
               style={{
-                padding: 'var(--space-1)',
+                padding: '8px',
                 border: 'none',
-                background: 'transparent',
-                borderRadius: 'var(--radius-sm)',
+                background: 'var(--chat-close-bg, #fef2f2)',
+                borderRadius: '10px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: 'var(--color-text-secondary)'
+                color: 'var(--chat-close-text, #dc2626)',
+                minWidth: '36px',
+                minHeight: '36px',
+                transition: 'all 0.2s ease-out'
               }}
               aria-label="Chat schließen"
               title="Chat schließen"
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--color-error-bg)';
-                e.currentTarget.style.color = 'var(--color-error)';
+                e.currentTarget.style.background = 'var(--chat-close-hover-bg, #fee2e2)';
+                e.currentTarget.style.color = 'var(--chat-close-hover-text, #b91c1c)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'var(--color-text-secondary)';
+                e.currentTarget.style.background = 'var(--chat-close-bg, #fef2f2)';
+                e.currentTarget.style.color = 'var(--chat-close-text, #dc2626)';
               }}
             >
               <X size={16} />
@@ -422,52 +457,97 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       </div>
 
       {/* Main Chat Content */}
-      <div className="flex-1 flex flex-col">
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: 0 // Wichtig für Flexbox overflow
+      }}>
         {activeRoom ? (
           <>
-            {/* Chat Header */}
-            <ChatRoomHeader
-              room={activeRoom}
-              participants={roomParticipants}
-              onSettingsClick={() => console.log('Settings clicked')}
-              onCallClick={() => console.log('Call clicked')}
-              onVideoClick={() => console.log('Video call clicked')}
-              onMenuClick={() => console.log('Menu clicked')}
-            />
+            {/* Chat Header - Fixed height */}
+            <div style={{ flexShrink: 0 }}>
+              <ChatRoomHeader
+                room={activeRoom}
+                participants={roomParticipants}
+                onSettingsClick={() => console.log('Settings clicked')}
+                onCallClick={() => console.log('Call clicked')}
+                onVideoClick={() => console.log('Video call clicked')}
+                onMenuClick={() => console.log('Menu clicked')}
+                avatarSize="md"
+              />
+            </div>
 
-            {/* Messages */}
-            <ChatMessages
-              chatRoomId={activeRoom.id}
-              messages={messages}
-              onLoadMore={handleLoadMoreMessages}
-              hasMore={hasMoreMessages}
-              loading={messagesLoading}
-              onReplyToMessage={handleReplyToMessage}
-            />
+            {/* Messages - Flexible height with scroll */}
+            <div style={{
+              flex: 1,
+              minHeight: 0, // Wichtig für Flexbox overflow
+              overflow: 'hidden'
+            }}>
+              <ChatMessages
+                chatRoomId={activeRoom.id}
+                messages={messages}
+                onLoadMore={handleLoadMoreMessages}
+                hasMore={hasMoreMessages}
+                loading={messagesLoading}
+                onReplyToMessage={handleReplyToMessage}
+                avatarSize="sm"
+              />
+            </div>
 
-            {/* Message Input */}
-            <ChatInput
-              chatRoomId={activeRoom.id}
-              onSendMessage={handleSendMessage}
-              replyTo={replyToMessage ? {
-                id: replyToMessage.id,
-                content: replyToMessage.content,
-                senderName: replyToMessage.sender.nickname || replyToMessage.sender.display_name || 'Unbekannt'
-              } : undefined}
-              onCancelReply={handleCancelReply}
-            />
+            {/* Message Input - Fixed height */}
+            <div style={{ flexShrink: 0 }}>
+              <ChatInput
+                chatRoomId={activeRoom.id}
+                onSendMessage={handleSendMessage}
+                replyTo={replyToMessage ? {
+                  id: replyToMessage.id,
+                  content: replyToMessage.content,
+                  senderName: replyToMessage.sender.nickname || replyToMessage.sender.display_name || 'Unbekannt'
+                } : undefined}
+                onCancelReply={handleCancelReply}
+              />
+            </div>
           </>
         ) : (
           /* No room selected */
-          <div className="flex-1 flex items-center justify-center bg-gray-50">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-8 h-8 text-gray-400" />
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'var(--chat-bg, #f9fafb)'
+          }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                background: 'var(--chat-button-bg, #e5e7eb)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 16px auto'
+              }}>
+                <Users style={{
+                  width: '32px',
+                  height: '32px',
+                  color: 'var(--chat-text-secondary, #9ca3af)'
+                }} />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 style={{
+                fontSize: '18px',
+                fontWeight: '500',
+                color: 'var(--chat-text-primary, #111827)',
+                marginBottom: '8px',
+                margin: 0
+              }}>
                 Wählen Sie einen Chat aus
               </h3>
-              <p className="text-gray-500">
+              <p style={{
+                color: 'var(--chat-text-secondary, #6b7280)',
+                margin: 0
+              }}>
                 Beginnen Sie eine Unterhaltung aus der Seitenleiste
               </p>
             </div>
