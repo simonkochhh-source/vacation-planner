@@ -527,10 +527,12 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                             onClick={(e) => handlePhotoClick(activity, e)}
                             style={{
                               width: '100%',
-                              height: compact ? '120px' : '150px',
+                              maxWidth: '400px',
+                              height: '200px',
                               objectFit: 'cover',
                               cursor: 'pointer',
-                              transition: 'opacity var(--transition-normal)'
+                              transition: 'opacity var(--transition-normal)',
+                              borderRadius: '8px'
                             }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.opacity = '0.8';
