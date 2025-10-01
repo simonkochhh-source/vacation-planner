@@ -23,7 +23,10 @@ import {
   Clock,
   Share,
   CheckCircle,
-  Circle
+  Circle,
+  Heart,
+  MessageCircle,
+  ArrowUp
 } from 'lucide-react';
 import { formatDate } from '../../utils';
 import { PhotoService, TripPhoto } from '../../services/photoService';
@@ -63,6 +66,11 @@ const AllPhotosView: React.FC = () => {
   const [showPhotoShareModal, setShowPhotoShareModal] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedPhotos, setSelectedPhotos] = useState<Set<string>>(new Set());
+  const [photoShareData, setPhotoShareData] = useState<any>(null);
+  const [isLiked, setIsLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [newComment, setNewComment] = useState('');
+  const [comments, setComments] = useState<any[]>([]);
 
   const loadAllPhotos = useCallback(async () => {
     console.log('AllPhotosView - loadAllPhotos called', { 
@@ -230,11 +238,43 @@ const AllPhotosView: React.FC = () => {
     }
   };
 
-  const handlePhotoClick = (photo: GlobalPhoto) => {
+  const handlePhotoClick = async (photo: GlobalPhoto) => {
     if (selectionMode) {
       togglePhotoSelection(photo.id);
     } else {
       setSelectedPhoto(photo);
+      await loadPhotoShareData(photo);
+    }
+  };
+
+  const loadPhotoShareData = async (photo: GlobalPhoto) => {
+    try {
+      // Try to find existing photo share for this photo
+      const photoShares = await socialService.getUserPhotoShares(user?.id || '', 100);
+      const photoShare = photoShares.find(ps => 
+        ps.photo_url === (photo.url || photo.photo_url) ||
+        (ps.photos && ps.photos.some((p: any) => p.url === (photo.url || photo.photo_url)))
+      );
+      
+      if (photoShare) {
+        setPhotoShareData(photoShare);
+        setIsLiked(photoShare.user_liked || false);
+        setLikeCount(photoShare.like_count || 0);
+        // Note: Comments would need to be loaded from a comments table if implemented
+        setComments([]);
+      } else {
+        // Reset state for local photos
+        setPhotoShareData(null);
+        setIsLiked(false);
+        setLikeCount(0);
+        setComments([]);
+      }
+    } catch (error) {
+      console.error('Error loading photo share data:', error);
+      setPhotoShareData(null);
+      setIsLiked(false);
+      setLikeCount(0);
+      setComments([]);
     }
   };
 
@@ -244,6 +284,74 @@ const AllPhotosView: React.FC = () => {
       return;
     }
     setShowPhotoShareModal(true);
+  };
+
+  const handleLikePhoto = async () => {
+    if (!photoShareData) {
+      alert('Dieses Foto muss erst geteilt werden, bevor Sie es liken können!');
+      return;
+    }
+
+    try {
+      if (isLiked) {
+        await socialService.unlikePhoto(photoShareData.id);
+        setIsLiked(false);
+        setLikeCount(prev => prev - 1);
+      } else {
+        await socialService.likePhoto(photoShareData.id);
+        setIsLiked(true);
+        setLikeCount(prev => prev + 1);
+      }
+    } catch (error) {
+      console.error('Error toggling like:', error);
+      alert('Fehler beim Liken des Fotos');
+    }
+  };
+
+  const handleAddComment = async () => {
+    if (!newComment.trim()) return;
+    if (!photoShareData) {
+      alert('Dieses Foto muss erst geteilt werden, bevor Sie kommentieren können!');
+      return;
+    }
+
+    try {
+      // Note: This would require a comments table and service method
+      // For now, just show a placeholder
+      alert('Kommentar-Funktion wird in Kürze verfügbar sein!');
+      setNewComment('');
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Fehler beim Hinzufügen des Kommentars');
+    }
+  };
+
+  const handleSharePhoto = async (photo: GlobalPhoto) => {
+    if (photoShareData) {
+      alert('Dieses Foto wurde bereits geteilt!');
+      return;
+    }
+
+    try {
+      const shareData = {
+        photo_url: photo.url || photo.photo_url,
+        caption: photo.caption || photo.file_name,
+        trip_id: photo.tripId,
+        destination_id: photo.destinationId,
+        privacy: 'public' as const
+      };
+
+      const result = await socialService.sharePhoto(shareData);
+      console.log('Photo shared successfully:', result);
+      
+      // Reload photo share data
+      await loadPhotoShareData(photo);
+      
+      alert('Foto erfolgreich geteilt!');
+    } catch (error) {
+      console.error('Error sharing photo:', error);
+      alert('Fehler beim Teilen des Fotos');
+    }
   };
 
   const handleDeletePhoto = async (photo: GlobalPhoto) => {
@@ -837,7 +945,14 @@ const AllPhotosView: React.FC = () => {
             <ModernButton
               variant="text"
               size="sm"
-              onClick={() => setSelectedPhoto(null)}
+              onClick={() => {
+                setSelectedPhoto(null);
+                setPhotoShareData(null);
+                setIsLiked(false);
+                setLikeCount(0);
+                setNewComment('');
+                setComments([]);
+              }}
               style={{
                 position: 'absolute',
                 top: '-50px',
@@ -900,6 +1015,128 @@ const AllPhotosView: React.FC = () => {
                 <span style={{ color: 'var(--color-text-primary)' }}>
                   {((selectedPhoto.size || selectedPhoto.file_size || 0) / (1024 * 1024)).toFixed(1)} MB
                 </span>
+              </div>
+
+              {/* Photo Reactions Section */}
+              <div style={{
+                borderTop: '1px solid var(--color-border)',
+                paddingTop: 'var(--space-lg)',
+                marginBottom: 'var(--space-lg)'
+              }}>
+                {/* Status and Share Button */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 'var(--space-md)'
+                }}>
+                  <div style={{
+                    fontSize: 'var(--text-sm)',
+                    color: photoShareData ? 'var(--color-success)' : 'var(--color-text-secondary)'
+                  }}>
+                    {photoShareData ? '✓ Öffentlich geteilt' : 'Nur lokal gespeichert'}
+                  </div>
+                  
+                  {!photoShareData && (
+                    <ModernButton
+                      variant="outlined"
+                      size="sm"
+                      onClick={() => handleSharePhoto(selectedPhoto)}
+                      leftIcon={<Share size={16} />}
+                      style={{
+                        borderColor: 'var(--color-primary-ocean)',
+                        color: 'var(--color-primary-ocean)'
+                      }}
+                    >
+                      Teilen
+                    </ModernButton>
+                  )}
+                </div>
+
+                {/* Like and Comment Buttons */}
+                {photoShareData && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-lg)',
+                    marginBottom: 'var(--space-md)'
+                  }}>
+                    <ModernButton
+                      variant="text"
+                      size="sm"
+                      onClick={handleLikePhoto}
+                      leftIcon={
+                        <Heart 
+                          size={20} 
+                          style={{ 
+                            color: isLiked ? 'var(--color-error)' : 'var(--color-text-secondary)',
+                            fill: isLiked ? 'var(--color-error)' : 'none'
+                          }} 
+                        />
+                      }
+                      style={{
+                        color: isLiked ? 'var(--color-error)' : 'var(--color-text-secondary)',
+                        fontWeight: isLiked ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)'
+                      }}
+                    >
+                      {likeCount > 0 ? `${likeCount} Like${likeCount === 1 ? '' : 's'}` : 'Like'}
+                    </ModernButton>
+
+                    <ModernButton
+                      variant="text"
+                      size="sm"
+                      leftIcon={<MessageCircle size={20} />}
+                      style={{ color: 'var(--color-text-secondary)' }}
+                    >
+                      {comments.length > 0 ? `${comments.length} Kommentar${comments.length === 1 ? '' : 'e'}` : 'Kommentieren'}
+                    </ModernButton>
+                  </div>
+                )}
+
+                {/* Comment Input */}
+                {photoShareData && (
+                  <div style={{
+                    display: 'flex',
+                    gap: 'var(--space-sm)',
+                    alignItems: 'center'
+                  }}>
+                    <input
+                      type="text"
+                      placeholder="Kommentar hinzufügen..."
+                      value={newComment}
+                      onChange={(e) => setNewComment(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') {
+                          handleAddComment();
+                        }
+                      }}
+                      style={{
+                        flex: 1,
+                        padding: 'var(--space-sm) var(--space-md)',
+                        border: '1px solid var(--color-border)',
+                        borderRadius: 'var(--radius-full)',
+                        fontSize: 'var(--text-sm)',
+                        fontFamily: 'var(--font-family-system)',
+                        background: 'var(--color-surface)',
+                        color: 'var(--color-text-primary)'
+                      }}
+                    />
+                    <ModernButton
+                      variant="text"
+                      size="sm"
+                      onClick={handleAddComment}
+                      disabled={!newComment.trim()}
+                      leftIcon={<ArrowUp size={16} />}
+                      style={{
+                        minWidth: 'auto',
+                        padding: 'var(--space-sm)',
+                        color: newComment.trim() ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)'
+                      }}
+                    >
+                      Senden
+                    </ModernButton>
+                  </div>
+                )}
               </div>
 
               <div style={{

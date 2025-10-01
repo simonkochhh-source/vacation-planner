@@ -441,14 +441,30 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                               objectFit: 'cover'
                             }}
                           />
-                          {activity.metadata?.caption && (
+                          {(activity.metadata?.caption || activity.destination_location || activity.related_data?.location) && (
                             <div style={{
                               padding: 'var(--space-sm)',
                               background: 'var(--color-bg-secondary)',
                               fontSize: 'var(--text-sm)',
                               color: 'var(--color-text-primary)'
                             }}>
-                              {activity.metadata.caption}
+                              {activity.metadata?.caption && (
+                                <div style={{ marginBottom: activity.destination_location || activity.related_data?.location ? 'var(--space-xs)' : 0 }}>
+                                  {activity.metadata.caption}
+                                </div>
+                              )}
+                              {(activity.destination_location || activity.related_data?.location) && (
+                                <div style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--space-xs)',
+                                  fontSize: 'var(--text-xs)',
+                                  color: 'var(--color-text-secondary)'
+                                }}>
+                                  <MapPin size={12} />
+                                  <span>{activity.destination_location || activity.related_data?.location}</span>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -475,7 +491,7 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                         </div>
                         
                         {/* Activity metadata */}
-                        {activity.related_data?.location && (
+                        {(activity.related_data?.location || activity.destination_location) && (
                           <div style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -486,7 +502,7 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                               fontSize: 'var(--text-xs)',
                               color: 'var(--color-text-secondary)'
                             }}>
-                              {activity.related_data.location}
+                              {activity.related_data?.location || activity.destination_location}
                             </span>
                           </div>
                         )}
