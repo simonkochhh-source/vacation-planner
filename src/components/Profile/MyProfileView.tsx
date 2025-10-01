@@ -520,10 +520,12 @@ const MyProfileView: React.FC = () => {
                             alt={post.metadata?.caption || 'Geteiltes Foto'}
                             style={{
                               width: '100%',
-                              height: 'auto',
-                              objectFit: 'contain', // Show complete image without cropping
+                              maxWidth: '400px',
+                              height: '200px',
+                              objectFit: 'cover',
                               cursor: 'pointer',
-                              display: 'block' // Remove any extra spacing
+                              display: 'block',
+                              borderRadius: 'var(--radius-md)'
                             }}
                             onClick={() => {
                               // TODO: Open photo modal similar to SocialActivityFeed
