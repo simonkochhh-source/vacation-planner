@@ -20,12 +20,14 @@ import {
   List,
   Search,
   Tag,
-  Clock
+  Clock,
+  Share
 } from 'lucide-react';
 import { formatDate } from '../../utils';
 import { PhotoService, TripPhoto } from '../../services/photoService';
 import ModernButton from '../UI/ModernButton';
 import ModernCard from '../UI/ModernCard';
+import PhotoShareModal from '../Social/PhotoShareModal';
 
 // Global photo interface for all trips
 interface GlobalPhoto extends TripPhoto {
@@ -55,6 +57,7 @@ const AllPhotosView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedPhoto, setSelectedPhoto] = useState<GlobalPhoto | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
+  const [showPhotoShareModal, setShowPhotoShareModal] = useState(false);
 
   // Load all photos from all trips
   useEffect(() => {
@@ -273,14 +276,44 @@ const AllPhotosView: React.FC = () => {
           </p>
         </div>
 
-        <ModernButton
-          variant="filled"
-          size="default"
-          onClick={() => setShowUploadModal(true)}
-          leftIcon={<Plus size={20} />}
-        >
-          Fotos hinzufügen
-        </ModernButton>
+        <div style={{
+          display: 'flex',
+          gap: 'var(--space-md)',
+          alignItems: 'center'
+        }}>
+          <ModernButton
+            variant="filled"
+            size="default"
+            onClick={() => setShowUploadModal(true)}
+            leftIcon={<Plus size={20} />}
+          >
+            Fotos hinzufügen
+          </ModernButton>
+          
+          <ModernButton
+            variant="outlined"
+            size="default"
+            onClick={() => {
+              if (filteredPhotos.length === 0) {
+                alert('Laden Sie zuerst Fotos hoch, bevor Sie sie teilen können!');
+                return;
+              }
+              setShowPhotoShareModal(true);
+            }}
+            leftIcon={<Share size={20} />}
+            disabled={filteredPhotos.length === 0}
+            style={{
+              borderColor: filteredPhotos.length > 0 ? 'var(--color-primary-ocean)' : 'var(--color-border)',
+              color: filteredPhotos.length > 0 ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
+              opacity: filteredPhotos.length > 0 ? 1 : 0.6
+            }}
+            title={filteredPhotos.length === 0 
+              ? 'Laden Sie zuerst Fotos hoch um sie zu teilen' 
+              : '📸 Multi-Photo Sharing - Teile mehrere Fotos als einen Post!'}
+          >
+            Fotos teilen
+          </ModernButton>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -406,14 +439,37 @@ const AllPhotosView: React.FC = () => {
             </div>
 
             {!searchQuery && (
-              <ModernButton
-                variant="filled"
-                size="default"
-                leftIcon={<Plus size={20} />}
-                onClick={() => setShowUploadModal(true)}
-              >
-                Erste Fotos hinzufügen
-              </ModernButton>
+              <div style={{
+                display: 'flex',
+                gap: 'var(--space-md)',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                justifyContent: 'center'
+              }}>
+                <ModernButton
+                  variant="filled"
+                  size="default"
+                  leftIcon={<Plus size={20} />}
+                  onClick={() => setShowUploadModal(true)}
+                >
+                  Erste Fotos hochladen
+                </ModernButton>
+                
+                <ModernButton
+                  variant="outlined"
+                  size="default"
+                  leftIcon={<Share size={20} />}
+                  disabled
+                  style={{
+                    borderColor: 'var(--color-border)',
+                    color: 'var(--color-text-secondary)',
+                    opacity: 0.6
+                  }}
+                  title="Laden Sie zuerst Fotos hoch um sie zu teilen"
+                >
+                  Fotos teilen
+                </ModernButton>
+              </div>
             )}
           </div>
         </ModernCard>
@@ -707,6 +763,28 @@ const AllPhotosView: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Photo Share Modal */}
+      {showPhotoShareModal && (
+        <PhotoShareModal
+          isOpen={showPhotoShareModal}
+          onClose={() => setShowPhotoShareModal(false)}
+          onShare={async (data) => {
+            try {
+              console.log('Sharing photos from AllPhotosView:', data);
+              setShowPhotoShareModal(false);
+              // Show success message
+              alert('Fotos erfolgreich geteilt!');
+            } catch (error) {
+              console.error('Error sharing photos:', error);
+              alert('Fehler beim Teilen der Fotos');
+            }
+          }}
+          trip={undefined} // AllPhotosView spans multiple trips
+          destination={undefined} // AllPhotosView spans multiple destinations
+          initialPhotos={filteredPhotos.map(photo => photo.url || photo.photo_url)}
+        />
       )}
     </div>
   );
