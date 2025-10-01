@@ -760,6 +760,14 @@ const SettingsView: React.FC = () => {
       fuelType: FuelType.E10,
       fuelConsumption: 9.0,
       
+      // Notification Settings
+      enableNotifications: true,
+      reminderTime: 30,
+      
+      // Export Settings
+      defaultExportFormat: 'json',
+      includePhotosInExport: true,
+      includeNotesInExport: true,
       
       // Privacy Settings
       shareLocation: false,

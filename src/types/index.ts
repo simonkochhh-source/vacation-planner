@@ -262,6 +262,15 @@ export interface AppSettings {
   shareLocation: boolean;
   trackVisitHistory: boolean;
   
+  // Notification Settings
+  enableNotifications: boolean;
+  reminderTime: number; // minutes before
+  
+  // Export Settings
+  defaultExportFormat: 'json' | 'csv' | 'gpx' | 'pdf';
+  includePhotosInExport: boolean;
+  includeNotesInExport: boolean;
+  
   // Backup Settings
   autoBackup: boolean;
   backupInterval: number; // hours
