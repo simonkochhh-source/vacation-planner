@@ -667,19 +667,24 @@ class SocialService implements SocialServiceInterface {
       await this.createActivity({
         user_id: user.id,
         activity_type: ActivityType.PHOTO_SHARED,
-        related_trip_id: data.trip_id,
-        related_destination_id: data.destination_id,
+        related_trip_id: data.trip_id || undefined,
+        related_destination_id: data.destination_id || undefined,
         title: 'hat ein Foto geteilt',
         description: destinationName ? 
           `hat ein Foto von ${destinationName} geteilt` :
+          tripName ?
+          `hat ein Foto von der Reise ${tripName} geteilt` :
           `hat ein Foto geteilt`,
         metadata: {
-          photo_url: data.photo_url,
+          photo_url: data.photo_url || (data.photos && data.photos[0]?.url) || '',
+          photos: data.photos,
+          photo_count: data.photos ? data.photos.length : 1,
           caption: data.caption,
           destination_name: destinationName,
           location: location,
           trip_name: tripName,
-          photo_share_id: photoShare.id
+          photo_share_id: photoShare.id,
+          privacy: data.privacy
         }
       });
     } catch (error) {
