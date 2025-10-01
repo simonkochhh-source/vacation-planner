@@ -561,9 +561,9 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                           style={{
                             width: '100%',
                             height: 'auto',
-                            maxHeight: '400px',
-                            objectFit: 'cover',
-                            cursor: 'pointer'
+                            objectFit: 'contain', // Show complete image without cropping
+                            cursor: 'pointer',
+                            display: 'block' // Remove any extra spacing
                           }}
                           onClick={() => {
                             // TODO: Open photo modal similar to SocialActivityFeed
