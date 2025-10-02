@@ -237,15 +237,39 @@ class SocialService implements SocialServiceInterface {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
+    // Get the follow request before accepting it
+    const { data: followRequest, error: followError } = await supabase
+      .from('follows')
+      .select('*')
+      .eq('follower_id', requesterId)
+      .eq('following_id', user.id)
+      .eq('status', FollowStatus.PENDING)
+      .single();
+
+    if (followError || !followRequest) {
+      throw new Error('Follow request not found');
+    }
+
     // Accept the incoming request
-    const accepted = await this.acceptFollowRequest(requesterId);
+    await this.acceptFollowRequest(followRequest.id);
+
+    // Get the updated follow record
+    const { data: accepted, error: acceptedError } = await supabase
+      .from('follows')
+      .select('*')
+      .eq('id', followRequest.id)
+      .single();
+
+    if (acceptedError || !accepted) {
+      throw new Error('Failed to retrieve accepted follow request');
+    }
 
     // Create reciprocal follow relationship to establish friendship
     let reciprocal: Follow;
     try {
       reciprocal = await this.followUser(requesterId);
       // Immediately accept the reciprocal relationship
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('follows')
         .update({ status: FollowStatus.ACCEPTED })
         .eq('follower_id', user.id)
@@ -253,10 +277,11 @@ class SocialService implements SocialServiceInterface {
         .select('*')
         .single();
       
+      if (error) throw error;
       if (data) reciprocal = data;
     } catch (error) {
       // If reciprocal relationship already exists, just accept it
-      const { data } = await supabase
+      const { data, error: updateError } = await supabase
         .from('follows')
         .update({ status: FollowStatus.ACCEPTED })
         .eq('follower_id', user.id)
@@ -264,7 +289,7 @@ class SocialService implements SocialServiceInterface {
         .select('*')
         .single();
       
-      if (!data) throw new Error('Failed to create or update reciprocal relationship');
+      if (updateError || !data) throw new Error('Failed to create or update reciprocal relationship');
       reciprocal = data;
     }
 
