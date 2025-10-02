@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image, X, Download, Trash2, MessageCircle, ArrowUp, ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
+import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image, X, Download, Trash2, MessageCircle, ArrowUp, ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import { ActivityFeedItem, ActivityType } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -115,7 +115,7 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
       case ActivityType.TRIP_SHARED:
         return <Users size={16} style={{ color: '#3b82f6' }} />;
       case ActivityType.TRIP_CREATED:
-        return <PlusCircle size={16} style={{ color: '#06b6d4' }} />;
+        return <Plus size={16} style={{ color: '#06b6d4' }} />;
       case ActivityType.TRIP_STARTED:
         return <Plane size={16} style={{ color: '#f97316' }} />;
       case ActivityType.TRIP_COMPLETED:
