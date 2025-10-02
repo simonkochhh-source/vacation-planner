@@ -523,7 +523,7 @@ export enum ActivityType {
   DESTINATION_ADDED = 'destination_added'
 }
 
-// Follow relationship interface
+// Follow relationship interface (legacy - for backward compatibility)
 export interface Follow {
   id: UUID;
   follower_id: UUID;
@@ -531,6 +531,79 @@ export interface Follow {
   status: FollowStatus;
   created_at: DateString;
   updated_at: DateString;
+}
+
+// Friendship interface (bidirectional relationship)
+export interface Friendship {
+  user1_id: UUID;
+  user2_id: UUID;
+  friendship_created_at: DateString;
+  friendship_updated_at: DateString;
+}
+
+// Chat system interfaces
+export interface ChatRoom {
+  id: UUID;
+  name?: string;
+  description?: string;
+  is_group: boolean;
+  created_by: UUID;
+  created_at: DateString;
+  updated_at: DateString;
+  user1_id?: UUID; // For 1:1 chats
+  user2_id?: UUID; // For 1:1 chats
+}
+
+export interface ChatParticipant {
+  id: UUID;
+  room_id: UUID;
+  user_id: UUID;
+  role: 'member' | 'admin';
+  joined_at: DateString;
+  last_read_at: DateString;
+}
+
+export interface ChatMessage {
+  id: UUID;
+  room_id: UUID;
+  sender_id: UUID;
+  content: string;
+  message_type: 'text' | 'image' | 'file' | 'system';
+  metadata: Record<string, any>;
+  edited_at?: DateString;
+  created_at: DateString;
+}
+
+export interface MessageReaction {
+  id: UUID;
+  message_id: UUID;
+  user_id: UUID;
+  reaction: string;
+  created_at: DateString;
+}
+
+export interface ChatNotification {
+  id: UUID;
+  user_id: UUID;
+  room_id: UUID;
+  message_id?: UUID;
+  type: 'new_message' | 'mention' | 'new_participant';
+  read_at?: DateString;
+  created_at: DateString;
+}
+
+// Enhanced chat message with user info
+export interface ChatMessageWithUser extends ChatMessage {
+  sender_nickname: string;
+  sender_avatar_url?: string;
+  reactions?: MessageReaction[];
+}
+
+// Chat room with participant info
+export interface ChatRoomWithDetails extends ChatRoom {
+  participants: ChatParticipant[];
+  last_message?: ChatMessageWithUser;
+  unread_count?: number;
 }
 
 // User activity interface

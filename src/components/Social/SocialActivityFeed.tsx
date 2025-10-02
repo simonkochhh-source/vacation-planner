@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image, X, Download, Trash2, MessageCircle, ArrowUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image, X, Download, Trash2, MessageCircle, ArrowUp, ChevronLeft, ChevronRight, PlusCircle } from 'lucide-react';
 import { ActivityFeedItem, ActivityType } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
@@ -93,12 +93,14 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
     }
   };
 
-  // Filter out destination/planning activities and focus on sharing
+  // Filter activities based on privacy settings and user network
   const filteredActivities = activities.filter(activity => {
     const shareableTypes = [
       ActivityType.TRIP_PUBLISHED,
       ActivityType.TRIP_SHARED, 
       ActivityType.TRIP_COMPLETED,
+      ActivityType.TRIP_CREATED, // Show when network users plan trips
+      ActivityType.TRIP_STARTED, // Show when network users start trips
       ActivityType.PHOTO_UPLOADED,
       ActivityType.PHOTO_SHARED,
       ActivityType.USER_FOLLOWED
@@ -112,6 +114,10 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
         return <Plane size={16} style={{ color: '#10b981' }} />;
       case ActivityType.TRIP_SHARED:
         return <Users size={16} style={{ color: '#3b82f6' }} />;
+      case ActivityType.TRIP_CREATED:
+        return <PlusCircle size={16} style={{ color: '#06b6d4' }} />;
+      case ActivityType.TRIP_STARTED:
+        return <Plane size={16} style={{ color: '#f97316' }} />;
       case ActivityType.TRIP_COMPLETED:
         return <Star size={16} style={{ color: '#f59e0b' }} />;
       case ActivityType.PHOTO_UPLOADED:
@@ -142,6 +148,18 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
         return (
           <span>
             <strong>{userName}</strong> hat die Reise <strong>"{tripName}"</strong> mit Kontakten geteilt
+          </span>
+        );
+      case ActivityType.TRIP_CREATED:
+        return (
+          <span>
+            <strong>{userName}</strong> plant eine neue Reise: <strong>"{tripName}"</strong>
+          </span>
+        );
+      case ActivityType.TRIP_STARTED:
+        return (
+          <span>
+            <strong>{userName}</strong> ist aufgebrochen: <strong>"{tripName}"</strong> hat begonnen!
           </span>
         );
       case ActivityType.TRIP_COMPLETED:

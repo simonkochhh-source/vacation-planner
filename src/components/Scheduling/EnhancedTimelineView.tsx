@@ -1809,134 +1809,65 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
       </div>
 
-      {/* Enhanced Statistics */}
+      {/* Compact Statistics */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(180px, 1fr))',
-        gap: isMobile ? '0.75rem' : '1rem',
-        marginBottom: isMobile ? '1.5rem' : '2rem'
+        display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? '0.5rem' : '1rem',
+        marginBottom: isMobile ? '1rem' : '1.5rem',
+        padding: isMobile ? '0.75rem' : '1rem',
+        background: 'rgba(74, 144, 164, 0.05)',
+        border: '1px solid rgba(74, 144, 164, 0.2)',
+        borderRadius: '8px'
       }}>
-
-
-        {/* Übergeordnete Gesamtreisestrecke-Kachel */}
+        {/* Compact Trip Overview */}
         <div style={{
-          background: 'rgba(74, 144, 164, 0.1)',
-          border: '1px solid var(--color-primary-ocean)',
-          borderRadius: isMobile ? '8px' : '12px',
-          padding: isMobile ? '1rem' : '1.5rem',
-          gridColumn: '1 / -1' // Spannt über alle Spalten
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '0.75rem' : '1rem',
+          flex: 1
         }}>
-          {/* Header der übergeordneten Kachel */}
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            marginBottom: '1rem'
-          }}>
-            <Route size={20} style={{ color: 'var(--color-primary-ocean)' }} />
-            <span style={{ fontSize: '1.125rem', color: 'var(--color-primary-ocean)', fontWeight: '700' }}>
-              Gesamtstrecke
-            </span>
-          </div>
-          
-          {/* Gesamtdistanz */}
-          <div style={{ 
-            fontSize: isMobile ? '2rem' : '2.5rem', 
-            fontWeight: 'bold', 
-            color: 'var(--color-secondary-forest)',
-            marginBottom: isMobile ? '1rem' : '1.5rem',
-            textAlign: 'center'
-          }}>
-            {Math.round(overallStats.distance)}km
-          </div>
-
-          {/* Eingebettete Transportmodi-Kacheln */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(150px, 1fr))',
-            gap: isMobile ? '0.75rem' : '1rem'
-          }}>
-            {/* Auto-Strecke */}
-            {overallStats.drivingDistance > 0 && (
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid var(--color-primary-ocean)',
-                borderRadius: '8px',
-                padding: '1rem',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '0.5rem'
-                }}>
-                  <Car size={16} style={{ color: 'var(--color-primary-ocean)' }} />
-                  <span style={{ fontSize: '0.875rem', color: 'var(--color-primary-ocean)', fontWeight: '600' }}>
-                    Auto
-                  </span>
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-primary-ocean)' }}>
-                  {Math.round(overallStats.drivingDistance)}km
-                </div>
-              </div>
-            )}
-
-            {/* Wandern-Strecke */}
-            {overallStats.walkingDistance > 0 && (
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid var(--color-success)',
-                borderRadius: '8px',
-                padding: '1rem',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '0.5rem'
-                }}>
-                  <Mountain size={16} style={{ color: 'var(--color-success)' }} />
-                  <span style={{ fontSize: '0.875rem', color: 'var(--color-success)', fontWeight: '600' }}>
-                    Wandern
-                  </span>
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-success)' }}>
-                  {Math.round(overallStats.walkingDistance)}km
-                </div>
-              </div>
-            )}
-
-            {/* Fahrrad-Strecke */}
-            {overallStats.bikingDistance > 0 && (
-              <div style={{
-                background: 'rgba(255, 255, 255, 0.8)',
-                border: '1px solid rgba(220, 38, 38, 0.2)',
-                borderRadius: '8px',
-                padding: '1rem',
-                textAlign: 'center'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  marginBottom: '0.5rem'
-                }}>
-                  <Bike size={16} style={{ color: 'var(--color-error)' }} />
-                  <span style={{ fontSize: '0.875rem', color: 'var(--color-error)', fontWeight: '600' }}>
-                    Fahrrad
-                  </span>
-                </div>
-                <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: 'var(--color-error)' }}>
-                  {Math.round(overallStats.bikingDistance)}km
-                </div>
-              </div>
-            )}
-          </div>
+          <Route size={16} style={{ color: 'var(--color-primary-ocean)' }} />
+          <span style={{ fontSize: isMobile ? '0.875rem' : '1rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+            Gesamt: <strong>{Math.round(overallStats.distance)}km</strong>
+          </span>
+          {overallStats.drivingDistance > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Car size={14} style={{ color: 'var(--color-primary-ocean)' }} />
+              <span style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: 'var(--color-text-secondary)' }}>
+                {Math.round(overallStats.drivingDistance)}km
+              </span>
+            </div>
+          )}
+          {overallStats.walkingDistance > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Mountain size={14} style={{ color: 'var(--color-success)' }} />
+              <span style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: 'var(--color-text-secondary)' }}>
+                {Math.round(overallStats.walkingDistance)}km
+              </span>
+            </div>
+          )}
+          {overallStats.bikingDistance > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Bike size={14} style={{ color: 'var(--color-error)' }} />
+              <span style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: 'var(--color-text-secondary)' }}>
+                {Math.round(overallStats.bikingDistance)}km
+              </span>
+            </div>
+          )}
+        </div>
+        
+        {/* Additional Stats */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: isMobile ? '0.5rem' : '0.75rem',
+          fontSize: isMobile ? '0.75rem' : '0.875rem',
+          color: 'var(--color-text-secondary)'
+        }}>
+          <span>{overallStats.destinations} Ziele</span>
+          <span>•</span>
+          <span>{overallStats.days} Tage</span>
         </div>
 
 
