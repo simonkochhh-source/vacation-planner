@@ -2,9 +2,10 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
-import { TripStatus } from '../../types';
+import { TripStatus, SocialUserProfile } from '../../types';
 import { userStatusService } from '../../services/userStatusService';
 import { chatService, ChatRoomWithInfo } from '../../services/chatService';
+import { socialService } from '../../services/socialService';
 import { 
   User, 
   Users, 
@@ -58,6 +59,8 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
   const [nextTrip, setNextTrip] = useState<any>(null);
   const [realUsers, setRealUsers] = useState<MockUser[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [friends, setFriends] = useState<SocialUserProfile[]>([]);
+  const [loadingFriends, setLoadingFriends] = useState(false);
   const [chatRooms, setChatRooms] = useState<ChatRoomWithInfo[]>([]);
   const [loadingChatRooms, setLoadingChatRooms] = useState(false);
 
@@ -89,6 +92,9 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
         console.error('Failed to initialize user status service:', error);
       });
       
+      // Load friends
+      loadFriends();
+      
       // Load real users for development testing
       loadRealUsersForTesting();
       
@@ -96,6 +102,23 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
       loadChatRooms();
     }
   }, [isOpen, user]);
+
+  // Load friends from socialService
+  const loadFriends = async () => {
+    if (!user) return;
+    
+    try {
+      setLoadingFriends(true);
+      const friendsList = await socialService.getFriends();
+      setFriends(friendsList);
+      console.log('✅ SocialSidebar: Loaded friends:', friendsList.length);
+    } catch (error) {
+      console.error('❌ SocialSidebar: Error loading friends:', error);
+      setFriends([]);
+    } finally {
+      setLoadingFriends(false);
+    }
+  };
 
   // Load real users from the database for chat testing
   const loadRealUsersForTesting = async () => {
@@ -857,8 +880,8 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
   );
 
   const renderFriendsList = () => {
-    // Use only real users - no mock data fallback
-    const usersToShow = realUsers;
+    // Use real friends from socialService
+    const friendsToShow = friends;
 
     return (
       <div style={{ padding: 'var(--space-4)' }}>
@@ -871,12 +894,12 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
           alignItems: 'center',
           justifyContent: 'space-between'
         }}>
-          {`Freunde (${usersToShow.length})`}
+          {`Freunde (${friendsToShow.length})`}
           <TrendingUp size={16} style={{ color: 'var(--color-primary-sage)' }} />
         </div>
 
         {/* Status Notice */}
-        {loadingUsers && (
+        {loadingFriends && (
           <div style={{
             background: 'var(--color-neutral-mist)',
             borderRadius: 'var(--radius-md)',
@@ -886,12 +909,12 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
             color: 'var(--color-text-secondary)',
             textAlign: 'center'
           }}>
-            ⏳ Lade Benutzer...
+            ⏳ Lade Freunde...
           </div>
         )}
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
-          {usersToShow.length === 0 ? (
+          {friendsToShow.length === 0 ? (
             <div style={{
               textAlign: 'center',
               padding: 'var(--space-4)',
@@ -901,7 +924,7 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
               Noch keine Freunde hinzugefügt
             </div>
           ) : (
-            usersToShow.map(friend => (
+            friendsToShow.map(friend => (
           <div
             key={friend.id}
             style={{
@@ -921,11 +944,7 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
             }}
             onClick={() => {
               try {
-                // Check if this is a mock user (these profiles don't exist in backend)
-                if (friend.id.startsWith('550e8400-e29b-41d4-a716-44665544')) {
-                  alert(`${friend.name} ist ein Demo-Profil. Echte Profile werden verfügbar sein, sobald die sozialen Features implementiert sind.`);
-                  return;
-                }
+                // Navigate to friend profile
                 
                 updateUIState({ 
                   currentView: 'user-profile',
@@ -951,10 +970,10 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
               justifyContent: 'center',
               overflow: 'hidden'
             }}>
-              {friend.avatar ? (
+              {friend.avatar_url ? (
                 <img 
-                  src={friend.avatar}
-                  alt={friend.name}
+                  src={friend.avatar_url}
+                  alt={friend.display_name || friend.nickname}
                   style={{
                     width: '100%',
                     height: '100%',
@@ -973,16 +992,16 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
               <div style={{
                 width: '100%',
                 height: '100%',
-                display: friend.avatar ? 'none' : 'flex',
+                display: friend.avatar_url ? 'none' : 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                position: friend.avatar ? 'absolute' : 'static',
+                position: friend.avatar_url ? 'absolute' : 'static',
                 top: 0,
                 left: 0
               }}>
                 <User size={20} style={{ color: 'var(--color-text-secondary)' }} />
               </div>
-              {friend.isOnline && (
+              {/* Online status not available for real friends */ false && (
                 <div style={{
                   position: 'absolute',
                   bottom: '0',
@@ -1004,13 +1023,13 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
                 fontWeight: 'var(--font-weight-medium)',
                 color: 'var(--color-text-primary)'
               }}>
-                {friend.name}
+                {friend.display_name || friend.nickname}
               </div>
               <div style={{
                 fontSize: 'var(--text-xs)',
                 color: 'var(--color-text-secondary)'
               }}>
-                {friend.isOnline ? 'Online' : `Zuletzt: ${friend.lastSeen}`}
+                {`@${friend.nickname}`}
               </div>
             </div>
 
