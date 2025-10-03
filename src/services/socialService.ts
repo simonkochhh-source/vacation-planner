@@ -58,14 +58,8 @@ class SocialService implements SocialServiceInterface {
 
     if (error) throw new Error(`Failed to create follow request: ${error.message}`);
     
-    // Create activity for follow request
-    await this.createActivity({
-      user_id: user.id,
-      activity_type: ActivityType.TRIP_SHARED, // We can add FOLLOW_REQUEST later
-      title: `Follow-Anfrage gesendet`,
-      description: `Du hast eine Follow-Anfrage gesendet`,
-      metadata: { target_user_id: targetUserId }
-    });
+    // Note: Skip activity creation for follow requests as they are not trip/destination related
+    // and would violate the activity_has_related_item constraint
 
     return data;
   }
@@ -93,13 +87,7 @@ class SocialService implements SocialServiceInterface {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Get the follow request details before accepting
-    const { data: followData } = await supabase
-      .from('follows')
-      .select('follower_id')
-      .eq('id', followId)
-      .eq('following_id', user.id)
-      .single();
+    // Note: Follow request details not needed since we're skipping activity creation
 
     const { error } = await supabase
       .from('follows')
@@ -109,29 +97,8 @@ class SocialService implements SocialServiceInterface {
 
     if (error) throw new Error(`Failed to accept follow request: ${error.message}`);
 
-    // Create activity for the user who initiated the follow
-    if (followData?.follower_id) {
-      try {
-        const { data: targetUserProfile } = await supabase
-          .from('user_profiles')
-          .select('nickname')
-          .eq('user_id', user.id)
-          .single();
-
-        await this.createActivity({
-          user_id: followData.follower_id,
-          activity_type: ActivityType.USER_FOLLOWED,
-          title: 'Neuer Follower',
-          description: `Du folgst jetzt ${targetUserProfile?.nickname || 'einem Nutzer'}`,
-          metadata: { 
-            target_user_id: user.id,
-            target_user_name: targetUserProfile?.nickname || 'Unbekannt'
-          }
-        });
-      } catch (activityError) {
-        console.warn('Failed to create follow activity:', activityError);
-      }
-    }
+    // Note: Skip activity creation for follow acceptance as it's not trip/destination related
+    // and would violate the activity_has_related_item constraint
   }
 
   /**
