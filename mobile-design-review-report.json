@@ -1,0 +1,272 @@
+[
+  {
+    "device": "iPhone SE",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "page": "Landing/Home Page",
+    "url": "http://localhost:3000",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-SE-landing-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 375,
+    "scrollWidth": 375
+  },
+  {
+    "device": "iPhone SE",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "page": "Search & Discovery",
+    "url": "http://localhost:3000/#search",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-SE-search-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 375,
+    "scrollWidth": 375
+  },
+  {
+    "device": "iPhone SE",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "page": "Map View",
+    "url": "http://localhost:3000/#map",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-SE-map-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 375,
+    "scrollWidth": 375
+  },
+  {
+    "device": "iPhone SE",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "page": "Timeline/Scheduling",
+    "url": "http://localhost:3000/#timeline",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-SE-timeline-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 375,
+    "scrollWidth": 375
+  },
+  {
+    "device": "iPhone SE",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "page": "Budget View",
+    "url": "http://localhost:3000/#budget",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-SE-budget-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 375,
+    "scrollWidth": 375
+  },
+  {
+    "device": "iPhone SE",
+    "viewport": {
+      "width": 375,
+      "height": 667
+    },
+    "page": "Photos View",
+    "url": "http://localhost:3000/#photos",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-SE-photos-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 375,
+    "scrollWidth": 375
+  },
+  {
+    "device": "iPhone 12/13/14",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": "Landing/Home Page",
+    "url": "http://localhost:3000",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-landing-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 390,
+    "scrollWidth": 390
+  },
+  {
+    "device": "iPhone 12/13/14",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": "Search & Discovery",
+    "url": "http://localhost:3000/#search",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-search-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 390,
+    "scrollWidth": 390
+  },
+  {
+    "device": "iPhone 12/13/14",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": "Map View",
+    "url": "http://localhost:3000/#map",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-map-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 390,
+    "scrollWidth": 390
+  },
+  {
+    "device": "iPhone 12/13/14",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": "Timeline/Scheduling",
+    "url": "http://localhost:3000/#timeline",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-timeline-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 390,
+    "scrollWidth": 390
+  },
+  {
+    "device": "iPhone 12/13/14",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": "Budget View",
+    "url": "http://localhost:3000/#budget",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-budget-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 390,
+    "scrollWidth": 390
+  },
+  {
+    "device": "iPhone 12/13/14",
+    "viewport": {
+      "width": 390,
+      "height": 844
+    },
+    "page": "Photos View",
+    "url": "http://localhost:3000/#photos",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-photos-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 390,
+    "scrollWidth": 390
+  },
+  {
+    "device": "iPhone 12/13/14 Pro Max",
+    "viewport": {
+      "width": 428,
+      "height": 926
+    },
+    "page": "Landing/Home Page",
+    "url": "http://localhost:3000",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-Pro-Max-landing-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 428,
+    "scrollWidth": 428
+  },
+  {
+    "device": "iPhone 12/13/14 Pro Max",
+    "viewport": {
+      "width": 428,
+      "height": 926
+    },
+    "page": "Search & Discovery",
+    "url": "http://localhost:3000/#search",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-Pro-Max-search-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 428,
+    "scrollWidth": 428
+  },
+  {
+    "device": "iPhone 12/13/14 Pro Max",
+    "viewport": {
+      "width": 428,
+      "height": 926
+    },
+    "page": "Map View",
+    "url": "http://localhost:3000/#map",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-Pro-Max-map-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 428,
+    "scrollWidth": 428
+  },
+  {
+    "device": "iPhone 12/13/14 Pro Max",
+    "viewport": {
+      "width": 428,
+      "height": 926
+    },
+    "page": "Timeline/Scheduling",
+    "url": "http://localhost:3000/#timeline",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-Pro-Max-timeline-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 428,
+    "scrollWidth": 428
+  },
+  {
+    "device": "iPhone 12/13/14 Pro Max",
+    "viewport": {
+      "width": 428,
+      "height": 926
+    },
+    "page": "Budget View",
+    "url": "http://localhost:3000/#budget",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-Pro-Max-budget-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 428,
+    "scrollWidth": 428
+  },
+  {
+    "device": "iPhone 12/13/14 Pro Max",
+    "viewport": {
+      "width": 428,
+      "height": 926
+    },
+    "page": "Photos View",
+    "url": "http://localhost:3000/#photos",
+    "screenshot": "/Users/si.koch/Documents/Claude Projekte/Urkaubsplanung/vacation-planner/mobile-design-review-screenshots/iPhone-12-13-14-Pro-Max-photos-view.png",
+    "hasHorizontalScroll": false,
+    "hasMobileClasses": false,
+    "hasSafeAreaSupport": true,
+    "bodyWidth": 428,
+    "scrollWidth": 428
+  }
+]
