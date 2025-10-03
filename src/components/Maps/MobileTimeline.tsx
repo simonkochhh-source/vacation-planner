@@ -271,7 +271,12 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
         boxShadow: '0 -2px 10px rgba(0,0,0,0.1)',
         zIndex: 1000,
         maxHeight: isExpanded ? '60vh' : 'auto',
-        overflow: isExpanded ? 'auto' : 'hidden'
+        overflow: isExpanded ? 'auto' : 'hidden',
+        // iPhone safe area support
+        paddingBottom: 'max(0px, env(safe-area-inset-bottom))',
+        // iOS Safari optimizations
+        WebkitTouchCallout: 'none',
+        WebkitUserSelect: 'none'
       }}>
         {/* Compact Header */}
         {!isExpanded && (
@@ -326,10 +331,17 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
+                  padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  fontSize: '16px', // Prevent zoom on iOS
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
               >
                 <SkipBack size={16} />
@@ -342,10 +354,17 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   color: isPlaying ? 'white' : '#374151',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
+                  padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  fontSize: '16px', // Prevent zoom on iOS
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
               >
                 {isPlaying ? <Pause size={16} /> : <Play size={16} />}
@@ -357,10 +376,17 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
+                  padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  fontSize: '16px', // Prevent zoom on iOS
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
               >
                 <SkipForward size={16} />
@@ -372,10 +398,17 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
+                  padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  fontSize: '16px', // Prevent zoom on iOS
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
               >
                 <ChevronUp size={16} />
@@ -410,10 +443,17 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   background: '#f3f4f6',
                   border: 'none',
                   borderRadius: '6px',
-                  padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
+                  padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
+                  minWidth: '48px',
+                  minHeight: '48px',
+                  fontSize: '16px', // Prevent zoom on iOS
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
               >
                 <ChevronUp size={16} />

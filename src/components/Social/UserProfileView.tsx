@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useResponsive } from '../../hooks/useResponsive';
 import { 
   ArrowLeft, 
   Users, 
@@ -41,6 +42,7 @@ interface UserProfileViewProps {
 const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => {
   const { user: currentUser } = useAuth();
   const { updateUIState } = useSupabaseApp();
+  const { isMobile } = useResponsive();
   
   const [profile, setProfile] = useState<SocialUserProfile | null>(null);
   const [followStatus, setFollowStatus] = useState<FollowStatus | 'none'>('none');

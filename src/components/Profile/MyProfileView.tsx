@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useResponsive } from '../../hooks/useResponsive';
 import { 
   User, 
   Settings, 
@@ -26,6 +27,7 @@ import { formatDate } from '../../utils';
 const MyProfileView: React.FC = () => {
   const { user, userProfile } = useAuth();
   const { updateUIState, trips } = useSupabaseApp();
+  const { isMobile } = useResponsive();
   const [socialProfile, setSocialProfile] = useState<SocialUserProfile | null>(null);
   const [myActivities, setMyActivities] = useState<ActivityFeedItem[]>([]);
   const [myPosts, setMyPosts] = useState<ActivityFeedItem[]>([]);
@@ -216,20 +218,28 @@ const MyProfileView: React.FC = () => {
   }
 
   return (
-    <div className="app-container" style={{ padding: 'var(--space-lg)' }}>
+    <div className="app-container" style={{ 
+      padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+      // iPhone safe area support
+      paddingLeft: isMobile ? 'max(var(--space-md), env(safe-area-inset-left))' : 'var(--space-lg)',
+      paddingRight: isMobile ? 'max(var(--space-md), env(safe-area-inset-right))' : 'var(--space-lg)',
+      paddingBottom: isMobile ? 'max(var(--space-md), env(safe-area-inset-bottom))' : 'var(--space-lg)'
+    }}>
       {/* Header */}
       <div style={{
         background: 'var(--color-surface)',
         borderRadius: 'var(--radius-lg)',
-        padding: 'var(--space-xl)',
+        padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)',
         marginBottom: 'var(--space-lg)',
         border: '1px solid var(--color-border)'
       }}>
         <div style={{
           display: 'flex',
-          alignItems: 'flex-start',
-          gap: 'var(--space-lg)',
-          marginBottom: 'var(--space-lg)'
+          flexDirection: isMobile ? 'column' : 'row',
+          alignItems: isMobile ? 'center' : 'flex-start',
+          gap: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+          marginBottom: 'var(--space-lg)',
+          textAlign: isMobile ? 'center' : 'left'
         }}>
           {/* Avatar */}
           <div style={{ flexShrink: 0 }}>
@@ -244,13 +254,14 @@ const MyProfileView: React.FC = () => {
           <div style={{ flex: 1 }}>
             <div style={{
               display: 'flex',
+              flexDirection: isMobile ? 'column' : 'row',
               alignItems: 'center',
-              gap: 'var(--space-md)',
+              gap: isMobile ? 'var(--space-sm)' : 'var(--space-md)',
               marginBottom: 'var(--space-sm)'
             }}>
               <h1 style={{
                 fontFamily: 'var(--font-heading)',
-                fontSize: 'var(--text-2xl)',
+                fontSize: isMobile ? 'var(--text-xl)' : 'var(--text-2xl)',
                 fontWeight: 'var(--font-weight-bold)',
                 color: 'var(--color-text-primary)',
                 margin: 0
@@ -265,29 +276,38 @@ const MyProfileView: React.FC = () => {
                   color: 'white',
                   border: 'none',
                   borderRadius: 'var(--radius-md)',
-                  padding: 'var(--space-sm) var(--space-md)',
-                  fontSize: 'var(--text-sm)',
+                  padding: isMobile ? 'var(--space-md) var(--space-lg)' : 'var(--space-sm) var(--space-md)',
+                  fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 'var(--space-xs)',
-                  transition: 'background var(--transition-normal)'
+                  transition: 'background var(--transition-normal)',
+                  minHeight: isMobile ? '48px' : 'auto',
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'var(--color-primary-forest)';
+                  if (!isMobile) {
+                    e.currentTarget.style.background = 'var(--color-primary-forest)';
+                  }
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'var(--color-primary-ocean)';
+                  if (!isMobile) {
+                    e.currentTarget.style.background = 'var(--color-primary-ocean)';
+                  }
                 }}
               >
-                <Edit3 size={14} />
-                Profil bearbeiten
+                <Edit3 size={isMobile ? 18 : 14} />
+                {isMobile ? 'Bearbeiten' : 'Profil bearbeiten'}
               </button>
             </div>
 
             {userProfile.display_name && (
               <p style={{
-                fontSize: 'var(--text-lg)',
+                fontSize: isMobile ? 'var(--text-base)' : 'var(--text-lg)',
                 color: 'var(--color-text-primary)',
                 margin: '0 0 var(--space-sm) 0'
               }}>
@@ -373,26 +393,37 @@ const MyProfileView: React.FC = () => {
               style={{
                 background: activeTab === tab.id ? 'var(--color-surface)' : 'transparent',
                 border: 'none',
-                padding: 'var(--space-md) var(--space-lg)',
-                fontSize: 'var(--text-sm)',
+                padding: isMobile ? 'var(--space-sm) var(--space-md)' : 'var(--space-md) var(--space-lg)',
+                fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
                 fontWeight: 'var(--font-weight-medium)',
                 color: activeTab === tab.id ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
                 cursor: 'pointer',
                 display: 'flex',
+                flexDirection: isMobile ? 'column' : 'row',
                 alignItems: 'center',
-                gap: 'var(--space-xs)',
+                justifyContent: 'center',
+                gap: isMobile ? 'var(--space-xs)' : 'var(--space-xs)',
                 transition: 'all var(--transition-normal)',
-                borderBottom: activeTab === tab.id ? '2px solid var(--color-primary-ocean)' : '2px solid transparent'
+                borderBottom: activeTab === tab.id ? '2px solid var(--color-primary-ocean)' : '2px solid transparent',
+                minHeight: isMobile ? '48px' : 'auto',
+                flex: isMobile ? '1' : 'none',
+                whiteSpace: 'nowrap',
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
-              <tab.icon size={16} />
-              {tab.label}
+              <tab.icon size={isMobile ? 14 : 16} />
+              <span style={{ fontSize: isMobile ? 'var(--text-xs)' : 'var(--text-sm)' }}>
+                {isMobile ? tab.label.replace('Meine ', '') : tab.label}
+              </span>
             </button>
           ))}
         </div>
 
         {/* Tab Content */}
-        <div style={{ padding: 'var(--space-xl)' }}>
+        <div style={{ padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)' }}>
           {activeTab === 'posts' && (
             <div>
               <h3 style={{

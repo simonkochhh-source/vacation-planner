@@ -330,7 +330,7 @@ const BudgetView: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                fontSize: isMobile ? '0.8rem' : '0.875rem'
+                fontSize: isMobile ? 'var(--text-xs)' : '0.875rem'
               }}>
                 <span>Budget:</span>
                 <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>
@@ -342,7 +342,7 @@ const BudgetView: React.FC = () => {
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                fontSize: isMobile ? '0.8rem' : '0.875rem'
+                fontSize: isMobile ? 'var(--text-xs)' : '0.875rem'
               }}>
                 <span>Verbleibend:</span>
                 <span style={{ 
@@ -359,7 +359,7 @@ const BudgetView: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '0.5rem',
-            fontSize: isMobile ? '0.8rem' : '0.875rem'
+            fontSize: isMobile ? 'var(--text-xs)' : '0.875rem'
           }}>
             <span>Reise:</span>
             <span style={{ 

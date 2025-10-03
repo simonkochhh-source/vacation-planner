@@ -1906,8 +1906,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                   color: 'white',
                   border: 'none',
                   borderRadius: '12px',
-                  padding: '1rem 2rem',
-                  fontSize: '1rem',
+                  padding: isMobile ? '1rem 1.5rem' : '1rem 2rem',
+                  fontSize: isMobile ? '0.95rem' : '1rem',
+                  minHeight: isMobile ? '48px' : 'auto',
                   fontWeight: '600',
                   cursor: 'pointer',
                   display: 'flex',
@@ -1933,8 +1934,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 background: 'var(--color-neutral-cream)',
                 border: '1px solid var(--color-neutral-mist)',
                 borderRadius: '12px',
-                padding: '1.5rem',
-                maxWidth: '600px',
+                padding: isMobile ? '1rem' : '1.5rem',
+                maxWidth: isMobile ? '100%' : '600px',
                 margin: '0 auto'
               }}>
                 <h4 style={{
@@ -1967,9 +1968,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 {/* Manual Input Fields */}
                 <div style={{
                   display: 'grid',
-                  gap: '1rem',
-                  gridTemplateColumns: '1fr 1fr',
-                  marginBottom: '1rem'
+                  gap: isMobile ? '0.75rem' : '1rem',
+                  gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+                  marginBottom: isMobile ? '0.75rem' : '1rem'
                 }}>
                   <div style={{ gridColumn: '1 / -1' }}>
                     <EnhancedPlaceSearch
@@ -1991,11 +1992,12 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       onChange={(e) => setNewDestinationForm(prev => ({ ...prev, location: e.target.value }))}
                       style={{
                         width: '100%',
-                        padding: '0.75rem',
+                        padding: isMobile ? '1rem 0.75rem' : '0.75rem',
                         paddingRight: settings.homePoint ? '5.5rem' : '3rem', // Extra space for home button when available
                         border: '1px solid var(--color-neutral-mist)',
                         borderRadius: '8px',
-                        fontSize: '1rem',
+                        fontSize: isMobile ? '16px' : '1rem', // 16px prevents zoom on iOS
+                        minHeight: isMobile ? '48px' : 'auto',
                         backgroundColor: newDestinationForm.coordinates ? 'var(--color-surface)' : 'var(--color-surface)',
                         borderColor: newDestinationForm.coordinates ? 'var(--color-primary-ocean)' : 'var(--color-border)',
                         color: 'var(--color-text-primary)'
@@ -2364,10 +2366,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       }))}
                       style={{
                         width: '100%',
-                        padding: '0.75rem',
+                        padding: isMobile ? '1rem 0.75rem' : '0.75rem',
                         border: '1px solid var(--color-neutral-mist)',
                         borderRadius: '8px',
-                        fontSize: '1rem'
+                        fontSize: isMobile ? '16px' : '1rem', // 16px prevents zoom on iOS
+                        minHeight: isMobile ? '48px' : 'auto'
                       }}
                       min="0"
                       step="0.01"
@@ -2413,9 +2416,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                 
                 <div style={{
                   display: 'flex',
-                  gap: '0.5rem',
+                  flexDirection: isMobile ? 'column' : 'row',
+                  gap: isMobile ? '0.75rem' : '0.5rem',
                   justifyContent: 'center',
-                  marginTop: '1.5rem'
+                  marginTop: isMobile ? '1rem' : '1.5rem'
                 }}>
                   <button
                     onClick={handleCreateDestination}
@@ -2433,8 +2437,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
-                      padding: '0.75rem 1.5rem',
-                      fontSize: '0.875rem',
+                      padding: isMobile ? '1rem 1.5rem' : '0.75rem 1.5rem',
+                      fontSize: isMobile ? '1rem' : '0.875rem',
+                      minHeight: isMobile ? '48px' : 'auto',
                       fontWeight: '600',
                       cursor: (
                         !newDestinationForm.name || 
@@ -2457,8 +2462,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       color: 'white',
                       border: 'none',
                       borderRadius: '8px',
-                      padding: '0.75rem 1.5rem',
-                      fontSize: '0.875rem',
+                      padding: isMobile ? '1rem 1.5rem' : '0.75rem 1.5rem',
+                      fontSize: isMobile ? '1rem' : '0.875rem',
+                      minHeight: isMobile ? '48px' : 'auto',
                       fontWeight: '600',
                       cursor: 'pointer',
                       display: 'flex',

@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { Destination, DestinationCategory, DestinationStatus, Trip, canUserAccessTripAsync } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import PublicTripSearch from './PublicTripSearch';
@@ -51,6 +52,7 @@ const SearchPage: React.FC = () => {
     createDestinationForTrip
   } = useSupabaseApp();
   const { user: currentUser } = useAuth();
+  const { isMobile } = useResponsive();
   
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<DestinationCategory[]>([]);
@@ -994,19 +996,30 @@ const SearchPage: React.FC = () => {
 
   return (
     <div style={{ 
-      padding: 'var(--space-lg)',
+      padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+      // iPhone safe area support
+      paddingLeft: isMobile ? 'max(var(--space-md), env(safe-area-inset-left))' : 'var(--space-lg)',
+      paddingRight: isMobile ? 'max(var(--space-md), env(safe-area-inset-right))' : 'var(--space-lg)',
+      paddingBottom: isMobile ? 'max(var(--space-md), env(safe-area-inset-bottom))' : 'var(--space-lg)',
       maxWidth: 'var(--container-max-width)',
       margin: '0 auto',
       minHeight: '100vh',
       background: 'var(--color-background)'
     }} className="theme-surface">
       {/* Header */}
-      <div style={{ marginBottom: 'var(--space-2xl)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 'var(--space-md)' }}>
+      <div style={{ marginBottom: isMobile ? 'var(--space-lg)' : 'var(--space-2xl)' }}>
+        <div style={{ 
+          display: 'flex', 
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: 'space-between', 
+          alignItems: isMobile ? 'flex-start' : 'flex-start', 
+          marginBottom: 'var(--space-md)',
+          gap: isMobile ? 'var(--space-lg)' : 0
+        }}>
           <div>
             <h1 style={{ 
               margin: 0,
-              fontSize: 'var(--text-3xl)',
+              fontSize: isMobile ? 'var(--text-2xl)' : 'var(--text-3xl)',
               fontWeight: 'var(--font-weight-bold)',
               color: 'var(--color-text-primary)',
               marginBottom: 'var(--space-sm)'
@@ -1015,14 +1028,15 @@ const SearchPage: React.FC = () => {
             </h1>
             <p style={{ 
               margin: 0,
-              fontSize: 'var(--text-base)',
-              color: 'var(--color-text-secondary)'
+              fontSize: isMobile ? 'var(--text-sm)' : 'var(--text-base)',
+              color: 'var(--color-text-secondary)',
+              lineHeight: 1.4
             }}>
               {(searchMode as string) === 'destinations' 
-                ? `Durchsuche ${isLoadingDestinations ? 'alle zugänglichen Reiseziele' : `${currentDestinations.length} zugängliche Reiseziele aus allen deinen Reisen`} und finde genau was du suchst`
+                ? `${isMobile ? 'Durchsuche' : 'Durchsuche'} ${isLoadingDestinations ? 'alle zugänglichen Reiseziele' : `${currentDestinations.length} ${isMobile ? 'Ziele' : 'zugängliche Reiseziele aus allen deinen Reisen'}`} ${isMobile ? '' : 'und finde genau was du suchst'}`
                 : (searchMode as string) === 'trips'
-                  ? 'Entdecke öffentliche Reisen von anderen Nutzern'
-                  : 'Importiere Ziele aus anderen Reisen in deine eigene'
+                  ? isMobile ? 'Öffentliche Reisen entdecken' : 'Entdecke öffentliche Reisen von anderen Nutzern'
+                  : isMobile ? 'Ziele importieren' : 'Importiere Ziele aus anderen Reisen in deine eigene'
               }
             </p>
           </div>
@@ -1034,7 +1048,10 @@ const SearchPage: React.FC = () => {
             borderRadius: 'var(--radius-md)',
             padding: 'var(--space-xs)',
             display: 'flex',
-            boxShadow: 'var(--shadow-sm)'
+            flexDirection: isMobile ? 'column' : 'row',
+            boxShadow: 'var(--shadow-sm)',
+            width: isMobile ? '100%' : 'auto',
+            gap: isMobile ? '2px' : 0
           }}>
             <button
               onClick={() => setSearchMode('destinations')}
@@ -1043,11 +1060,16 @@ const SearchPage: React.FC = () => {
                 color: (searchMode as string) === 'destinations' ? 'white' : 'var(--color-text-secondary)',
                 border: 'none',
                 borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-sm) var(--space-md)',
+                padding: isMobile ? 'var(--space-md) var(--space-lg)' : 'var(--space-sm) var(--space-md)',
                 cursor: 'pointer',
-                fontSize: 'var(--text-sm)',
+                fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
                 fontWeight: 'var(--font-weight-medium)',
-                transition: 'all var(--transition-normal)'
+                transition: 'all var(--transition-normal)',
+                minHeight: isMobile ? '48px' : 'auto', // Touch target
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
               Alle Ziele
@@ -1059,11 +1081,16 @@ const SearchPage: React.FC = () => {
                 color: (searchMode as string) === 'trips' ? 'white' : 'var(--color-text-secondary)',
                 border: 'none',
                 borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-sm) var(--space-md)',
+                padding: isMobile ? 'var(--space-md) var(--space-lg)' : 'var(--space-sm) var(--space-md)',
                 cursor: 'pointer',
-                fontSize: 'var(--text-sm)',
+                fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
                 fontWeight: 'var(--font-weight-medium)',
-                transition: 'all var(--transition-normal)'
+                transition: 'all var(--transition-normal)',
+                minHeight: isMobile ? '48px' : 'auto', // Touch target
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
               Alle Reisen
@@ -1075,25 +1102,31 @@ const SearchPage: React.FC = () => {
                 color: 'var(--color-text-secondary)',
                 border: 'none',
                 borderRadius: 'var(--radius-sm)',
-                padding: 'var(--space-sm) var(--space-md)',
+                padding: isMobile ? 'var(--space-md) var(--space-lg)' : 'var(--space-sm) var(--space-md)',
                 cursor: 'pointer',
-                fontSize: 'var(--text-sm)',
+                fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
                 fontWeight: 'var(--font-weight-medium)',
-                transition: 'all var(--transition-normal)'
+                transition: 'all var(--transition-normal)',
+                minHeight: isMobile ? '48px' : 'auto', // Touch target
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
-              Ziele importieren
+              {isMobile ? 'Importieren' : 'Ziele importieren'}
             </button>
           </div>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: isMobile ? 'var(--space-lg)' : '24px' }}>
         <div style={{
           display: 'flex',
-          gap: '12px',
-          alignItems: 'center'
+          flexDirection: isMobile ? 'column' : 'row',
+          gap: isMobile ? 'var(--space-md)' : '12px',
+          alignItems: isMobile ? 'stretch' : 'center'
         }}>
           {/* Main Search Input */}
           <div style={{
@@ -1107,89 +1140,122 @@ const SearchPage: React.FC = () => {
               transform: 'translateY(-50%)',
               color: 'var(--color-text-secondary)'
             }}>
-              <Search size={20} />
+              <Search size={isMobile ? 18 : 20} />
             </div>
             <input
               type="text"
-              placeholder="Ziele, Orte, Tags durchsuchen..."
+              placeholder={isMobile ? "Suchen..." : "Ziele, Orte, Tags durchsuchen..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               style={{
                 width: '100%',
-                padding: '16px 16px 16px 52px',
+                padding: isMobile ? '16px 16px 16px 48px' : '16px 16px 16px 52px',
                 border: '1px solid #e5e7eb',
                 borderRadius: '12px',
-                fontSize: '1rem',
+                fontSize: isMobile ? '16px' : '1rem', // Prevent zoom on iOS
                 background: 'var(--color-surface)',
                 outline: 'none',
                 transition: 'border-color 0.2s',
-                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                minHeight: isMobile ? '48px' : 'auto', // Touch target
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitAppearance: 'none'
               }}
               onFocus={(e) => e.target.style.borderColor = 'var(--color-primary-ocean)'}
               onBlur={(e) => e.target.style.borderColor = 'var(--color-border)'}
             />
           </div>
 
-          {/* Filter Toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            style={{
-              background: showFilters ? 'var(--color-primary-ocean)' : 'var(--color-surface)',
-              color: showFilters ? 'var(--color-surface)' : 'var(--color-text-secondary)',
+          {/* Control Buttons Container */}
+          <div style={{
+            display: 'flex',
+            gap: isMobile ? 'var(--space-sm)' : '12px',
+            alignItems: 'center'
+          }}>
+            {/* Filter Toggle */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              style={{
+                background: showFilters ? 'var(--color-primary-ocean)' : 'var(--color-surface)',
+                color: showFilters ? 'var(--color-surface)' : 'var(--color-text-secondary)',
+                border: '1px solid #e5e7eb',
+                borderRadius: '12px',
+                padding: isMobile ? '12px 16px' : '16px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: isMobile ? '6px' : '8px',
+                fontSize: isMobile ? '14px' : '0.875rem',
+                fontWeight: '500',
+                transition: 'all var(--transition-normal)',
+                boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+                flex: isMobile ? 1 : 'none',
+                minHeight: isMobile ? '48px' : 'auto', // Touch target
+                justifyContent: 'center',
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
+              }}
+            >
+              <Filter size={isMobile ? 16 : 18} />
+              {isMobile ? 'Filter' : 'Filter'}
+            </button>
+
+            {/* View Mode Toggle */}
+            <div style={{
+              background: 'var(--color-surface)',
               border: '1px solid #e5e7eb',
               borderRadius: '12px',
-              padding: '16px',
-              cursor: 'pointer',
+              padding: '4px',
               display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '0.875rem',
-              fontWeight: '500',
-              transition: 'all var(--transition-normal)',
-              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-            }}
-          >
-            <Filter size={18} />
-            Filter
-          </button>
-
-          {/* View Mode Toggle */}
-          <div style={{
-            background: 'var(--color-surface)',
-            border: '1px solid #e5e7eb',
-            borderRadius: '12px',
-            padding: '4px',
-            display: 'flex',
-            boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
-          }}>
-            <button
-              onClick={() => setViewMode('list')}
-              style={{
-                background: viewMode === 'list' ? 'var(--color-primary-ocean)' : 'transparent',
-                color: viewMode === 'list' ? 'var(--color-surface)' : 'var(--color-text-secondary)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                transition: 'all var(--transition-normal)'
-              }}
-            >
-              <List size={16} />
-            </button>
-            <button
-              onClick={() => setViewMode('grid')}
-              style={{
-                background: viewMode === 'grid' ? 'var(--color-primary-ocean)' : 'transparent',
-                color: viewMode === 'grid' ? 'var(--color-surface)' : 'var(--color-text-secondary)',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                cursor: 'pointer',
-                transition: 'all var(--transition-normal)'
-              }}
-            >
-              <Square size={16} />
-            </button>
+              boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+              flex: isMobile ? 1 : 'none'
+            }}>
+              <button
+                onClick={() => setViewMode('list')}
+                style={{
+                  background: viewMode === 'list' ? 'var(--color-primary-ocean)' : 'transparent',
+                  color: viewMode === 'list' ? 'var(--color-surface)' : 'var(--color-text-secondary)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: isMobile ? '12px' : '8px 12px',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-normal)',
+                  flex: isMobile ? 1 : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: isMobile ? '40px' : 'auto',
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                <List size={16} />
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                style={{
+                  background: viewMode === 'grid' ? 'var(--color-primary-ocean)' : 'transparent',
+                  color: viewMode === 'grid' ? 'var(--color-surface)' : 'var(--color-text-secondary)',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: isMobile ? '12px' : '8px 12px',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-normal)',
+                  flex: isMobile ? 1 : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: isMobile ? '40px' : 'auto',
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                <Square size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -1200,17 +1266,24 @@ const SearchPage: React.FC = () => {
           background: 'var(--color-surface)',
           border: '1px solid #e5e7eb',
           borderRadius: '12px',
-          padding: '24px',
-          marginBottom: '24px',
+          padding: isMobile ? 'var(--space-lg)' : '24px',
+          marginBottom: isMobile ? 'var(--space-lg)' : '24px',
           boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
         }}>
           <div style={{
             display: 'flex',
+            flexDirection: isMobile ? 'column' : 'row',
             justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: '20px'
+            alignItems: isMobile ? 'flex-start' : 'center',
+            marginBottom: isMobile ? 'var(--space-lg)' : '20px',
+            gap: isMobile ? 'var(--space-md)' : 0
           }}>
-            <h3 style={{ margin: 0, fontSize: '1.125rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
+            <h3 style={{ 
+              margin: 0, 
+              fontSize: isMobile ? '1rem' : '1.125rem', 
+              fontWeight: '600', 
+              color: 'var(--color-text-primary)' 
+            }}>
               Filter
             </h3>
             {hasActiveFilters && (
@@ -1221,26 +1294,43 @@ const SearchPage: React.FC = () => {
                   color: '#ef4444',
                   border: 'none',
                   cursor: 'pointer',
-                  fontSize: '0.875rem',
+                  fontSize: isMobile ? '14px' : '0.875rem',
                   fontWeight: '500',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: 'var(--space-xs)'
+                  gap: 'var(--space-xs)',
+                  padding: isMobile ? 'var(--space-sm)' : 0,
+                  minHeight: isMobile ? '40px' : 'auto',
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent'
                 }}
               >
                 <X size={14} />
-                Alle Filter löschen
+                {isMobile ? 'Zurücksetzen' : 'Alle Filter löschen'}
               </button>
             )}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '24px' }}>
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))', 
+            gap: isMobile ? 'var(--space-lg)' : '24px' 
+          }}>
             {/* Categories */}
             <div>
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
+              <h4 style={{ 
+                margin: `0 0 ${isMobile ? '16px' : '12px'} 0`, 
+                fontSize: isMobile ? '0.9rem' : '0.875rem', 
+                fontWeight: '600', 
+                color: '#374151' 
+              }}>
                 Kategorien
               </h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: isMobile ? '12px' : '8px' 
+              }}>
                 {availableCategories.map(category => (
                   <button
                     key={category}
@@ -1250,14 +1340,19 @@ const SearchPage: React.FC = () => {
                       color: selectedCategories.includes(category) ? 'var(--color-surface)' : 'var(--color-text-secondary)',
                       border: 'none',
                       borderRadius: '8px',
-                      padding: '8px 12px',
+                      padding: isMobile ? '12px 16px' : '8px 12px',
                       cursor: 'pointer',
-                      fontSize: '0.875rem',
+                      fontSize: isMobile ? '14px' : '0.875rem',
                       fontWeight: '500',
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      transition: 'all var(--transition-normal)'
+                      transition: 'all var(--transition-normal)',
+                      minHeight: isMobile ? '44px' : 'auto', // Touch target
+                      // iOS Safari optimizations
+                      WebkitTapHighlightColor: 'transparent',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none'
                     }}
                   >
                     {getCategoryIcon(category)}
@@ -1269,10 +1364,19 @@ const SearchPage: React.FC = () => {
 
             {/* Status */}
             <div>
-              <h4 style={{ margin: '0 0 12px 0', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
+              <h4 style={{ 
+                margin: `0 0 ${isMobile ? '16px' : '12px'} 0`, 
+                fontSize: isMobile ? '0.9rem' : '0.875rem', 
+                fontWeight: '600', 
+                color: '#374151' 
+              }}>
                 Status
               </h4>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              <div style={{ 
+                display: 'flex', 
+                flexWrap: 'wrap', 
+                gap: isMobile ? '12px' : '8px' 
+              }}>
                 {Object.values(DestinationStatus).map(status => (
                   <button
                     key={status}
@@ -1282,11 +1386,16 @@ const SearchPage: React.FC = () => {
                       color: selectedStatus.includes(status) ? 'var(--color-surface)' : 'var(--color-text-secondary)',
                       border: 'none',
                       borderRadius: '8px',
-                      padding: '8px 12px',
+                      padding: isMobile ? '12px 16px' : '8px 12px',
                       cursor: 'pointer',
-                      fontSize: '0.875rem',
+                      fontSize: isMobile ? '14px' : '0.875rem',
                       fontWeight: '500',
-                      transition: 'all var(--transition-normal)'
+                      transition: 'all var(--transition-normal)',
+                      minHeight: isMobile ? '44px' : 'auto', // Touch target
+                      // iOS Safari optimizations
+                      WebkitTapHighlightColor: 'transparent',
+                      WebkitTouchCallout: 'none',
+                      WebkitUserSelect: 'none'
                     }}
                   >
                     {getStatusLabel(status)}
@@ -1298,10 +1407,21 @@ const SearchPage: React.FC = () => {
             {/* Tags */}
             {availableTags.length > 0 && (
               <div>
-                <h4 style={{ margin: '0 0 12px 0', fontSize: '0.875rem', fontWeight: '600', color: '#374151' }}>
+                <h4 style={{ 
+                  margin: `0 0 ${isMobile ? '16px' : '12px'} 0`, 
+                  fontSize: isMobile ? '0.9rem' : '0.875rem', 
+                  fontWeight: '600', 
+                  color: '#374151' 
+                }}>
                   Tags
                 </h4>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', maxHeight: '120px', overflowY: 'auto' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  flexWrap: 'wrap', 
+                  gap: isMobile ? '10px' : '8px', 
+                  maxHeight: isMobile ? '160px' : '120px', 
+                  overflowY: 'auto' 
+                }}>
                   {availableTags.map(tag => (
                     <button
                       key={tag}
@@ -1311,11 +1431,16 @@ const SearchPage: React.FC = () => {
                         color: selectedTags.includes(tag) ? 'var(--color-surface)' : '#1d4ed8',
                         border: 'none',
                         borderRadius: '6px',
-                        padding: '6px 10px',
+                        padding: isMobile ? '10px 14px' : '6px 10px',
                         cursor: 'pointer',
-                        fontSize: '0.75rem',
+                        fontSize: isMobile ? '13px' : '0.75rem',
                         fontWeight: '500',
-                        transition: 'all var(--transition-normal)'
+                        transition: 'all var(--transition-normal)',
+                        minHeight: isMobile ? '36px' : 'auto', // Touch target
+                        // iOS Safari optimizations
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitTouchCallout: 'none',
+                        WebkitUserSelect: 'none'
                       }}
                     >
                       #{tag}
@@ -1385,15 +1510,21 @@ const SearchPage: React.FC = () => {
       {searchResults.length > 0 ? (
         <div style={{
           display: viewMode === 'grid' ? 'grid' : 'flex',
-          gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(300px, 1fr))' : undefined,
+          gridTemplateColumns: viewMode === 'grid' 
+            ? isMobile 
+              ? '1fr' // Single column on mobile
+              : 'repeat(auto-fill, minmax(300px, 1fr))' 
+            : undefined,
           flexDirection: viewMode === 'list' ? 'column' : undefined,
-          gap: viewMode === 'grid' ? '16px' : '12px'
+          gap: isMobile 
+            ? viewMode === 'grid' ? '16px' : '12px'
+            : viewMode === 'grid' ? '16px' : '12px'
         }}>
           {searchResults.map(destination => (
             <DestinationCard 
               key={destination.id} 
               destination={destination} 
-              compact={viewMode === 'grid'}
+              compact={viewMode === 'grid' && !isMobile} // Don't use compact on mobile
             />
           ))}
         </div>

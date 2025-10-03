@@ -177,18 +177,31 @@ const MapView: React.FC = () => {
   }
 
   return (
-    <div style={{ position: 'relative', height: '100%', width: '100%' }}>
+    <div style={{ 
+      position: 'relative', 
+      height: '100%', 
+      width: '100%',
+      // iPhone safe area support
+      paddingLeft: isMobile ? 'max(0px, env(safe-area-inset-left))' : 0,
+      paddingRight: isMobile ? 'max(0px, env(safe-area-inset-right))' : 0
+    }}>
       <MapContainer
         center={getMapCenter()}
         zoom={currentDestinations.length > 0 ? (isMobile ? 8 : 10) : (isMobile ? 4 : 5)}
         minZoom={2} // Allow zooming out to see the world
         maxZoom={18} // Allow zooming in to street level
-        style={{ height: '100%', width: '100%' }}
+        style={{ 
+          height: '100%', 
+          width: '100%',
+          // Mobile-specific optimizations
+          touchAction: isMobile ? 'manipulation' : 'auto',
+          userSelect: 'none'
+        }}
         ref={setMapRef}
-        // Zoom optimizations - allow multiple zoom methods
-        touchZoom={true} // Always enable touch zoom
-        doubleClickZoom={true} // Always enable double-click zoom
-        scrollWheelZoom={true} // Always enable scroll wheel zoom
+        // Mobile-optimized zoom and interaction settings
+        touchZoom={isMobile ? 'center' : true} // Center zoom on mobile for better UX
+        doubleClickZoom={true} 
+        scrollWheelZoom={!isTouchDevice} // Disable scroll wheel zoom on touch devices
         dragging={true}
         zoomControl={false} // We'll use custom controls
         attributionControl={!isMobile} // Hide on mobile to save space
@@ -198,12 +211,25 @@ const MapView: React.FC = () => {
               setCurrentZoom(mapRef.getZoom());
             });
             
-            // Mobile-specific map settings
+            // Mobile-specific map settings for better performance and UX
             if (isMobile) {
-              // Disable zoom animation on mobile for better performance
+              // Optimize animations for mobile performance
               mapRef.options.zoomAnimation = false;
               mapRef.options.fadeAnimation = false;
               mapRef.options.markerZoomAnimation = false;
+              
+              // Increase touch tolerance for better mobile interaction
+              if (mapRef.options.tap) {
+                mapRef.options.tap.tolerance = 15;
+              }
+              
+              // Add mobile-specific event handlers
+              mapRef.on('touchstart', (e: any) => {
+                // Prevent iOS Safari bounce effect
+                if (e.originalEvent && e.originalEvent.touches.length === 1) {
+                  e.originalEvent.preventDefault();
+                }
+              });
             }
           }
         }}
@@ -304,14 +330,19 @@ const MapView: React.FC = () => {
 
 
 
-      {/* Timeline */}
+      {/* Timeline - Mobile optimized with safe area support */}
       {showTimeline && currentDestinations.length > 0 && (
-        <MobileTimeline
-          destinations={currentDestinations}
-          onDestinationSelect={handleTimelineDestinationSelect}
-          currentDestination={selectedDestination}
-          isMobile={isMobile || isTablet}
-        />
+        <div style={{
+          // Add bottom safe area padding for iPhone devices
+          paddingBottom: isMobile ? 'max(0px, env(safe-area-inset-bottom))' : 0
+        }}>
+          <MobileTimeline
+            destinations={currentDestinations}
+            onDestinationSelect={handleTimelineDestinationSelect}
+            currentDestination={selectedDestination}
+            isMobile={isMobile || isTablet}
+          />
+        </div>
       )}
     </div>
   );

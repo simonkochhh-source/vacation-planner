@@ -231,8 +231,8 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
       {/* Fixed Zoom Controls - Always visible on mobile */}
       <div style={{
         position: 'absolute',
-        top: '1rem',
-        right: '1rem',
+        top: 'max(1rem, env(safe-area-inset-top, 0px) + 0.5rem)',
+        right: 'max(1rem, env(safe-area-inset-right, 0px) + 0.5rem)',
         zIndex: 1000,
         display: 'flex',
         flexDirection: 'column',
@@ -244,18 +244,22 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             background: 'var(--color-neutral-cream)',
             border: 'none',
             borderRadius: '50%',
-            width: '48px',
-            height: '48px',
+            width: '56px', // Increased from 48px for better touch target
+            height: '56px', // Increased from 48px for better touch target
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            fontSize: '1.125rem'
+            fontSize: '1.125rem',
+            // iOS Safari optimizations
+            WebkitTapHighlightColor: 'transparent',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none'
           }}
           title="Hineinzoomen"
         >
-          <ZoomIn size={20} />
+          <ZoomIn size={22} />
         </button>
         <button
           onClick={onZoomOut}
@@ -263,26 +267,30 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             background: 'var(--color-neutral-cream)',
             border: 'none',
             borderRadius: '50%',
-            width: '48px',
-            height: '48px',
+            width: '56px', // Increased from 48px for better touch target
+            height: '56px', // Increased from 48px for better touch target
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            fontSize: '1.125rem'
+            fontSize: '1.125rem',
+            // iOS Safari optimizations
+            WebkitTapHighlightColor: 'transparent',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none'
           }}
           title="Herauszoomen"
         >
-          <ZoomOut size={20} />
+          <ZoomOut size={22} />
         </button>
       </div>
 
       {/* Mobile Menu Button */}
       <div style={{
         position: 'absolute',
-        top: '1rem',
-        left: '1rem',
+        top: 'max(1rem, env(safe-area-inset-top, 0px) + 0.5rem)',
+        left: 'max(1rem, env(safe-area-inset-left, 0px) + 0.5rem)',
         zIndex: 1000
       }}>
         <button
@@ -292,18 +300,22 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             color: isControlsExpanded ? 'white' : '#374151',
             border: 'none',
             borderRadius: '50%',
-            width: '48px',
-            height: '48px',
+            width: '56px', // Increased from 48px for better touch target
+            height: '56px', // Increased from 48px for better touch target
             cursor: 'pointer',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-            fontSize: '1.125rem'
+            fontSize: '1.125rem',
+            // iOS Safari optimizations
+            WebkitTapHighlightColor: 'transparent',
+            WebkitTouchCallout: 'none',
+            WebkitUserSelect: 'none'
           }}
           title="Menü"
         >
-          {isControlsExpanded ? <X size={20} /> : <Menu size={20} />}
+          {isControlsExpanded ? <X size={22} /> : <Menu size={22} />}
         </button>
       </div>
 
@@ -320,7 +332,9 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
           boxShadow: '0 -4px 20px rgba(0,0,0,0.15)',
           zIndex: 1000,
           maxHeight: '70vh',
-          overflow: 'auto'
+          overflow: 'auto',
+          // iPhone safe area support for controls panel
+          paddingBottom: 'max(1rem, env(safe-area-inset-bottom, 0px) + 0.5rem)'
         }}>
           {/* Handle bar */}
           <div style={{
@@ -338,7 +352,7 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
 
           {/* Controls Grid */}
           <div style={{
-            padding: '0 1rem 1rem 1rem',
+            padding: '0 1rem 0.5rem 1rem', // Reduced bottom padding since we have safe area padding
             display: 'grid',
             gridTemplateColumns: 'repeat(3, 1fr)',
             gap: '1rem'
@@ -359,7 +373,12 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '0.5rem',
-                minHeight: '80px'
+                minHeight: '88px', // Increased from 80px for better touch target
+                fontSize: '16px', // Prevent zoom on iOS
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
               <Navigation size={24} style={{ color: '#3b82f6' }} />
@@ -382,7 +401,12 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '0.5rem',
-                minHeight: '80px'
+                minHeight: '88px', // Increased from 80px for better touch target
+                fontSize: '16px', // Prevent zoom on iOS
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
               <RotateCcw size={24} style={{ color: '#6b7280' }} />
@@ -408,7 +432,12 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '0.5rem',
-                minHeight: '80px'
+                minHeight: '88px', // Increased from 80px for better touch target
+                fontSize: '16px', // Prevent zoom on iOS
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
               <Route size={24} style={{ color: showRouting ? '#3b82f6' : '#6b7280' }} />
@@ -434,7 +463,12 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '0.5rem',
-                minHeight: '80px'
+                minHeight: '88px', // Increased from 80px for better touch target
+                fontSize: '16px', // Prevent zoom on iOS
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
               <Clock size={24} style={{ color: showTimeline ? '#3b82f6' : '#6b7280' }} />
@@ -460,7 +494,12 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '0.5rem',
-                minHeight: '80px'
+                minHeight: '88px', // Increased from 80px for better touch target
+                fontSize: '16px', // Prevent zoom on iOS
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
               <Ruler size={24} style={{ color: showMeasurement ? '#3b82f6' : '#6b7280' }} />
@@ -486,7 +525,12 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: '0.5rem',
-                minHeight: '80px'
+                minHeight: '88px', // Increased from 80px for better touch target
+                fontSize: '16px', // Prevent zoom on iOS
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
             >
               <Layers size={24} style={{ color: showClustering ? '#3b82f6' : '#6b7280' }} />

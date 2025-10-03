@@ -424,70 +424,92 @@ const AllPhotosView: React.FC = () => {
 
   return (
     <div style={{
-      padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)',
+      padding: isMobile ? 'var(--space-md)' : 'var(--space-xl)',
       background: 'var(--color-background)',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      // iPhone safe area support
+      paddingLeft: isMobile ? 'max(var(--space-md), env(safe-area-inset-left))' : 'var(--space-xl)',
+      paddingRight: isMobile ? 'max(var(--space-md), env(safe-area-inset-right))' : 'var(--space-xl)',
+      paddingBottom: isMobile ? 'max(var(--space-md), env(safe-area-inset-bottom))' : 'var(--space-xl)'
     }}>
       {/* Header */}
       <div style={{
-        marginBottom: 'var(--space-xl)',
+        marginBottom: isMobile ? 'var(--space-lg)' : 'var(--space-xl)',
         display: 'flex',
-        alignItems: 'center',
+        alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'space-between',
-        flexWrap: 'wrap',
-        gap: 'var(--space-md)'
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 'var(--space-lg)' : 'var(--space-md)'
       }}>
-        <div>
+        <div style={{ width: isMobile ? '100%' : 'auto' }}>
           <h1 style={{
             fontFamily: 'var(--font-heading)',
-            fontSize: 'var(--text-3xl)',
+            fontSize: isMobile ? 'var(--text-2xl)' : 'var(--text-3xl)',
             fontWeight: 'var(--font-weight-bold)',
             margin: 0,
             marginBottom: 'var(--space-sm)',
             color: 'var(--color-text-primary)'
           }}>
-            Alle meine Fotos
+            {isMobile ? 'Meine Fotos' : 'Alle meine Fotos'}
           </h1>
           <p style={{
-            fontSize: 'var(--text-base)',
+            fontSize: isMobile ? 'var(--text-sm)' : 'var(--text-base)',
             color: 'var(--color-text-secondary)',
             margin: 0
           }}>
-            {stats.totalPhotos} Fotos aus {stats.uniqueTrips} Reisen • {stats.totalSize} MB
+            {stats.totalPhotos} Fotos{!isMobile && ` aus ${stats.uniqueTrips} Reisen`} • {stats.totalSize} MB
           </p>
         </div>
 
         <div style={{
           display: 'flex',
-          gap: 'var(--space-md)',
+          gap: isMobile ? 'var(--space-sm)' : 'var(--space-md)',
           alignItems: 'center',
-          flexWrap: 'wrap'
+          flexWrap: 'wrap',
+          width: isMobile ? '100%' : 'auto',
+          justifyContent: isMobile ? 'stretch' : 'flex-start'
         }}>
           {!selectionMode ? (
             <>
               <ModernButton
                 variant="filled"
-                size="default"
+                size={isMobile ? "sm" : "default"}
                 onClick={() => setShowUploadModal(true)}
-                leftIcon={<Plus size={20} />}
+                leftIcon={<Plus size={isMobile ? 18 : 20} />}
+                style={{
+                  flex: isMobile ? '1' : 'none',
+                  minHeight: isMobile ? '48px' : 'auto',
+                  fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
+                }}
               >
-                Fotos hinzufügen
+                {isMobile ? 'Hinzufügen' : 'Fotos hinzufügen'}
               </ModernButton>
               
               <ModernButton
                 variant="outlined"
-                size="default"
+                size={isMobile ? "sm" : "default"}
                 onClick={toggleSelectionMode}
-                leftIcon={<CheckCircle size={20} />}
+                leftIcon={<CheckCircle size={isMobile ? 18 : 20} />}
                 disabled={filteredPhotos.length === 0}
                 style={{
                   borderColor: filteredPhotos.length > 0 ? 'var(--color-primary-ocean)' : 'var(--color-border)',
                   color: filteredPhotos.length > 0 ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
-                  opacity: filteredPhotos.length > 0 ? 1 : 0.6
+                  opacity: filteredPhotos.length > 0 ? 1 : 0.6,
+                  flex: isMobile ? '1' : 'none',
+                  minHeight: isMobile ? '48px' : 'auto',
+                  fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+                  // iOS Safari optimizations
+                  WebkitTapHighlightColor: 'transparent',
+                  WebkitTouchCallout: 'none',
+                  WebkitUserSelect: 'none'
                 }}
                 title="Fotos zum Teilen auswählen"
               >
-                Fotos auswählen
+                {isMobile ? 'Auswählen' : 'Fotos auswählen'}
               </ModernButton>
             </>
           ) : (
@@ -530,11 +552,12 @@ const AllPhotosView: React.FC = () => {
 
       {/* Filters and Search */}
       <div style={{
-        marginBottom: 'var(--space-xl)',
+        marginBottom: isMobile ? 'var(--space-lg)' : 'var(--space-xl)',
         display: 'flex',
-        alignItems: 'center',
-        gap: 'var(--space-md)',
-        flexWrap: 'wrap'
+        alignItems: isMobile ? 'stretch' : 'center',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 'var(--space-md)' : 'var(--space-md)',
+        flexWrap: isMobile ? 'nowrap' : 'wrap'
       }}>
         {/* Search */}
         <div style={{
@@ -551,24 +574,34 @@ const AllPhotosView: React.FC = () => {
           }} />
           <input
             type="text"
-            placeholder="Fotos durchsuchen..."
+            placeholder={isMobile ? 'Suchen...' : 'Fotos durchsuchen...'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
               width: '100%',
-              padding: 'var(--space-md) var(--space-md) var(--space-md) 48px',
+              padding: isMobile ? 'var(--space-md) var(--space-md) var(--space-md) 48px' : 'var(--space-md) var(--space-md) var(--space-md) 48px',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-md)',
-              fontSize: 'var(--text-sm)',
+              fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
               fontFamily: 'var(--font-family-system)',
               background: 'var(--color-surface)',
-              color: 'var(--color-text-primary)'
+              color: 'var(--color-text-primary)',
+              minHeight: isMobile ? '48px' : 'auto',
+              // iOS Safari optimizations
+              WebkitTapHighlightColor: 'transparent',
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'text'
             }}
           />
         </div>
 
         {/* Filter Buttons */}
-        <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: 'var(--space-xs)',
+          width: isMobile ? '100%' : 'auto',
+          justifyContent: isMobile ? 'space-between' : 'flex-start'
+        }}>
           {[
             { key: 'all' as FilterType, label: 'Alle', icon: <Image size={16} /> },
             { key: 'recent' as FilterType, label: 'Neueste', icon: <Clock size={16} /> },
@@ -580,6 +613,15 @@ const AllPhotosView: React.FC = () => {
               size="sm"
               onClick={() => setFilterType(filter.key)}
               leftIcon={filter.icon}
+              style={{
+                flex: isMobile ? '1' : 'none',
+                minHeight: isMobile ? '48px' : 'auto',
+                fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
+              }}
             >
               {!isMobile && filter.label}
             </ModernButton>
@@ -587,12 +629,25 @@ const AllPhotosView: React.FC = () => {
         </div>
 
         {/* View Mode Toggle */}
-        <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
+        <div style={{ 
+          display: 'flex', 
+          gap: 'var(--space-xs)',
+          width: isMobile ? '100%' : 'auto'
+        }}>
           <ModernButton
             variant={viewMode === 'grid' ? "filled" : "outlined"}
             size="sm"
             onClick={() => setViewMode('grid')}
             leftIcon={<Grid3X3 size={16} />}
+            style={{
+              flex: isMobile ? '1' : 'none',
+              minHeight: isMobile ? '48px' : 'auto',
+              fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+              // iOS Safari optimizations
+              WebkitTapHighlightColor: 'transparent',
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             {!isMobile && 'Grid'}
           </ModernButton>
@@ -601,6 +656,15 @@ const AllPhotosView: React.FC = () => {
             size="sm"
             onClick={() => setViewMode('list')}
             leftIcon={<List size={16} />}
+            style={{
+              flex: isMobile ? '1' : 'none',
+              minHeight: isMobile ? '48px' : 'auto',
+              fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+              // iOS Safari optimizations
+              WebkitTapHighlightColor: 'transparent',
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none'
+            }}
           >
             {!isMobile && 'Liste'}
           </ModernButton>
@@ -693,7 +757,7 @@ const AllPhotosView: React.FC = () => {
               gridTemplateColumns: isMobile 
                 ? 'repeat(2, 1fr)' 
                 : 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: 'var(--space-md)'
+              gap: isMobile ? 'var(--space-sm)' : 'var(--space-md)'
             }}>
               {filteredPhotos.map((photo) => (
                 <ModernCard
@@ -761,7 +825,7 @@ const AllPhotosView: React.FC = () => {
                       )}
                     </div>
                     
-                    <div style={{ padding: 'var(--space-md)' }}>
+                    <div style={{ padding: isMobile ? 'var(--space-sm)' : 'var(--space-md)' }}>
                       <h4 style={{
                         fontSize: 'var(--text-sm)',
                         fontWeight: 'var(--font-weight-medium)',
@@ -930,21 +994,25 @@ const AllPhotosView: React.FC = () => {
           background: 'rgba(0, 0, 0, 0.9)',
           zIndex: 1000,
           display: 'flex',
-          alignItems: 'center',
+          alignItems: isMobile ? 'flex-start' : 'center',
           justifyContent: 'center',
-          padding: 'var(--space-lg)'
+          padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+          paddingTop: isMobile ? 'max(var(--space-lg), env(safe-area-inset-top))' : 'var(--space-lg)',
+          paddingBottom: isMobile ? 'max(var(--space-lg), env(safe-area-inset-bottom))' : 'var(--space-lg)',
+          overflow: isMobile ? 'auto' : 'hidden'
         }}>
           <div style={{
             position: 'relative',
-            maxWidth: '90vw',
-            maxHeight: '90vh',
+            maxWidth: isMobile ? '100%' : '90vw',
+            maxHeight: isMobile ? 'none' : '90vh',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            width: isMobile ? '100%' : 'auto'
           }}>
             {/* Close Button */}
             <ModernButton
               variant="text"
-              size="sm"
+              size={isMobile ? "default" : "sm"}
               onClick={() => {
                 setSelectedPhoto(null);
                 setPhotoShareData(null);
@@ -955,14 +1023,20 @@ const AllPhotosView: React.FC = () => {
               }}
               style={{
                 position: 'absolute',
-                top: '-50px',
+                top: isMobile ? '-60px' : '-50px',
                 right: 0,
                 color: 'white',
-                zIndex: 1001
+                zIndex: 1001,
+                minHeight: isMobile ? '48px' : 'auto',
+                fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+                // iOS Safari optimizations
+                WebkitTapHighlightColor: 'transparent',
+                WebkitTouchCallout: 'none',
+                WebkitUserSelect: 'none'
               }}
-              leftIcon={<X size={20} />}
+              leftIcon={<X size={isMobile ? 24 : 20} />}
             >
-              Schließen
+              {isMobile ? '' : 'Schließen'}
             </ModernButton>
 
             {/* Image */}
@@ -971,9 +1045,12 @@ const AllPhotosView: React.FC = () => {
               alt={selectedPhoto.caption || selectedPhoto.file_name}
               style={{
                 maxWidth: '100%',
-                maxHeight: '70vh',
+                maxHeight: isMobile ? '50vh' : '70vh',
                 objectFit: 'contain',
-                borderRadius: 'var(--radius-md)'
+                borderRadius: 'var(--radius-md)',
+                // Mobile touch optimization
+                touchAction: 'pan-x pan-y pinch-zoom',
+                userSelect: 'none'
               }}
             />
 
@@ -981,15 +1058,16 @@ const AllPhotosView: React.FC = () => {
             <div style={{
               background: 'var(--color-surface)',
               borderRadius: 'var(--radius-md)',
-              padding: 'var(--space-lg)',
+              padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
               marginTop: 'var(--space-md)',
-              maxWidth: '500px'
+              maxWidth: isMobile ? '100%' : '500px',
+              width: isMobile ? '100%' : 'auto'
             }}>
               <h3 style={{
-                fontSize: 'var(--text-lg)',
+                fontSize: isMobile ? 'var(--text-base)' : 'var(--text-lg)',
                 fontWeight: 'var(--font-weight-semibold)',
                 margin: 0,
-                marginBottom: 'var(--space-md)',
+                marginBottom: isMobile ? 'var(--space-sm)' : 'var(--space-md)',
                 color: 'var(--color-text-primary)'
               }}>
                 {selectedPhoto.caption || selectedPhoto.file_name}
@@ -997,10 +1075,10 @@ const AllPhotosView: React.FC = () => {
 
               <div style={{
                 display: 'grid',
-                gridTemplateColumns: 'auto 1fr',
-                gap: 'var(--space-sm) var(--space-md)',
+                gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr',
+                gap: isMobile ? 'var(--space-xs)' : 'var(--space-sm) var(--space-md)',
                 fontSize: 'var(--text-sm)',
-                marginBottom: 'var(--space-lg)'
+                marginBottom: isMobile ? 'var(--space-md)' : 'var(--space-lg)'
               }}>
                 <span style={{ color: 'var(--color-text-secondary)' }}>Reise:</span>
                 <span style={{ color: 'var(--color-text-primary)' }}>{selectedPhoto.tripName}</span>
@@ -1112,28 +1190,39 @@ const AllPhotosView: React.FC = () => {
                       }}
                       style={{
                         flex: 1,
-                        padding: 'var(--space-sm) var(--space-md)',
+                        padding: isMobile ? 'var(--space-md)' : 'var(--space-sm) var(--space-md)',
                         border: '1px solid var(--color-border)',
                         borderRadius: 'var(--radius-full)',
-                        fontSize: 'var(--text-sm)',
+                        fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
                         fontFamily: 'var(--font-family-system)',
                         background: 'var(--color-surface)',
-                        color: 'var(--color-text-primary)'
+                        color: 'var(--color-text-primary)',
+                        minHeight: isMobile ? '48px' : 'auto',
+                        // iOS Safari optimizations
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitTouchCallout: 'none',
+                        WebkitUserSelect: 'text'
                       }}
                     />
                     <ModernButton
                       variant="text"
-                      size="sm"
+                      size={isMobile ? "default" : "sm"}
                       onClick={handleAddComment}
                       disabled={!newComment.trim()}
-                      leftIcon={<ArrowUp size={16} />}
+                      leftIcon={<ArrowUp size={isMobile ? 18 : 16} />}
                       style={{
                         minWidth: 'auto',
-                        padding: 'var(--space-sm)',
-                        color: newComment.trim() ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)'
+                        padding: isMobile ? 'var(--space-md)' : 'var(--space-sm)',
+                        color: newComment.trim() ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
+                        minHeight: isMobile ? '48px' : 'auto',
+                        fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+                        // iOS Safari optimizations
+                        WebkitTapHighlightColor: 'transparent',
+                        WebkitTouchCallout: 'none',
+                        WebkitUserSelect: 'none'
                       }}
                     >
-                      Senden
+                      {isMobile ? '' : 'Senden'}
                     </ModernButton>
                   </div>
                 )}
@@ -1141,25 +1230,42 @@ const AllPhotosView: React.FC = () => {
 
               <div style={{
                 display: 'flex',
-                gap: 'var(--space-md)',
-                justifyContent: 'flex-end'
+                gap: isMobile ? 'var(--space-sm)' : 'var(--space-md)',
+                justifyContent: isMobile ? 'space-between' : 'flex-end',
+                flexWrap: isMobile ? 'wrap' : 'nowrap'
               }}>
                 <ModernButton
                   variant="outlined"
-                  size="sm"
+                  size={isMobile ? "default" : "sm"}
                   onClick={() => handleDownloadPhoto(selectedPhoto)}
-                  leftIcon={<Download size={16} />}
+                  leftIcon={<Download size={isMobile ? 18 : 16} />}
+                  style={{
+                    flex: isMobile ? '1' : 'none',
+                    minHeight: isMobile ? '48px' : 'auto',
+                    fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+                    // iOS Safari optimizations
+                    WebkitTapHighlightColor: 'transparent',
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none'
+                  }}
                 >
                   Download
                 </ModernButton>
                 <ModernButton
                   variant="outlined"
-                  size="sm"
+                  size={isMobile ? "default" : "sm"}
                   onClick={() => handleDeletePhoto(selectedPhoto)}
-                  leftIcon={<Trash2 size={16} />}
+                  leftIcon={<Trash2 size={isMobile ? 18 : 16} />}
                   style={{
                     borderColor: 'var(--color-error)',
-                    color: 'var(--color-error)'
+                    color: 'var(--color-error)',
+                    flex: isMobile ? '1' : 'none',
+                    minHeight: isMobile ? '48px' : 'auto',
+                    fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
+                    // iOS Safari optimizations
+                    WebkitTapHighlightColor: 'transparent',
+                    WebkitTouchCallout: 'none',
+                    WebkitUserSelect: 'none'
                   }}
                 >
                   Löschen
