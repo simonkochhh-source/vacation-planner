@@ -2,28 +2,33 @@
 
 Diese Anleitung hilft dabei, sicherzustellen, dass neue Nutzer direkt auf die App zugreifen können, ohne sich bei Vercel anmelden zu müssen.
 
-## Problem
-Neue Nutzer müssen sich bei Vercel einloggen, bevor sie die App verwenden können.
+## ❗ Problem
+Neue Nutzer sehen eine Vercel-Login-Seite anstatt der App und müssen sich bei Vercel anmelden, bevor sie die App verwenden können.
 
-## Lösung: Vercel Dashboard Einstellungen
+## ✅ Kritische Lösung: Vercel Dashboard Konfiguration
 
-### 1. Vercel Dashboard aufrufen
-1. Gehe zu [vercel.com](https://vercel.com)
-2. Logge dich in deinen Account ein
-3. Wähle das "vacation-planner" Projekt aus
+**Das Problem liegt zu 99% in den Vercel-Projekteinstellungen, NICHT im Code!**
 
-### 2. Project Settings überprüfen
-1. Klicke auf **Settings** (Zahnrad-Symbol)
-2. Gehe zu **General** Tab
-3. Scrolle zu **Access Control**
+### 🚨 SCHRITT 1: Vercel Dashboard Access Control (KRITISCH!)
+1. **Gehe zu:** [vercel.com/dashboard](https://vercel.com/dashboard)
+2. **Logge dich ein** und wähle dein `vacation-planner` Projekt
+3. **Klicke auf:** ⚙️ **Settings** (Zahnrad-Symbol)
+4. **Gehe zu:** **General** Tab
+5. **Scrolle zu:** **Access Control** Sektion
 
-### 3. Access Control konfigurieren
-**Wichtig**: Stelle sicher, dass folgende Einstellungen korrekt sind:
+### 🔓 SCHRITT 2: Access Control auf PUBLIC setzen
+**KRITISCH**: Stelle sicher, dass folgende Einstellungen exakt so sind:
 
 ```
-Access Control: Public (nicht Private!)
-Password Protection: Disabled
+✅ Access Control: PUBLIC (nicht Private!)
+✅ Password Protection: DISABLED
+✅ Team Visibility: PUBLIC (falls Team-Projekt)
 ```
+
+**Häufige Fehler:**
+- ❌ Access Control steht auf "Private" 
+- ❌ Password Protection ist aktiviert
+- ❌ Team-Einstellungen blockieren öffentlichen Zugang
 
 ### 4. Team/Organization Settings
 Wenn das Projekt unter einem Team läuft:
