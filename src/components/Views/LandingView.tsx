@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useResponsive } from '../../hooks/useResponsive';
 import { Destination, DestinationCategory, Trip, DestinationStatus, TripPrivacy } from '../../types';
 import { 
   MapPin, 
@@ -59,6 +60,7 @@ const LandingView: React.FC = () => {
   } = useSupabaseApp();
   
   const { userProfile } = useAuth();
+  const { isMobile } = useResponsive();
   
   const [selectedSuggestion, setSelectedSuggestion] = useState<TravelSuggestion | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -213,34 +215,53 @@ const LandingView: React.FC = () => {
   };
 
   return (
-    <div className="app-container" style={{ padding: 'var(--space-lg)' }}>
+    <div className="app-container" style={{ 
+      padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+      maxWidth: '100%',
+      overflow: 'hidden'
+    }}>
       {/* Welcome Section */}
-      <div className="text-center" style={{ marginBottom: 'var(--space-2xl)' }}>
-        <div className="flex justify-center items-center" style={{ marginBottom: 'var(--space-lg)' }}>
+      <div className="text-center" style={{ 
+        marginBottom: isMobile ? 'var(--space-xl)' : 'var(--space-2xl)'
+      }}>
+        <div className={isMobile ? "flex flex-col items-center" : "flex justify-center items-center"} style={{ 
+          marginBottom: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+          gap: isMobile ? 'var(--space-md)' : 0
+        }}>
           <div 
             className="flex items-center justify-center rounded-full" 
             style={{ 
-              width: '80px', 
-              height: '80px',
+              width: isMobile ? '60px' : '80px', 
+              height: isMobile ? '60px' : '80px',
               backgroundColor: 'var(--color-primary-sage)',
-              marginRight: 'var(--space-md)'
+              marginRight: isMobile ? 0 : 'var(--space-md)',
+              flexShrink: 0
             }}
           >
-            <Compass size={40} style={{ color: 'white' }} />
+            <Compass size={isMobile ? 30 : 40} style={{ color: 'white' }} />
           </div>
-          <div>
+          <div style={{ textAlign: isMobile ? 'center' : 'left' }}>
             <h1 style={{ 
               fontFamily: 'var(--font-heading)',
-              fontSize: 'var(--text-3xl)',
+              fontSize: isMobile ? 'var(--text-2xl)' : 'var(--text-3xl)',
               fontWeight: 'var(--font-weight-bold)',
               color: 'var(--color-text-primary)',
-              margin: 0
+              margin: 0,
+              lineHeight: 1.2
             }}>
               {welcomeData.greeting}
             </h1>
-            <div className="flex items-center justify-center" style={{ gap: 'var(--space-xs)', marginTop: 'var(--space-xs)' }}>
+            <div className="flex items-center justify-center" style={{ 
+              gap: 'var(--space-xs)', 
+              marginTop: 'var(--space-xs)',
+              flexWrap: 'wrap'
+            }}>
               <Zap size={16} style={{ color: 'var(--color-primary-ocean)' }} />
-              <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
+              <span style={{ 
+                fontSize: isMobile ? 'var(--text-xs)' : 'var(--text-sm)', 
+                color: 'var(--color-text-secondary)',
+                textAlign: 'center'
+              }}>
                 Deine persönlichen Reiseempfehlungen
               </span>
             </div>
@@ -248,31 +269,41 @@ const LandingView: React.FC = () => {
         </div>
         
         <p style={{ 
-          fontSize: 'var(--text-lg)',
+          fontSize: isMobile ? 'var(--text-base)' : 'var(--text-lg)',
           color: 'var(--color-text-secondary)',
-          maxWidth: '600px',
-          margin: '0 auto var(--space-sm)',
-          lineHeight: 1.6
+          maxWidth: isMobile ? '100%' : '600px',
+          margin: `0 auto var(--space-sm)`,
+          lineHeight: 1.6,
+          padding: isMobile ? '0 var(--space-xs)' : 0
         }}>
           {welcomeData.message}
         </p>
         
         <p style={{ 
-          fontSize: 'var(--text-base)',
+          fontSize: isMobile ? 'var(--text-sm)' : 'var(--text-base)',
           color: 'var(--color-text-secondary)',
-          fontStyle: 'italic'
+          fontStyle: 'italic',
+          padding: isMobile ? '0 var(--space-sm)' : 0
         }}>
           {welcomeData.subtitle}
         </p>
       </div>
 
       {/* Social Activity Feed Section */}
-      <div style={{ maxWidth: '1200px', margin: '0 auto var(--space-2xl)' }}>
-        <SocialActivityFeed maxItems={8} compact={true} />
+      <div style={{ 
+        maxWidth: '1200px', 
+        margin: isMobile ? '0 auto var(--space-xl)' : '0 auto var(--space-2xl)',
+        padding: isMobile ? '0' : 'var(--space-md)'
+      }}>
+        <SocialActivityFeed maxItems={isMobile ? 5 : 8} compact={true} />
       </div>
 
       {/* Travel Suggestions Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <div className={`grid grid-cols-1 ${isMobile ? '' : 'md:grid-cols-2'} gap-${isMobile ? '4' : '6'}`} style={{ 
+        maxWidth: '1200px', 
+        margin: '0 auto',
+        padding: isMobile ? '0' : 'var(--space-md)'
+      }}>
         {personalizedSuggestions.map((suggestion) => (
           <div 
             key={suggestion.id}
@@ -281,10 +312,11 @@ const LandingView: React.FC = () => {
               backgroundColor: 'var(--color-surface)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-lg)',
-              padding: 'var(--space-lg)',
+              padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
               transition: 'all var(--transition-normal)',
               cursor: 'pointer',
-              position: 'relative'
+              position: 'relative',
+              marginBottom: isMobile ? 'var(--space-md)' : 0
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-4px)';
@@ -495,7 +527,7 @@ const LandingView: React.FC = () => {
           className="fixed inset-0 z-50 flex items-center justify-center"
           style={{ 
             backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            padding: 'var(--space-lg)'
+            padding: isMobile ? 'var(--space-sm)' : 'var(--space-lg)'
           }}
           onClick={() => setShowImportModal(false)}
         >
@@ -504,11 +536,12 @@ const LandingView: React.FC = () => {
             style={{ 
               backgroundColor: 'var(--color-surface)',
               borderRadius: 'var(--radius-lg)',
-              padding: 'var(--space-2xl)',
-              maxWidth: '600px',
+              padding: isMobile ? 'var(--space-lg)' : 'var(--space-2xl)',
+              maxWidth: isMobile ? '100%' : '600px',
               width: '100%',
-              maxHeight: '80vh',
-              overflow: 'auto'
+              maxHeight: isMobile ? '90vh' : '80vh',
+              overflow: 'auto',
+              margin: isMobile ? 'var(--space-sm)' : 0
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -517,10 +550,11 @@ const LandingView: React.FC = () => {
               <div>
                 <h2 style={{ 
                   fontFamily: 'var(--font-heading)',
-                  fontSize: 'var(--text-2xl)',
+                  fontSize: isMobile ? 'var(--text-xl)' : 'var(--text-2xl)',
                   fontWeight: 'var(--font-weight-bold)',
                   color: 'var(--color-text-primary)',
-                  margin: 0
+                  margin: 0,
+                  lineHeight: 1.3
                 }}>
                   {selectedSuggestion.title}
                 </h2>
@@ -675,7 +709,9 @@ const LandingView: React.FC = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex" style={{ gap: 'var(--space-md)' }}>
+            <div className={`flex ${isMobile ? 'flex-col' : 'flex-row'}`} style={{ 
+              gap: isMobile ? 'var(--space-sm)' : 'var(--space-md)'
+            }}>
               <button
                 onClick={() => setShowImportModal(false)}
                 className="btn btn-secondary flex-1"
@@ -683,9 +719,10 @@ const LandingView: React.FC = () => {
                   backgroundColor: 'transparent',
                   border: '2px solid var(--color-border)',
                   color: 'var(--color-text-primary)',
-                  padding: 'var(--space-md) var(--space-lg)',
+                  padding: isMobile ? 'var(--space-md) var(--space-lg)' : 'var(--space-md) var(--space-lg)',
                   borderRadius: 'var(--radius-md)',
-                  fontSize: 'var(--text-base)',
+                  fontSize: isMobile ? 'var(--text-base)' : 'var(--text-base)',
+                  minHeight: isMobile ? '48px' : 'auto',
                   fontWeight: 'var(--font-weight-medium)',
                   transition: 'all var(--transition-normal)',
                   cursor: 'pointer'
@@ -713,9 +750,10 @@ const LandingView: React.FC = () => {
                   backgroundColor: 'var(--color-primary-sage)',
                   color: 'white',
                   border: 'none',
-                  padding: 'var(--space-md) var(--space-lg)',
+                  padding: isMobile ? 'var(--space-md) var(--space-lg)' : 'var(--space-md) var(--space-lg)',
                   borderRadius: 'var(--radius-md)',
-                  fontSize: 'var(--text-base)',
+                  fontSize: isMobile ? 'var(--text-base)' : 'var(--text-base)',
+                  minHeight: isMobile ? '48px' : 'auto',
                   fontWeight: 'var(--font-weight-medium)',
                   transition: 'all var(--transition-normal)',
                   cursor: importingTripId === selectedSuggestion.id ? 'not-allowed' : 'pointer',
