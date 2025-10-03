@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import SocialSidebar from './SocialSidebar';
-import MobileBottomNav from '../Navigation/MobileBottomNav';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
 import { useResponsive } from '../../hooks/useResponsive';
 
@@ -14,7 +13,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isMobile } = useResponsive();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [socialSidebarOpen, setSocialSidebarOpen] = useState(false);
-  const { uiState, updateUIState } = useSupabaseApp();
+  const { uiState } = useSupabaseApp();
 
   // Determine which sidebar should be shown based on current view
   const currentView = uiState.currentView || uiState.activeView;
@@ -47,7 +46,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       overflow: 'hidden',
       position: 'relative',
       paddingTop: isMobile ? 'var(--safe-area-inset-top, 0px)' : 0,
-      paddingBottom: isMobile ? 'var(--mobile-bottom-nav-height, 64px)' : 0,
+      paddingBottom: 0,
       backgroundColor: 'var(--color-background)',
       color: 'var(--color-text-primary)'
     }}>
@@ -110,14 +109,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         </main>
       </div>
-      
-      {/* Mobile Bottom Navigation */}
-      {isMobile && (
-        <MobileBottomNav 
-          onChatToggle={() => updateUIState({ chatOpen: true })}
-          showChatBadge={false} // TODO: Add unread message logic
-        />
-      )}
     </div>
   );
 };

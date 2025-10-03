@@ -1,6 +1,7 @@
 import React from 'react';
-import { Home, MapPin, Plane, Camera } from 'lucide-react';
+import { Home, MapPin, Plane, Camera, Search } from 'lucide-react';
 import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useResponsive } from '../../hooks/useResponsive';
 
 export interface NavigationItem {
   id: string;
@@ -41,6 +42,45 @@ export const navigationItems: NavigationItem[] = [
   }
 ];
 
+// Extended navigation items for mobile header (includes all main views)
+export const mobileNavigationItems: NavigationItem[] = [
+  {
+    id: 'whats-new',
+    label: "News",
+    icon: <Home size={18} />,
+    view: 'landing',
+    description: 'Neuigkeiten und Updates'
+  },
+  {
+    id: 'trips',
+    label: 'Trips',
+    icon: <Plane size={18} />,
+    view: 'trips',
+    description: 'Alle deine Reisen'
+  },
+  {
+    id: 'search',
+    label: 'Search',
+    icon: <Search size={18} />,
+    view: 'search',
+    description: 'Suche nach Destinationen und Trips'
+  },
+  {
+    id: 'map',
+    label: 'Map',
+    icon: <MapPin size={18} />,
+    view: 'map',
+    description: 'Interaktive Kartenansicht'
+  },
+  {
+    id: 'photos',
+    label: 'Photos',
+    icon: <Camera size={18} />,
+    view: 'photos',
+    description: 'Reisefotos und Erinnerungen'
+  }
+];
+
 interface AppNavigationProps {
   variant?: 'sidebar' | 'bottom' | 'header';
   className?: string;
@@ -53,7 +93,11 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
   showLabels = true 
 }) => {
   const { uiState, updateUIState } = useSupabaseApp();
+  const { isMobile } = useResponsive();
   const currentView = uiState.currentView || uiState.activeView || 'landing';
+  
+  // Use mobile navigation items for header variant on mobile devices
+  const items = (variant === 'header' && isMobile) ? mobileNavigationItems : navigationItems;
 
   const handleNavClick = (view: string) => {
     updateUIState({ currentView: view as any });
@@ -88,9 +132,11 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
           ...baseStyles,
           flexDirection: 'row' as const,
           alignItems: 'center',
-          gap: 'var(--space-1)',
+          gap: isMobile ? 'var(--space-1)' : 'var(--space-2)',
           padding: 0,
-          background: 'transparent'
+          background: 'transparent',
+          overflow: isMobile ? 'auto' : 'visible',
+          maxWidth: '100%'
         };
       default: // sidebar
         return {
@@ -107,19 +153,21 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
       const headerItemStyles = {
         display: 'flex',
         alignItems: 'center',
-        gap: 'var(--space-2)',
-        padding: 'var(--space-2) var(--space-3)',
+        gap: isMobile ? 'var(--space-1)' : 'var(--space-2)',
+        padding: isMobile ? 'var(--space-1) var(--space-2)' : 'var(--space-2) var(--space-3)',
         borderRadius: 'var(--radius-md)',
         textDecoration: 'none',
         cursor: 'pointer',
         transition: 'all var(--transition-normal)',
         border: 'none',
         background: 'transparent',
-        minHeight: 'var(--touch-target-min-size)',
-        fontSize: 'var(--text-sm)',
+        minHeight: isMobile ? '40px' : 'var(--touch-target-min-size)',
+        fontSize: isMobile ? 'var(--text-xs)' : 'var(--text-sm)',
         fontWeight: 'var(--font-weight-medium)',
         fontFamily: 'var(--font-family-system)',
-        color: 'white'
+        color: 'white',
+        whiteSpace: 'nowrap' as const,
+        flexShrink: 0
       };
 
       if (isActive) {
@@ -183,7 +231,7 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
       role="navigation"
       aria-label="Hauptnavigation"
     >
-      {navigationItems.map((item) => {
+      {items.map((item) => {
         const isActive = currentView === item.view;
         
         return (
