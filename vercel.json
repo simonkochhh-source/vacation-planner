@@ -5,7 +5,6 @@
   "outputDirectory": "build",
   "devCommand": "npm start",
   "framework": "create-react-app",
-  "functions": {},
   "regions": ["fra1"],
   "build": {
     "env": {
