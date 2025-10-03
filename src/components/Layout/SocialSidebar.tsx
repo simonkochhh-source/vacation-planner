@@ -109,9 +109,11 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
     
     try {
       setLoadingFriends(true);
+      console.log('🔄 SocialSidebar: Loading friends for user:', user.id);
       const friendsList = await socialService.getFriends();
       setFriends(friendsList);
       console.log('✅ SocialSidebar: Loaded friends:', friendsList.length);
+      console.log('📊 SocialSidebar: Friends details:', friendsList.map(f => ({ id: f.id, nickname: f.nickname, display_name: f.display_name })));
     } catch (error) {
       console.error('❌ SocialSidebar: Error loading friends:', error);
       setFriends([]);
@@ -256,7 +258,7 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
     return () => clearInterval(interval);
   }, [nextTrip]);
 
-  // Calculate user stats from real data - no mock social data
+  // Calculate user stats from real data - including real friends count
   const userStats = useMemo(() => {
     const completedTrips = trips.filter(trip => trip.status === 'completed').length;
     const visitedDestinations = destinations.filter(dest => dest.status === 'visited').length;
@@ -266,12 +268,12 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
       completedTrips,
       totalDestinations: destinations.length,
       visitedDestinations,
-      // Social features not yet implemented - show realistic 0 values
-      friends: 0,     // Real friend count when social features are implemented
-      following: 0,   // Real following count when social features are implemented  
-      followers: 0    // Real follower count when social features are implemented
+      // Use real friends count from loaded friends
+      friends: friends.length,  // Real friend count from socialService
+      following: 0,   // Legacy following count (not used in bidirectional friends)  
+      followers: 0    // Legacy follower count (not used in bidirectional friends)
     };
-  }, [trips, destinations]);
+  }, [trips, destinations, friends]);
 
   const handleNavigateToProfile = () => {
     // Navigate to user's own profile
@@ -791,13 +793,13 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
             fontWeight: 'var(--font-weight-bold)',
             color: 'white'
           }}>
-            {userStats.completedTrips}
+            {userStats.friends}
           </div>
           <div style={{
             fontSize: 'var(--text-xs)',
             color: 'rgba(255, 255, 255, 0.8)'
           }}>
-            Abgeschlossen
+            Freunde
           </div>
         </div>
 

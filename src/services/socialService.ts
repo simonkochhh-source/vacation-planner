@@ -271,7 +271,10 @@ class SocialService implements SocialServiceInterface {
     if (!user) throw new Error('Not authenticated');
     
     const targetUserId = userId || user.id;
+    console.log('🔍 socialService.getFriends called for user:', targetUserId);
 
+    // First, check if friendships view/table exists
+    console.log('🔍 Checking friendships data...');
     const { data, error } = await supabase
       .from('friendships')
       .select(`
@@ -281,14 +284,81 @@ class SocialService implements SocialServiceInterface {
       `)
       .or(`user1_id.eq.${targetUserId},user2_id.eq.${targetUserId}`);
 
-    if (error) throw new Error(`Failed to get friends: ${error.message}`);
+    console.log('🔍 Friendships query result:', { 
+      data: data?.length || 0, 
+      error: error?.message,
+      query: `user1_id.eq.${targetUserId},user2_id.eq.${targetUserId}` 
+    });
+
+    if (error) {
+      console.error('❌ Friendships query error:', error);
+      
+      // Fallback: Try to get friends using the follows table directly
+      console.log('🔄 Fallback: Checking follows table for bidirectional relationships...');
+      
+      const { data: followsData, error: followsError } = await supabase
+        .from('follows')
+        .select('follower_id, following_id, status')
+        .or(`follower_id.eq.${targetUserId},following_id.eq.${targetUserId}`)
+        .eq('status', 'ACCEPTED');
+
+      console.log('🔍 Follows fallback query result:', { 
+        data: followsData?.length || 0, 
+        error: followsError?.message 
+      });
+
+      if (followsError) {
+        throw new Error(`Failed to get friends: ${error.message}`);
+      }
+
+      // Find bidirectional relationships
+      const followMap = new Map();
+      followsData?.forEach(follow => {
+        const key1 = `${follow.follower_id}-${follow.following_id}`;
+        const key2 = `${follow.following_id}-${follow.follower_id}`;
+        
+        if (followMap.has(key2)) {
+          // Bidirectional relationship found
+          followMap.set(`friends-${Math.min(follow.follower_id, follow.following_id)}-${Math.max(follow.follower_id, follow.following_id)}`, true);
+        } else {
+          followMap.set(key1, follow);
+        }
+      });
+
+      // Extract friend IDs from bidirectional relationships
+      const friendIds = Array.from(followMap.keys())
+        .filter(key => key.startsWith('friends-'))
+        .map(key => key.split('-').slice(1))
+        .flat()
+        .filter(id => id !== targetUserId);
+
+      console.log('🔍 Bidirectional friends found:', friendIds);
+
+      if (friendIds.length === 0) return [];
+
+      // Get friend profiles
+      const { data: profiles, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .in('id', friendIds);
+
+      if (profileError) throw new Error(`Failed to get friend profiles: ${profileError.message}`);
+
+      console.log('✅ Friends loaded via fallback:', profiles?.length || 0);
+      return profiles || [];
+    }
 
     // Get friend user IDs
     const friendIds = data.map(f => 
       f.user1_id === targetUserId ? f.user2_id : f.user1_id
     );
 
-    if (friendIds.length === 0) return [];
+    console.log('🔍 Friend IDs from friendships view:', friendIds);
+
+    if (friendIds.length === 0) {
+      console.log('⚠️ No friends found in friendships view');
+      return [];
+    }
 
     // Get friend profiles
     const { data: profiles, error: profileError } = await supabase
@@ -298,6 +368,7 @@ class SocialService implements SocialServiceInterface {
 
     if (profileError) throw new Error(`Failed to get friend profiles: ${profileError.message}`);
 
+    console.log('✅ Friends loaded:', profiles?.length || 0);
     return profiles || [];
   }
 
