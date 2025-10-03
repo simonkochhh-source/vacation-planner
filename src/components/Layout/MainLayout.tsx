@@ -96,14 +96,18 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           color: 'var(--color-text-primary)',
           padding: isMobile ? '0' : 'var(--space-4)',
           paddingLeft: isMobile ? 'max(var(--space-2), var(--safe-area-inset-left, 0px))' : 'var(--space-4)',
-          paddingRight: isMobile ? 'max(var(--space-2), var(--safe-area-inset-right, 0px))' : 'var(--space-4)'
+          paddingRight: isMobile ? 'max(var(--space-2), var(--safe-area-inset-right, 0px))' : 'var(--space-4)',
+          minHeight: 0 // Important: Allow flex item to shrink
         }}>
           <div style={{
             flex: 1,
             overflow: 'auto',
             padding: isMobile ? '0.5rem' : '1rem',
             backgroundColor: 'var(--color-background)',
-            color: 'var(--color-text-primary)'
+            color: 'var(--color-text-primary)',
+            // Enhanced mobile scrolling
+            WebkitOverflowScrolling: isMobile ? 'touch' : 'auto',
+            minHeight: 0 // Allow content to shrink for proper scrolling
           }}>
             {children}
           </div>

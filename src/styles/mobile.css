@@ -79,6 +79,34 @@
     overflow-x: hidden;
     /* Add bottom padding for bottom navigation */
     padding-bottom: var(--mobile-bottom-nav-height);
+    /* Ensure smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Ensure all main containers are scrollable */
+  .main-content, 
+  .app-container,
+  [data-timeline-container],
+  .mobile-container,
+  .mobile-modal-content {
+    /* Enable smooth scrolling */
+    -webkit-overflow-scrolling: touch;
+    /* Ensure content can scroll */
+    overflow-y: auto;
+    /* Prevent horizontal scroll */
+    overflow-x: hidden;
+  }
+
+  /* Fix specific container heights for scrollability */
+  .main-content {
+    height: 100%;
+    min-height: 0; /* Allow flex item to shrink */
+  }
+
+  /* Ensure views with fixed height can scroll */
+  [data-timeline-container] {
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch;
   }
 
   /* Hide horizontal scrollbars on mobile */

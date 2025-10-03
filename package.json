@@ -45,7 +45,12 @@
     "env:status": "chmod +x scripts/env-status.sh && ./scripts/env-status.sh",
     "dev": "npm run env:dev && npm start",
     "prod": "npm run env:prod && npm start",
-    "build:prod": "npm run env:prod && npm run build"
+    "build:prod": "npm run env:prod && npm run build",
+    "deploy": "chmod +x deploy.sh && ./deploy.sh",
+    "deploy:public": "vercel deploy --prod --public --confirm",
+    "deploy:preview": "vercel deploy --public",
+    "vercel:link": "vercel link",
+    "vercel:env": "vercel env ls"
   },
   "eslintConfig": {
     "extends": [

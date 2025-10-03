@@ -1765,7 +1765,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
       padding: 0,
       height: '100%',
       display: 'flex',
-      flexDirection: 'column'
+      flexDirection: 'column',
+      overflow: 'auto' // Enable scrolling for mobile
     }}>
       {/* Enhanced Header */}
       <div style={{

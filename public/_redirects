@@ -1,0 +1,5 @@
+# Redirect all routes to index.html for React Router
+/*    /index.html   200
+
+# Ensure public access - no authentication required
+# These redirects ensure all routes work correctly in SPA mode

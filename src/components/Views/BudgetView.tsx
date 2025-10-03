@@ -93,13 +93,18 @@ const BudgetView: React.FC = () => {
   return (
     <div className="main-content" style={{
       background: 'var(--color-neutral-cream)',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      // Enable mobile scrolling
+      WebkitOverflowScrolling: isMobile ? 'touch' : 'auto'
     }}>
       {/* Header with Tabs */}
       <div style={{
         background: 'var(--color-neutral-cream)',
         borderBottom: '1px solid var(--color-neutral-mist)',
-        padding: isMobile ? '0 1rem' : '0 1.5rem'
+        padding: isMobile ? '0 1rem' : '0 1.5rem',
+        flexShrink: 0 // Prevent header from shrinking
       }}>
         <div style={{
           display: 'flex',
@@ -271,7 +276,10 @@ const BudgetView: React.FC = () => {
       <div style={{
         flex: 1,
         overflow: 'auto',
-        background: 'var(--color-neutral-cream)'
+        background: 'var(--color-neutral-cream)',
+        // Enhanced mobile scrolling
+        WebkitOverflowScrolling: isMobile ? 'touch' : 'auto',
+        minHeight: 0 // Allow flex item to shrink for proper scrolling
       }}>
         {activeTab === 'overview' && (
           <BudgetOverview 
