@@ -6,6 +6,7 @@ import { TripStatus, SocialUserProfile } from '../../types';
 import { userStatusService } from '../../services/userStatusService';
 import { chatService, ChatRoomWithInfo } from '../../services/chatService';
 import { socialService } from '../../services/socialService';
+import { supabase } from '../../lib/supabase';
 import { 
   User, 
   Users, 
@@ -51,14 +52,10 @@ interface ActivityItem {
 const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose }) => {
   const { trips, destinations, updateUIState } = useSupabaseApp();
   const { user, userProfile } = useAuth();
-  const { isTablet } = useResponsive();
   const [activeTab, setActiveTab] = useState<'friends' | 'activity' | 'suggestions' | 'chat'>('friends');
   const [avatarError, setAvatarError] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [nextTrip, setNextTrip] = useState<any>(null);
-  const [realUsers, setRealUsers] = useState<MockUser[]>([]);
-  const [loadingUsers, setLoadingUsers] = useState(false);
   const [friends, setFriends] = useState<SocialUserProfile[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(false);
   const [chatRooms, setChatRooms] = useState<ChatRoomWithInfo[]>([]);
@@ -67,8 +64,8 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
   // No more mock data - using live data only
 
   // Real activity and suggestions data - no more mock data
-  const [activityItems, setActivityItems] = useState<ActivityItem[]>([]);
-  const [suggestedUsers, setSuggestedUsers] = useState<MockUser[]>([]);
+  const [activityItems] = useState<ActivityItem[]>([]);
+  const [suggestedUsers] = useState<MockUser[]>([]);
 
   // Find next upcoming trip
   const findNextTrip = useMemo(() => {
@@ -95,12 +92,10 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
       // Load friends
       loadFriends();
       
-      // Load real users for development testing
-      loadRealUsersForTesting();
-      
       // Load chat rooms
       loadChatRooms();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, user]);
 
   // Load friends from socialService
@@ -122,45 +117,6 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
     }
   };
 
-  // Load real users from the database for chat testing
-  const loadRealUsersForTesting = async () => {
-    try {
-      setLoadingUsers(true);
-      
-      // Import supabase here to avoid circular dependencies
-      const { supabase } = await import('../../lib/supabase');
-      
-      // Get all users from database (excluding current user)
-      const { data: users, error } = await supabase
-        .from('users')
-        .select('id, nickname, display_name, avatar_url, email')
-        .neq('id', user?.id)
-        .limit(10);
-
-      if (error) {
-        console.warn('Could not load real users for chat testing:', error);
-        return;
-      }
-
-      // Convert to MockUser format for compatibility
-      const convertedUsers: MockUser[] = (users || []).map(dbUser => ({
-        id: dbUser.id,
-        name: dbUser.display_name || dbUser.nickname || dbUser.email?.split('@')[0] || 'Unbekannt',
-        username: `@${dbUser.nickname || dbUser.email?.split('@')[0] || 'user'}`,
-        avatar: dbUser.avatar_url,
-        isOnline: Math.random() > 0.5, // Random online status for demo
-        lastSeen: Math.random() > 0.3 ? undefined : `${Math.floor(Math.random() * 60)} Min.`,
-        mutualFriends: Math.floor(Math.random() * 15)
-      }));
-
-      setRealUsers(convertedUsers);
-      console.log('🟢 Loaded real users for chat testing:', convertedUsers.length);
-    } catch (error) {
-      console.error('Error loading real users:', error);
-    } finally {
-      setLoadingUsers(false);
-    }
-  };
 
   // Load chat rooms from database
   const loadChatRooms = async () => {
@@ -661,7 +617,7 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
         setAvatarError(false);
       }
     }
-  }, [user, userProfile]); // Watch both user and userProfile
+  }, [user, userProfile, avatarError]); // Watch user, userProfile and avatarError
 
   const renderUserProfile = () => (
     <div style={{
@@ -897,7 +853,51 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
           justifyContent: 'space-between'
         }}>
           {`Freunde (${friendsToShow.length})`}
-          <TrendingUp size={16} style={{ color: 'var(--color-primary-sage)' }} />
+          <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+            <button
+              onClick={async () => {
+                console.log('🔧 === MANUAL FRIENDS DEBUG ===');
+                try {
+                  // Manual debug of friends loading
+                  const { data: { user } } = await supabase.auth.getUser();
+                  console.log('Current user:', user?.id);
+                  
+                  // Check follows table
+                  const { data: followsData, error: followsError } = await supabase
+                    .from('follows')
+                    .select('*')
+                    .or(`follower_id.eq.${user?.id},following_id.eq.${user?.id}`);
+                  
+                  console.log('Follows data:', followsData, 'Error:', followsError);
+                  
+                  // Check friendships view
+                  const { data: friendshipsData, error: friendshipsError } = await supabase
+                    .from('friendships')
+                    .select('*')
+                    .or(`user1_id.eq.${user?.id},user2_id.eq.${user?.id}`);
+                  
+                  console.log('Friendships data:', friendshipsData, 'Error:', friendshipsError);
+                  
+                  // Re-load friends
+                  await loadFriends();
+                } catch (error) {
+                  console.error('Debug error:', error);
+                }
+              }}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--color-primary-sage)',
+                cursor: 'pointer',
+                padding: '2px',
+                fontSize: '12px'
+              }}
+              title="Debug Friends Loading"
+            >
+              🔧
+            </button>
+            <TrendingUp size={16} style={{ color: 'var(--color-primary-sage)' }} />
+          </div>
         </div>
 
         {/* Status Notice */}
