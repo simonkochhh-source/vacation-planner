@@ -854,48 +854,51 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
         }}>
           {`Freunde (${friendsToShow.length})`}
           <div style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
-            <button
-              onClick={async () => {
-                console.log('🔧 === MANUAL FRIENDS DEBUG ===');
-                try {
-                  // Manual debug of friends loading
-                  const { data: { user } } = await supabase.auth.getUser();
-                  console.log('Current user:', user?.id);
-                  
-                  // Check follows table
-                  const { data: followsData, error: followsError } = await supabase
-                    .from('follows')
-                    .select('*')
-                    .or(`follower_id.eq.${user?.id},following_id.eq.${user?.id}`);
-                  
-                  console.log('Follows data:', followsData, 'Error:', followsError);
-                  
-                  // Check friendships view
-                  const { data: friendshipsData, error: friendshipsError } = await supabase
-                    .from('friendships')
-                    .select('*')
-                    .or(`user1_id.eq.${user?.id},user2_id.eq.${user?.id}`);
-                  
-                  console.log('Friendships data:', friendshipsData, 'Error:', friendshipsError);
-                  
-                  // Re-load friends
-                  await loadFriends();
-                } catch (error) {
-                  console.error('Debug error:', error);
-                }
-              }}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--color-primary-sage)',
-                cursor: 'pointer',
-                padding: '2px',
-                fontSize: '12px'
-              }}
-              title="Debug Friends Loading"
-            >
-              🔧
-            </button>
+            {/* Debug button - only show in development */}
+            {process.env.NODE_ENV === 'development' && (
+              <button
+                onClick={async () => {
+                  console.log('🔧 === MANUAL FRIENDS DEBUG ===');
+                  try {
+                    // Manual debug of friends loading
+                    const { data: { user } } = await supabase.auth.getUser();
+                    console.log('Current user:', user?.id);
+                    
+                    // Check follows table
+                    const { data: followsData, error: followsError } = await supabase
+                      .from('follows')
+                      .select('*')
+                      .or(`follower_id.eq.${user?.id},following_id.eq.${user?.id}`);
+                    
+                    console.log('Follows data:', followsData, 'Error:', followsError);
+                    
+                    // Check friendships view
+                    const { data: friendshipsData, error: friendshipsError } = await supabase
+                      .from('friendships')
+                      .select('*')
+                      .or(`user1_id.eq.${user?.id},user2_id.eq.${user?.id}`);
+                    
+                    console.log('Friendships data:', friendshipsData, 'Error:', friendshipsError);
+                    
+                    // Re-load friends
+                    await loadFriends();
+                  } catch (error) {
+                    console.error('Debug error:', error);
+                  }
+                }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'var(--color-primary-sage)',
+                  cursor: 'pointer',
+                  padding: '2px',
+                  fontSize: '12px'
+                }}
+                title="Debug Friends Loading"
+              >
+                🔧
+              </button>
+            )}
             <TrendingUp size={16} style={{ color: 'var(--color-primary-sage)' }} />
           </div>
         </div>
