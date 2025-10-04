@@ -198,50 +198,117 @@ class SocialService implements SocialServiceInterface {
   }
 
   /**
-   * Connect directly with a user (creates immediate friendship)
+   * Send a friendship request
    */
-  async connectWithUser(targetUserId: UUID): Promise<{ friendshipId: string }> {
+  async sendFriendshipRequest(targetUserId: UUID): Promise<{ friendshipId: string }> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    console.log('🔄 Creating direct connection with:', targetUserId, 'by user:', user.id);
+    console.log('🔄 Sending friendship request to:', targetUserId, 'from user:', user.id);
 
-    // Check if friendship already exists
-    const { data: existingFriendship, error: checkError } = await supabase
-      .rpc('are_users_friends', {
-        user_a: user.id,
-        user_b: targetUserId
-      });
-
-    if (checkError) {
-      console.error('❌ Error checking existing friendship:', checkError);
-      throw new Error('Failed to check existing friendship');
-    }
-
-    if (existingFriendship) {
-      throw new Error('Friendship already exists');
-    }
-
-    // Create friendship directly
-    console.log('🔄 Adding friendship to friendships table');
+    // Send friendship request
     const { data: friendshipId, error: friendshipError } = await supabase
-      .rpc('add_friendship', {
-        user_a: user.id,
-        user_b: targetUserId
+      .rpc('send_friendship_request', {
+        requester_id: user.id,
+        target_id: targetUserId
       });
 
     if (friendshipError) {
-      console.error('❌ Failed to create friendship:', friendshipError);
-      throw new Error('Failed to create friendship');
+      console.error('❌ Failed to send friendship request:', friendshipError);
+      throw new Error('Failed to send friendship request');
     }
 
-    console.log('✅ Direct friendship established!');
-    console.log('📊 Friendship Details:', {
+    console.log('✅ Friendship request sent!');
+    console.log('📊 Request Details:', {
       friendshipId: friendshipId,
-      friendship: `${user.id} ↔ ${targetUserId}`
+      requester: user.id,
+      target: targetUserId
     });
 
     return { friendshipId };
+  }
+
+  /**
+   * Accept a friendship request
+   */
+  async acceptFriendshipRequest(requesterId: UUID): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    console.log('🔄 Accepting friendship request from:', requesterId, 'by user:', user.id);
+
+    const { data: success, error: acceptError } = await supabase
+      .rpc('accept_friendship_request', {
+        target_id: user.id,
+        requester_id: requesterId
+      });
+
+    if (acceptError) {
+      console.error('❌ Failed to accept friendship request:', acceptError);
+      throw new Error('Failed to accept friendship request');
+    }
+
+    console.log('✅ Friendship request accepted!');
+    return success;
+  }
+
+  /**
+   * Decline a friendship request
+   */
+  async declineFriendshipRequest(requesterId: UUID): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    console.log('🔄 Declining friendship request from:', requesterId, 'by user:', user.id);
+
+    const { data: success, error: declineError } = await supabase
+      .rpc('decline_friendship_request', {
+        target_id: user.id,
+        requester_id: requesterId
+      });
+
+    if (declineError) {
+      console.error('❌ Failed to decline friendship request:', declineError);
+      throw new Error('Failed to decline friendship request');
+    }
+
+    console.log('✅ Friendship request declined!');
+    return success;
+  }
+
+  /**
+   * Get pending friendship requests for current user
+   */
+  async getPendingFriendshipRequests(): Promise<SocialUserProfile[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    // Get pending requests
+    const { data: requestsData, error: requestsError } = await supabase
+      .rpc('get_pending_friendship_requests', { target_user_id: user.id });
+
+    if (requestsError) {
+      console.error('❌ Failed to get pending friendship requests:', requestsError);
+      throw new Error('Failed to get pending friendship requests');
+    }
+
+    if (!requestsData || requestsData.length === 0) {
+      return [];
+    }
+
+    // Get user profiles for requesters
+    const requesterIds = requestsData.map((req: any) => req.requester_id);
+    const { data: profiles, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .in('id', requesterIds);
+
+    if (profileError) {
+      console.error('❌ Failed to get requester profiles:', profileError);
+      throw new Error('Failed to get requester profiles');
+    }
+
+    return profiles || [];
   }
 
   /**
@@ -504,12 +571,38 @@ class SocialService implements SocialServiceInterface {
   /**
    * Get friendship status between current user and target user
    */
-  async getFriendshipStatus(targetUserId: UUID): Promise<'friends' | 'none'> {
+  async getFriendshipStatus(targetUserId: UUID): Promise<'friends' | 'pending_sent' | 'pending_received' | 'none'> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return 'none';
 
-    const areFriends = await this.areFriends(user.id, targetUserId);
-    return areFriends ? 'friends' : 'none';
+    const { data: statusData, error } = await supabase
+      .rpc('get_friendship_status', {
+        user_a: user.id,
+        user_b: targetUserId
+      });
+
+    if (error) {
+      console.error('Error getting friendship status:', error);
+      return 'none';
+    }
+
+    if (!statusData || statusData.length === 0) {
+      return 'none';
+    }
+
+    const friendship = statusData[0];
+    
+    if (friendship.status === 'ACCEPTED') {
+      return 'friends';
+    } else if (friendship.status === 'PENDING') {
+      if (friendship.requested_by === user.id) {
+        return 'pending_sent';
+      } else {
+        return 'pending_received';
+      }
+    }
+
+    return 'none';
   }
 
   /**

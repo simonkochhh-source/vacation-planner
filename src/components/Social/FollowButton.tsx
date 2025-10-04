@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { User, Check, Clock, X } from 'lucide-react';
-import { UUID, FollowStatus } from '../../types';
+import { UUID } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
+
+type FriendshipStatus = 'none' | 'pending_sent' | 'pending_received' | 'friends';
 
 interface FollowButtonProps {
   targetUserId: UUID;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'default' | 'compact';
-  onFollowChange?: (status: FollowStatus | 'none') => void;
+  onFollowChange?: (status: FriendshipStatus) => void;
   className?: string;
   style?: React.CSSProperties;
 }
@@ -22,7 +24,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   style
 }) => {
   const { user } = useAuth();
-  const [friendshipStatus, setFriendshipStatus] = useState<'friends' | 'none'>('none');
+  const [friendshipStatus, setFriendshipStatus] = useState<FriendshipStatus>('none');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,21 +52,53 @@ const FollowButton: React.FC<FollowButtonProps> = ({
       setLoading(true);
       setError(null);
       
-      let newStatus: 'friends' | 'none';
+      let newStatus: FriendshipStatus;
       
-      if (friendshipStatus === 'none') {
-        await socialService.connectWithUser(targetUserId);
-        newStatus = 'friends';
-      } else {
-        await socialService.removeFriend(targetUserId);
-        newStatus = 'none';
+      switch (friendshipStatus) {
+        case 'none':
+          // Send friendship request
+          await socialService.sendFriendshipRequest(targetUserId);
+          newStatus = 'pending_sent';
+          break;
+        case 'pending_received':
+          // Accept friendship request
+          await socialService.acceptFriendshipRequest(targetUserId);
+          newStatus = 'friends';
+          break;
+        case 'friends':
+          // Remove friendship
+          await socialService.removeFriend(targetUserId);
+          newStatus = 'none';
+          break;
+        case 'pending_sent':
+          // Can't do anything for sent requests
+          return;
+        default:
+          return;
       }
       
       setFriendshipStatus(newStatus);
-      onFollowChange?.(newStatus as any); // Legacy callback
+      onFollowChange?.(newStatus);
       
     } catch (error: any) {
       console.error('Connect action failed:', error);
+      setError(error.message || 'Aktion fehlgeschlagen');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeclineRequest = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      await socialService.declineFriendshipRequest(targetUserId);
+      setFriendshipStatus('none');
+      onFollowChange?.('none');
+      
+    } catch (error: any) {
+      console.error('Decline action failed:', error);
       setError(error.message || 'Aktion fehlgeschlagen');
     } finally {
       setLoading(false);
@@ -78,6 +112,8 @@ const FollowButton: React.FC<FollowButtonProps> = ({
 
     switch (friendshipStatus) {
       case 'none': return 'Connect';
+      case 'pending_sent': return 'Request Sent';
+      case 'pending_received': return 'Accept';
       case 'friends': return 'Connected';
       default: return 'Connect';
     }
@@ -88,6 +124,8 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     
     switch (friendshipStatus) {
       case 'none': return <User size={iconSize} />;
+      case 'pending_sent': return <Clock size={iconSize} />;
+      case 'pending_received': return <Check size={iconSize} />;
       case 'friends': return <Check size={iconSize} />;
       default: return <User size={iconSize} />;
     }
@@ -125,6 +163,15 @@ const FollowButton: React.FC<FollowButtonProps> = ({
         baseStyle.background = '#3b82f6';
         baseStyle.color = 'white';
         break;
+      case 'pending_sent':
+        baseStyle.background = '#6b7280';
+        baseStyle.color = 'white';
+        baseStyle.cursor = 'not-allowed';
+        break;
+      case 'pending_received':
+        baseStyle.background = '#f59e0b';
+        baseStyle.color = 'white';
+        break;
       case 'friends':
         baseStyle.background = '#10b981';
         baseStyle.color = 'white';
@@ -140,6 +187,8 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   const getTooltipText = () => {
     switch (friendshipStatus) {
       case 'none': return 'Mit diesem Nutzer vernetzen';
+      case 'pending_sent': return 'Freundschaftsanfrage gesendet';
+      case 'pending_received': return 'Freundschaftsanfrage annehmen';
       case 'friends': return 'Verbindung trennen';
       default: return 'Connect';
     }
@@ -160,10 +209,72 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     );
   }
 
+  // Handle pending_received status with Accept/Decline buttons
+  if (friendshipStatus === 'pending_received') {
+    return (
+      <div style={{ display: 'flex', gap: '4px' }}>
+        <button
+          onClick={handleConnectAction}
+          disabled={loading}
+          className={className}
+          style={{
+            ...getButtonStyle(),
+            background: '#10b981',
+            minWidth: variant === 'compact' ? 'auto' : size === 'sm' ? '60px' : '70px'
+          }}
+          title="Freundschaftsanfrage annehmen"
+        >
+          {loading ? (
+            <div style={{
+              width: size === 'sm' ? '14px' : '16px',
+              height: size === 'sm' ? '14px' : '16px',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              borderTop: '2px solid white',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          ) : (
+            <>
+              <Check size={size === 'sm' ? 14 : size === 'lg' ? 18 : 16} />
+              {variant !== 'compact' && <span>Accept</span>}
+            </>
+          )}
+        </button>
+        <button
+          onClick={handleDeclineRequest}
+          disabled={loading}
+          className={className}
+          style={{
+            ...getButtonStyle(),
+            background: '#ef4444',
+            minWidth: variant === 'compact' ? 'auto' : size === 'sm' ? '60px' : '70px'
+          }}
+          title="Freundschaftsanfrage ablehnen"
+        >
+          {loading ? (
+            <div style={{
+              width: size === 'sm' ? '14px' : '16px',
+              height: size === 'sm' ? '14px' : '16px',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              borderTop: '2px solid white',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite'
+            }} />
+          ) : (
+            <>
+              <X size={size === 'sm' ? 14 : size === 'lg' ? 18 : 16} />
+              {variant !== 'compact' && <span>Decline</span>}
+            </>
+          )}
+        </button>
+      </div>
+    );
+  }
+
   return (
     <button
       onClick={handleConnectAction}
-      disabled={loading}
+      disabled={loading || friendshipStatus === 'pending_sent'}
       className={className}
       style={getButtonStyle()}
       title={getTooltipText()}
