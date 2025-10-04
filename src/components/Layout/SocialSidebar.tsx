@@ -872,11 +872,9 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
                     
                     console.log('Follows data:', followsData, 'Error:', followsError);
                     
-                    // Check friendships view
+                    // Check friendships table using RPC function
                     const { data: friendshipsData, error: friendshipsError } = await supabase
-                      .from('friendships')
-                      .select('*')
-                      .or(`user1_id.eq.${user?.id},user2_id.eq.${user?.id}`);
+                      .rpc('get_user_friends', { target_user_id: user?.id });
                     
                     console.log('Friendships data:', friendshipsData, 'Error:', friendshipsError);
                     

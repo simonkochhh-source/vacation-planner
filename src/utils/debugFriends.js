@@ -34,12 +34,10 @@ window.debugFriends = async function() {
       count: followsData?.length || 0
     });
     
-    // Test 2: Check friendships view/table
-    console.log('\n🔍 === CHECKING FRIENDSHIPS VIEW ===');
+    // Test 2: Check friendships table using RPC function
+    console.log('\n🔍 === CHECKING FRIENDSHIPS TABLE ===');
     const { data: friendshipsData, error: friendshipsError } = await supabase
-      .from('friendships')
-      .select('*')
-      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
+      .rpc('get_user_friends', { target_user_id: user.id });
     
     console.log('Friendships query result:', { 
       data: friendshipsData, 
