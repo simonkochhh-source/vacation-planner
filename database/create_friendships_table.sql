@@ -36,7 +36,13 @@ CREATE POLICY "Users can view their own friendships" ON friendships
 CREATE POLICY "Service can manage friendships" ON friendships
     FOR ALL USING (true);
 
--- 6. Create helper functions
+-- 6. Drop existing functions if they exist
+DROP FUNCTION IF EXISTS are_users_friends(UUID, UUID);
+DROP FUNCTION IF EXISTS get_user_friends(UUID);
+DROP FUNCTION IF EXISTS add_friendship(UUID, UUID);
+DROP FUNCTION IF EXISTS remove_friendship(UUID, UUID);
+
+-- 7. Create helper functions
 
 -- Function to add a friendship
 CREATE OR REPLACE FUNCTION add_friendship(user_a UUID, user_b UUID)
@@ -148,7 +154,7 @@ BEGIN
 END;
 $$;
 
--- 7. Grant permissions
+-- 8. Grant permissions
 GRANT SELECT, INSERT, UPDATE, DELETE ON friendships TO authenticated;
 GRANT EXECUTE ON FUNCTION add_friendship(UUID, UUID) TO authenticated;
 GRANT EXECUTE ON FUNCTION remove_friendship(UUID, UUID) TO authenticated;
