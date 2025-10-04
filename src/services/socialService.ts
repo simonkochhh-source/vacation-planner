@@ -198,6 +198,53 @@ class SocialService implements SocialServiceInterface {
   }
 
   /**
+   * Connect directly with a user (creates immediate friendship)
+   */
+  async connectWithUser(targetUserId: UUID): Promise<{ friendshipId: string }> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    console.log('🔄 Creating direct connection with:', targetUserId, 'by user:', user.id);
+
+    // Check if friendship already exists
+    const { data: existingFriendship, error: checkError } = await supabase
+      .rpc('are_users_friends', {
+        user_a: user.id,
+        user_b: targetUserId
+      });
+
+    if (checkError) {
+      console.error('❌ Error checking existing friendship:', checkError);
+      throw new Error('Failed to check existing friendship');
+    }
+
+    if (existingFriendship) {
+      throw new Error('Friendship already exists');
+    }
+
+    // Create friendship directly
+    console.log('🔄 Adding friendship to friendships table');
+    const { data: friendshipId, error: friendshipError } = await supabase
+      .rpc('add_friendship', {
+        user_a: user.id,
+        user_b: targetUserId
+      });
+
+    if (friendshipError) {
+      console.error('❌ Failed to create friendship:', friendshipError);
+      throw new Error('Failed to create friendship');
+    }
+
+    console.log('✅ Direct friendship established!');
+    console.log('📊 Friendship Details:', {
+      friendshipId: friendshipId,
+      friendship: `${user.id} ↔ ${targetUserId}`
+    });
+
+    return { friendshipId };
+  }
+
+  /**
    * Accept a friend request (creates bidirectional friendship)
    */
   async acceptFriendRequest(requesterId: UUID): Promise<{ accepted: Follow; friendshipId: string }> {
@@ -455,7 +502,18 @@ class SocialService implements SocialServiceInterface {
   }
 
   /**
-   * Get follow status between current user and target user
+   * Get friendship status between current user and target user
+   */
+  async getFriendshipStatus(targetUserId: UUID): Promise<'friends' | 'none'> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return 'none';
+
+    const areFriends = await this.areFriends(user.id, targetUserId);
+    return areFriends ? 'friends' : 'none';
+  }
+
+  /**
+   * Get follow status between current user and target user (legacy)
    */
   async getFollowStatus(targetUserId: UUID): Promise<FollowStatus | 'none'> {
     const { data: { user } } = await supabase.auth.getUser();

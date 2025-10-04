@@ -22,7 +22,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   style
 }) => {
   const { user } = useAuth();
-  const [followStatus, setFollowStatus] = useState<FollowStatus | 'none'>('none');
+  const [friendshipStatus, setFriendshipStatus] = useState<'friends' | 'none'>('none');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,43 +32,39 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   }
 
   useEffect(() => {
-    loadFollowStatus();
+    loadFriendshipStatus();
   }, [targetUserId]);
 
-  const loadFollowStatus = async () => {
+  const loadFriendshipStatus = async () => {
     try {
-      const status = await socialService.getFollowStatus(targetUserId);
-      setFollowStatus(status);
+      const status = await socialService.getFriendshipStatus(targetUserId);
+      setFriendshipStatus(status);
     } catch (error) {
-      console.error('Failed to load follow status:', error);
+      console.error('Failed to load friendship status:', error);
       setError('Status konnte nicht geladen werden');
     }
   };
 
-  const handleFollowAction = async () => {
+  const handleConnectAction = async () => {
     try {
       setLoading(true);
       setError(null);
       
-      let newStatus: FollowStatus | 'none';
+      let newStatus: 'friends' | 'none';
       
-      if (followStatus === 'none') {
-        await socialService.followUser(targetUserId);
-        newStatus = FollowStatus.PENDING;
-      } else if (followStatus === FollowStatus.ACCEPTED || followStatus === FollowStatus.PENDING) {
-        await socialService.unfollowUser(targetUserId);
-        newStatus = 'none';
+      if (friendshipStatus === 'none') {
+        await socialService.connectWithUser(targetUserId);
+        newStatus = 'friends';
       } else {
-        // For declined status, try following again
-        await socialService.followUser(targetUserId);
-        newStatus = FollowStatus.PENDING;
+        await socialService.removeFriend(targetUserId);
+        newStatus = 'none';
       }
       
-      setFollowStatus(newStatus);
-      onFollowChange?.(newStatus);
+      setFriendshipStatus(newStatus);
+      onFollowChange?.(newStatus as any); // Legacy callback
       
     } catch (error: any) {
-      console.error('Follow action failed:', error);
+      console.error('Connect action failed:', error);
       setError(error.message || 'Aktion fehlgeschlagen');
     } finally {
       setLoading(false);
@@ -77,19 +73,12 @@ const FollowButton: React.FC<FollowButtonProps> = ({
 
   const getButtonText = () => {
     if (variant === 'compact') {
-      switch (followStatus) {
-        case 'none': return '';
-        case FollowStatus.PENDING: return '';
-        case FollowStatus.ACCEPTED: return '';
-        default: return '';
-      }
+      return '';
     }
 
-    switch (followStatus) {
+    switch (friendshipStatus) {
       case 'none': return 'Connect';
-      case FollowStatus.PENDING: return 'Angefragt';
-      case FollowStatus.ACCEPTED: return 'Connected';
-      case FollowStatus.DECLINED: return 'Connect';
+      case 'friends': return 'Connected';
       default: return 'Connect';
     }
   };
@@ -97,11 +86,9 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   const getButtonIcon = () => {
     const iconSize = size === 'sm' ? 14 : size === 'lg' ? 18 : 16;
     
-    switch (followStatus) {
+    switch (friendshipStatus) {
       case 'none': return <User size={iconSize} />;
-      case FollowStatus.PENDING: return <Clock size={iconSize} />;
-      case FollowStatus.ACCEPTED: return <Check size={iconSize} />;
-      case FollowStatus.DECLINED: return <User size={iconSize} />;
+      case 'friends': return <Check size={iconSize} />;
       default: return <User size={iconSize} />;
     }
   };
@@ -133,21 +120,13 @@ const FollowButton: React.FC<FollowButtonProps> = ({
     }
 
     // Status-specific colors
-    switch (followStatus) {
+    switch (friendshipStatus) {
       case 'none':
         baseStyle.background = '#3b82f6';
         baseStyle.color = 'white';
         break;
-      case FollowStatus.PENDING:
-        baseStyle.background = '#f59e0b';
-        baseStyle.color = 'white';
-        break;
-      case FollowStatus.ACCEPTED:
+      case 'friends':
         baseStyle.background = '#10b981';
-        baseStyle.color = 'white';
-        break;
-      case FollowStatus.DECLINED:
-        baseStyle.background = 'var(--color-text-secondary)';
         baseStyle.color = 'white';
         break;
       default:
@@ -159,11 +138,9 @@ const FollowButton: React.FC<FollowButtonProps> = ({
   };
 
   const getTooltipText = () => {
-    switch (followStatus) {
+    switch (friendshipStatus) {
       case 'none': return 'Mit diesem Nutzer vernetzen';
-      case FollowStatus.PENDING: return 'Verbindungsanfrage gesendet';
-      case FollowStatus.ACCEPTED: return 'Verbindung trennen';
-      case FollowStatus.DECLINED: return 'Erneut vernetzen';
+      case 'friends': return 'Verbindung trennen';
       default: return 'Connect';
     }
   };
@@ -185,18 +162,18 @@ const FollowButton: React.FC<FollowButtonProps> = ({
 
   return (
     <button
-      onClick={handleFollowAction}
+      onClick={handleConnectAction}
       disabled={loading}
       className={className}
       style={getButtonStyle()}
       title={getTooltipText()}
       onMouseOver={(e) => {
-        if (!loading && followStatus === FollowStatus.ACCEPTED) {
+        if (!loading && friendshipStatus === 'friends') {
           e.currentTarget.style.background = '#ef4444';
         }
       }}
       onMouseOut={(e) => {
-        if (!loading && followStatus === FollowStatus.ACCEPTED) {
+        if (!loading && friendshipStatus === 'friends') {
           e.currentTarget.style.background = '#10b981';
         }
       }}
