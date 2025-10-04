@@ -864,13 +864,13 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
                     const { data: { user } } = await supabase.auth.getUser();
                     console.log('Current user:', user?.id);
                     
-                    // Check follows table
-                    const { data: followsData, error: followsError } = await supabase
-                      .from('follows')
+                    // Check friendships table directly
+                    const { data: friendshipsDirectData, error: friendshipsDirectError } = await supabase
+                      .from('friendships')
                       .select('*')
-                      .or(`follower_id.eq.${user?.id},following_id.eq.${user?.id}`);
+                      .or(`user1_id.eq.${user?.id},user2_id.eq.${user?.id}`);
                     
-                    console.log('Follows data:', followsData, 'Error:', followsError);
+                    console.log('Friendships direct data:', friendshipsDirectData, 'Error:', friendshipsDirectError);
                     
                     // Check friendships table using RPC function
                     const { data: friendshipsData, error: friendshipsError } = await supabase

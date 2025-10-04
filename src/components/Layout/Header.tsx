@@ -5,7 +5,7 @@ import ModernButton from '../UI/ModernButton';
 import HeaderBrand from './HeaderBrand';
 import HeaderNavigation from './HeaderNavigation';
 import HeaderSearch from './HeaderSearch';
-import FollowRequestsDropdown from '../Social/FollowRequestsDropdown';
+import FriendshipRequestsDropdown from '../Social/FollowRequestsDropdown';
 import AvatarUpload from '../User/AvatarUpload';
 import { useResponsive } from '../../hooks/useResponsive';
 import { useAuth } from '../../contexts/AuthContext';
@@ -131,8 +131,8 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
               onViewChange={handleViewChange}
             />
 
-            {/* Follow Requests Dropdown - Only show if user is logged in */}
-            {user && <FollowRequestsDropdown />}
+            {/* Friendship Requests Dropdown - Only show if user is logged in */}
+            {user && <FriendshipRequestsDropdown />}
 
             {/* My Profile Avatar - Only show if user is logged in */}
             {user && (

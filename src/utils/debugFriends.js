@@ -21,17 +21,17 @@ window.debugFriends = async function() {
     
     console.log('✅ Current user:', user.id);
     
-    // Test 1: Check follows table
-    console.log('\n🔍 === CHECKING FOLLOWS TABLE ===');
-    const { data: followsData, error: followsError } = await supabase
-      .from('follows')
+    // Test 1: Check friendships table directly
+    console.log('\n🔍 === CHECKING FRIENDSHIPS TABLE (DIRECT) ===');
+    const { data: friendshipsDirectData, error: friendshipsDirectError } = await supabase
+      .from('friendships')
       .select('*')
-      .or(`follower_id.eq.${user.id},following_id.eq.${user.id}`);
+      .or(`user1_id.eq.${user.id},user2_id.eq.${user.id}`);
     
-    console.log('Follows query result:', { 
-      data: followsData, 
-      error: followsError?.message,
-      count: followsData?.length || 0
+    console.log('Friendships direct query result:', { 
+      data: friendshipsDirectData, 
+      error: friendshipsDirectError?.message,
+      count: friendshipsDirectData?.length || 0
     });
     
     // Test 2: Check friendships table using RPC function
@@ -69,40 +69,18 @@ window.debugFriends = async function() {
       console.error('❌ socialService.getFriends() error:', serviceError);
     }
     
-    // Test 5: Check accepted follows for bidirectional relationships
-    console.log('\n🔍 === CHECKING BIDIRECTIONAL RELATIONSHIPS ===');
-    const acceptedFollows = followsData?.filter(f => f.status === 'ACCEPTED') || [];
-    console.log('Accepted follows:', acceptedFollows);
+    // Test 5: Check accepted friendships
+    console.log('\n🔍 === CHECKING ACCEPTED FRIENDSHIPS ===');
+    const acceptedFriendships = friendshipsDirectData?.filter(f => f.status === 'ACCEPTED') || [];
+    console.log('Accepted friendships:', acceptedFriendships);
     
-    // Find bidirectional pairs
-    const bidirectionalPairs = [];
-    for (const follow of acceptedFollows) {
-      const reciprocal = acceptedFollows.find(f => 
-        f.follower_id === follow.following_id && 
-        f.following_id === follow.follower_id
-      );
-      
-      if (reciprocal) {
-        const pair = {
-          user1: follow.follower_id,
-          user2: follow.following_id,
-          currentUser: user.id
-        };
-        
-        // Avoid duplicates
-        const alreadyExists = bidirectionalPairs.some(p => 
-          (p.user1 === pair.user1 && p.user2 === pair.user2) ||
-          (p.user1 === pair.user2 && p.user2 === pair.user1)
-        );
-        
-        if (!alreadyExists) {
-          bidirectionalPairs.push(pair);
-        }
-      }
-    }
+    // Count friendships involving current user
+    const userFriendships = acceptedFriendships.filter(f => 
+      f.user1_id === user.id || f.user2_id === user.id
+    );
     
-    console.log('Bidirectional pairs found:', bidirectionalPairs);
-    console.log('Should show as friends count:', bidirectionalPairs.length);
+    console.log('User friendships found:', userFriendships);
+    console.log('Should show as friends count:', userFriendships.length);
     
     console.log('\n✅ === DEBUG COMPLETE ===');
     

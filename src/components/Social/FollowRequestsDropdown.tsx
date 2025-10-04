@@ -1,20 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Users, Check, X, Bell } from 'lucide-react';
-import { Follow, FollowStatus, SocialUserProfile } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
 import AvatarUpload from '../User/AvatarUpload';
 
-interface FollowRequestsDropdownProps {
+interface FriendshipRequestsDropdownProps {
   onRequestUpdate?: () => void;
 }
 
-const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
+const FriendshipRequestsDropdown: React.FC<FriendshipRequestsDropdownProps> = ({
   onRequestUpdate
 }) => {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
-  const [requests, setRequests] = useState<Follow[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   
@@ -22,7 +21,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
 
   useEffect(() => {
     if (user) {
-      loadFollowRequests();
+      loadFriendshipRequests();
     }
   }, [user]);
 
@@ -37,45 +36,45 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const loadFollowRequests = async () => {
+  const loadFriendshipRequests = async () => {
     try {
       setLoading(true);
-      const followRequests = await socialService.getFollowRequests();
-      setRequests(followRequests);
+      const friendshipRequests = await socialService.getPendingFriendshipRequests();
+      setRequests(friendshipRequests);
     } catch (error) {
-      console.error('Failed to load follow requests:', error);
+      console.error('Failed to load friendship requests:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAcceptRequest = async (followId: string) => {
+  const handleAcceptRequest = async (requesterId: string) => {
     try {
-      setActionLoading(followId);
-      await socialService.acceptFollowRequest(followId);
+      setActionLoading(requesterId);
+      await socialService.acceptFriendshipRequest(requesterId);
       
       // Remove from local state
-      setRequests(prev => prev.filter(req => req.id !== followId));
+      setRequests(prev => prev.filter(req => req.requester_id !== requesterId));
       onRequestUpdate?.();
       
     } catch (error) {
-      console.error('Failed to accept follow request:', error);
+      console.error('Failed to accept friendship request:', error);
     } finally {
       setActionLoading(null);
     }
   };
 
-  const handleDeclineRequest = async (followId: string) => {
+  const handleDeclineRequest = async (requesterId: string) => {
     try {
-      setActionLoading(followId);
-      await socialService.declineFollowRequest(followId);
+      setActionLoading(requesterId);
+      await socialService.declineFriendshipRequest(requesterId);
       
       // Remove from local state
-      setRequests(prev => prev.filter(req => req.id !== followId));
+      setRequests(prev => prev.filter(req => req.requester_id !== requesterId));
       onRequestUpdate?.();
       
     } catch (error) {
-      console.error('Failed to decline follow request:', error);
+      console.error('Failed to decline friendship request:', error);
     } finally {
       setActionLoading(null);
     }
@@ -84,7 +83,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
     if (!isOpen) {
-      loadFollowRequests(); // Refresh when opening
+      loadFriendshipRequests(); // Refresh when opening
     }
   };
 
@@ -109,7 +108,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
         }}
         onMouseOver={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.3)'}
         onMouseOut={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.2)'}
-        title="Follow-Anfragen"
+        title="Freundschaftsanfragen"
       >
         <Users size={18} />
         
@@ -166,7 +165,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
               gap: '8px'
             }}>
               <Users size={16} />
-              Follow-Anfragen
+              Freundschaftsanfragen
               {requests.length > 0 && (
                 <span style={{
                   background: '#ef4444',
@@ -202,7 +201,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
                   animation: 'spin 1s linear infinite',
                   margin: '0 auto 8px'
                 }} />
-                Lade Anfragen...
+                Lade Freundschaftsanfragen...
               </div>
             ) : requests.length === 0 ? (
               <div style={{
@@ -216,14 +215,14 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
                   opacity: 0.5
                 }} />
                 <div style={{ fontSize: '0.875rem' }}>
-                  Keine neuen Follow-Anfragen
+                  Keine neuen Freundschaftsanfragen
                 </div>
               </div>
             ) : (
               <div>
                 {requests.map((request) => (
                   <div
-                    key={request.id}
+                    key={request.requester_id}
                     style={{
                       padding: '16px 20px',
                       borderBottom: '1px solid #f9fafb',
@@ -235,7 +234,7 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
                     {/* Avatar */}
                     <div style={{ flexShrink: 0 }}>
                       <AvatarUpload
-                        currentAvatarUrl={(request as any).user_profiles?.avatar_url}
+                        currentAvatarUrl={request.user_profiles?.avatar_url}
                         size="small"
                         editable={false}
                       />
@@ -249,22 +248,22 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
                         color: '#1f2937',
                         marginBottom: '2px'
                       }}>
-                        @{(request as any).user_profiles?.nickname || 'Unbekannt'}
+                        @{request.user_profiles?.nickname || 'Unbekannt'}
                       </div>
-                      {(request as any).user_profiles?.display_name && (
+                      {request.user_profiles?.display_name && (
                         <div style={{
                           fontSize: '0.75rem',
                           color: 'var(--color-text-secondary)',
                           marginBottom: '4px'
                         }}>
-                          {(request as any).user_profiles?.display_name}
+                          {request.user_profiles?.display_name}
                         </div>
                       )}
                       <div style={{
                         fontSize: '0.75rem',
                         color: 'var(--color-text-secondary)'
                       }}>
-                        vor {getTimeAgo(request.created_at)}
+                        vor {getTimeAgo(request.requested_at)}
                       </div>
                     </div>
 
@@ -275,19 +274,19 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
                       flexShrink: 0
                     }}>
                       <button
-                        onClick={() => handleAcceptRequest(request.id)}
-                        disabled={actionLoading === request.id}
+                        onClick={() => handleAcceptRequest(request.requester_id)}
+                        disabled={actionLoading === request.requester_id}
                         style={{
                           background: '#10b981',
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
                           padding: '6px',
-                          cursor: actionLoading === request.id ? 'not-allowed' : 'pointer',
+                          cursor: actionLoading === request.requester_id ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          opacity: actionLoading === request.id ? 0.6 : 1
+                          opacity: actionLoading === request.requester_id ? 0.6 : 1
                         }}
                         title="Akzeptieren"
                       >
@@ -295,19 +294,19 @@ const FollowRequestsDropdown: React.FC<FollowRequestsDropdownProps> = ({
                       </button>
                       
                       <button
-                        onClick={() => handleDeclineRequest(request.id)}
-                        disabled={actionLoading === request.id}
+                        onClick={() => handleDeclineRequest(request.requester_id)}
+                        disabled={actionLoading === request.requester_id}
                         style={{
                           background: '#ef4444',
                           color: 'white',
                           border: 'none',
                           borderRadius: '6px',
                           padding: '6px',
-                          cursor: actionLoading === request.id ? 'not-allowed' : 'pointer',
+                          cursor: actionLoading === request.requester_id ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          opacity: actionLoading === request.id ? 0.6 : 1
+                          opacity: actionLoading === request.requester_id ? 0.6 : 1
                         }}
                         title="Ablehnen"
                       >
@@ -338,4 +337,4 @@ const getTimeAgo = (dateString: string): string => {
   return `${Math.floor(diffInSeconds / 604800)} Wochen`;
 };
 
-export default FollowRequestsDropdown;
+export default FriendshipRequestsDropdown;

@@ -410,17 +410,17 @@ export const getTripPermissionsAsync = async (trip: Trip, currentUserId: UUID): 
   const isTagged = taggedUsers.includes(currentUserId);
   const isPublic = privacy === TripPrivacy.PUBLIC;
   
-  // For CONTACTS privacy, check if users are following each other
-  let isFollowing = false;
+  // For CONTACTS privacy, check if users are friends
+  let areFriends = false;
   if (privacy === TripPrivacy.CONTACTS && !isOwner && !isTagged) {
     try {
       // Dynamic import to avoid circular dependency
       const { socialService } = await import('../services/socialService');
-      const followStatus = await socialService.getFriendshipStatus(ownerId);
-      isFollowing = followStatus === 'friends';
+      const friendshipStatus = await socialService.getFriendshipStatus(ownerId);
+      areFriends = friendshipStatus === 'friends';
     } catch (error) {
-      console.error('Error checking follow status:', error);
-      isFollowing = false;
+      console.error('Error checking friendship status:', error);
+      areFriends = false;
     }
   }
   
@@ -434,8 +434,8 @@ export const getTripPermissionsAsync = async (trip: Trip, currentUserId: UUID): 
     // Anyone can see public trips
     canView = true;
   } else if (privacy === TripPrivacy.CONTACTS) {
-    // Only followers can see contact trips
-    canView = isFollowing;
+    // Only friends can see contact trips
+    canView = areFriends;
   } else {
     // Private trips - only owner and tagged users (already handled above)
     canView = false;
@@ -496,11 +496,11 @@ export interface AppContextType {
 // Social Network Types
 // =====================================================
 
-// Follow relationship status
-export enum FollowStatus {
-  PENDING = 'pending',
-  ACCEPTED = 'accepted',
-  DECLINED = 'declined'
+// Friendship status
+export enum FriendshipStatus {
+  PENDING = 'PENDING',
+  ACCEPTED = 'ACCEPTED',
+  DECLINED = 'DECLINED'
 }
 
 // Activity types for the social feed
@@ -523,15 +523,6 @@ export enum ActivityType {
   DESTINATION_ADDED = 'destination_added'
 }
 
-// Follow relationship interface (legacy - for backward compatibility)
-export interface Follow {
-  id: UUID;
-  follower_id: UUID;
-  following_id: UUID;
-  status: FollowStatus;
-  created_at: DateString;
-  updated_at: DateString;
-}
 
 // Friendship interface (bidirectional relationship)
 export interface Friendship {
@@ -682,7 +673,7 @@ export interface UserSearchResult {
   follower_count: number;
   trip_count: number;
   is_verified: boolean;
-  follow_status?: FollowStatus | 'none'; // Current user's relationship to this user
+  friendship_status?: FriendshipStatus | 'none'; // Current user's relationship to this user
 }
 
 // Social statistics
@@ -694,13 +685,13 @@ export interface SocialStats {
   contact_trip_count: number;
 }
 
-// Follow request/response interfaces
-export interface FollowRequest {
+// Friendship request/response interfaces
+export interface FriendshipRequest {
   target_user_id: UUID;
 }
 
-export interface FollowResponse {
-  follow_id: UUID;
+export interface FriendshipResponse {
+  friendship_id: UUID;
   action: 'accept' | 'decline';
 }
 
@@ -718,7 +709,7 @@ export interface SocialFeedFilters {
 export const getSocialTripPermissions = (
   trip: Trip, 
   currentUserId: UUID, 
-  followStatus?: FollowStatus | 'none'
+  friendshipStatus?: FriendshipStatus | 'none'
 ): TripPermissions => {
   if (!trip || !currentUserId) {
     return {
@@ -738,7 +729,7 @@ export const getSocialTripPermissions = (
   const isTagged = taggedUsers.includes(currentUserId);
   const isPublic = privacy === TripPrivacy.PUBLIC;
   const isContacts = privacy === TripPrivacy.CONTACTS;
-  const isFollowing = followStatus === FollowStatus.ACCEPTED;
+  const areFriends = friendshipStatus === FriendshipStatus.ACCEPTED;
   
   // Determine view permissions based on privacy level
   let canView = false;
@@ -746,8 +737,8 @@ export const getSocialTripPermissions = (
     canView = true; // Owners and tagged users can always view
   } else if (isPublic) {
     canView = true; // Public trips are visible to everyone
-  } else if (isContacts && isFollowing) {
-    canView = true; // Contact trips are visible to followers
+  } else if (isContacts && areFriends) {
+    canView = true; // Contact trips are visible to friends
   }
   
   return {
@@ -811,21 +802,20 @@ export interface CreatePhotoShareData {
 
 // Social service interface types
 export interface SocialServiceInterface {
-  // Follow management
-  followUser: (targetUserId: UUID) => Promise<Follow>;
-  unfollowUser: (targetUserId: UUID) => Promise<void>;
-  acceptFollowRequest: (followId: UUID) => Promise<void>;
-  declineFollowRequest: (followId: UUID) => Promise<void>;
+  // Friendship management
+  sendFriendshipRequest: (targetUserId: UUID) => Promise<any>;
+  acceptFriendshipRequest: (requesterId: UUID) => Promise<boolean>;
+  declineFriendshipRequest: (requesterId: UUID) => Promise<boolean>;
+  removeFriend: (targetUserId: UUID) => Promise<void>;
   
   // User search and discovery
   searchUsers: (query: string, limit?: number) => Promise<UserSearchResult[]>;
   getUserProfile: (userId: UUID) => Promise<SocialUserProfile>;
   
-  // Follow relationships
-  getFollowers: (userId: UUID) => Promise<SocialUserProfile[]>;
-  getFollowing: (userId: UUID) => Promise<SocialUserProfile[]>;
-  getFollowRequests: () => Promise<Follow[]>;
-  getFollowStatus: (targetUserId: UUID) => Promise<FollowStatus | 'none'>;
+  // Friendship relationships
+  getFriends: (userId?: UUID) => Promise<SocialUserProfile[]>;
+  getPendingFriendshipRequests: () => Promise<SocialUserProfile[]>;
+  getFriendshipStatus: (targetUserId: UUID) => Promise<string>;
   
   // Activity feed
   getActivityFeed: (limit?: number) => Promise<ActivityFeedItem[]>;

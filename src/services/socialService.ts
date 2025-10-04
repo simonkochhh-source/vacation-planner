@@ -1,13 +1,11 @@
 /**
  * Social Network Service
- * Handles user following, activity feeds, and social interactions
+ * Handles user friendships, activity feeds, and social interactions
  */
 
 import { supabase } from '../lib/supabase';
 import {
   UUID,
-  Follow,
-  FollowStatus,
   UserActivity,
   ActivityType,
   SocialUserProfile,
@@ -24,98 +22,12 @@ import {
 class SocialService implements SocialServiceInterface {
   
   // =====================================================
-  // Follow Management
+  // Friendship Management
   // =====================================================
   
-  /**
-   * Send a follow request to another user
-   */
-  async followUser(targetUserId: UUID): Promise<Follow> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
 
-    // Check if relationship already exists
-    const { data: existing } = await supabase
-      .from('follows')
-      .select('*')
-      .eq('follower_id', user.id)
-      .eq('following_id', targetUserId)
-      .single();
 
-    if (existing) {
-      throw new Error('Follow relationship already exists');
-    }
 
-    const { data, error } = await supabase
-      .from('follows')
-      .insert({
-        follower_id: user.id,
-        following_id: targetUserId,
-        status: FollowStatus.PENDING
-      })
-      .select('*')
-      .single();
-
-    if (error) throw new Error(`Failed to create follow request: ${error.message}`);
-    
-    // Note: Skip activity creation for follow requests as they are not trip/destination related
-    // and would violate the activity_has_related_item constraint
-
-    return data;
-  }
-
-  /**
-   * Unfollow a user (or cancel follow request)
-   */
-  async unfollowUser(targetUserId: UUID): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { error } = await supabase
-      .from('follows')
-      .delete()
-      .eq('follower_id', user.id)
-      .eq('following_id', targetUserId);
-
-    if (error) throw new Error(`Failed to unfollow user: ${error.message}`);
-  }
-
-  /**
-   * Accept a follow request
-   */
-  async acceptFollowRequest(followId: UUID): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    // Note: Follow request details not needed since we're skipping activity creation
-
-    const { error } = await supabase
-      .from('follows')
-      .update({ status: FollowStatus.ACCEPTED, updated_at: new Date().toISOString() })
-      .eq('id', followId)
-      .eq('following_id', user.id); // Only the person being followed can accept
-
-    if (error) throw new Error(`Failed to accept follow request: ${error.message}`);
-
-    // Note: Skip activity creation for follow acceptance as it's not trip/destination related
-    // and would violate the activity_has_related_item constraint
-  }
-
-  /**
-   * Decline a follow request
-   */
-  async declineFollowRequest(followId: UUID): Promise<void> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { error } = await supabase
-      .from('follows')
-      .update({ status: FollowStatus.DECLINED, updated_at: new Date().toISOString() })
-      .eq('id', followId)
-      .eq('following_id', user.id); // Only the person being followed can decline
-
-    if (error) throw new Error(`Failed to decline follow request: ${error.message}`);
-  }
 
   // =====================================================
   // User Search and Discovery
@@ -152,22 +64,10 @@ class SocialService implements SocialServiceInterface {
 
     if (error) throw new Error(`Failed to search users: ${error.message}`);
 
-    // Get follow status for each user
-    const userIds = data.map(u => u.id);
-    const { data: followData } = await supabase
-      .from('follows')
-      .select('following_id, status')
-      .eq('follower_id', user.id)
-      .in('following_id', userIds);
-
-    const followMap = new Map();
-    followData?.forEach(f => {
-      followMap.set(f.following_id, f.status);
-    });
-
+    // Note: Friendship status can be determined by calling getFriendshipStatus() for individual users
     return data.map(u => ({
       ...u,
-      follow_status: followMap.get(u.id) || 'none'
+      friendship_status: 'none' // Will be determined by individual getFriendshipStatus() calls
     }));
   }
 
@@ -190,12 +90,6 @@ class SocialService implements SocialServiceInterface {
   // Friendship Management (Bidirectional)
   // =====================================================
 
-  /**
-   * Send a friend request (creates follow relationship)
-   */
-  async sendFriendRequest(targetUserId: UUID): Promise<Follow> {
-    return this.followUser(targetUserId);
-  }
 
   /**
    * Send a friendship request
@@ -311,71 +205,6 @@ class SocialService implements SocialServiceInterface {
     return profiles || [];
   }
 
-  /**
-   * Accept a friend request (creates bidirectional friendship)
-   */
-  async acceptFriendRequest(requesterId: UUID): Promise<{ accepted: Follow; friendshipId: string }> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    console.log('🔄 Accepting friend request from:', requesterId, 'by user:', user.id);
-
-    // Get the follow request before accepting it
-    const { data: followRequest, error: followError } = await supabase
-      .from('follows')
-      .select('*')
-      .eq('follower_id', requesterId)
-      .eq('following_id', user.id)
-      .eq('status', FollowStatus.PENDING)
-      .single();
-
-    if (followError || !followRequest) {
-      console.error('❌ Follow request not found:', followError);
-      throw new Error('Follow request not found');
-    }
-
-    console.log('✅ Found follow request:', followRequest.id);
-
-    // Accept the incoming request (requesterId → user.id)
-    const { data: accepted, error: acceptError } = await supabase
-      .from('follows')
-      .update({ 
-        status: FollowStatus.ACCEPTED, 
-        updated_at: new Date().toISOString() 
-      })
-      .eq('id', followRequest.id)
-      .select('*')
-      .single();
-
-    if (acceptError || !accepted) {
-      console.error('❌ Failed to accept follow request:', acceptError);
-      throw new Error('Failed to accept follow request');
-    }
-
-    console.log('✅ Accepted follow request');
-
-    // Create friendship entry in friendships table
-    console.log('🔄 Adding friendship to friendships table');
-    const { data: friendshipId, error: friendshipError } = await supabase
-      .rpc('add_friendship', {
-        user_a: user.id,
-        user_b: requesterId
-      });
-
-    if (friendshipError) {
-      console.error('❌ Failed to create friendship:', friendshipError);
-      throw new Error('Failed to create friendship');
-    }
-
-    console.log('✅ Friendship established!');
-    console.log('📊 Friendship Details:', {
-      followRequest: `${requesterId} → ${user.id} (${accepted.status})`,
-      friendshipId: friendshipId,
-      friendship: `${user.id} ↔ ${requesterId}`
-    });
-
-    return { accepted, friendshipId };
-  }
 
   /**
    * Get user's friends (from friendships table)
@@ -468,26 +297,6 @@ class SocialService implements SocialServiceInterface {
 
     console.log('✅ Friendship removed from friendships table:', removed);
 
-    // Remove both follow relationships (optional cleanup)
-    console.log('🔄 Cleaning up follow relationships...');
-    try {
-      await Promise.all([
-        supabase
-          .from('follows')
-          .delete()
-          .eq('follower_id', user.id)
-          .eq('following_id', friendUserId),
-        supabase
-          .from('follows')
-          .delete()
-          .eq('follower_id', friendUserId)
-          .eq('following_id', user.id)
-      ]);
-      console.log('✅ Follow relationships cleaned up');
-    } catch (followError) {
-      console.warn('⚠️ Failed to clean up follow relationships:', followError);
-      // Don't throw here, friendship removal was successful
-    }
 
     console.log('✅ Friend removal completed');
   }
@@ -509,64 +318,8 @@ class SocialService implements SocialServiceInterface {
     return data;
   }
 
-  // =====================================================
-  // Follow Relationships (Legacy)
-  // =====================================================
 
-  /**
-   * Get a user's followers
-   */
-  async getFollowers(userId: UUID): Promise<SocialUserProfile[]> {
-    const { data, error } = await supabase
-      .from('follows')
-      .select(`
-        user_profiles!follows_follower_id_fkey(*)
-      `)
-      .eq('following_id', userId)
-      .eq('status', FollowStatus.ACCEPTED);
 
-    if (error) throw new Error(`Failed to get followers: ${error.message}`);
-    
-    return (data?.map(f => f.user_profiles).filter(Boolean) || []) as unknown as SocialUserProfile[];
-  }
-
-  /**
-   * Get users that a user is following
-   */
-  async getFollowing(userId: UUID): Promise<SocialUserProfile[]> {
-    const { data, error } = await supabase
-      .from('follows')
-      .select(`
-        user_profiles!follows_following_id_fkey(*)
-      `)
-      .eq('follower_id', userId)
-      .eq('status', FollowStatus.ACCEPTED);
-
-    if (error) throw new Error(`Failed to get following: ${error.message}`);
-    
-    return (data?.map(f => f.user_profiles).filter(Boolean) || []) as unknown as SocialUserProfile[];
-  }
-
-  /**
-   * Get pending follow requests for the current user
-   */
-  async getFollowRequests(): Promise<Follow[]> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const { data, error } = await supabase
-      .from('follows')
-      .select(`
-        *,
-        user_profiles!follows_follower_id_fkey(nickname, display_name, avatar_url)
-      `)
-      .eq('following_id', user.id)
-      .eq('status', FollowStatus.PENDING)
-      .order('created_at', { ascending: false });
-
-    if (error) throw new Error(`Failed to get follow requests: ${error.message}`);
-    return data || [];
-  }
 
   /**
    * Get friendship status between current user and target user
@@ -605,23 +358,6 @@ class SocialService implements SocialServiceInterface {
     return 'none';
   }
 
-  /**
-   * Get follow status between current user and target user (legacy)
-   */
-  async getFollowStatus(targetUserId: UUID): Promise<FollowStatus | 'none'> {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return 'none';
-
-    const { data, error } = await supabase
-      .from('follows')
-      .select('status')
-      .eq('follower_id', user.id)
-      .eq('following_id', targetUserId)
-      .single();
-
-    if (error || !data) return 'none';
-    return data.status as FollowStatus;
-  }
 
   // =====================================================
   // Activity Feed
