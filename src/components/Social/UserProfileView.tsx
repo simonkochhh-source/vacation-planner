@@ -21,7 +21,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { 
   SocialUserProfile, 
   UUID, 
-  FollowStatus, 
   ActivityFeedItem, 
   ActivityType,
   Trip,
@@ -45,7 +44,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
   const { isMobile } = useResponsive();
   
   const [profile, setProfile] = useState<SocialUserProfile | null>(null);
-  const [followStatus, setFollowStatus] = useState<FollowStatus | 'none'>('none');
+  const [followStatus, setFollowStatus] = useState<'friends' | 'pending_sent' | 'pending_received' | 'none'>('none');
   const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
   const [userPosts, setUserPosts] = useState<ActivityFeedItem[]>([]);
   const [userTrips, setUserTrips] = useState<Trip[]>([]);
@@ -74,7 +73,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
 
       // Load follow status if not own profile
       if (!isOwnProfile && currentUser) {
-        const status = await socialService.getFollowStatus(userId);
+        const status = await socialService.getFriendshipStatus(userId);
         setFollowStatus(status);
       }
 
@@ -83,7 +82,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
       setActivities(userActivities);
 
       // Load user posts (photo shares and other posts) - chronological
-      if (isOwnProfile || followStatus === FollowStatus.ACCEPTED) {
+      if (isOwnProfile || followStatus === 'friends') {
         try {
           // Load photo shares
           const photoShares = await socialService.getUserPhotoShares(userId, 50);
@@ -148,10 +147,10 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
       setFollowLoading(true);
       
       if (followStatus === 'none') {
-        await socialService.followUser(userId);
-        setFollowStatus(FollowStatus.PENDING);
-      } else if (followStatus === FollowStatus.ACCEPTED || followStatus === FollowStatus.PENDING) {
-        await socialService.unfollowUser(userId);
+        await socialService.sendFriendshipRequest(userId);
+        setFollowStatus('pending_sent');
+      } else if (followStatus === 'friends') {
+        await socialService.removeFriend(userId);
         setFollowStatus('none');
       }
       
@@ -168,8 +167,9 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
   const getFollowButtonText = () => {
     switch (followStatus) {
       case 'none': return 'Connect';
-      case FollowStatus.PENDING: return 'Angefragt';
-      case FollowStatus.ACCEPTED: return 'Connected';
+      case 'pending_sent': return 'Request Sent';
+      case 'pending_received': return 'Accept Request';
+      case 'friends': return 'Connected';
       default: return 'Connect';
     }
   };
@@ -177,8 +177,9 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
   const getFollowButtonIcon = () => {
     switch (followStatus) {
       case 'none': return <User size={16} />;
-      case FollowStatus.PENDING: return <Clock size={16} />;
-      case FollowStatus.ACCEPTED: return <Check size={16} />;
+      case 'pending_sent': return <Clock size={16} />;
+      case 'pending_received': return <Check size={16} />;
+      case 'friends': return <Check size={16} />;
       default: return <User size={16} />;
     }
   };
@@ -406,9 +407,9 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                     alignItems: 'center',
                     gap: '8px',
                     padding: '12px 20px',
-                    background: followStatus === FollowStatus.ACCEPTED ? 
+                    background: followStatus === 'friends' ? 
                       'rgba(255, 255, 255, 0.2)' : 'white',
-                    color: followStatus === FollowStatus.ACCEPTED ? 'white' : '#3b82f6',
+                    color: followStatus === 'friends' ? 'white' : '#3b82f6',
                     border: 'none',
                     borderRadius: '8px',
                     fontSize: '0.875rem',

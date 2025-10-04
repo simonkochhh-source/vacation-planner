@@ -416,8 +416,8 @@ export const getTripPermissionsAsync = async (trip: Trip, currentUserId: UUID): 
     try {
       // Dynamic import to avoid circular dependency
       const { socialService } = await import('../services/socialService');
-      const followStatus = await socialService.getFollowStatus(ownerId);
-      isFollowing = followStatus === 'accepted';
+      const followStatus = await socialService.getFriendshipStatus(ownerId);
+      isFollowing = followStatus === 'friends';
     } catch (error) {
       console.error('Error checking follow status:', error);
       isFollowing = false;
