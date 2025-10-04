@@ -200,7 +200,7 @@ class SocialService implements SocialServiceInterface {
   /**
    * Accept a friend request (creates bidirectional friendship)
    */
-  async acceptFriendRequest(requesterId: UUID): Promise<{ accepted: Follow; reciprocal: Follow }> {
+  async acceptFriendRequest(requesterId: UUID): Promise<{ accepted: Follow; friendshipId: string }> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
@@ -240,68 +240,31 @@ class SocialService implements SocialServiceInterface {
 
     console.log('✅ Accepted follow request');
 
-    // Create or update reciprocal follow relationship (user.id → requesterId)
-    let reciprocal: Follow;
-    
-    // First check if reciprocal relationship already exists
-    const { data: existingReciprocal } = await supabase
-      .from('follows')
-      .select('*')
-      .eq('follower_id', user.id)
-      .eq('following_id', requesterId)
-      .single();
+    // Create friendship entry in friendships table
+    console.log('🔄 Adding friendship to friendships table');
+    const { data: friendshipId, error: friendshipError } = await supabase
+      .rpc('add_friendship', {
+        user_a: user.id,
+        user_b: requesterId
+      });
 
-    if (existingReciprocal) {
-      console.log('🔄 Updating existing reciprocal relationship');
-      // Update existing reciprocal to ACCEPTED
-      const { data, error } = await supabase
-        .from('follows')
-        .update({ 
-          status: FollowStatus.ACCEPTED,
-          updated_at: new Date().toISOString() 
-        })
-        .eq('follower_id', user.id)
-        .eq('following_id', requesterId)
-        .select('*')
-        .single();
-      
-      if (error || !data) {
-        console.error('❌ Failed to update reciprocal relationship:', error);
-        throw new Error('Failed to update reciprocal relationship');
-      }
-      reciprocal = data;
-    } else {
-      console.log('🔄 Creating new reciprocal relationship');
-      // Create new reciprocal relationship
-      const { data, error } = await supabase
-        .from('follows')
-        .insert({
-          follower_id: user.id,
-          following_id: requesterId,
-          status: FollowStatus.ACCEPTED,
-          created_at: new Date().toISOString()
-        })
-        .select('*')
-        .single();
-      
-      if (error || !data) {
-        console.error('❌ Failed to create reciprocal relationship:', error);
-        throw new Error('Failed to create reciprocal relationship');
-      }
-      reciprocal = data;
+    if (friendshipError) {
+      console.error('❌ Failed to create friendship:', friendshipError);
+      throw new Error('Failed to create friendship');
     }
 
-    console.log('✅ Bidirectional friendship established!');
-    console.log('📊 Friendship:', {
-      original: `${requesterId} → ${user.id} (${accepted.status})`,
-      reciprocal: `${user.id} → ${requesterId} (${reciprocal.status})`
+    console.log('✅ Friendship established!');
+    console.log('📊 Friendship Details:', {
+      followRequest: `${requesterId} → ${user.id} (${accepted.status})`,
+      friendshipId: friendshipId,
+      friendship: `${user.id} ↔ ${requesterId}`
     });
 
-    return { accepted, reciprocal };
+    return { accepted, friendshipId };
   }
 
   /**
-   * Get user's friends (bidirectional accepted follows)
+   * Get user's friends (from friendships table)
    */
   async getFriends(userId?: UUID): Promise<SocialUserProfile[]> {
     const { data: { user } } = await supabase.auth.getUser();
@@ -310,62 +273,30 @@ class SocialService implements SocialServiceInterface {
     const targetUserId = userId || user.id;
     console.log('🔍 socialService.getFriends called for user:', targetUserId);
 
-    // Use follows table directly to find bidirectional relationships
-    console.log('🔄 Checking follows table for bidirectional relationships...');
+    // Use the friendships table to get established friendships
+    console.log('🔄 Querying friendships table...');
     
-    const { data: followsData, error: followsError } = await supabase
-      .from('follows')
-      .select('follower_id, following_id, status, created_at')
-      .or(`follower_id.eq.${targetUserId},following_id.eq.${targetUserId}`)
-      .eq('status', 'ACCEPTED');
+    const { data: friendshipsData, error: friendshipsError } = await supabase
+      .rpc('get_user_friends', { target_user_id: targetUserId });
 
-    console.log('🔍 Follows query result:', { 
-      data: followsData?.length || 0, 
-      error: followsError?.message 
+    console.log('🔍 Friendships query result:', { 
+      data: friendshipsData?.length || 0, 
+      error: friendshipsError?.message 
     });
 
-    if (followsError) {
-      throw new Error(`Failed to get friends: ${followsError.message}`);
+    if (friendshipsError) {
+      console.error('❌ Failed to get friends from friendships table:', friendshipsError);
+      throw new Error(`Failed to get friends: ${friendshipsError.message}`);
     }
 
-    if (!followsData || followsData.length === 0) {
-      console.log('⚠️ No accepted follows found');
+    if (!friendshipsData || friendshipsData.length === 0) {
+      console.log('⚠️ No friendships found in friendships table');
       return [];
     }
 
-    // Find bidirectional relationships (mutual follows)
-    const followMap = new Map();
-    const potentialFriends = new Map();
-
-    followsData.forEach(follow => {
-      const key = `${follow.follower_id}-${follow.following_id}`;
-      const reverseKey = `${follow.following_id}-${follow.follower_id}`;
-      
-      followMap.set(key, follow);
-      
-      // Check if the reverse relationship exists
-      if (followMap.has(reverseKey)) {
-        // This is a bidirectional friendship
-        const friendId = follow.follower_id === targetUserId ? follow.following_id : follow.follower_id;
-        if (friendId !== targetUserId) {
-          potentialFriends.set(friendId, {
-            friend_id: friendId,
-            friendship_created_at: Math.min(
-              new Date(follow.created_at).getTime(),
-              new Date(followMap.get(reverseKey)!.created_at).getTime()
-            )
-          });
-        }
-      }
-    });
-
-    const friendIds = Array.from(potentialFriends.keys());
-    console.log('🔍 Bidirectional friends found:', friendIds);
-
-    if (friendIds.length === 0) {
-      console.log('⚠️ No bidirectional friendships found');
-      return [];
-    }
+    // Extract friend IDs
+    const friendIds = friendshipsData.map(f => f.friend_id);
+    console.log('🔍 Friend IDs from friendships table:', friendIds);
 
     // Get friend profiles
     const { data: profiles, error: profileError } = await supabase
@@ -373,9 +304,12 @@ class SocialService implements SocialServiceInterface {
       .select('*')
       .in('id', friendIds);
 
-    if (profileError) throw new Error(`Failed to get friend profiles: ${profileError.message}`);
+    if (profileError) {
+      console.error('❌ Failed to get friend profiles:', profileError);
+      throw new Error(`Failed to get friend profiles: ${profileError.message}`);
+    }
 
-    console.log('✅ Friends loaded via follows table:', profiles?.length || 0);
+    console.log('✅ Friends loaded from friendships table:', profiles?.length || 0);
     return profiles || [];
   }
 
@@ -385,8 +319,8 @@ class SocialService implements SocialServiceInterface {
   async areFriends(userId1: UUID, userId2: UUID): Promise<boolean> {
     const { data, error } = await supabase
       .rpc('are_users_friends', {
-        user1: userId1,
-        user2: userId2
+        user_a: userId1,
+        user_b: userId2
       });
 
     if (error) {
@@ -398,25 +332,50 @@ class SocialService implements SocialServiceInterface {
   }
 
   /**
-   * Remove friendship (removes both follow relationships)
+   * Remove friendship (removes from friendships table and follow relationships)
    */
   async removeFriend(friendUserId: UUID): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Remove both follow relationships
-    await Promise.all([
-      supabase
-        .from('follows')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', friendUserId),
-      supabase
-        .from('follows')
-        .delete()
-        .eq('follower_id', friendUserId)
-        .eq('following_id', user.id)
-    ]);
+    console.log('🔄 Removing friendship between:', user.id, 'and:', friendUserId);
+
+    // Remove from friendships table
+    const { data: removed, error: friendshipError } = await supabase
+      .rpc('remove_friendship', {
+        user_a: user.id,
+        user_b: friendUserId
+      });
+
+    if (friendshipError) {
+      console.error('❌ Failed to remove friendship:', friendshipError);
+      throw new Error('Failed to remove friendship');
+    }
+
+    console.log('✅ Friendship removed from friendships table:', removed);
+
+    // Remove both follow relationships (optional cleanup)
+    console.log('🔄 Cleaning up follow relationships...');
+    try {
+      await Promise.all([
+        supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', user.id)
+          .eq('following_id', friendUserId),
+        supabase
+          .from('follows')
+          .delete()
+          .eq('follower_id', friendUserId)
+          .eq('following_id', user.id)
+      ]);
+      console.log('✅ Follow relationships cleaned up');
+    } catch (followError) {
+      console.warn('⚠️ Failed to clean up follow relationships:', followError);
+      // Don't throw here, friendship removal was successful
+    }
+
+    console.log('✅ Friend removal completed');
   }
 
   // =====================================================
