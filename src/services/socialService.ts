@@ -295,7 +295,7 @@ class SocialService implements SocialServiceInterface {
     }
 
     // Extract friend IDs
-    const friendIds = friendshipsData.map(f => f.friend_id);
+    const friendIds = friendshipsData.map((f: { friend_id: UUID; friendship_created_at: string }) => f.friend_id);
     console.log('🔍 Friend IDs from friendships table:', friendIds);
 
     // Get friend profiles
