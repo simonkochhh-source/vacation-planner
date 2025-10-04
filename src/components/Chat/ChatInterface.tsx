@@ -33,6 +33,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [activeRoomId, setActiveRoomId] = useState<string | undefined>(initialRoomId);
   const [messages, setMessages] = useState<ChatMessageWithSender[]>([]);
   const [roomParticipants, setRoomParticipants] = useState<UserWithStatus[]>([]);
+  const [allParticipants, setAllParticipants] = useState<UserWithStatus[]>([]);
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [hasMoreMessages, setHasMoreMessages] = useState(false);
@@ -212,9 +213,18 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const loadRoomParticipants = async (roomId: string) => {
     try {
-      // This would need to be implemented in chatService
-      // For now, we'll use mock data
-      setRoomParticipants([]);
+      const participants = await chatService.getRoomParticipants(roomId);
+      
+      // Keep all participants for count
+      setAllParticipants(participants);
+      
+      // For direct messages, filter out current user for display name
+      if (activeRoom?.type === 'direct') {
+        const filteredParticipants = participants.filter(p => p.id !== user?.id);
+        setRoomParticipants(filteredParticipants);
+      } else {
+        setRoomParticipants(participants);
+      }
     } catch (error) {
       console.error('Failed to load room participants:', error);
     }
@@ -385,7 +395,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
             fontSize: '20px',
             lineHeight: '1'
           }}>💬</span>
-          {activeRoom ? (activeRoom.name || `Chat ${activeRoom.id.slice(0, 8)}`) : 'Chat'}
+          {activeRoom ? (
+            activeRoom.name || 
+            (activeRoom.type === 'direct' && roomParticipants.length > 0 
+              ? `Chat mit ${roomParticipants[0].nickname || roomParticipants[0].display_name || 'Unbekannter Benutzer'}`
+              : 'Chat'
+            )
+          ) : 'Chat'}
         </div>
 
         {/* Modern Desktop Controls - Hidden on mobile */}

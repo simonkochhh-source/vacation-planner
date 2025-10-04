@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { UserWithStatus } from './userStatusService';
 
 // Chat Types
 export type ChatRoomType = 'direct' | 'group' | 'trip';
@@ -876,6 +877,48 @@ class ChatService {
     }
 
     return `${room.type === 'group' ? 'Gruppe' : room.type === 'trip' ? 'Reise' : 'Chat'}`;
+  }
+
+  /**
+   * Get room participants with user details
+   */
+  async getRoomParticipants(chatRoomId: string): Promise<UserWithStatus[]> {
+    try {
+      const { data, error } = await supabase
+        .from('chat_participants')
+        .select(`
+          user_id,
+          role,
+          is_active,
+          user_profiles:user_id (
+            id,
+            nickname,
+            display_name,
+            avatar_url,
+            email
+          )
+        `)
+        .eq('chat_room_id', chatRoomId)
+        .eq('is_active', true);
+
+      if (error) {
+        console.warn('⚠️ Chat: Could not load participants, using mock data:', error);
+        return []; // Return empty array if we can't load participants
+      }
+
+      // Transform the data to match UserWithStatus interface
+      return (data || []).map(participant => ({
+        id: participant.user_profiles?.id || participant.user_id,
+        nickname: participant.user_profiles?.nickname,
+        display_name: participant.user_profiles?.display_name,
+        avatar_url: participant.user_profiles?.avatar_url,
+        status: 'offline' as const, // Default status - would need real-time status service
+        last_seen_at: new Date().toISOString() // Default to current time
+      }));
+    } catch (error) {
+      console.error('❌ Chat: Error getting room participants:', error);
+      return [];
+    }
   }
 
   /**

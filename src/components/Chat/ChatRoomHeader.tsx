@@ -53,16 +53,21 @@ const ChatRoomHeader: React.FC<ChatRoomHeaderProps> = ({
   };
 
   const getRoomSubtitle = (): string => {
-    if (room.type === 'direct' && participants.length > 0) {
-      const participant = participants[0];
-      if (participant.status === 'online') {
-        return 'Online';
-      } else if (participant.status === 'away') {
-        return 'Abwesend';
-      } else if (participant.last_seen_at) {
-        return `Zuletzt online ${new Date(participant.last_seen_at).toLocaleDateString('de-DE')}`;
+    if (room.type === 'direct') {
+      if (participants.length > 0) {
+        const participant = participants[0];
+        if (participant.status === 'online') {
+          return 'Online';
+        } else if (participant.status === 'away') {
+          return 'Abwesend';
+        } else if (participant.last_seen_at) {
+          return `Zuletzt online ${new Date(participant.last_seen_at).toLocaleDateString('de-DE')}`;
+        }
+        return 'Offline';
+      } else {
+        // For direct messages, always show 2 participants (current user + other user)
+        return '2 Teilnehmer';
       }
-      return 'Offline';
     }
 
     const onlineCount = participants.filter(p => p.status === 'online').length;
