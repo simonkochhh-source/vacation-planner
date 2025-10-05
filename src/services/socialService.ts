@@ -75,7 +75,8 @@ class SocialService implements SocialServiceInterface {
    * Get a user's public profile
    */
   async getUserProfile(userId: UUID): Promise<SocialUserProfile> {
-    const { data, error } = await supabase
+    // Get user profile
+    const { data: profile, error } = await supabase
       .from('user_profiles')
       .select('*')
       .eq('id', userId)
@@ -83,7 +84,26 @@ class SocialService implements SocialServiceInterface {
       .single();
 
     if (error) throw new Error(`Failed to get user profile: ${error.message}`);
-    return data;
+
+    // Get friend count (accepted friendships)
+    const { count: friendCount } = await supabase
+      .from('friendships')
+      .select('*', { count: 'exact', head: true })
+      .or(`requester_id.eq.${userId},accepter_id.eq.${userId}`)
+      .eq('status', 'accepted');
+
+    // Get pending requests count (only requests sent to this user)
+    const { count: pendingRequestsCount } = await supabase
+      .from('friendships')
+      .select('*', { count: 'exact', head: true })
+      .eq('accepter_id', userId)
+      .eq('status', 'pending');
+
+    return {
+      ...profile,
+      friend_count: friendCount || 0,
+      pending_requests_count: pendingRequestsCount || 0
+    };
   }
 
   // =====================================================

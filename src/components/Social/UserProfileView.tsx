@@ -344,18 +344,18 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
-                    {profile.follower_count}
+                    {profile.friend_count || 0}
                   </div>
                   <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-                    Follower
+                    Freunde
                   </div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
-                    {profile.following_count}
+                    {profile.pending_requests_count || 0}
                   </div>
                   <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-                    Folgt
+                    Anfragen
                   </div>
                 </div>
               </div>

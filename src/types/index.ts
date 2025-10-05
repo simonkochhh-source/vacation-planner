@@ -625,8 +625,8 @@ export interface SocialUserProfile {
   is_verified: boolean;
   
   // Social stats
-  follower_count: number;
-  following_count: number;
+  friend_count: number;
+  pending_requests_count: number;
   trip_count: number;
   
   // Metadata
