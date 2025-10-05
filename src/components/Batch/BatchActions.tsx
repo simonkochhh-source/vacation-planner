@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useTripContext } from '../../contexts/TripContext';
 import { 
   CheckSquare, 
   Square, 
@@ -25,6 +26,7 @@ const BatchActions: React.FC<BatchActionsProps> = ({
   onBatchComplete
 }) => {
   const { updateDestination, deleteDestination, createDestination } = useDestinationContext();
+  const { currentTrip } = useTripContext();
   const [showBatchEdit, setShowBatchEdit] = useState(false);
   const [batchEditData, setBatchEditData] = useState({
     status: '' as DestinationStatus | '',
@@ -101,6 +103,11 @@ const BatchActions: React.FC<BatchActionsProps> = ({
     try {
       const selectedDests = destinations.filter(dest => selectedDestinations.includes(dest.id));
       
+      if (!currentTrip) {
+        alert('Kein Trip ausgewählt. Bitte wählen Sie einen Trip aus.');
+        return;
+      }
+      
       for (const dest of selectedDests) {
         const duplicateData = {
           name: `${dest.name} (Kopie)`,
@@ -115,7 +122,7 @@ const BatchActions: React.FC<BatchActionsProps> = ({
           color: dest.color
         };
         
-        await createDestination(duplicateData);
+        await createDestination(currentTrip.id, duplicateData);
       }
       
       onSelectionChange([]);
