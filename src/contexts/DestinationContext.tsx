@@ -146,7 +146,7 @@ export const DestinationProvider: React.FC<DestinationProviderProps> = ({ childr
       };
 
       // Save to Supabase
-      const savedDestination = await SupabaseService.createDestination(newDestination);
+      const savedDestination = await SupabaseService.createDestination(newDestination, tripId);
       
       dispatch({ type: 'ADD_DESTINATION', payload: savedDestination });
       return savedDestination;
@@ -197,8 +197,8 @@ export const DestinationProvider: React.FC<DestinationProviderProps> = ({ childr
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
       
-      // Update order in Supabase
-      await SupabaseService.reorderDestinations(tripId, destinationIds);
+      // TODO: Update order in Supabase when reorderDestinations method is implemented
+      // await SupabaseService.reorderDestinations(tripId, destinationIds);
       
       dispatch({ type: 'REORDER_DESTINATIONS', payload: { tripId, destinationIds } });
     } catch (error) {
