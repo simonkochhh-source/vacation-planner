@@ -88,12 +88,12 @@ const TripForm: React.FC<TripFormProps> = ({
         updatedAt: new Date().toISOString()
       };
 
-      let savedTrip: Trip;
       if (trip) {
-        savedTrip = await updateTrip(trip.id, tripData);
+        await updateTrip(trip.id, tripData);
+        // For updates, the trip is already in context and will be updated via reducer
       } else {
         const createData = tripData as CreateTripData;
-        savedTrip = await createTrip(createData);
+        const savedTrip = await createTrip(createData);
         setCurrentTrip(savedTrip.id);
       }
 
