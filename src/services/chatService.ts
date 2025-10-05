@@ -907,7 +907,7 @@ class ChatService {
       }
 
       // Transform the data to match UserWithStatus interface
-      return (data || []).map(participant => ({
+      return (data || []).map((participant: any) => ({
         id: participant.user_profiles?.id || participant.user_id,
         nickname: participant.user_profiles?.nickname,
         display_name: participant.user_profiles?.display_name,
