@@ -5,7 +5,7 @@ import {
   ChatRoom, 
   ChatMessage, 
   FriendshipStatus,
-  Activity
+  UserActivity
 } from '../types';
 import { socialService } from '../services/socialService';
 import { chatService } from '../services/chatService';
@@ -23,8 +23,8 @@ type SocialAction =
   | { type: 'ADD_CHAT_MESSAGE'; payload: ChatMessage }
   | { type: 'UPDATE_CHAT_MESSAGE'; payload: { id: string; data: Partial<ChatMessage> } }
   | { type: 'SET_ROOM_PARTICIPANTS'; payload: SocialUserProfile[] }
-  | { type: 'SET_ACTIVITIES'; payload: Activity[] }
-  | { type: 'ADD_ACTIVITY'; payload: Activity }
+  | { type: 'SET_ACTIVITIES'; payload: UserActivity[] }
+  | { type: 'ADD_ACTIVITY'; payload: UserActivity }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_CHAT_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null };
@@ -44,7 +44,7 @@ interface SocialState {
   roomParticipants: SocialUserProfile[];
   
   // Activities
-  activities: Activity[];
+  activities: UserActivity[];
   
   // Loading & Error States
   isLoading: boolean;
