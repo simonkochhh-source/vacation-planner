@@ -117,6 +117,7 @@ export interface Destination {
   tags: string[];
   color?: string; // hex color for map display
   duration?: number; // kept for compatibility but deprecated - use startTime/endTime instead
+  order?: number; // Order within the trip for reordering functionality
   
   // Enhanced timeline features
   startTime?: TimeString; // HH:MM format for daily schedule
