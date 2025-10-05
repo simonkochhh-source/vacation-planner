@@ -1,5 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Destination } from '../../types';
 import {
@@ -35,7 +37,9 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
   onEditBudget,
   onAddExpense
 }) => {
-  const { currentTrip, destinations, settings } = useSupabaseApp();
+  const { currentTrip } = useTripContext();
+  const { destinations } = useDestinationContext();
+  const { settings } = useUIContext();
   const [selectedTimeframe, setSelectedTimeframe] = useState<'all' | 'upcoming' | 'past'>('all');
   const [groupBy, setGroupBy] = useState<'category' | 'date' | 'status'>('category');
   const [currentFuelPrice, setCurrentFuelPrice] = useState<number>(1.65);

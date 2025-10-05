@@ -1,6 +1,6 @@
 import React from 'react';
 import { Home, MapPin, Plane, Camera, Search } from 'lucide-react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useResponsive } from '../../hooks/useResponsive';
 
 export interface NavigationItem {
@@ -92,9 +92,9 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
   className = '',
   showLabels = true 
 }) => {
-  const { uiState, updateUIState } = useSupabaseApp();
+  const { currentView, activeView, updateUIState } = useUIContext();
   const { isMobile } = useResponsive();
-  const currentView = uiState.currentView || uiState.activeView || 'landing';
+  const view = currentView || activeView || 'landing';
   
   // Use mobile navigation items for header variant on mobile devices
   const items = (variant === 'header' && isMobile) ? mobileNavigationItems : navigationItems;
@@ -232,7 +232,7 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
       aria-label="Hauptnavigation"
     >
       {items.map((item) => {
-        const isActive = currentView === item.view;
+        const isActive = view === item.view;
         
         return (
           <button

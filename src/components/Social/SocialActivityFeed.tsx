@@ -3,7 +3,7 @@ import { Users, MapPin, Heart, Plane, Star, User, Clock, Camera, Image, X, Downl
 import { ActivityFeedItem, ActivityType } from '../../types';
 import { socialService } from '../../services/socialService';
 import { useAuth } from '../../contexts/AuthContext';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import AvatarUpload from '../User/AvatarUpload';
 import { formatDate } from '../../utils';
 import ModernButton from '../UI/ModernButton';
@@ -20,7 +20,7 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
   compact = false
 }) => {
   const { user } = useAuth();
-  const { updateUIState } = useSupabaseApp();
+  const { updateUIState } = useUIContext();
   const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

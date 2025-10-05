@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
+import { useTripContext } from '../../contexts/TripContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { chatService } from '../../services/chatService';
 import { 
@@ -54,7 +55,8 @@ const tripTabs: TripTabConfig[] = [
 ];
 
 const TripsView: React.FC = () => {
-  const { currentTrip, updateUIState } = useSupabaseApp();
+  const { updateUIState } = useUIContext();
+  const { currentTrip } = useTripContext();
   const { isMobile } = useResponsive();
   const [activeTab, setActiveTab] = useState<TripSubTab>('timeline');
   const [isCreatingChat, setIsCreatingChat] = useState(false);

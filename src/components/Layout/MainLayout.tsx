@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import SocialSidebar from './SocialSidebar';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useResponsive } from '../../hooks/useResponsive';
 
 interface MainLayoutProps {
@@ -13,12 +13,12 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const { isMobile } = useResponsive();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [socialSidebarOpen, setSocialSidebarOpen] = useState(false);
-  const { uiState } = useSupabaseApp();
+  const { currentView, activeView, hideHeader } = useUIContext();
 
   // Determine which sidebar should be shown based on current view
-  const currentView = uiState.currentView || uiState.activeView;
-  const shouldShowTripsSidebar = currentView === 'trips';
-  const shouldShowSocialSidebar = currentView === 'landing';
+  const viewToCheck = currentView || activeView;
+  const shouldShowTripsSidebar = viewToCheck === 'trips';
+  const shouldShowSocialSidebar = viewToCheck === 'landing';
 
   // Close sidebars when switching to desktop
   useEffect(() => {
@@ -51,7 +51,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       color: 'var(--color-text-primary)'
     }}>
       {/* Header - Always full width at top */}
-      {!uiState.hideHeader && (
+      {!hideHeader && (
         <Header 
           onMenuClick={
             isMobile && shouldShowTripsSidebar ? () => setSidebarOpen(true) : 

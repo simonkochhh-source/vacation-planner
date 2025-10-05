@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, MapPin, Star, Clock, Euro, Plus, ExternalLink, Heart } from 'lucide-react';
 import { webDestinationService, WebDestination, DestinationSearchFilters } from '../../services/webDestinationService';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { DestinationCategory, DestinationStatus } from '../../types';
 
 interface DestinationDiscoveryProps {
@@ -21,7 +21,7 @@ const DestinationDiscovery: React.FC<DestinationDiscoveryProps> = ({
   const [filters, setFilters] = useState<DestinationSearchFilters>({});
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   
-  const { createDestination } = useSupabaseApp();
+  const { createDestination } = useDestinationContext();
 
   // Load trending destinations on mount
   useEffect(() => {

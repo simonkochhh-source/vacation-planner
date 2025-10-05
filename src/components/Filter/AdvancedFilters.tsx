@@ -1,5 +1,7 @@
 import React, { useState, useMemo } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useTripContext } from '../../contexts/TripContext';
 import { 
   Filter, 
   Calendar,
@@ -29,12 +31,9 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   isCompact = false,
   showHeader = true
 }) => {
-  const { 
-    currentTrip,
-    destinations, 
-    uiState, 
-    updateUIState 
-  } = useSupabaseApp();
+  const { destinations } = useDestinationContext();
+  const { filters, sortOptions, searchQuery, updateUIState } = useUIContext();
+  const { currentTrip } = useTripContext();
 
   const [isExpanded, setIsExpanded] = useState(!isCompact);
   const [showDateRange, setShowDateRange] = useState(false);
@@ -74,16 +73,16 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   // Count active filters
   const activeFiltersCount = useMemo(() => {
     let count = 0;
-    if (uiState.filters.category?.length) count++;
-    if (uiState.filters.status?.length) count++;
-    if (uiState.filters.tags?.length) count++;
-    if (uiState.filters.dateRange) count++;
-    if (uiState.filters.budgetRange) count++;
+    if (filters.category?.length) count++;
+    if (filters.status?.length) count++;
+    if (filters.tags?.length) count++;
+    if (filters.dateRange) count++;
+    if (filters.budgetRange) count++;
     return count;
-  }, [uiState.filters]);
+  }, [filters]);
 
   const handleFilterChange = (filterType: keyof DestinationFilters, value: any) => {
-    const currentFilters = uiState.filters;
+    const currentFilters = filters;
     let newFilters = { ...currentFilters };
 
     if (Array.isArray(currentFilters[filterType])) {
@@ -103,7 +102,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   const handleDateRangeChange = (start: string, end: string) => {
     updateUIState({
       filters: {
-        ...uiState.filters,
+        ...filters,
         dateRange: start && end ? { start, end } : undefined
       }
     });
@@ -112,14 +111,14 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
   const handleBudgetRangeChange = (min: number, max: number) => {
     updateUIState({
       filters: {
-        ...uiState.filters,
+        ...filters,
         budgetRange: { min, max }
       }
     });
   };
 
   const handleSortChange = (field: SortField) => {
-    const currentSort = uiState.sortOptions;
+    const currentSort = sortOptions;
     const newDirection = currentSort.field === field && currentSort.direction === SortDirection.ASC
       ? SortDirection.DESC
       : SortDirection.ASC;
@@ -136,7 +135,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
     });
   };
 
-  const hasActiveFilters = activeFiltersCount > 0 || uiState.searchQuery;
+  const hasActiveFilters = activeFiltersCount > 0 || searchQuery;
 
   if (!currentTrip) {
     return (
@@ -261,8 +260,8 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                   key={field}
                   onClick={() => handleSortChange(field)}
                   style={{
-                    background: uiState.sortOptions.field === field ? '#dbeafe' : '#f9fafb',
-                    border: uiState.sortOptions.field === field ? '1px solid #3b82f6' : '1px solid #e5e7eb',
+                    background: sortOptions.field === field ? '#dbeafe' : '#f9fafb',
+                    border: sortOptions.field === field ? '1px solid #3b82f6' : '1px solid #e5e7eb',
                     borderRadius: '8px',
                     padding: '0.5rem 0.75rem',
                     cursor: 'pointer',
@@ -270,7 +269,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                     alignItems: 'center',
                     justifyContent: 'space-between',
                     fontSize: '0.875rem',
-                    color: uiState.sortOptions.field === field ? '#3b82f6' : '#6b7280',
+                    color: sortOptions.field === field ? '#3b82f6' : '#6b7280',
                     transition: 'all 0.2s'
                   }}
                 >
@@ -278,9 +277,9 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                     <Icon size={14} />
                     {label}
                   </span>
-                  {uiState.sortOptions.field === field && (
+                  {sortOptions.field === field && (
                     <span style={{ fontSize: '0.75rem', fontWeight: '600' }}>
-                      {uiState.sortOptions.direction === SortDirection.ASC ? '↑' : '↓'}
+                      {sortOptions.direction === SortDirection.ASC ? '↑' : '↓'}
                     </span>
                   )}
                 </button>
@@ -306,7 +305,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
               gap: '0.5rem'
             }}>
               {Object.values(DestinationCategory).map((category) => {
-                const isSelected = uiState.filters.category?.includes(category);
+                const isSelected = filters.category?.includes(category);
                 const count = currentDestinations.filter(d => d.category === category).length;
                 
                 return (
@@ -353,7 +352,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
             </h4>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               {Object.values(DestinationStatus).map((status) => {
-                const isSelected = uiState.filters.status?.includes(status);
+                const isSelected = filters.status?.includes(status);
                 const count = currentDestinations.filter(d => d.status === status).length;
                 const statusConfig = {
                   [DestinationStatus.PLANNED]: { label: 'Geplant', emoji: '⏳', color: '#3b82f6' },
@@ -446,7 +445,7 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                   padding: '0.5rem'
                 }}>
                   {filterStats.availableTags.map((tag) => {
-                    const isSelected = uiState.filters.tags?.includes(tag);
+                    const isSelected = filters.tags?.includes(tag);
                     const count = currentDestinations.filter(d => d.tags.includes(tag)).length;
                     
                     return (
@@ -525,8 +524,8 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                     type="date"
                     min={filterStats.dateRange.min}
                     max={filterStats.dateRange.max}
-                    value={uiState.filters.dateRange?.start || ''}
-                    onChange={(e) => handleDateRangeChange(e.target.value, uiState.filters.dateRange?.end || '')}
+                    value={filters.dateRange?.start || ''}
+                    onChange={(e) => handleDateRangeChange(e.target.value, filters.dateRange?.end || '')}
                     style={{
                       width: '100%',
                       border: '1px solid #e5e7eb',
@@ -544,8 +543,8 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                     type="date"
                     min={filterStats.dateRange.min}
                     max={filterStats.dateRange.max}
-                    value={uiState.filters.dateRange?.end || ''}
-                    onChange={(e) => handleDateRangeChange(uiState.filters.dateRange?.start || '', e.target.value)}
+                    value={filters.dateRange?.end || ''}
+                    onChange={(e) => handleDateRangeChange(filters.dateRange?.start || '', e.target.value)}
                     style={{
                       width: '100%',
                       border: '1px solid #e5e7eb',
@@ -593,10 +592,10 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                 <div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                      {formatCurrency(uiState.filters.budgetRange?.min || filterStats.budgetRange.min)}
+                      {formatCurrency(filters.budgetRange?.min || filterStats.budgetRange.min)}
                     </span>
                     <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
-                      {formatCurrency(uiState.filters.budgetRange?.max || filterStats.budgetRange.max)}
+                      {formatCurrency(filters.budgetRange?.max || filterStats.budgetRange.max)}
                     </span>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
@@ -608,10 +607,10 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                         type="number"
                         min={filterStats.budgetRange.min}
                         max={filterStats.budgetRange.max}
-                        value={uiState.filters.budgetRange?.min || filterStats.budgetRange.min}
+                        value={filters.budgetRange?.min || filterStats.budgetRange.min}
                         onChange={(e) => handleBudgetRangeChange(
                           Number(e.target.value),
-                          uiState.filters.budgetRange?.max || filterStats.budgetRange.max
+                          filters.budgetRange?.max || filterStats.budgetRange.max
                         )}
                         style={{
                           width: '100%',
@@ -630,9 +629,9 @@ const AdvancedFilters: React.FC<AdvancedFiltersProps> = ({
                         type="number"
                         min={filterStats.budgetRange.min}
                         max={filterStats.budgetRange.max}
-                        value={uiState.filters.budgetRange?.max || filterStats.budgetRange.max}
+                        value={filters.budgetRange?.max || filterStats.budgetRange.max}
                         onChange={(e) => handleBudgetRangeChange(
-                          uiState.filters.budgetRange?.min || filterStats.budgetRange.min,
+                          filters.budgetRange?.min || filterStats.budgetRange.min,
                           Number(e.target.value)
                         )}
                         style={{

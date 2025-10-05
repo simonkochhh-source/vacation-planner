@@ -1,12 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { 
   Bookmark, 
   BookmarkCheck,
   Plus,
-  Edit,
   Trash2,
-  Star,
   MapPin,
   Calendar,
   Clock,
@@ -31,9 +29,8 @@ interface FilterPresetsProps {
 }
 
 const FilterPresets: React.FC<FilterPresetsProps> = ({ onApplyPreset }) => {
-  const { uiState, updateUIState } = useSupabaseApp();
+  const { filters, updateUIState } = useUIContext();
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [editingPreset, setEditingPreset] = useState<FilterPreset | null>(null);
   const [newPresetName, setNewPresetName] = useState('');
   const [newPresetDescription, setNewPresetDescription] = useState('');
   const [savedPresets, setSavedPresets] = useState<FilterPreset[]>(() => {
@@ -136,8 +133,8 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ onApplyPreset }) => {
 
   // Get current filter fingerprint for matching
   const currentFilterFingerprint = useMemo(() => {
-    return JSON.stringify(uiState.filters);
-  }, [uiState.filters]);
+    return JSON.stringify(filters);
+  }, [filters]);
 
   const savePresets = (presets: FilterPreset[]) => {
     setSavedPresets(presets);
@@ -151,7 +148,7 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ onApplyPreset }) => {
       id: Date.now().toString(),
       name: newPresetName.trim(),
       description: newPresetDescription.trim(),
-      filters: { ...uiState.filters },
+      filters: { ...filters },
       icon: '🔖',
       color: '#6b7280',
       isBuiltIn: false,
@@ -179,8 +176,8 @@ const FilterPresets: React.FC<FilterPresetsProps> = ({ onApplyPreset }) => {
     return JSON.stringify(preset.filters) === currentFilterFingerprint;
   };
 
-  const hasActiveFilters = Object.keys(uiState.filters).some(key => {
-    const value = (uiState.filters as any)[key];
+  const hasActiveFilters = Object.keys(filters).some(key => {
+    const value = (filters as any)[key];
     return value && (Array.isArray(value) ? value.length > 0 : true);
   });
 

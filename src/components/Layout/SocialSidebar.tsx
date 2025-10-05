@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { TripStatus, SocialUserProfile } from '../../types';
@@ -50,7 +52,9 @@ interface ActivityItem {
 }
 
 const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose }) => {
-  const { trips, destinations, updateUIState } = useSupabaseApp();
+  const { trips } = useTripContext();
+  const { destinations } = useDestinationContext();
+  const { updateUIState } = useUIContext();
   const { user, userProfile } = useAuth();
   const [activeTab, setActiveTab] = useState<'friends' | 'activity' | 'suggestions' | 'chat'>('friends');
   const [avatarError, setAvatarError] = useState(false);

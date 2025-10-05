@@ -1,5 +1,6 @@
 import React from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { Destination } from '../../types';
 import EnhancedTimelineView from '../Scheduling/EnhancedTimelineView';
 import {
@@ -7,7 +8,8 @@ import {
 } from 'lucide-react';
 
 const SchedulingView: React.FC = () => {
-  const { currentTrip, reorderDestinations } = useSupabaseApp();
+  const { currentTrip } = useTripContext();
+  const { reorderDestinations } = useDestinationContext();
 
   const handleReorderDestinations = async (reorderedDestinations: Destination[]) => {
     if (!currentTrip) return;

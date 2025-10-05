@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PhotoService, PhotoInfo } from '../../services/photoService';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
 import { socialService } from '../../services/socialService';
 import PhotoShareModal from '../Social/PhotoShareModal';
 import { Destination, Trip, CreatePhotoShareData } from '../../types';

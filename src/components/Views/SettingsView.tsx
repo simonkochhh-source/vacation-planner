@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { AppSettings, TransportMode, FuelType, Coordinates } from '../../types';
@@ -727,7 +727,7 @@ const MobileSettingsCategory: React.FC<{
 };
 
 const SettingsView: React.FC = () => {
-  const { settings, updateSettings } = useSupabaseApp();
+  const { settings, updateSettings } = useUIContext();
   const { user, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState<'list' | 'account' | 'general' | 'map' | 'travel' | 'privacy'>('list');
   const [showResetConfirm, setShowResetConfirm] = useState(false);

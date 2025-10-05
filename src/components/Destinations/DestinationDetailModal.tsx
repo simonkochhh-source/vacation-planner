@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Destination, Trip } from '../../types';
 import Modal from '../Common/Modal';
@@ -56,7 +57,8 @@ const DestinationDetailModal: React.FC<DestinationDetailModalProps> = ({
   canEdit = true,
   canDelete = true
 }) => {
-  const { trips, destinations } = useSupabaseApp();
+  const { trips } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { user } = useAuth();
   const [showTripImport, setShowTripImport] = useState(false);
   const [isImporting, setIsImporting] = useState(false);

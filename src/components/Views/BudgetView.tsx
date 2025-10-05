@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { 
   BudgetOverview, 
@@ -17,7 +18,8 @@ import {
 type BudgetTab = 'overview' | 'expenses';
 
 const BudgetView: React.FC = () => {
-  const { currentTrip, destinations, updateTrip, updateDestination } = useSupabaseApp();
+  const { currentTrip, updateTrip } = useTripContext();
+  const { destinations, updateDestination } = useDestinationContext();
   const { isMobile } = useResponsive();
   const [activeTab, setActiveTab] = useState<BudgetTab>('overview');
   const [showBudgetForm, setShowBudgetForm] = useState(false);

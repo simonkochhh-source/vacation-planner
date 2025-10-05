@@ -4,7 +4,10 @@ import { SecurityProvider } from './security/SecurityProvider';
 import CookieConsent from './components/GDPR/CookieConsent';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import DashboardLayout from './components/Layout/DashboardLayout';
-import { SupabaseAppProvider, useSupabaseApp } from './stores/SupabaseAppContext';
+import { AppContextProvider } from './contexts/AppContextProvider';
+import { useUIContext } from './contexts/UIContext';
+import { useTripContext } from './contexts/TripContext';
+import { useDestinationContext } from './contexts/DestinationContext';
 import MainLayout from './components/Layout/MainLayout';
 import { useTheme } from './hooks/useTheme';
 import { useOptimizedCallback } from './hooks/useOptimizedCallback';
@@ -81,7 +84,16 @@ const preloadRoute = (routeName: string) => {
 };
 
 const AppContent: React.FC = () => {
-  const { uiState, currentTrip, reorderDestinations, updateUIState } = useSupabaseApp();
+  const { 
+    currentView, 
+    activeView, 
+    selectedUserId, 
+    chatOpen, 
+    selectedChatRoomId,
+    updateUIState 
+  } = useUIContext();
+  const { currentTrip, getCurrentTrip } = useTripContext();
+  const { reorderDestinations } = useDestinationContext();
   
   // Initialize theme system and performance monitoring
   useTheme();
@@ -93,10 +105,10 @@ const AppContent: React.FC = () => {
 
   // Preload likely next routes based on current view
   React.useEffect(() => {
-    const currentView = uiState.currentView || uiState.activeView;
+    const currentViewName = currentView || activeView;
     
     // Preload common next views based on user flow patterns
-    switch (currentView) {
+    switch (currentViewName) {
       case 'landing':
       case 'list':
         // Users often go to map or search from timeline/landing
@@ -113,7 +125,7 @@ const AppContent: React.FC = () => {
         preloadRoute('map');
         break;
     }
-  }, [uiState.currentView, uiState.activeView]);
+  }, [currentView, activeView]);
 
   const handleReorderDestinations = useOptimizedCallback(async (reorderedDestinations: Destination[]) => {
     if (!currentTrip) return;
@@ -132,7 +144,7 @@ const AppContent: React.FC = () => {
   }, [currentTrip, reorderDestinations], 'handleReorderDestinations');
 
   const renderCurrentView = useOptimizedCallback(() => {
-    switch (uiState.currentView || uiState.activeView) {
+    switch (currentView || activeView) {
       case 'landing':
         return <LandingView />;
       case 'trips':
@@ -152,7 +164,7 @@ const AppContent: React.FC = () => {
       case 'user-profile':
         return (
           <UserProfileView
-            userId={uiState.selectedUserId || ''}
+            userId={selectedUserId || ''}
             onBack={() => updateUIState({ currentView: 'landing' })}
           />
         );
@@ -176,7 +188,7 @@ const AppContent: React.FC = () => {
           />
         );
     }
-  }, [uiState.currentView, uiState.activeView, uiState.selectedUserId, updateUIState, handleReorderDestinations], 'renderCurrentView');
+  }, [currentView, activeView, selectedUserId, updateUIState, handleReorderDestinations], 'renderCurrentView');
 
   return (
     <div className="app-container">
@@ -197,11 +209,11 @@ const AppContent: React.FC = () => {
       {/* <QuickSearchTest /> */}
       
       {/* Global Chat Interface */}
-      {uiState.chatOpen && (
+      {chatOpen && (
         <ChatInterface
-          isOpen={uiState.chatOpen}
+          isOpen={chatOpen}
           onClose={() => updateUIState({ chatOpen: false })}
-          initialRoomId={uiState.selectedChatRoomId}
+          initialRoomId={selectedChatRoomId}
         />
       )}
     </div>
@@ -213,9 +225,9 @@ function App() {
     <SecurityProvider>
       <AuthProvider>
         <ProtectedRoute>
-          <SupabaseAppProvider>
+          <AppContextProvider>
             <AppContent />
-          </SupabaseAppProvider>
+          </AppContextProvider>
         </ProtectedRoute>
       </AuthProvider>
     </SecurityProvider>

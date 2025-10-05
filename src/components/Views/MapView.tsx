@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, Marker, Popup } from 'react-leaflet';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { LatLngExpression, Icon } from 'leaflet';
 import RoutingMachine from '../Maps/RoutingMachine';
 import MobileTimeline from '../Maps/MobileTimeline';
@@ -23,7 +24,8 @@ Icon.Default.mergeOptions({
 
 
 const MapView: React.FC = () => {
-  const { currentTrip, destinations } = useSupabaseApp();
+  const { currentTrip } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { isMobile, isTablet, isTouchDevice } = useResponsive();
   const [mapRef, setMapRef] = useState<any>(null);
   const [userLocation, setUserLocation] = useState<LatLngExpression | null>(null);

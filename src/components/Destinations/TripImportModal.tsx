@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Trip, Destination } from '../../types';
 import Modal from '../Common/Modal';
@@ -36,7 +36,7 @@ const TripImportModal: React.FC<TripImportModalProps> = ({
   onClose,
   onImportComplete
 }) => {
-  const { trips, currentTrip } = useSupabaseApp();
+  const { trips, currentTrip } = useTripContext();
   const { user } = useAuth();
   
   const [currentStep, setCurrentStep] = useState<ImportStep>('select-trip');

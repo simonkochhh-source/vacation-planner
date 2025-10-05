@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Destination, DestinationCategory, Trip, DestinationStatus, TripPrivacy } from '../../types';
@@ -48,16 +50,18 @@ interface TravelSuggestion {
 }
 
 const LandingView: React.FC = () => {
+  const { updateUIState, settings } = useUIContext();
   const { 
-    currentTrip,
-    destinations,
-    trips,
-    publicTrips,
-    createTrip,
-    createDestinationForTrip,
-    updateUIState,
-    settings
-  } = useSupabaseApp();
+    currentTrip, 
+    trips, 
+    publicTrips, 
+    createTrip, 
+    getPublicTrips 
+  } = useTripContext();
+  const { 
+    destinations, 
+    createDestination 
+  } = useDestinationContext();
   
   const { userProfile } = useAuth();
   const { isMobile } = useResponsive();
@@ -179,7 +183,7 @@ const LandingView: React.FC = () => {
         
         console.log(`🎯 Creating destination ${i + 1}/${suggestion.locations.length}:`, location, 'for trip:', newTrip.id);
         
-        const newDestination = await createDestinationForTrip({
+        const newDestination = await createDestination(newTrip.id, {
           name: `${location} - ${suggestion.title}`,
           location: location,
           coordinates: suggestion.coordinates,
@@ -190,7 +194,7 @@ const LandingView: React.FC = () => {
           budget: Math.round(suggestion.estimatedBudget / suggestion.locations.length),
           notes: suggestion.description,
           tags: suggestion.tags
-        }, newTrip.id);
+        });
         
         if (!newDestination) {
           console.warn('⚠️ Destination creation returned null/undefined for:', location);

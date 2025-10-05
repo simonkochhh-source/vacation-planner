@@ -9,7 +9,7 @@ import {
   Search,
   Settings
 } from 'lucide-react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useResponsive } from '../../hooks/useResponsive';
 
 interface MobileBottomNavProps {
@@ -21,13 +21,13 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   onChatToggle, 
   showChatBadge = false 
 }) => {
-  const { uiState, updateUIState } = useSupabaseApp();
+  const { currentView, activeView, updateUIState } = useUIContext();
   const { isMobile } = useResponsive();
 
   // Don't render on desktop
   if (!isMobile) return null;
 
-  const currentView = uiState.currentView || uiState.activeView;
+  const activeCurrentView = currentView || activeView;
 
   const navItems = [
     {
@@ -155,7 +155,7 @@ const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
           key={item.id}
           icon={item.icon}
           label={item.label}
-          isActive={currentView === item.view}
+          isActive={activeCurrentView === item.view}
           onClick={() => handleNavigation(item.view)}
         />
       ))}

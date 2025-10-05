@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { destinationSchema, type DestinationFormData } from '../../schemas/validationSchemas';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useTripContext } from '../../contexts/TripContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { 
   DestinationCategory, 
@@ -74,7 +75,8 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
   onClose, 
   destination 
 }) => {
-  const { createDestination, updateDestination } = useSupabaseApp();
+  const { createDestination, updateDestination } = useDestinationContext();
+  const { currentTrip } = useTripContext();
   
   // Mobile responsiveness
   const { isMobile } = useResponsive();
@@ -194,7 +196,7 @@ const DestinationForm: React.FC<DestinationFormProps> = ({
         console.log('Destination updated successfully');
       } else {
         console.log('Creating new destination...');
-        const newDestination = await createDestination(formData);
+        const newDestination = await createDestination(currentTrip?.id || '', formData);
         console.log('Destination created successfully:', newDestination);
       }
       

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useUIContext } from '../../contexts/UIContext';
 import TripForm from '../Forms/TripForm';
 import ModernButton from '../UI/ModernButton';
 import Card from '../Common/Card';
@@ -26,15 +28,9 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) => {
-  const { 
-    currentTrip, 
-    destinations, 
-    trips, 
-    setCurrentTrip,
-    deleteTrip,
-    settings,
-    updateUIState 
-  } = useSupabaseApp();
+  const { currentTrip, trips, setCurrentTrip, deleteTrip } = useTripContext();
+  const { destinations } = useDestinationContext();
+  const { settings, updateUIState } = useUIContext();
 
   const [showTrips, setShowTrips] = useState(true);
   const [showTripForm, setShowTripForm] = useState(false);

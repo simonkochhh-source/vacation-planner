@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { Destination, Trip, UserSearchResult, canUserAccessTripAsync } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { Search, MapPin, Globe, Users, Calendar, ArrowRight, User } from 'lucide-react';
@@ -37,7 +38,8 @@ const IntelligentSearch: React.FC<IntelligentSearchProps> = ({
   style,
   isMobile = false
 }) => {
-  const { destinations, trips, publicTrips, currentTrip, loadPublicTrips } = useSupabaseApp();
+  const { trips, currentTrip, publicTrips, loadPublicTrips } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { user: currentUser } = useAuth();
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [userSuggestions, setUserSuggestions] = useState<UserSearchResult[]>([]);

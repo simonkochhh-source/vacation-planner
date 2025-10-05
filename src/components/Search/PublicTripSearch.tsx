@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { Trip, TripPrivacy, DestinationCategory, canUserAccessTripAsync } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -39,11 +40,9 @@ const PublicTripSearch: React.FC<PublicTripSearchProps> = ({
   const { 
     publicTrips,
     trips,
-    destinations,
-    currentTrip,
-    uiState,
     loadPublicTrips
-  } = useSupabaseApp();
+  } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { user: currentUser } = useAuth();
 
   // Add CSS styles for smooth hover effects

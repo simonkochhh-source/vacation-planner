@@ -228,6 +228,8 @@ export interface UIState {
   // Chat states
   chatOpen?: boolean; // Flag to show chat interface
   selectedChatRoomId?: string; // For opening specific chat room
+  // App Settings
+  settings: AppSettings;
 }
 
 // Settings types

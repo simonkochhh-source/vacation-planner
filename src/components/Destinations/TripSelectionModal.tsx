@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { Trip } from '../../types';
 import Modal from '../Common/Modal';
@@ -34,7 +34,7 @@ const TripSelectionModal: React.FC<TripSelectionModalProps> = ({
   title = "Reise auswählen",
   subtitle = "Wählen Sie eine Reise aus."
 }) => {
-  const { trips, currentTrip } = useSupabaseApp();
+  const { trips, currentTrip } = useTripContext();
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
 

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Trip, VehicleConfig, FuelType, CreateTripData, TripPrivacy } from '../../types';
 import { tripSchema, TripFormData } from '../../schemas/validationSchemas';
@@ -36,7 +37,7 @@ const TripForm: React.FC<TripFormProps> = ({
   onClose, 
   trip 
 }) => {
-  const { createTrip, updateTrip, setCurrentTrip, destinations } = useSupabaseApp();
+  const { createTrip, updateTrip, setCurrentTrip } = useTripContext();
   
   // Mobile responsiveness
   const { isMobile } = useResponsive();

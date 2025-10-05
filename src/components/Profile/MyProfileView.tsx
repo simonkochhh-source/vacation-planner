@@ -18,7 +18,8 @@ import {
   X
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { socialService } from '../../services/socialService';
 import { SocialUserProfile, Trip, TripPrivacy, ActivityFeedItem, ActivityType } from '../../types';
 import AvatarUpload from '../User/AvatarUpload';
@@ -26,7 +27,8 @@ import { formatDate } from '../../utils';
 
 const MyProfileView: React.FC = () => {
   const { user, userProfile } = useAuth();
-  const { updateUIState, trips } = useSupabaseApp();
+  const { updateUIState } = useUIContext();
+  const { trips } = useTripContext();
   const { isMobile } = useResponsive();
   const [socialProfile, setSocialProfile] = useState<SocialUserProfile | null>(null);
   const [myActivities, setMyActivities] = useState<ActivityFeedItem[]>([]);

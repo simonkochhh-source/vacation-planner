@@ -1,9 +1,9 @@
 import React from 'react';
 import { Search } from 'lucide-react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 
 const QuickSearchTest: React.FC = () => {
-  const { updateUIState } = useSupabaseApp();
+  const { updateUIState } = useUIContext();
 
   return (
     <div style={{

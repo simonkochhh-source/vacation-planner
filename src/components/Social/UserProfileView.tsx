@@ -28,7 +28,7 @@ import {
   getSocialTripPermissions
 } from '../../types';
 import { socialService } from '../../services/socialService';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { formatDate } from '../../utils';
 import AvatarUpload from '../User/AvatarUpload';
 import SocialActivityFeed from './SocialActivityFeed';
@@ -40,7 +40,7 @@ interface UserProfileViewProps {
 
 const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => {
   const { user: currentUser } = useAuth();
-  const { updateUIState } = useSupabaseApp();
+  const { updateUIState } = useUIContext();
   const { isMobile } = useResponsive();
   
   const [profile, setProfile] = useState<SocialUserProfile | null>(null);

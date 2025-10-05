@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import PhotoShareModal from '../Social/PhotoShareModal';
@@ -49,7 +50,8 @@ interface DestinationWithPhotos extends Omit<Destination, 'photos'> {
 }
 
 const PhotosView: React.FC = () => {
-  const { currentTrip, destinations } = useSupabaseApp();
+  const { currentTrip } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { isMobile } = useResponsive();
   
   const [selectedDestination, setSelectedDestination] = useState<string | null>(null);

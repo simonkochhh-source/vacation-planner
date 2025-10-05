@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { X, RotateCcw, Star, Tag, Calendar, DollarSign } from 'lucide-react';
 import { 
   DestinationCategory, 
@@ -17,10 +17,10 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
   showClearAll = true,
   compact = false
 }) => {
-  const { uiState, updateUIState } = useSupabaseApp();
+  const { filters, searchQuery, updateUIState } = useUIContext();
 
   const removeFilter = (filterType: keyof DestinationFilters, value?: any) => {
-    const currentFilters = uiState.filters;
+    const currentFilters = filters;
     let newFilters = { ...currentFilters };
 
     if (Array.isArray(currentFilters[filterType]) && value !== undefined) {
@@ -63,10 +63,10 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
   }> = [];
 
   // Search query chip
-  if (uiState.searchQuery) {
+  if (searchQuery) {
     filterChips.push({
       id: 'search',
-      label: `"${uiState.searchQuery}"`,
+      label: `"${searchQuery}"`,
       icon: <span style={{ fontSize: '0.75rem' }}>🔍</span>,
       color: '#3b82f6',
       onRemove: clearSearchQuery
@@ -74,8 +74,8 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
   }
 
   // Category filters
-  if (uiState.filters.category?.length) {
-    uiState.filters.category.forEach(category => {
+  if (filters.category?.length) {
+    filters.category.forEach(category => {
       filterChips.push({
         id: `category-${category}`,
         label: getCategoryLabel(category),
@@ -87,7 +87,7 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
   }
 
   // Status filters
-  if (uiState.filters.status?.length) {
+  if (filters.status?.length) {
     const statusConfig = {
       [DestinationStatus.PLANNED]: { label: 'Geplant', emoji: '⏳', color: '#3b82f6' },
       [DestinationStatus.VISITED]: { label: 'Besucht', emoji: '✅', color: '#10b981' },
@@ -95,7 +95,7 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
       [DestinationStatus.IN_PROGRESS]: { label: 'In Bearbeitung', emoji: '🔄', color: '#f59e0b' }
     };
 
-    uiState.filters.status.forEach(status => {
+    filters.status.forEach(status => {
       const config = statusConfig[status];
       filterChips.push({
         id: `status-${status}`,
@@ -109,8 +109,8 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
 
 
   // Tag filters
-  if (uiState.filters.tags?.length) {
-    uiState.filters.tags.forEach(tag => {
+  if (filters.tags?.length) {
+    filters.tags.forEach(tag => {
       filterChips.push({
         id: `tag-${tag}`,
         label: tag,
@@ -122,8 +122,8 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
   }
 
   // Date range filter
-  if (uiState.filters.dateRange) {
-    const { start, end } = uiState.filters.dateRange;
+  if (filters.dateRange) {
+    const { start, end } = filters.dateRange;
     filterChips.push({
       id: 'dateRange',
       label: `${formatDate(start)} - ${formatDate(end)}`,
@@ -134,8 +134,8 @@ const FilterSummary: React.FC<FilterSummaryProps> = ({
   }
 
   // Budget range filter
-  if (uiState.filters.budgetRange) {
-    const { min, max } = uiState.filters.budgetRange;
+  if (filters.budgetRange) {
+    const { min, max } = filters.budgetRange;
     filterChips.push({
       id: 'budgetRange',
       label: `${formatCurrency(min)} - ${formatCurrency(max)}`,

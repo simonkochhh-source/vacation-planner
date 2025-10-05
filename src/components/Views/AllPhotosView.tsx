@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { 
@@ -51,7 +52,8 @@ type ViewMode = 'grid' | 'list';
 type FilterType = 'all' | 'recent' | 'favorites';
 
 const AllPhotosView: React.FC = () => {
-  const { trips, destinations } = useSupabaseApp();
+  const { trips } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { user } = useAuth();
   const { isMobile } = useResponsive();
   

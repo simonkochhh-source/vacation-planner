@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { Settings, Menu } from 'lucide-react';
 import ModernButton from '../UI/ModernButton';
 import HeaderBrand from './HeaderBrand';
@@ -15,7 +15,7 @@ interface HeaderProps {
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-  const { uiState, updateUIState } = useSupabaseApp();
+  const { updateUIState, searchQuery, currentView } = useUIContext();
   const { user, userProfile } = useAuth();
   const { isMobile } = useResponsive();
   const isLargeScreen = !isMobile;
@@ -78,7 +78,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
 
   // Initialize search component handlers
   const searchHandlers = HeaderSearch({
-    searchQuery: uiState.searchQuery,
+    searchQuery: searchQuery,
     onSearchChange: handleSearchChange,
     onNavigate: handleNavigateToItem,
     onShowSearchPage: handleShowSearchPage
@@ -127,7 +127,7 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
           {/* Right Section - Navigation & Settings */}
           <div className="flex items-center gap-2">
             <HeaderNavigation 
-              currentView={uiState.currentView}
+              currentView={currentView}
               onViewChange={handleViewChange}
             />
 

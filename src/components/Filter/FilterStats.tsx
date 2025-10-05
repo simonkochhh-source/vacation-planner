@@ -1,5 +1,7 @@
 import React, { useMemo } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { 
   BarChart3,
   TrendingUp,
@@ -22,7 +24,9 @@ interface FilterStatsProps {
 }
 
 const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
-  const { currentTrip, destinations, uiState } = useSupabaseApp();
+  const { currentTrip } = useTripContext();
+  const { destinations } = useDestinationContext();
+  const { filters, searchQuery } = useUIContext();
 
   // Get current trip destinations
   const currentDestinations = currentTrip 
@@ -33,8 +37,8 @@ const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
   const filteredDestinations = useMemo(() => {
     return currentDestinations.filter(dest => {
       // Search filter
-      if (uiState.searchQuery) {
-        const searchTerm = uiState.searchQuery.toLowerCase();
+      if (searchQuery) {
+        const searchTerm = searchQuery.toLowerCase();
         const matchesSearch = 
           dest.name.toLowerCase().includes(searchTerm) ||
           dest.location.toLowerCase().includes(searchTerm) ||
@@ -45,39 +49,39 @@ const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
       }
 
       // Category filter
-      if (uiState.filters.category?.length) {
-        if (!uiState.filters.category.includes(dest.category)) return false;
+      if (filters.category?.length) {
+        if (!filters.category.includes(dest.category)) return false;
       }
 
       // Status filter
-      if (uiState.filters.status?.length) {
-        if (!uiState.filters.status.includes(dest.status)) return false;
+      if (filters.status?.length) {
+        if (!filters.status.includes(dest.status)) return false;
       }
 
 
       // Tags filter
-      if (uiState.filters.tags?.length) {
-        const hasMatchingTag = uiState.filters.tags.some(tag => dest.tags.includes(tag));
+      if (filters.tags?.length) {
+        const hasMatchingTag = filters.tags.some(tag => dest.tags.includes(tag));
         if (!hasMatchingTag) return false;
       }
 
       // Date range filter
-      if (uiState.filters.dateRange) {
-        const { start, end } = uiState.filters.dateRange;
+      if (filters.dateRange) {
+        const { start, end } = filters.dateRange;
         if (start && dest.startDate < start) return false;
         if (end && dest.endDate > end) return false;
       }
 
       // Budget range filter
-      if (uiState.filters.budgetRange) {
-        const { min, max } = uiState.filters.budgetRange;
+      if (filters.budgetRange) {
+        const { min, max } = filters.budgetRange;
         const budget = dest.budget || 0;
         if (budget < min || budget > max) return false;
       }
 
       return true;
     });
-  }, [currentDestinations, uiState.searchQuery, uiState.filters]);
+  }, [currentDestinations, searchQuery, filters]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -139,10 +143,10 @@ const FilterStats: React.FC<FilterStatsProps> = ({ showDetailed = false }) => {
     };
   }, [currentDestinations, filteredDestinations]);
 
-  const hasActiveFilters = Object.keys(uiState.filters).some(key => {
-    const value = (uiState.filters as any)[key];
+  const hasActiveFilters = Object.keys(filters).some(key => {
+    const value = (filters as any)[key];
     return value && (Array.isArray(value) ? value.length > 0 : true);
-  }) || uiState.searchQuery;
+  }) || searchQuery;
 
   if (!currentTrip) {
     return (

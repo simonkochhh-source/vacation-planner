@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { Trip, Destination, DestinationStatus, TripPrivacy } from '../../types';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { LatLngExpression, Icon } from 'leaflet';
@@ -582,7 +584,7 @@ interface PublicTripViewProps {
 }
 
 const PublicTripView: React.FC<PublicTripViewProps> = ({ trip, onBack, onImportTrip }) => {
-  const { destinations } = useSupabaseApp();
+  const { destinations } = useDestinationContext();
   const [showImportDialog, setShowImportDialog] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');

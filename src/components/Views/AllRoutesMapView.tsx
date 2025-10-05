@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { MapContainer, Marker, Popup, Polyline } from 'react-leaflet';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { LatLngExpression, Icon } from 'leaflet';
 import MapLayerControl, { DynamicTileLayer } from '../Maps/MapLayerControl';
 import MapMeasurement from '../Maps/MapMeasurement';
@@ -36,7 +37,8 @@ interface TripStatistics {
 }
 
 const AllRoutesMapView: React.FC = () => {
-  const { trips, destinations } = useSupabaseApp();
+  const { trips } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { isMobile, isTablet, isTouchDevice } = useResponsive();
   const [mapRef, setMapRef] = useState<any>(null);
   const [userLocation, setUserLocation] = useState<LatLngExpression | null>(null);

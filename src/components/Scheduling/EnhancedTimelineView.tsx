@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates, getTripPermissions, canUserEditTrip } from '../../types';
@@ -85,7 +87,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   onEditDestination,
   onReorderDestinations
 }) => {
-  const { currentTrip, destinations, createDestination, createDestinationForTrip, updateDestination, deleteDestination, settings } = useSupabaseApp();
+  const { currentTrip } = useTripContext();
+  const { destinations, createDestination, updateDestination, deleteDestination } = useDestinationContext();
+  const { settings } = useUIContext();
   
   // Mobile responsiveness
   const { isMobile } = useResponsive();
@@ -1221,7 +1225,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         returnDestinationId: newDestinationForm.returnDestinationId
       };
 
-      const createdDestination = await createDestination(destinationData);
+      const createdDestination = await createDestination(currentTrip?.id || '', destinationData);
       
       // Update the created destination with actualCost if provided
       if (createdDestination && newDestinationForm.actualCost !== undefined && newDestinationForm.actualCost !== null) {
@@ -1347,7 +1351,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
             color: returnDestination.color
           };
 
-          const clonedDestination = await createDestination(clonedDestinationData);
+          const clonedDestination = await createDestination(currentTrip?.id || '', clonedDestinationData);
           
           // Set the transport mode of the cloned destination to match the original destination's transport mode
           if (clonedDestination) {
@@ -1569,7 +1573,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
               console.log('🎯 Cloned destination data:', clonedDestinationData);
               
               // Use the createDestinationForTrip function with explicit tripId
-              const clonedDestination = await createDestinationForTrip(clonedDestinationData, currentTrip.id);
+              const clonedDestination = await createDestination(currentTrip.id, clonedDestinationData);
               
               // Set the transport mode of the cloned destination to match the original destination's transport mode
               if (clonedDestination) {

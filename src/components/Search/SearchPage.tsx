@@ -1,5 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Destination, DestinationCategory, DestinationStatus, Trip, canUserAccessTripAsync } from '../../types';
 import { useAuth } from '../../contexts/AuthContext';
@@ -41,20 +43,21 @@ import PhotoPreview from '../Photos/PhotoPreview';
 import { WeatherService } from '../../services/weatherService';
 
 const SearchPage: React.FC = () => {
+  const { currentTrip, trips, publicTrips } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { 
-    currentTrip,
-    destinations,
-    trips,
-    publicTrips,
-    uiState, 
-    updateUIState,
-    createTrip,
-    createDestinationForTrip
-  } = useSupabaseApp();
+    searchQuery,
+    selectedDestinationId,
+    showDestinationDetails,
+    selectedTripId,
+    showTripDetails,
+    updateUIState
+  } = useUIContext();
+  const { createTrip } = useTripContext();
+  const { createDestination } = useDestinationContext();
   const { user: currentUser } = useAuth();
   const { isMobile } = useResponsive();
   
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<DestinationCategory[]>([]);
   const [selectedStatus, setSelectedStatus] = useState<DestinationStatus[]>([]);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -72,9 +75,9 @@ const SearchPage: React.FC = () => {
   // Handle navigation from header search
   React.useEffect(() => {
     // Handle trip navigation
-    if (uiState.selectedTripId && uiState.showTripDetails) {
+    if (selectedTripId && showTripDetails) {
       // Search in all trips, not just public trips, to include own trips and contact trips
-      const trip = trips.find(t => t.id === uiState.selectedTripId);
+      const trip = trips.find(t => t.id === selectedTripId);
       if (trip) {
         setSelectedTrip(trip);
         setShowTripView(true);
@@ -84,15 +87,15 @@ const SearchPage: React.FC = () => {
           showTripDetails: false 
         });
       } else {
-        console.log(`🔍 [SearchPage] Trip with ID ${uiState.selectedTripId} not found in trips list`);
+        console.log(`🔍 [SearchPage] Trip with ID ${selectedTripId} not found in trips list`);
         console.log(`📊 [SearchPage] Available trips: ${trips.length}`);
         console.log(`📋 [SearchPage] Trip IDs: ${trips.map(t => t.id).join(', ')}`);
       }
     }
 
     // Handle destination navigation
-    if (uiState.selectedDestinationId && uiState.showDestinationDetails) {
-      const destination = accessibleDestinations.find(d => d.id === uiState.selectedDestinationId);
+    if (selectedDestinationId && showDestinationDetails) {
+      const destination = accessibleDestinations.find(d => d.id === selectedDestinationId);
       if (destination) {
         setSelectedDestination(destination);
         setShowDestinationDetail(true);
@@ -102,11 +105,11 @@ const SearchPage: React.FC = () => {
           showDestinationDetails: false 
         });
       } else {
-        console.log(`🔍 [SearchPage] Destination with ID ${uiState.selectedDestinationId} not found in accessible destinations`);
+        console.log(`🔍 [SearchPage] Destination with ID ${selectedDestinationId} not found in accessible destinations`);
         console.log(`📊 [SearchPage] Available destinations: ${accessibleDestinations.length}`);
       }
     }
-  }, [uiState.selectedTripId, uiState.showTripDetails, uiState.selectedDestinationId, uiState.showDestinationDetails, trips, accessibleDestinations, updateUIState]);
+  }, [selectedTripId, showTripDetails, selectedDestinationId, showDestinationDetails, trips, accessibleDestinations, updateUIState]);
 
   // Load destinations from all accessible trips
   useEffect(() => {
@@ -233,7 +236,7 @@ const SearchPage: React.FC = () => {
   };
 
   const clearAllFilters = () => {
-    setSearchQuery('');
+    updateUIState({ searchQuery: '' });
     setSelectedCategories([]);
     setSelectedStatus([]);
     setSelectedTags([]);
@@ -279,7 +282,7 @@ const SearchPage: React.FC = () => {
       const { id, createdAt, updatedAt, ...destinationData } = destination;
       
       
-      const importedDestination = await createDestinationForTrip({
+      const importedDestination = await createDestination(currentTrip?.id || '', {
         ...destinationData,
         // Keep original name without "Copy of" prefix
         name: destination.name,
@@ -1146,7 +1149,7 @@ const SearchPage: React.FC = () => {
               type="text"
               placeholder={isMobile ? "Suchen..." : "Ziele, Orte, Tags durchsuchen..."}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => updateUIState({ searchQuery: e.target.value })}
               style={{
                 width: '100%',
                 padding: isMobile ? '16px 16px 16px 48px' : '16px 16px 16px 52px',

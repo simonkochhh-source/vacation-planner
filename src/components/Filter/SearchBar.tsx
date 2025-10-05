@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useUIContext } from '../../contexts/UIContext';
 import { 
   Search, 
   X,
@@ -26,12 +28,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
   placeholder = "Ziele, Orte, Tags durchsuchen...",
   size = 'md'
 }) => {
-  const { 
-    currentTrip,
-    destinations,
-    uiState, 
-    updateUIState 
-  } = useSupabaseApp();
+  const { currentTrip } = useTripContext();
+  const { destinations } = useDestinationContext();
+  const { searchQuery, filters, updateUIState } = useUIContext();
   
   const [isFocused, setIsFocused] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -47,9 +46,9 @@ const SearchBar: React.FC<SearchBarProps> = ({
 
   // Generate search suggestions
   const searchSuggestions = useMemo(() => {
-    if (!uiState.searchQuery || uiState.searchQuery.length < 2) return [];
+    if (!searchQuery || searchQuery.length < 2) return [];
 
-    const query = uiState.searchQuery.toLowerCase();
+    const query = searchQuery.toLowerCase();
     const suggestions: Array<{
       type: 'destination' | 'location' | 'tag' | 'category';
       value: string;
@@ -131,7 +130,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         if (b.value.toLowerCase() === query) return 1;
         return (b.count || 0) - (a.count || 0);
       });
-  }, [uiState.searchQuery, currentDestinations]);
+  }, [searchQuery, currentDestinations]);
 
   const handleInputChange = (value: string) => {
     updateUIState({ searchQuery: value });
@@ -146,11 +145,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
       updateUIState({ searchQuery: suggestion.value });
     } else if (suggestion.type === 'tag') {
       // Add tag to filter instead of search query
-      const currentTags = uiState.filters.tags || [];
+      const currentTags = filters.tags || [];
       if (!currentTags.includes(suggestion.value)) {
         updateUIState({ 
           filters: { 
-            ...uiState.filters, 
+            ...filters, 
             tags: [...currentTags, suggestion.value] 
           },
           searchQuery: ''
@@ -158,11 +157,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
       }
     } else if (suggestion.type === 'category') {
       // Add category to filter
-      const currentCategories = uiState.filters.category || [];
+      const currentCategories = filters.category || [];
       if (!currentCategories.includes(suggestion.value as any)) {
         updateUIState({ 
           filters: { 
-            ...uiState.filters, 
+            ...filters, 
             category: [...currentCategories, suggestion.value as any] 
           },
           searchQuery: ''
@@ -275,11 +274,11 @@ const SearchBar: React.FC<SearchBarProps> = ({
           ref={inputRef}
           type="text"
           placeholder={placeholder}
-          value={uiState.searchQuery}
+          value={searchQuery}
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={() => {
             setIsFocused(true);
-            if (uiState.searchQuery.length > 1) {
+            if (searchQuery.length > 1) {
               setShowSuggestions(true);
             }
           }}
@@ -309,7 +308,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
         }}>
           
           {/* Clear Button */}
-          {uiState.searchQuery && (
+          {searchQuery && (
             <button
               onClick={handleClear}
               style={{
@@ -481,7 +480,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
       )}
 
       {/* Search Stats */}
-      {uiState.searchQuery && currentDestinations.length > 0 && (
+      {searchQuery && currentDestinations.length > 0 && (
         <div style={{
           marginTop: '8px',
           fontSize: '0.75rem',
@@ -493,7 +492,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <Clock size={12} />
           <span>
             {currentDestinations.filter(dest => {
-              const searchTerm = uiState.searchQuery.toLowerCase();
+              const searchTerm = searchQuery.toLowerCase();
               return dest.name.toLowerCase().includes(searchTerm) ||
                      dest.location.toLowerCase().includes(searchTerm) ||
                      dest.notes?.toLowerCase().includes(searchTerm) ||

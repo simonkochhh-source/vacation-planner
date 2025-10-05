@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { useSupabaseApp } from '../../stores/SupabaseAppContext';
+import { useTripContext } from '../../contexts/TripContext';
+import { useDestinationContext } from '../../contexts/DestinationContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   Destination, 
@@ -39,7 +40,8 @@ const DestinationBrowser: React.FC<DestinationBrowserProps> = ({
   onClose,
   onImportDestination
 }) => {
-  const { trips, destinations } = useSupabaseApp();
+  const { trips } = useTripContext();
+  const { destinations } = useDestinationContext();
   const { user: currentUser } = useAuth();
   
   const [searchQuery, setSearchQuery] = useState('');

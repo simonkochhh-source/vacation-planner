@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
-import { useSupabaseApp } from '../stores/SupabaseAppContext';
+import { useUIContext } from '../contexts/UIContext';
 
 export const useTheme = () => {
-  const { settings, updateSettings } = useSupabaseApp();
+  const { settings, updateSettings } = useUIContext();
 
   useEffect(() => {
     const applyTheme = (theme: 'light' | 'dark' | 'auto') => {
