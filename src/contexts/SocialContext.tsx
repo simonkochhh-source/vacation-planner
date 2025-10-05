@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
 import { 
-  UserProfile, 
   SocialUserProfile,
   UUID, 
   ChatRoom, 
@@ -68,7 +67,7 @@ interface SocialContextType extends SocialState {
   // User Search & Profile
   searchUsers: (query: string) => Promise<void>;
   getUserProfile: (userId: UUID) => Promise<SocialUserProfile | null>;
-  updateUserProfile: (data: Partial<UserProfile>) => Promise<void>;
+  updateUserProfile: (data: Partial<SocialUserProfile>) => Promise<void>;
   
   // Chat Operations
   loadChatRooms: () => Promise<void>;
@@ -296,7 +295,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
     }
   }, [handleError]);
 
-  const updateUserProfile = useCallback(async (data: Partial<UserProfile>): Promise<void> => {
+  const updateUserProfile = useCallback(async (data: Partial<SocialUserProfile>): Promise<void> => {
     try {
       await socialService.updateUserProfile(data);
     } catch (error) {
