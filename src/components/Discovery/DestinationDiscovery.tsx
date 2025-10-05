@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Search, Filter, MapPin, Star, Clock, Euro, Plus, ExternalLink, Heart } from 'lucide-react';
 import { webDestinationService, WebDestination, DestinationSearchFilters } from '../../services/webDestinationService';
 import { useDestinationContext } from '../../contexts/DestinationContext';
+import { useTripContext } from '../../contexts/TripContext';
 import { DestinationCategory, DestinationStatus } from '../../types';
 
 interface DestinationDiscoveryProps {
@@ -22,6 +23,7 @@ const DestinationDiscovery: React.FC<DestinationDiscoveryProps> = ({
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   
   const { createDestination } = useDestinationContext();
+  const { currentTrip } = useTripContext();
 
   // Load trending destinations on mount
   useEffect(() => {
@@ -78,6 +80,12 @@ const DestinationDiscovery: React.FC<DestinationDiscoveryProps> = ({
   // Add destination to trip
   const handleAddToTrip = useCallback(async (destination: WebDestination) => {
     try {
+      if (!currentTrip) {
+        console.error('No current trip selected');
+        alert('Bitte wählen Sie zunächst eine Reise aus, um Ziele hinzuzufügen.');
+        return;
+      }
+
       // Get enriched destination details
       const enrichedDestination = await webDestinationService.getDestinationDetails(destination);
       
@@ -101,7 +109,7 @@ const DestinationDiscovery: React.FC<DestinationDiscoveryProps> = ({
         photos: []
       };
 
-      await createDestination(destinationData);
+      await createDestination(currentTrip.id, destinationData);
       
       if (onAddDestination) {
         onAddDestination(enrichedDestination);
@@ -112,7 +120,7 @@ const DestinationDiscovery: React.FC<DestinationDiscoveryProps> = ({
     } catch (error) {
       console.error('Error adding destination to trip:', error);
     }
-  }, [createDestination, onAddDestination]);
+  }, [createDestination, onAddDestination, currentTrip]);
 
   // Toggle favorite
   const toggleFavorite = useCallback((destinationId: string) => {
