@@ -335,13 +335,13 @@ const MyProfileView: React.FC = () => {
             }}>
               <div>
                 <span style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                  {socialProfile?.follower_count || 0}
-                </span> Follower
+                  {socialProfile?.friend_count || 0}
+                </span> Freunde
               </div>
               <div>
                 <span style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                  {socialProfile?.following_count || 0}
-                </span> Folge ich
+                  {socialProfile?.pending_requests_count || 0}
+                </span> Anfragen
               </div>
               <div>
                 <span style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
@@ -363,7 +363,7 @@ const MyProfileView: React.FC = () => {
         }}>
           <Eye size={16} style={{ color: 'var(--color-primary-ocean)' }} />
           <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-            So sehen andere dein Profil. Nur öffentliche und Follower-Inhalte sind für andere sichtbar.
+            So sehen andere dein Profil. Nur öffentliche und Freunde-Inhalte sind für andere sichtbar.
           </span>
         </div>
       </div>
@@ -684,7 +684,7 @@ const MyProfileView: React.FC = () => {
                     fontSize: 'var(--text-sm)',
                     color: 'var(--color-text-secondary)'
                   }}>
-                    Nur für Follower
+                    Nur für Freunde
                   </div>
                 </div>
 
@@ -812,7 +812,7 @@ const MyProfileView: React.FC = () => {
                     gap: 'var(--space-sm)'
                   }}>
                     <Users size={16} style={{ color: '#f59e0b' }} />
-                    Nur für Follower ({getContactsTrips().length})
+                    Nur für Freunde ({getContactsTrips().length})
                   </h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {getContactsTrips().map(trip => (
@@ -1012,7 +1012,7 @@ const MyProfileView: React.FC = () => {
                         fontSize: 'var(--text-sm)',
                         color: 'var(--color-text-secondary)'
                       }}>
-                        Follower-Reisen
+                        Freunde-Reisen
                       </div>
                     </div>
                     
