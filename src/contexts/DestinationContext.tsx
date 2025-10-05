@@ -137,6 +137,7 @@ export const DestinationProvider: React.FC<DestinationProviderProps> = ({ childr
         actualCost: 0,
         notes: data.notes || '',
         tags: data.tags || [],
+        photos: [],
         color: data.color,
         order: state.destinations.filter(d => d.tripId === tripId).length,
         returnDestinationId: data.returnDestinationId,
