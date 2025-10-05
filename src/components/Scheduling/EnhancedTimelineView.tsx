@@ -1317,6 +1317,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           // Create a home destination object for cloning
           returnDestination = {
             id: 'temp-home',
+            tripId: currentTrip?.id || '',
             name: settings.homePoint.name,
             location: settings.homePoint.address,
             coordinates: settings.homePoint.coordinates,
