@@ -100,6 +100,7 @@ export interface TransportInfo {
 // Main Destination interface
 export interface Destination {
   id: UUID;
+  tripId: UUID; // ID of the trip this destination belongs to
   name: string;
   location: string;
   coordinates?: Coordinates;
