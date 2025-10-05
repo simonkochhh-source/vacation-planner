@@ -4,7 +4,6 @@ import {
   UUID, 
   ChatRoom, 
   ChatMessage, 
-  UserWithStatus,
   FriendshipStatus,
   Activity
 } from '../types';
@@ -23,7 +22,7 @@ type SocialAction =
   | { type: 'SET_CHAT_MESSAGES'; payload: ChatMessage[] }
   | { type: 'ADD_CHAT_MESSAGE'; payload: ChatMessage }
   | { type: 'UPDATE_CHAT_MESSAGE'; payload: { id: string; data: Partial<ChatMessage> } }
-  | { type: 'SET_ROOM_PARTICIPANTS'; payload: UserWithStatus[] }
+  | { type: 'SET_ROOM_PARTICIPANTS'; payload: SocialUserProfile[] }
   | { type: 'SET_ACTIVITIES'; payload: Activity[] }
   | { type: 'ADD_ACTIVITY'; payload: Activity }
   | { type: 'SET_LOADING'; payload: boolean }
@@ -42,7 +41,7 @@ interface SocialState {
   chatRooms: ChatRoom[];
   activeChatRoom?: ChatRoom;
   chatMessages: ChatMessage[];
-  roomParticipants: UserWithStatus[];
+  roomParticipants: SocialUserProfile[];
   
   // Activities
   activities: Activity[];
