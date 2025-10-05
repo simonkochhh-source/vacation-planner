@@ -290,7 +290,7 @@ const SearchPage: React.FC = () => {
         notes: destination.notes ? 
           `${destination.notes}\n\n[Importiert aus "${sourceTrip.name}"]` : 
           `[Importiert aus "${sourceTrip.name}"]`
-      }, currentTrip.id);
+      });
 
       // Show success message
       alert(`Ziel "${destination.name}" wurde erfolgreich in deine Reise importiert!`);
