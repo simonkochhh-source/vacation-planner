@@ -15,7 +15,6 @@ import { handleServiceError } from '../utils/errorHandling';
 type SocialAction = 
   | { type: 'SET_FRIENDS'; payload: SocialUserProfile[] }
   | { type: 'SET_FRIEND_REQUESTS'; payload: SocialUserProfile[] }
-  | { type: 'SET_BLOCKED_USERS'; payload: SocialUserProfile[] }
   | { type: 'SET_SEARCH_RESULTS'; payload: SocialUserProfile[] }
   | { type: 'SET_CHAT_ROOMS'; payload: ChatRoom[] }
   | { type: 'SET_ACTIVE_CHAT_ROOM'; payload: ChatRoom | undefined }
@@ -34,7 +33,6 @@ interface SocialState {
   // Friends & Social
   friends: SocialUserProfile[];
   friendRequests: SocialUserProfile[];
-  blockedUsers: SocialUserProfile[];
   searchResults: SocialUserProfile[];
   
   // Chat
@@ -60,8 +58,6 @@ interface SocialContextType extends SocialState {
   acceptFriendRequest: (userId: UUID) => Promise<void>;
   rejectFriendRequest: (userId: UUID) => Promise<void>;
   removeFriend: (userId: UUID) => Promise<void>;
-  blockUser: (userId: UUID) => Promise<void>;
-  unblockUser: (userId: UUID) => Promise<void>;
   
   // User Search & Profile
   searchUsers: (query: string) => Promise<void>;
@@ -100,7 +96,6 @@ interface SocialContextType extends SocialState {
 const initialSocialState: SocialState = {
   friends: [],
   friendRequests: [],
-  blockedUsers: [],
   searchResults: [],
   chatRooms: [],
   activeChatRoom: undefined,
@@ -121,8 +116,6 @@ const socialReducer = (state: SocialState, action: SocialAction): SocialState =>
     case 'SET_FRIEND_REQUESTS':
       return { ...state, friendRequests: Array.isArray(action.payload) ? action.payload : [] };
     
-    case 'SET_BLOCKED_USERS':
-      return { ...state, blockedUsers: Array.isArray(action.payload) ? action.payload : [] };
     
     case 'SET_SEARCH_RESULTS':
       return { ...state, searchResults: Array.isArray(action.payload) ? action.payload : [] };
@@ -252,25 +245,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
     }
   }, [handleError, getFriends]);
 
-  const blockUser = useCallback(async (userId: UUID): Promise<void> => {
-    try {
-      await socialService.blockUser(userId);
-      const blocked = await socialService.getBlockedUsers();
-      dispatch({ type: 'SET_BLOCKED_USERS', payload: blocked });
-    } catch (error) {
-      handleError(error, 'blockUser');
-    }
-  }, [handleError]);
 
-  const unblockUser = useCallback(async (userId: UUID): Promise<void> => {
-    try {
-      await socialService.unblockUser(userId);
-      const blocked = await socialService.getBlockedUsers();
-      dispatch({ type: 'SET_BLOCKED_USERS', payload: blocked });
-    } catch (error) {
-      handleError(error, 'unblockUser');
-    }
-  }, [handleError]);
 
   // User Search & Profile
   const searchUsers = useCallback(async (query: string): Promise<void> => {
@@ -474,8 +449,6 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
     acceptFriendRequest,
     rejectFriendRequest,
     removeFriend,
-    blockUser,
-    unblockUser,
     
     // User Search & Profile
     searchUsers,
