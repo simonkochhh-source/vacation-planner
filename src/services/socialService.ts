@@ -99,10 +99,272 @@ class SocialService implements SocialServiceInterface {
       .eq('accepter_id', userId)
       .eq('status', 'pending');
 
+    // Get follow counts
+    const followCounts = await this.getFollowCounts(userId);
+
     return {
       ...profile,
       friend_count: friendCount || 0,
-      pending_requests_count: pendingRequestsCount || 0
+      pending_requests_count: pendingRequestsCount || 0,
+      follower_count: followCounts.followersCount,
+      following_count: followCounts.followingCount
+    };
+  }
+
+  // =====================================================
+  // Follow System (Unidirectional) 
+  // =====================================================
+
+  /**
+   * Follow a user (immediate, no approval needed)
+   */
+  async followUser(targetUserId: UUID): Promise<{ followId: string }> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    if (user.id === targetUserId) {
+      throw new Error('Cannot follow yourself');
+    }
+
+    console.log('🔄 Following user:', targetUserId, 'from user:', user.id);
+
+    // Check for existing relationship
+    const { data: existingFollow } = await supabase
+      .from('follows')
+      .select('id, status')
+      .eq('follower_id', user.id)
+      .eq('following_id', targetUserId)
+      .single();
+
+    let followId: string;
+
+    if (existingFollow) {
+      // Update existing relationship to 'following'
+      const { data: updatedFollow, error: updateError } = await supabase
+        .from('follows')
+        .update({ 
+          status: 'following',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existingFollow.id)
+        .select('id')
+        .single();
+
+      if (updateError) {
+        console.error('❌ Failed to update follow relationship:', updateError);
+        throw new Error('Failed to follow user');
+      }
+
+      followId = updatedFollow.id;
+      console.log('✅ Updated existing relationship to following');
+    } else {
+      // Create new follow relationship
+      const { data: newFollow, error: insertError } = await supabase
+        .from('follows')
+        .insert({
+          follower_id: user.id,
+          following_id: targetUserId,
+          status: 'following'
+        })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.error('❌ Failed to create follow relationship:', insertError);
+        throw new Error('Failed to follow user');
+      }
+
+      followId = newFollow.id;
+      console.log('✅ Created new follow relationship');
+    }
+
+    console.log('✅ Successfully following user!');
+    return { followId };
+  }
+
+  /**
+   * Unfollow a user
+   */
+  async unfollowUser(targetUserId: UUID): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+
+    console.log('🔄 Unfollowing user:', targetUserId, 'from user:', user.id);
+
+    // Find and delete the follow relationship
+    const { error: deleteError } = await supabase
+      .from('follows')
+      .delete()
+      .eq('follower_id', user.id)
+      .eq('following_id', targetUserId)
+      .eq('status', 'following');
+
+    if (deleteError) {
+      console.error('❌ Failed to unfollow user:', deleteError);
+      throw new Error('Failed to unfollow user');
+    }
+
+    console.log('✅ Successfully unfollowed user!');
+    return true;
+  }
+
+  /**
+   * Check if current user is following target user
+   */
+  async isFollowing(targetUserId: UUID): Promise<boolean> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return false;
+
+    const { data: follow } = await supabase
+      .from('follows')
+      .select('id')
+      .eq('follower_id', user.id)
+      .eq('following_id', targetUserId)
+      .eq('status', 'following')
+      .single();
+
+    return !!follow;
+  }
+
+  /**
+   * Get follow status between current user and target user
+   */
+  async getFollowStatus(targetUserId: UUID): Promise<{
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+    areFriends: boolean;
+  }> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { isFollowing: false, isFollowedBy: false, areFriends: false };
+
+    // Check if current user is following target user
+    const { data: following } = await supabase
+      .from('follows')
+      .select('id')
+      .eq('follower_id', user.id)
+      .eq('following_id', targetUserId)
+      .eq('status', 'following')
+      .single();
+
+    // Check if target user is following current user
+    const { data: followedBy } = await supabase
+      .from('follows')
+      .select('id')
+      .eq('follower_id', targetUserId)
+      .eq('following_id', user.id)
+      .eq('status', 'following')
+      .single();
+
+    // Check if they are friends (bidirectional accepted relationship)
+    const areFriends = await this.areFriends(user.id, targetUserId);
+
+    return {
+      isFollowing: !!following,
+      isFollowedBy: !!followedBy,
+      areFriends
+    };
+  }
+
+  /**
+   * Get users that the current user is following
+   */
+  async getFollowing(userId?: UUID): Promise<SocialUserProfile[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+    
+    const targetUserId = userId || user.id;
+
+    const { data: follows, error } = await supabase
+      .from('follows')
+      .select(`
+        following_id,
+        created_at,
+        user_profiles!follows_following_id_fkey (*)
+      `)
+      .eq('follower_id', targetUserId)
+      .eq('status', 'following')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Failed to get following users:', error);
+      throw new Error('Failed to get following users');
+    }
+
+    return follows?.map(f => ({
+      ...f.user_profiles,
+      followed_at: f.created_at,
+      // Ensure required fields have defaults
+      social_links: f.user_profiles?.social_links || {},
+      friend_count: 0,
+      pending_requests_count: 0,
+      follower_count: 0,
+      following_count: 0,
+      trip_count: 0
+    } as SocialUserProfile)) || [];
+  }
+
+  /**
+   * Get users that follow the current user
+   */
+  async getFollowers(userId?: UUID): Promise<SocialUserProfile[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('Not authenticated');
+    
+    const targetUserId = userId || user.id;
+
+    const { data: follows, error } = await supabase
+      .from('follows')
+      .select(`
+        follower_id,
+        created_at,
+        user_profiles!follows_follower_id_fkey (*)
+      `)
+      .eq('following_id', targetUserId)
+      .eq('status', 'following')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ Failed to get followers:', error);
+      throw new Error('Failed to get followers');
+    }
+
+    return follows?.map(f => ({
+      ...f.user_profiles,
+      followed_at: f.created_at,
+      // Ensure required fields have defaults
+      social_links: f.user_profiles?.social_links || {},
+      friend_count: 0,
+      pending_requests_count: 0,
+      follower_count: 0,
+      following_count: 0,
+      trip_count: 0
+    } as SocialUserProfile)) || [];
+  }
+
+  /**
+   * Get follow counts for a user
+   */
+  async getFollowCounts(userId: UUID): Promise<{
+    followingCount: number;
+    followersCount: number;
+  }> {
+    // Count users this user is following
+    const { count: followingCount } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('follower_id', userId)
+      .eq('status', 'following');
+
+    // Count users following this user
+    const { count: followersCount } = await supabase
+      .from('follows')
+      .select('*', { count: 'exact', head: true })
+      .eq('following_id', userId)
+      .eq('status', 'following');
+
+    return {
+      followingCount: followingCount || 0,
+      followersCount: followersCount || 0
     };
   }
 
@@ -417,23 +679,114 @@ class SocialService implements SocialServiceInterface {
   }
 
   /**
-   * Get activity feed for current user (their activities + followed users' activities)
+   * Get activity feed for current user (their activities + friends' + followed users' activities)
    */
   async getActivityFeed(limit: number = 50): Promise<ActivityFeedItem[]> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error('Not authenticated');
 
-    // Use the database function for efficient feed generation
-    const { data, error } = await supabase
-      .rpc('get_activity_feed', {
-        user_uuid: user.id,
-        limit_count: limit
-      });
+    // Get own activities
+    const { data: ownActivities, error: ownError } = await supabase
+      .from('user_activities')
+      .select(`
+        *,
+        user_profiles!user_activities_user_id_fkey (nickname, avatar_url)
+      `)
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(Math.ceil(limit / 3)); // Reserve space for other activities
 
-    if (error) throw new Error(`Failed to get activity feed: ${error.message}`);
+    if (ownError) throw new Error(`Failed to get own activities: ${ownError.message}`);
+
+    // Get friends' activities (from bidirectional friendships)
+    const friends = await this.getFriends(user.id);
+    const friendIds = friends.map(f => f.id);
+    
+    let friendActivities: any[] = [];
+    if (friendIds.length > 0) {
+      const { data: friendsData, error: friendsError } = await supabase
+        .from('user_activities')
+        .select(`
+          *,
+          user_profiles!user_activities_user_id_fkey (nickname, avatar_url),
+          trips!user_activities_related_trip_id_fkey (privacy, owner_id, tagged_users)
+        `)
+        .in('user_id', friendIds)
+        .order('created_at', { ascending: false })
+        .limit(Math.ceil(limit / 3));
+
+      if (friendsError) {
+        console.warn('Warning: Failed to get friends activities:', friendsError);
+      } else {
+        // Filter based on trip privacy for friends
+        friendActivities = friendsData?.filter(activity => {
+          if (!activity.related_trip_id) return true; // Non-trip activities always shown
+          const trip = activity.trips;
+          if (!trip) return true;
+          
+          return trip.privacy === 'public' || 
+                 trip.privacy === 'contacts' || 
+                 trip.owner_id === user.id ||
+                 (trip.tagged_users && trip.tagged_users.includes(user.id));
+        }) || [];
+      }
+    }
+
+    // Get followed users' PUBLIC activities only (not friends)
+    const following = await this.getFollowing(user.id);
+    const followingIds = following
+      .map(f => f.id)
+      .filter(id => !friendIds.includes(id)); // Exclude friends (already covered above)
+    
+    let followedActivities: any[] = [];
+    if (followingIds.length > 0) {
+      const { data: followedData, error: followedError } = await supabase
+        .from('user_activities')
+        .select(`
+          *,
+          user_profiles!user_activities_user_id_fkey (nickname, avatar_url),
+          trips!user_activities_related_trip_id_fkey (privacy, owner_id, tagged_users)
+        `)
+        .in('user_id', followingIds)
+        .order('created_at', { ascending: false })
+        .limit(Math.ceil(limit / 3));
+
+      if (followedError) {
+        console.warn('Warning: Failed to get followed users activities:', followedError);
+      } else {
+        // Only show PUBLIC activities from followed users
+        followedActivities = followedData?.filter(activity => {
+          if (!activity.related_trip_id) return true; // Non-trip activities shown
+          const trip = activity.trips;
+          if (!trip) return true;
+          
+          return trip.privacy === 'public' || 
+                 trip.owner_id === user.id ||
+                 (trip.tagged_users && trip.tagged_users.includes(user.id));
+        }) || [];
+      }
+    }
+
+    // Combine all activities and sort by creation date
+    const allActivities = [...(ownActivities || []), ...friendActivities, ...followedActivities]
+      .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+      .slice(0, limit);
+
+    // Transform to ActivityFeedItem format
+    const feedItems = allActivities.map(activity => ({
+      activity_id: activity.id,
+      user_id: activity.user_id,
+      user_nickname: activity.user_profiles?.nickname || 'Unknown',
+      user_avatar: activity.user_profiles?.avatar_url,
+      activity_type: activity.activity_type,
+      title: activity.title,
+      description: activity.description,
+      metadata: activity.metadata || {},
+      created_at: activity.created_at
+    }));
 
     // Enhance activities with additional trip/destination info if needed
-    return this.enhanceActivityFeedItems(data || []);
+    return this.enhanceActivityFeedItems(feedItems);
   }
 
   /**
@@ -490,13 +843,14 @@ class SocialService implements SocialServiceInterface {
    * Get social statistics for a user
    */
   async getSocialStats(userId: UUID): Promise<SocialStats> {
-    // Use the database function for efficient stats calculation
-    const { data, error } = await supabase
-      .rpc('get_user_social_stats', { user_uuid: userId });
-
-    if (error) throw new Error(`Failed to get social stats: ${error.message}`);
-
-    const stats = data?.[0];
+    // Get follow counts
+    const followCounts = await this.getFollowCounts(userId);
+    
+    // Get friend count (bidirectional accepted relationships)
+    const { count: friendCount } = await supabase
+      .from('friendships')
+      .select('*', { count: 'exact', head: true })
+      .or(`user1_id.eq.${userId},user2_id.eq.${userId}`);
     
     // Get privacy-specific trip counts
     const { data: tripCounts } = await supabase
@@ -508,9 +862,10 @@ class SocialService implements SocialServiceInterface {
     const contactTripCount = tripCounts?.filter(t => t.privacy === 'contacts').length || 0;
 
     return {
-      follower_count: stats?.follower_count || 0,
-      following_count: stats?.following_count || 0,
-      trip_count: stats?.trip_count || 0,
+      follower_count: followCounts.followersCount,
+      following_count: followCounts.followingCount,
+      friend_count: friendCount || 0,
+      trip_count: (tripCounts?.length || 0),
       public_trip_count: publicTripCount,
       contact_trip_count: contactTripCount
     };

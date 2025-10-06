@@ -631,11 +631,14 @@ export interface SocialUserProfile {
   // Social stats
   friend_count: number;
   pending_requests_count: number;
+  follower_count: number;
+  following_count: number;
   trip_count: number;
   
   // Metadata
   created_at: DateString;
   updated_at: DateString;
+  followed_at?: DateString; // Optional field for when this user was followed
 }
 
 // Activity feed item with user info
@@ -684,6 +687,7 @@ export interface UserSearchResult {
 export interface SocialStats {
   follower_count: number;
   following_count: number;
+  friend_count: number;
   trip_count: number;
   public_trip_count: number;
   contact_trip_count: number;
@@ -806,7 +810,23 @@ export interface CreatePhotoShareData {
 
 // Social service interface types
 export interface SocialServiceInterface {
-  // Friendship management
+  // Follow system (unidirectional)
+  followUser: (targetUserId: UUID) => Promise<{ followId: string }>;
+  unfollowUser: (targetUserId: UUID) => Promise<boolean>;
+  isFollowing: (targetUserId: UUID) => Promise<boolean>;
+  getFollowStatus: (targetUserId: UUID) => Promise<{
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+    areFriends: boolean;
+  }>;
+  getFollowing: (userId?: UUID) => Promise<SocialUserProfile[]>;
+  getFollowers: (userId?: UUID) => Promise<SocialUserProfile[]>;
+  getFollowCounts: (userId: UUID) => Promise<{
+    followingCount: number;
+    followersCount: number;
+  }>;
+  
+  // Friendship management (bidirectional)
   sendFriendshipRequest: (targetUserId: UUID) => Promise<any>;
   acceptFriendshipRequest: (requesterId: UUID) => Promise<boolean>;
   declineFriendshipRequest: (requesterId: UUID) => Promise<boolean>;

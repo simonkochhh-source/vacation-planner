@@ -15,7 +15,9 @@ import {
   MoreHorizontal,
   Star,
   Heart,
-  Share
+  Share,
+  Plus,
+  Eye
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
@@ -45,11 +47,21 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
   
   const [profile, setProfile] = useState<SocialUserProfile | null>(null);
   const [followStatus, setFollowStatus] = useState<'friends' | 'pending_sent' | 'pending_received' | 'none'>('none');
+  const [followState, setFollowState] = useState<{
+    isFollowing: boolean;
+    isFollowedBy: boolean;
+    areFriends: boolean;
+  }>({
+    isFollowing: false,
+    isFollowedBy: false,
+    areFriends: false
+  });
   const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
   const [userPosts, setUserPosts] = useState<ActivityFeedItem[]>([]);
   const [userTrips, setUserTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
+  const [friendLoading, setFriendLoading] = useState(false);
   
   const isOwnProfile = currentUser?.id === userId;
   const [activeTab, setActiveTab] = useState<'posts' | 'trips' | 'activity' | 'about'>('trips');
@@ -75,6 +87,10 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
       if (!isOwnProfile && currentUser) {
         const status = await socialService.getFriendshipStatus(userId);
         setFollowStatus(status);
+        
+        // Load follow state (unidirectional follows)
+        const followState = await socialService.getFollowStatus(userId);
+        setFollowState(followState);
       }
 
       // Load user activities
@@ -140,11 +156,11 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
     }
   };
 
-  const handleFollowAction = async () => {
+  const handleFriendAction = async () => {
     if (!currentUser || isOwnProfile) return;
 
     try {
-      setFollowLoading(true);
+      setFriendLoading(true);
       
       if (followStatus === 'none') {
         await socialService.sendFriendshipRequest(userId);
@@ -152,6 +168,33 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
       } else if (followStatus === 'friends') {
         await socialService.removeFriend(userId);
         setFollowStatus('none');
+        // Update follow state after removing friendship
+        const newFollowState = await socialService.getFollowStatus(userId);
+        setFollowState(newFollowState);
+      }
+      
+      // Reload profile to update follower count
+      await loadUserProfile();
+      
+    } catch (error) {
+      console.error('Friend action failed:', error);
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
+  const handleFollowAction = async () => {
+    if (!currentUser || isOwnProfile) return;
+
+    try {
+      setFollowLoading(true);
+      
+      if (followState.isFollowing) {
+        await socialService.unfollowUser(userId);
+        setFollowState(prev => ({ ...prev, isFollowing: false }));
+      } else {
+        await socialService.followUser(userId);
+        setFollowState(prev => ({ ...prev, isFollowing: true }));
       }
       
       // Reload profile to update follower count
@@ -164,7 +207,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
     }
   };
 
-  const getFollowButtonText = () => {
+  const getFriendButtonText = () => {
     switch (followStatus) {
       case 'none': return 'Connect';
       case 'pending_sent': return 'Request Sent';
@@ -174,7 +217,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
     }
   };
 
-  const getFollowButtonIcon = () => {
+  const getFriendButtonIcon = () => {
     switch (followStatus) {
       case 'none': return <User size={16} />;
       case 'pending_sent': return <Clock size={16} />;
@@ -182,6 +225,14 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
       case 'friends': return <Check size={16} />;
       default: return <User size={16} />;
     }
+  };
+
+  const getFollowButtonText = () => {
+    return followState.isFollowing ? 'Following' : 'Follow';
+  };
+
+  const getFollowButtonIcon = () => {
+    return followState.isFollowing ? <Eye size={16} /> : <Plus size={16} />;
   };
 
   const handleTripClick = (tripId: UUID) => {
@@ -344,18 +395,26 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
-                    {profile.friend_count || 0}
+                    {profile.follower_count || 0}
                   </div>
                   <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-                    Freunde
+                    Followers
                   </div>
                 </div>
                 <div style={{ textAlign: 'center' }}>
                   <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
-                    {profile.pending_requests_count || 0}
+                    {profile.following_count || 0}
                   </div>
                   <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
-                    Anfragen
+                    Following
+                  </div>
+                </div>
+                <div style={{ textAlign: 'center' }}>
+                  <div style={{ fontSize: '1.5rem', fontWeight: '700' }}>
+                    {profile.friend_count || 0}
+                  </div>
+                  <div style={{ fontSize: '0.875rem', opacity: 0.8 }}>
+                    Freunde
                   </div>
                 </div>
               </div>
@@ -399,28 +458,55 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
             {/* Action Buttons */}
             <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
               {!isOwnProfile && (
-                <button
-                  onClick={handleFollowAction}
-                  disabled={followLoading}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    padding: '12px 20px',
-                    background: followStatus === 'friends' ? 
-                      'rgba(255, 255, 255, 0.2)' : 'white',
-                    color: followStatus === 'friends' ? 'white' : '#3b82f6',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '0.875rem',
-                    fontWeight: '600',
-                    cursor: followLoading ? 'not-allowed' : 'pointer',
-                    opacity: followLoading ? 0.6 : 1
-                  }}
-                >
-                  {getFollowButtonIcon()}
-                  {getFollowButtonText()}
-                </button>
+                <>
+                  {/* Follow Button - Unidirectional */}
+                  <button
+                    onClick={handleFollowAction}
+                    disabled={followLoading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '12px 20px',
+                      background: followState.isFollowing ? 
+                        'rgba(255, 255, 255, 0.2)' : 'white',
+                      color: followState.isFollowing ? 'white' : '#3b82f6',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: followLoading ? 'not-allowed' : 'pointer',
+                      opacity: followLoading ? 0.6 : 1
+                    }}
+                  >
+                    {getFollowButtonIcon()}
+                    {getFollowButtonText()}
+                  </button>
+
+                  {/* Connect Button - Bidirectional Friendship */}
+                  <button
+                    onClick={handleFriendAction}
+                    disabled={friendLoading}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '12px 20px',
+                      background: followStatus === 'friends' ? 
+                        'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                      border: '1px solid rgba(255, 255, 255, 0.3)',
+                      borderRadius: '8px',
+                      fontSize: '0.875rem',
+                      fontWeight: '600',
+                      cursor: friendLoading ? 'not-allowed' : 'pointer',
+                      opacity: friendLoading ? 0.6 : 1
+                    }}
+                  >
+                    {getFriendButtonIcon()}
+                    {getFriendButtonText()}
+                  </button>
+                </>
               )}
               
               <button
