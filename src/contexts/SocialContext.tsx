@@ -223,7 +223,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
 
   const acceptFriendRequest = useCallback(async (userId: UUID): Promise<void> => {
     try {
-      await socialService.acceptFriendRequest(userId);
+      await socialService.acceptFriendshipRequest(userId);
       // Refresh both friends and requests
       await getFriends();
       const requests = await socialService.getPendingFriendshipRequests();
@@ -235,7 +235,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
 
   const rejectFriendRequest = useCallback(async (userId: UUID): Promise<void> => {
     try {
-      await socialService.rejectFriendRequest(userId);
+      await socialService.declineFriendshipRequest(userId);
       const requests = await socialService.getPendingFriendshipRequests();
       dispatch({ type: 'SET_FRIEND_REQUESTS', payload: requests });
     } catch (error) {
