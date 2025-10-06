@@ -291,13 +291,13 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
         is_private: true,
         participant_user_ids: participantIds
       });
-      dispatch({ type: 'SET_CHAT_ROOMS', payload: [...state.chatRooms, room] });
+      await loadChatRooms(); // Reload all rooms to get the updated list
       return room;
     } catch (error) {
       handleError(error, 'createChatRoom');
       throw error;
     }
-  }, [handleError, state.chatRooms]);
+  }, [handleError, loadChatRooms]);
 
   const joinChatRoom = useCallback(async (roomId: string): Promise<void> => {
     try {
