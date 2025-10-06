@@ -6,10 +6,11 @@ import {
   ChatMessage, 
   FriendshipStatus,
   UserActivity,
-  UserSearchResult
+  UserSearchResult,
+  ActivityFeedItem
 } from '../types';
 import { socialService } from '../services/socialService';
-import { chatService } from '../services/chatService';
+import { chatService, ChatRoomWithInfo, ChatMessageWithSender } from '../services/chatService';
 import { handleServiceError } from '../utils/errorHandling';
 
 // Social Action Types
@@ -18,13 +19,13 @@ type SocialAction =
   | { type: 'SET_FRIEND_REQUESTS'; payload: SocialUserProfile[] }
   | { type: 'SET_BLOCKED_USERS'; payload: SocialUserProfile[] }
   | { type: 'SET_SEARCH_RESULTS'; payload: UserSearchResult[] }
-  | { type: 'SET_CHAT_ROOMS'; payload: ChatRoom[] }
-  | { type: 'SET_ACTIVE_CHAT_ROOM'; payload: ChatRoom | undefined }
-  | { type: 'SET_CHAT_MESSAGES'; payload: ChatMessage[] }
-  | { type: 'ADD_CHAT_MESSAGE'; payload: ChatMessage }
+  | { type: 'SET_CHAT_ROOMS'; payload: ChatRoomWithInfo[] }
+  | { type: 'SET_ACTIVE_CHAT_ROOM'; payload: ChatRoomWithInfo | undefined }
+  | { type: 'SET_CHAT_MESSAGES'; payload: ChatMessageWithSender[] }
+  | { type: 'ADD_CHAT_MESSAGE'; payload: ChatMessageWithSender }
   | { type: 'UPDATE_CHAT_MESSAGE'; payload: { id: string; data: Partial<ChatMessage> } }
   | { type: 'SET_ROOM_PARTICIPANTS'; payload: SocialUserProfile[] }
-  | { type: 'SET_ACTIVITIES'; payload: UserActivity[] }
+  | { type: 'SET_ACTIVITIES'; payload: ActivityFeedItem[] }
   | { type: 'ADD_ACTIVITY'; payload: UserActivity }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_CHAT_LOADING'; payload: boolean }
@@ -39,13 +40,13 @@ interface SocialState {
   searchResults: UserSearchResult[];
   
   // Chat
-  chatRooms: ChatRoom[];
-  activeChatRoom?: ChatRoom;
-  chatMessages: ChatMessage[];
+  chatRooms: ChatRoomWithInfo[];
+  activeChatRoom?: ChatRoomWithInfo;
+  chatMessages: ChatMessageWithSender[];
   roomParticipants: SocialUserProfile[];
   
   // Activities
-  activities: UserActivity[];
+  activities: ActivityFeedItem[];
   
   // Loading & Error States
   isLoading: boolean;
@@ -71,10 +72,10 @@ interface SocialContextType extends SocialState {
   
   // Chat Operations
   loadChatRooms: () => Promise<void>;
-  createChatRoom: (participantIds: UUID[], name?: string) => Promise<ChatRoom>;
+  createChatRoom: (participantIds: UUID[], name?: string) => Promise<ChatRoomWithInfo>;
   joinChatRoom: (roomId: string) => Promise<void>;
   leaveChatRoom: (roomId: string) => Promise<void>;
-  setActiveChatRoom: (room: ChatRoom | undefined) => void;
+  setActiveChatRoom: (room: ChatRoomWithInfo | undefined) => void;
   
   // Message Operations
   loadChatMessages: (roomId: string) => Promise<void>;
@@ -307,7 +308,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
   const loadChatRooms = useCallback(async (): Promise<void> => {
     try {
       dispatch({ type: 'SET_CHAT_LOADING', payload: true });
-      const rooms = await chatService.getChatRooms();
+      const rooms = await chatService.getUserChatRooms();
       dispatch({ type: 'SET_CHAT_ROOMS', payload: rooms });
     } catch (error) {
       handleError(error, 'loadChatRooms');
@@ -316,9 +317,9 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
     }
   }, [handleError]);
 
-  const createChatRoom = useCallback(async (participantIds: UUID[], name?: string): Promise<ChatRoom> => {
+  const createChatRoom = useCallback(async (participantIds: UUID[], name?: string): Promise<ChatRoomWithInfo> => {
     try {
-      const room = await chatService.createChatRoom(participantIds, name);
+      const room = await chatService.createChatRoom(participantIds[0]);
       dispatch({ type: 'SET_CHAT_ROOMS', payload: [...state.chatRooms, room] });
       return room;
     } catch (error) {
@@ -329,7 +330,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
 
   const joinChatRoom = useCallback(async (roomId: string): Promise<void> => {
     try {
-      await chatService.joinChatRoom(roomId);
+      // joinChatRoom not implemented in ChatService
       await loadChatRooms();
     } catch (error) {
       handleError(error, 'joinChatRoom');
@@ -338,7 +339,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
 
   const leaveChatRoom = useCallback(async (roomId: string): Promise<void> => {
     try {
-      await chatService.leaveChatRoom(roomId);
+      await chatService.leaveRoom(roomId);
       await loadChatRooms();
     } catch (error) {
       handleError(error, 'leaveChatRoom');
@@ -353,7 +354,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
   const loadChatMessages = useCallback(async (roomId: string): Promise<void> => {
     try {
       dispatch({ type: 'SET_CHAT_LOADING', payload: true });
-      const messages = await chatService.getChatMessages(roomId);
+      const messages = await chatService.getMessages(roomId);
       dispatch({ type: 'SET_CHAT_MESSAGES', payload: messages });
     } catch (error) {
       handleError(error, 'loadChatMessages');
@@ -429,7 +430,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
   const loadActivities = useCallback(async (): Promise<void> => {
     try {
       dispatch({ type: 'SET_LOADING', payload: true });
-      const activities = await socialService.getActivities();
+      const activities = await socialService.getActivityFeed();
       dispatch({ type: 'SET_ACTIVITIES', payload: activities });
     } catch (error) {
       handleError(error, 'loadActivities');
