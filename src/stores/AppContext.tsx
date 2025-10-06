@@ -13,7 +13,9 @@ import {
   SortDirection,
   AppSettings,
   TransportMode,
-  FuelType
+  FuelType,
+  TripStatus,
+  TripPrivacy
 } from '../types';
 import { 
   generateUUID, 
@@ -41,6 +43,44 @@ type AppAction =
   | { type: 'UPDATE_SETTINGS'; payload: Partial<AppSettings> }
   | { type: 'SET_LOADING'; payload: boolean };
 
+// Initial Settings
+const initialSettings: AppSettings = {
+  // General Settings
+  language: 'de',
+  theme: 'auto',
+  currency: 'EUR',
+  dateFormat: 'dd.MM.yyyy',
+  timeFormat: '24h',
+  
+  // Map Settings
+  defaultMapProvider: 'osm',
+  defaultMapZoom: 10,
+  showTraffic: false,
+  showPublicTransport: true,
+  
+  // Travel Settings
+  defaultTransportMode: TransportMode.DRIVING,
+  fuelType: FuelType.E10,
+  fuelConsumption: 7.5,
+  
+  // Privacy Settings
+  shareLocation: false,
+  trackVisitHistory: true,
+  
+  // Notification Settings
+  enableNotifications: true,
+  reminderTime: 30,
+  
+  // Export Settings
+  defaultExportFormat: 'json',
+  includePhotosInExport: true,
+  includeNotesInExport: true,
+  
+  // Backup Settings
+  autoBackup: false,
+  backupInterval: 24
+};
+
 // Initial UI State
 const initialUIState: UIState = {
   currentView: 'list',
@@ -60,45 +100,8 @@ const initialUIState: UIState = {
   sidebarOpen: true,
   hideHeader: false,
   mapCenter: undefined,
-  mapZoom: 10
-};
-
-// Initial Settings
-const initialSettings: AppSettings = {
-  // General Settings
-  language: 'de',
-  theme: 'auto',
-  currency: 'EUR',
-  dateFormat: 'dd.MM.yyyy',
-  timeFormat: '24h',
-  
-  // Map Settings
-  defaultMapProvider: 'osm',
-  defaultMapZoom: 10,
-  showTraffic: false,
-  showPublicTransport: true,
-  
-  // Travel Settings
-  defaultTransportMode: TransportMode.DRIVING,
-  fuelType: FuelType.E10,
-  fuelConsumption: 9.0,
-  
-  // Notification Settings
-  enableNotifications: true,
-  reminderTime: 30,
-  
-  // Export Settings
-  defaultExportFormat: 'json',
-  includePhotosInExport: true,
-  includeNotesInExport: true,
-  
-  // Privacy Settings
-  shareLocation: false,
-  trackVisitHistory: true,
-  
-  // Backup Settings
-  autoBackup: true,
-  backupInterval: 24
+  mapZoom: 10,
+  settings: initialSettings
 };
 
 // App State Interface
@@ -331,14 +334,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
   const createTrip = async (data: CreateTripData): Promise<Trip> => {
     const newTrip: Trip = {
       id: generateUUID(),
-      ...data,
+      name: data.name,
+      description: data.description,
+      startDate: data.startDate,
+      endDate: data.endDate,
       destinations: [],
+      budget: data.budget,
       actualCost: 0,
-      status: 'planned' as any,
+      participants: data.participants || [],
+      status: TripStatus.PLANNING,
       coverImage: undefined,
-      privacy: data.privacy || 'private' as any,
+      tags: data.tags || [],
+      privacy: data.privacy || TripPrivacy.PRIVATE,
       ownerId: 'anonymous', // TODO: Integrate with real auth
       taggedUsers: data.taggedUsers || [],
+      vehicleConfig: data.vehicleConfig,
       createdAt: getCurrentDateString(),
       updatedAt: getCurrentDateString()
     };
@@ -367,6 +377,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     const newDestination: Destination = {
       id: generateUUID(),
+      tripId: tripId,
       ...data,
       status: data.status || DestinationStatus.PLANNED,
       actualCost: undefined,
@@ -401,6 +412,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     
     const newDestination: Destination = {
       id: generateUUID(),
+      tripId: activeTripId || 'default-trip',
       ...data,
       actualCost: undefined,
       photos: [],

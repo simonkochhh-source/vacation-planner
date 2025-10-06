@@ -17,7 +17,8 @@ import {
   AppSettings,
   TransportMode,
   FuelType,
-  TripStatus
+  TripStatus,
+  TripPrivacy
 } from '../types';
 import { 
   getCurrentDateString,
@@ -55,6 +56,31 @@ const checkForLandingPageForce = (): boolean => {
   return false;
 };
 
+// Initial Settings
+const initialSettings: AppSettings = {
+  language: 'de',
+  theme: 'auto',
+  currency: 'EUR',
+  dateFormat: 'dd.MM.yyyy',
+  timeFormat: '24h',
+  defaultMapProvider: 'osm',
+  defaultMapZoom: 10,
+  showTraffic: false,
+  showPublicTransport: true,
+  defaultTransportMode: TransportMode.DRIVING,
+  fuelType: FuelType.E10,
+  fuelConsumption: 7.5,
+  shareLocation: false,
+  trackVisitHistory: true,
+  enableNotifications: true,
+  reminderTime: 30,
+  defaultExportFormat: 'json',
+  includePhotosInExport: true,
+  includeNotesInExport: true,
+  autoBackup: false,
+  backupInterval: 24
+};
+
 // Initial UI State
 const initialUIState: UIState = {
   currentView: 'list', // Will be updated in useEffect based on user activity
@@ -76,32 +102,8 @@ const initialUIState: UIState = {
   mapCenter: undefined,
   mapZoom: 10,
   selectedTripId: undefined,
-  showTripDetails: false
-};
-
-// Initial Settings
-const initialSettings: AppSettings = {
-  language: 'de',
-  theme: 'auto',
-  currency: 'EUR',
-  dateFormat: 'dd.MM.yyyy',
-  timeFormat: '24h',
-  defaultMapProvider: 'osm',
-  defaultMapZoom: 10,
-  showTraffic: false,
-  showPublicTransport: true,
-  defaultTransportMode: TransportMode.DRIVING,
-  fuelType: FuelType.E10,
-  fuelConsumption: 9.0,
-  enableNotifications: true,
-  reminderTime: 30,
-  defaultExportFormat: 'json',
-  includePhotosInExport: true,
-  includeNotesInExport: true,
-  shareLocation: false,
-  trackVisitHistory: true,
-  autoBackup: true,
-  backupInterval: 24
+  showTripDetails: false,
+  settings: initialSettings
 };
 
 // App State Interface
@@ -500,7 +502,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           status: TripStatus.PLANNING, // Fixed: Use enum value that matches DB constraint
           destinations: [],
           tags: data.tags || [],
-          privacy: data.privacy || 'private' as any,
+          privacy: data.privacy || TripPrivacy.PRIVATE,
           ownerId: await getCurrentUserId() || 'anonymous',
           taggedUsers: data.taggedUsers || [],
           coverImage: undefined,
@@ -559,6 +561,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
       
       const destinationData = {
         ...data,
+        tripId: tripId,
         status: data.status || 'planned' as any,
         photos: [],
         createdAt: getCurrentDateString(),
@@ -620,6 +623,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
           // Proceed with the fallback trip
           const destinationData = {
             ...data,
+            tripId: fallbackTripId,
             status: data.status || 'planned' as any,
             photos: [],
             createdAt: getCurrentDateString(),
@@ -656,6 +660,7 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
       
       const destinationData = {
         ...data,
+        tripId: activeTripId,
         status: data.status || 'planned' as any,
         photos: [],
         createdAt: getCurrentDateString(),

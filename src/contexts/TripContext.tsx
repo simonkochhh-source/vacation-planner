@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useReducer, useEffect, useCallback, ReactNode } from 'react';
-import { Trip, UUID, CreateTripData, TripStatus } from '../types';
+import { Trip, UUID, CreateTripData, TripStatus, TripPrivacy } from '../types';
 import { SupabaseService } from '../services/supabaseService';
 import { getCurrentDateString, generateUUID } from '../utils';
 
@@ -126,9 +126,14 @@ export const TripProvider: React.FC<TripProviderProps> = ({ children }) => {
         description: data.description || '',
         startDate: data.startDate,
         endDate: data.endDate,
-        status: TripStatus.PLANNED,
-        privacy: 'private' as any, // Will be properly typed when Privacy enum is available
         destinations: [],
+        participants: data.participants || [],
+        status: TripStatus.PLANNING,
+        tags: data.tags || [],
+        privacy: TripPrivacy.PRIVATE,
+        ownerId: generateUUID(), // TODO: Get actual user ID
+        taggedUsers: data.taggedUsers || [],
+        vehicleConfig: data.vehicleConfig,
         createdAt: getCurrentDateString(),
         updatedAt: getCurrentDateString()
       };
