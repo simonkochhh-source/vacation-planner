@@ -5,7 +5,6 @@ import {
   Navigation, 
   RotateCcw, 
   Route, 
-  Clock, 
   Ruler, 
   Layers,
   Menu,
@@ -19,8 +18,6 @@ interface MobileMapControlsProps {
   onLocate: () => void;
   showRouting: boolean;
   onToggleRouting: () => void;
-  showTimeline: boolean;
-  onToggleTimeline: () => void;
   showMeasurement: boolean;
   onToggleMeasurement: () => void;
   showClustering: boolean;
@@ -37,8 +34,6 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
   onLocate,
   showRouting,
   onToggleRouting,
-  showTimeline,
-  onToggleTimeline,
   showMeasurement,
   onToggleMeasurement,
   showClustering,
@@ -168,23 +163,6 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             title="Alle Routen"
           >
             <Route size={18} />
-          </button>
-          <button
-            onClick={onToggleTimeline}
-            style={{
-              background: showTimeline ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
-              color: showTimeline ? 'white' : '#374151',
-              border: 'none',
-              padding: '0.75rem',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              borderBottom: '1px solid #e5e7eb'
-            }}
-            title="Timeline"
-          >
-            <Clock size={18} />
           </button>
           <button
             onClick={onToggleMeasurement}
@@ -450,36 +428,6 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
               </span>
             </button>
 
-            {/* Timeline */}
-            <button
-              onClick={onToggleTimeline}
-              style={{
-                background: showTimeline ? '#eff6ff' : '#f8fafc',
-                border: `1px solid ${showTimeline ? '#3b82f6' : '#e2e8f0'}`,
-                borderRadius: '12px',
-                padding: '1rem',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '0.5rem',
-                minHeight: '88px', // Increased from 80px for better touch target
-                fontSize: '16px', // Prevent zoom on iOS
-                // iOS Safari optimizations
-                WebkitTapHighlightColor: 'transparent',
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none'
-              }}
-            >
-              <Clock size={24} style={{ color: showTimeline ? '#3b82f6' : '#6b7280' }} />
-              <span style={{ 
-                fontSize: '0.875rem', 
-                fontWeight: '500',
-                color: showTimeline ? '#3b82f6' : '#374151'
-              }}>
-                Timeline
-              </span>
-            </button>
 
             {/* Measurement */}
             <button

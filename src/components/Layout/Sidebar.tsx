@@ -16,10 +16,14 @@ import {
   MapPin,
   Compass,
   Trash2,
-  Menu
+  Menu,
+  Route,
+  Car,
+  Mountain,
+  Bike
 } from 'lucide-react';
-import { DestinationStatus } from '../../types';
-import { formatCurrency, calculateTravelCosts } from '../../utils';
+import { DestinationStatus, TransportMode } from '../../types';
+import { formatCurrency, calculateTravelCosts, calculateDistance } from '../../utils';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -86,19 +90,85 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
     ? destinations.filter(dest => currentTrip.destinations?.includes(dest.id))
     : [];
 
-  // Calculate stats
+  // Calculate stats with distance calculations
   const destinationCosts = currentDestinations.reduce((sum, d) => sum + (d.actualCost || 0), 0);
   const travelCosts = calculateTravelCosts(
     currentDestinations,
     settings?.fuelConsumption || 9.0,
     1.65
   );
+
+  // Calculate distances (similar to Enhanced Timeline View)
+  const calculateDistanceStats = () => {
+    let totalDistance = 0;
+    let drivingDistance = 0;
+    let walkingDistance = 0;
+    let bikingDistance = 0;
+
+    // Sort destinations by date
+    const sortedDestinations = [...currentDestinations].sort((a, b) => 
+      new Date(a.startDate || a.createdAt).getTime() - new Date(b.startDate || b.createdAt).getTime()
+    );
+
+    // Calculate travel between consecutive destinations
+    for (let i = 0; i < sortedDestinations.length - 1; i++) {
+      const current = sortedDestinations[i];
+      const next = sortedDestinations[i + 1];
+      
+      if (current.coordinates && next.coordinates) {
+        const straightDistance = calculateDistance(current.coordinates, next.coordinates);
+        const transportMode = current.transportToNext?.mode || TransportMode.DRIVING;
+        
+        // Apply transport-specific distance factor
+        let distanceFactor: number;
+        switch (transportMode) {
+          case TransportMode.DRIVING:
+            distanceFactor = 1.4; // Roads are typically 40% longer than straight line
+            break;
+          case TransportMode.WALKING:
+            distanceFactor = 1.2; // Walking paths are typically 20% longer
+            break;
+          case TransportMode.BICYCLE:
+            distanceFactor = 1.3; // Bike paths are typically 30% longer
+            break;
+          case TransportMode.PUBLIC_TRANSPORT:
+            distanceFactor = 1.6; // Public transport routes are typically 60% longer
+            break;
+          default:
+            distanceFactor = 1.4;
+        }
+        
+        const actualDistance = straightDistance * distanceFactor;
+        
+        // Add to appropriate category and total
+        switch (transportMode) {
+          case TransportMode.DRIVING:
+          case TransportMode.PUBLIC_TRANSPORT:
+            drivingDistance += actualDistance;
+            break;
+          case TransportMode.WALKING:
+            walkingDistance += actualDistance;
+            break;
+          case TransportMode.BICYCLE:
+            bikingDistance += actualDistance;
+            break;
+        }
+        
+        totalDistance += actualDistance;
+      }
+    }
+
+    return { totalDistance, drivingDistance, walkingDistance, bikingDistance };
+  };
+
+  const distanceStats = calculateDistanceStats();
   
   const stats = {
     totalDestinations: currentDestinations.length,
     completedDestinations: currentDestinations.filter(d => d.status === DestinationStatus.VISITED).length,
     totalCost: destinationCosts + travelCosts,
-    plannedCost: currentDestinations.reduce((sum, d) => sum + (d.budget || 0), 0) + travelCosts
+    plannedCost: currentDestinations.reduce((sum, d) => sum + (d.budget || 0), 0) + travelCosts,
+    ...distanceStats
   };
 
   // Enhanced functions to handle header visibility
@@ -147,10 +217,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
     setActiveDropdown(activeDropdown === tripId ? null : tripId);
   };
 
-  // Calculate budget progress (actual costs vs trip budget)
-  const budgetProgress = (currentTrip?.budget && currentTrip.budget > 0) 
-    ? (stats.totalCost / currentTrip.budget) * 100 
-    : 0;
 
   // Calculate trip duration in days
   const tripDays = currentTrip ? 
@@ -200,257 +266,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           flexShrink: 0
         }}
       >
-
-      {/* Current Trip Section */}
-      {currentTrip ? (
-        <Card className="mb-6" style={{ background: 'var(--color-surface)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div style={{
-                background: 'var(--color-primary-sage)',
-                color: 'white',
-                padding: 'var(--space-sm)',
-                borderRadius: 'var(--radius-md)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <Compass size={20} />
-              </div>
-              <div>
-                <h3 style={{
-                  fontFamily: 'var(--font-heading)',
-                  fontSize: 'var(--text-lg)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  margin: 0,
-                  color: 'var(--color-text-primary)'
-                }}>
-                  {currentTrip.name}
-                </h3>
-                <p style={{
-                  fontSize: 'var(--text-sm)',
-                  color: 'var(--color-text-secondary)',
-                  margin: 0
-                }}>
-                  Aktuelle Reise
-                </p>
-              </div>
-            </div>
-            
-            <ModernButton 
-              variant="text" 
-              size="sm"
-              onClick={handleShowEditTripForm}
-              title="Reise bearbeiten"
-              leftIcon={<Edit3 size={16} />}
-            >
-              Bearbeiten
-            </ModernButton>
-          </div>
-
-          {/* Trip Stats */}
-          <div className="grid grid-cols-2 gap-4 mb-4">
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontSize: 'var(--text-2xl)',
-                fontWeight: 'var(--font-weight-bold)',
-                color: 'var(--color-primary-sage)',
-                lineHeight: 1
-              }}>
-                {stats.totalDestinations}
-              </div>
-              <div style={{
-                fontSize: 'var(--text-xs)',
-                color: 'var(--color-text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                Ziele
-              </div>
-            </div>
-            
-            <div style={{ textAlign: 'center' }}>
-              <div style={{
-                fontSize: 'var(--text-2xl)',
-                fontWeight: 'var(--font-weight-bold)',
-                color: 'var(--color-primary-ocean)',
-                lineHeight: 1
-              }}>
-                {tripDays}
-              </div>
-              <div style={{
-                fontSize: 'var(--text-xs)',
-                color: 'var(--color-text-secondary)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                Tage
-              </div>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div style={{
-            background: 'var(--color-neutral-mist)',
-            borderRadius: 'var(--radius-full)',
-            height: '8px',
-            overflow: 'hidden',
-            marginBottom: 'var(--space-md)'
-          }}>
-            <div style={{
-              background: budgetProgress > 100 
-                ? 'linear-gradient(90deg, var(--color-secondary-sunset) 0%, var(--color-error) 100%)'
-                : 'linear-gradient(90deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
-              height: '100%',
-              width: `${Math.min(budgetProgress, 100)}%`,
-              borderRadius: 'var(--radius-full)',
-              transition: 'width var(--transition-normal)'
-            }} />
-          </div>
-
-          {/* Budget Overview */}
-          <div style={{
-            background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
-            borderRadius: 'var(--radius-md)',
-            padding: 'var(--space-md)',
-            border: '2px solid rgba(255, 255, 255, 0.2)'
-          }}>
-            <div className="flex items-center justify-between mb-3">
-              <span style={{
-                fontSize: 'var(--text-sm)',
-                fontWeight: 'var(--font-weight-medium)',
-                color: 'white'
-              }}>
-                Gesamtbudget
-              </span>
-              <DollarSign size={16} style={{ color: 'white' }} />
-            </div>
-            
-            <div style={{ marginBottom: 'var(--space-sm)' }}>
-              <div style={{
-                fontSize: 'var(--text-xl)',
-                fontWeight: 'var(--font-weight-bold)',
-                color: 'white',
-                marginBottom: '4px'
-              }}>
-                {formatCurrency(currentTrip?.budget || 0)}
-              </div>
-              <div style={{
-                fontSize: 'var(--text-xs)',
-                color: 'rgba(255, 255, 255, 0.8)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
-              }}>
-                Reisekosten
-              </div>
-            </div>
-
-            <div style={{
-              borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-              paddingTop: 'var(--space-sm)',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '4px'
-            }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{
-                  fontSize: 'var(--text-xs)',
-                  color: 'rgba(255, 255, 255, 0.9)'
-                }}>
-                  Destinations
-                </span>
-                <span style={{
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'white'
-                }}>
-                  {formatCurrency(destinationCosts)}
-                </span>
-              </div>
-              
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{
-                  fontSize: 'var(--text-xs)',
-                  color: 'rgba(255, 255, 255, 0.9)'
-                }}>
-                  Fahrtkosten
-                </span>
-                <span style={{
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'white'
-                }}>
-                  {formatCurrency(travelCosts)}
-                </span>
-              </div>
-              
-              <div style={{
-                borderTop: '1px solid rgba(255, 255, 255, 0.2)',
-                paddingTop: '4px',
-                marginTop: '4px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}>
-                <span style={{
-                  fontSize: 'var(--text-sm)',
-                  fontWeight: 'var(--font-weight-medium)',
-                  color: 'white'
-                }}>
-                  Gesamt
-                </span>
-                <span style={{
-                  fontSize: 'var(--text-lg)',
-                  fontWeight: 'var(--font-weight-bold)',
-                  color: 'white'
-                }}>
-                  {formatCurrency(stats.totalCost)}
-                </span>
-              </div>
-            </div>
-          </div>
-        </Card>
-      ) : (
-        <Card className="mb-6" style={{ 
-          background: 'var(--color-neutral-mist)',
-          textAlign: 'center' 
-        }}>
-          <div style={{
-            padding: 'var(--space-lg)',
-            color: 'var(--color-text-secondary)'
-          }}>
-            <Plane size={32} style={{ 
-              color: 'var(--color-text-secondary)',
-              marginBottom: 'var(--space-md)',
-              display: 'block',
-              margin: '0 auto var(--space-md) auto'
-            }} />
-            <p style={{
-              fontSize: 'var(--text-sm)',
-              margin: 0,
-              marginBottom: 'var(--space-md)'
-            }}>
-              Keine aktive Reise
-            </p>
-            <ModernButton 
-              variant="filled" 
-              size="default"
-              onClick={handleShowTripForm}
-              leftIcon={<Plus size={16} />}
-            >
-              Neue Reise planen
-            </ModernButton>
-          </div>
-        </Card>
-      )}
 
       {/* Trips List */}
       <Card style={{ background: 'var(--color-surface)' }}>
@@ -651,7 +466,321 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
         )}
       </Card>
 
+      {/* Current Trip Section */}
+      {currentTrip ? (
+        <Card className="mb-6" style={{ background: 'var(--color-surface)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div style={{
+                background: 'var(--color-primary-sage)',
+                color: 'white',
+                padding: 'var(--space-sm)',
+                borderRadius: 'var(--radius-md)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <Compass size={20} />
+              </div>
+              <div>
+                <h3 style={{
+                  fontFamily: 'var(--font-heading)',
+                  fontSize: 'var(--text-lg)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  margin: 0,
+                  color: 'var(--color-text-primary)'
+                }}>
+                  {currentTrip.name}
+                </h3>
+                <p style={{
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-text-secondary)',
+                  margin: 0
+                }}>
+                  Aktuelle Reise
+                </p>
+              </div>
+            </div>
+            
+            <ModernButton 
+              variant="text" 
+              size="sm"
+              onClick={handleShowEditTripForm}
+              title="Reise bearbeiten"
+              leftIcon={<Edit3 size={16} />}
+            >
+              Bearbeiten
+            </ModernButton>
+          </div>
 
+          {/* Trip Stats */}
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: 'var(--text-2xl)',
+                fontWeight: 'var(--font-weight-bold)',
+                color: 'var(--color-primary-sage)',
+                lineHeight: 1
+              }}>
+                {stats.totalDestinations}
+              </div>
+              <div style={{
+                fontSize: 'var(--text-xs)',
+                color: 'var(--color-text-secondary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Ziele
+              </div>
+            </div>
+            
+            <div style={{ textAlign: 'center' }}>
+              <div style={{
+                fontSize: 'var(--text-2xl)',
+                fontWeight: 'var(--font-weight-bold)',
+                color: 'var(--color-primary-ocean)',
+                lineHeight: 1
+              }}>
+                {tripDays}
+              </div>
+              <div style={{
+                fontSize: 'var(--text-xs)',
+                color: 'var(--color-text-secondary)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Tage
+              </div>
+            </div>
+          </div>
+
+          {/* Distance Stats */}
+          {stats.totalDistance > 0 && (
+            <div style={{
+              background: 'var(--color-neutral-mist)',
+              borderRadius: 'var(--radius-md)',
+              padding: 'var(--space-md)',
+              marginBottom: 'var(--space-md)'
+            }}>
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-sm)',
+                marginBottom: 'var(--space-md)'
+              }}>
+                <Route size={16} style={{ color: 'var(--color-primary-ocean)' }} />
+                <h4 style={{
+                  margin: 0,
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-semibold)',
+                  color: 'var(--color-text-primary)'
+                }}>
+                  Gesamtdistanz: {Math.round(stats.totalDistance)}km
+                </h4>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: 'var(--space-sm)'
+              }}>
+                {stats.drivingDistance > 0 && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    background: 'var(--color-surface)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: 'var(--text-xs)'
+                  }}>
+                    <Car size={12} style={{ color: 'var(--color-primary-ocean)' }} />
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
+                      {Math.round(stats.drivingDistance)}km
+                    </span>
+                  </div>
+                )}
+                
+                {stats.walkingDistance > 0 && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    background: 'var(--color-surface)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: 'var(--text-xs)'
+                  }}>
+                    <Mountain size={12} style={{ color: 'var(--color-success)' }} />
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
+                      {Math.round(stats.walkingDistance)}km
+                    </span>
+                  </div>
+                )}
+                
+                {stats.bikingDistance > 0 && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 8px',
+                    background: 'var(--color-surface)',
+                    borderRadius: 'var(--radius-sm)',
+                    fontSize: 'var(--text-xs)'
+                  }}>
+                    <Bike size={12} style={{ color: 'var(--color-error)' }} />
+                    <span style={{ color: 'var(--color-text-secondary)' }}>
+                      {Math.round(stats.bikingDistance)}km
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Budget Overview */}
+          <div style={{
+            background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-md)',
+            border: '2px solid rgba(255, 255, 255, 0.2)'
+          }}>
+            <div className="flex items-center justify-between mb-3">
+              <span style={{
+                fontSize: 'var(--text-sm)',
+                fontWeight: 'var(--font-weight-medium)',
+                color: 'white'
+              }}>
+                Gesamtbudget
+              </span>
+              <DollarSign size={16} style={{ color: 'white' }} />
+            </div>
+            
+            <div style={{ marginBottom: 'var(--space-sm)' }}>
+              <div style={{
+                fontSize: 'var(--text-xl)',
+                fontWeight: 'var(--font-weight-bold)',
+                color: 'white',
+                marginBottom: '4px'
+              }}>
+                {formatCurrency(currentTrip?.budget || 0)}
+              </div>
+              <div style={{
+                fontSize: 'var(--text-xs)',
+                color: 'rgba(255, 255, 255, 0.8)',
+                textTransform: 'uppercase',
+                letterSpacing: '0.5px'
+              }}>
+                Reisekosten
+              </div>
+            </div>
+
+            <div style={{
+              borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+              paddingTop: 'var(--space-sm)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '4px'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{
+                  fontSize: 'var(--text-xs)',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}>
+                  Destinations
+                </span>
+                <span style={{
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'white'
+                }}>
+                  {formatCurrency(destinationCosts)}
+                </span>
+              </div>
+              
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{
+                  fontSize: 'var(--text-xs)',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}>
+                  Fahrtkosten
+                </span>
+                <span style={{
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'white'
+                }}>
+                  {formatCurrency(travelCosts)}
+                </span>
+              </div>
+              
+              <div style={{
+                borderTop: '1px solid rgba(255, 255, 255, 0.2)',
+                paddingTop: '4px',
+                marginTop: '4px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <span style={{
+                  fontSize: 'var(--text-sm)',
+                  fontWeight: 'var(--font-weight-medium)',
+                  color: 'white'
+                }}>
+                  Gesamt
+                </span>
+                <span style={{
+                  fontSize: 'var(--text-lg)',
+                  fontWeight: 'var(--font-weight-bold)',
+                  color: 'white'
+                }}>
+                  {formatCurrency(stats.totalCost)}
+                </span>
+              </div>
+            </div>
+          </div>
+        </Card>
+      ) : (
+        <Card className="mb-6" style={{ 
+          background: 'var(--color-neutral-mist)',
+          textAlign: 'center' 
+        }}>
+          <div style={{
+            padding: 'var(--space-lg)',
+            color: 'var(--color-text-secondary)'
+          }}>
+            <Plane size={32} style={{ 
+              color: 'var(--color-text-secondary)',
+              marginBottom: 'var(--space-md)',
+              display: 'block',
+              margin: '0 auto var(--space-md) auto'
+            }} />
+            <p style={{
+              fontSize: 'var(--text-sm)',
+              margin: 0,
+              marginBottom: 'var(--space-md)'
+            }}>
+              Keine aktive Reise
+            </p>
+            <ModernButton 
+              variant="filled" 
+              size="default"
+              onClick={handleShowTripForm}
+              leftIcon={<Plus size={16} />}
+            >
+              Neue Reise planen
+            </ModernButton>
+          </div>
+        </Card>
+      )}
 
       {/* Trip Form Modal */}
       {showTripForm && (

@@ -85,27 +85,51 @@ class SocialService implements SocialServiceInterface {
 
     if (error) throw new Error(`Failed to get user profile: ${error.message}`);
 
-    // Get friend count (accepted friendships)
-    const { count: friendCount } = await supabase
-      .from('friendships')
-      .select('*', { count: 'exact', head: true })
-      .or(`requester_id.eq.${userId},accepter_id.eq.${userId}`)
-      .eq('status', 'accepted');
+    // Get friend count (accepted friendships) - with error handling
+    let friendCount = 0;
+    try {
+      const { count, error: friendError } = await supabase
+        .from('friendships')
+        .select('*', { count: 'exact', head: true })
+        .or(`requester_id.eq.${userId},accepter_id.eq.${userId}`)
+        .eq('status', 'accepted');
+      
+      if (friendError) {
+        console.warn('⚠️ Failed to get friend count:', friendError.message);
+      } else {
+        friendCount = count || 0;
+      }
+    } catch (error) {
+      console.warn('⚠️ Friendship query failed:', error);
+      friendCount = 0;
+    }
 
-    // Get pending requests count (only requests sent to this user)
-    const { count: pendingRequestsCount } = await supabase
-      .from('friendships')
-      .select('*', { count: 'exact', head: true })
-      .eq('accepter_id', userId)
-      .eq('status', 'pending');
+    // Get pending requests count (only requests sent to this user) - with error handling
+    let pendingRequestsCount = 0;
+    try {
+      const { count, error: pendingError } = await supabase
+        .from('friendships')
+        .select('*', { count: 'exact', head: true })
+        .eq('accepter_id', userId)
+        .eq('status', 'pending');
+      
+      if (pendingError) {
+        console.warn('⚠️ Failed to get pending requests count:', pendingError.message);
+      } else {
+        pendingRequestsCount = count || 0;
+      }
+    } catch (error) {
+      console.warn('⚠️ Pending requests query failed:', error);
+      pendingRequestsCount = 0;
+    }
 
     // Get follow counts
     const followCounts = await this.getFollowCounts(userId);
 
     return {
       ...profile,
-      friend_count: friendCount || 0,
-      pending_requests_count: pendingRequestsCount || 0,
+      friend_count: friendCount,
+      pending_requests_count: pendingRequestsCount,
       follower_count: followCounts.followersCount,
       following_count: followCounts.followingCount
     };
@@ -378,23 +402,46 @@ class SocialService implements SocialServiceInterface {
     followingCount: number;
     followersCount: number;
   }> {
-    // Count users this user is following
-    const { count: followingCount } = await supabase
-      .from('follows')
-      .select('*', { count: 'exact', head: true })
-      .eq('follower_id', userId)
-      .eq('status', 'following');
+    let followingCount = 0;
+    let followersCount = 0;
 
-    // Count users following this user
-    const { count: followersCount } = await supabase
-      .from('follows')
-      .select('*', { count: 'exact', head: true })
-      .eq('following_id', userId)
-      .eq('status', 'following');
+    try {
+      // Count users this user is following
+      const { count: following, error: followingError } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('follower_id', userId)
+        .eq('status', 'following');
+
+      if (followingError) {
+        console.warn('⚠️ Failed to get following count:', followingError.message);
+      } else {
+        followingCount = following || 0;
+      }
+    } catch (error) {
+      console.warn('⚠️ Following count query failed:', error);
+    }
+
+    try {
+      // Count users following this user
+      const { count: followers, error: followersError } = await supabase
+        .from('follows')
+        .select('*', { count: 'exact', head: true })
+        .eq('following_id', userId)
+        .eq('status', 'following');
+
+      if (followersError) {
+        console.warn('⚠️ Failed to get followers count:', followersError.message);
+      } else {
+        followersCount = followers || 0;
+      }
+    } catch (error) {
+      console.warn('⚠️ Followers count query failed:', error);
+    }
 
     return {
-      followingCount: followingCount || 0,
-      followersCount: followersCount || 0
+      followingCount,
+      followersCount
     };
   }
 

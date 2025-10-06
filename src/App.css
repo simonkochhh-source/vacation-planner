@@ -43,6 +43,8 @@
   }
 }
 
+/* Budget View styles removed - using natural scrolling from MainLayout */
+
 @keyframes spin {
   from {
     transform: rotate(0deg);

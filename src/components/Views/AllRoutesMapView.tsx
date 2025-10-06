@@ -8,7 +8,7 @@ import MapMeasurement from '../Maps/MapMeasurement';
 import MobileMapControls from '../Maps/MobileMapControls';
 import { useResponsive } from '../../hooks/useResponsive';
 import { Trip, Destination, TripStatus, DestinationStatus } from '../../types';
-import { MapPin, Route, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import { Route, Calendar, CheckCircle, Clock } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 
 // Fix Leaflet default markers in React
@@ -44,11 +44,11 @@ const AllRoutesMapView: React.FC = () => {
   const [userLocation, setUserLocation] = useState<LatLngExpression | null>(null);
   const [showMeasurement, setShowMeasurement] = useState(false);
   const [currentMapLayer, setCurrentMapLayer] = useState('openstreetmap');
-  const [currentZoom, setCurrentZoom] = useState(isMobile ? 6 : 8);
   const [showCompleted, setShowCompleted] = useState(true);
   const [showPlanned, setShowPlanned] = useState(true);
   const [showActive, setShowActive] = useState(true);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
+  const [showRoutePanel, setShowRoutePanel] = useState(false);
 
   // Color configuration for different trip states
   const routeColors = {
@@ -255,19 +255,20 @@ const AllRoutesMapView: React.FC = () => {
 
   return (
     <div style={{ position: 'relative', height: '100%', width: '100%' }}>
-      {/* Statistics Header */}
-      <div style={{
-        position: 'absolute',
-        top: '1rem',
-        right: '1rem',
-        zIndex: 1000,
-        background: 'var(--color-surface)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--space-4)',
-        boxShadow: 'var(--shadow-lg)',
-        minWidth: isMobile ? '280px' : '320px',
-        maxWidth: isMobile ? '90vw' : '400px'
-      }}>
+      {/* Statistics Header - Only show when route panel is visible */}
+      {showRoutePanel && (
+        <div style={{
+          position: 'absolute',
+          top: '1rem',
+          right: isMobile ? '1rem' : '5rem', // Offset for desktop controls
+          zIndex: 1000,
+          background: 'var(--color-surface)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--space-4)',
+          boxShadow: 'var(--shadow-lg)',
+          minWidth: isMobile ? '280px' : '320px',
+          maxWidth: isMobile ? '90vw' : '400px'
+        }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
@@ -428,7 +429,8 @@ const AllRoutesMapView: React.FC = () => {
             </button>
           </div>
         </div>
-      </div>
+        </div>
+      )}
 
       <MapContainer
         center={getMapCenter()}
@@ -442,16 +444,10 @@ const AllRoutesMapView: React.FC = () => {
         zoomControl={false}
         attributionControl={!isMobile}
         whenReady={() => {
-          if (mapRef) {
-            mapRef.on('zoomend', () => {
-              setCurrentZoom(mapRef.getZoom());
-            });
-            
-            if (isMobile) {
-              mapRef.options.zoomAnimation = false;
-              mapRef.options.fadeAnimation = false;
-              mapRef.options.markerZoomAnimation = false;
-            }
+          if (mapRef && isMobile) {
+            mapRef.options.zoomAnimation = false;
+            mapRef.options.fadeAnimation = false;
+            mapRef.options.markerZoomAnimation = false;
           }
         }}
       >
@@ -526,11 +522,9 @@ const AllRoutesMapView: React.FC = () => {
         showMeasurement={showMeasurement}
         onToggleMeasurement={() => setShowMeasurement(!showMeasurement)}
         isMobile={isMobile || isTablet}
-        // Hide routing specific controls for global view
-        showRouting={false}
-        onToggleRouting={() => {}} // No-op for global view
-        showTimeline={false}
-        onToggleTimeline={() => {}} // No-op for global view
+        // Use routing control to toggle route panel for global view
+        showRouting={showRoutePanel}
+        onToggleRouting={() => setShowRoutePanel(!showRoutePanel)}
         showClustering={false}
         onToggleClustering={() => {}} // No-op for global view
         showTripRoutes={false}

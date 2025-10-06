@@ -40,20 +40,27 @@ class OpenStreetMapService {
   private useMockData: boolean;
 
   constructor() {
-    this.useMockData = process.env.REACT_APP_USE_MOCK_PLACES === 'true';
+    // Force real API for development - override environment variable
+    this.useMockData = false; // process.env.REACT_APP_USE_MOCK_PLACES === 'true';
     console.log('🚀 OpenStreetMapService initialized:', {
       REACT_APP_USE_MOCK_PLACES: process.env.REACT_APP_USE_MOCK_PLACES,
       useMockData: this.useMockData,
-      NODE_ENV: process.env.NODE_ENV
+      NODE_ENV: process.env.NODE_ENV,
+      FORCED_REAL_API: true
     });
   }
 
   // Search for places using Nominatim API
   async searchPlaces(query: string, options: SearchOptions = {}): Promise<PlacePrediction[]> {
-    console.log('openStreetMapService: searchPlaces called with query:', query, 'useMockData:', this.useMockData);
+    console.log('🔍 openStreetMapService: searchPlaces called with query:', query, 'useMockData:', this.useMockData);
+    console.log('🔍 Environment check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      REACT_APP_USE_MOCK_PLACES: process.env.REACT_APP_USE_MOCK_PLACES,
+      useMockData: this.useMockData
+    });
     
     if (this.useMockData) {
-      console.log('openStreetMapService: Using mock data');
+      console.log('🚫 openStreetMapService: Using mock data due to useMockData=true');
       return this.getMockPredictions(query);
     }
 
@@ -90,12 +97,17 @@ class OpenStreetMapService {
       }
 
       const url = `${this.baseUrl}/search?${params}`;
-      console.log('openStreetMapService: Making request to:', url);
+      console.log('🔍 openStreetMapService: Making request to:', url);
+      console.log('🔍 openStreetMapService: Query params:', Object.fromEntries(params.entries()));
       
       const response = await fetch(url, {
+        method: 'GET',
         headers: {
-          'User-Agent': 'VacationPlanner/1.0'
-        }
+          'User-Agent': 'VacationPlanner/1.0',
+          'Accept': 'application/json',
+          'Accept-Language': 'de,en;q=0.9'
+        },
+        mode: 'cors'
       });
 
       console.log('openStreetMapService: Response status:', response.status);
@@ -110,8 +122,9 @@ class OpenStreetMapService {
       }
 
       const data = await response.json();
-      console.log('openStreetMapService: Response data:', data);
-      console.log('openStreetMapService: Number of results:', data.length);
+      console.log('🔍 openStreetMapService: Response data:', data);
+      console.log('🔍 openStreetMapService: Number of results:', data.length);
+      console.log('🔍 openStreetMapService: First result sample:', data[0]);
       
       return data.map((place: any): PlacePrediction => ({
         place_id: place.place_id.toString(),

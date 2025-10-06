@@ -10,6 +10,8 @@ import { PlacePrediction } from '../../services/openStreetMapService';
 import LeafletMapOnly from '../Maps/LeafletMapOnly';
 import MapErrorBoundary from '../Maps/MapErrorBoundary';
 import DestinationWeather from '../Weather/DestinationWeather';
+import TimelineInsertPoint from '../Timeline/TimelineInsertPoint';
+import InlineDestinationCreator from '../Timeline/InlineDestinationCreator';
 import {
   Calendar,
   MapPin,
@@ -1785,100 +1787,9 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         padding: isMobile ? '1rem 1rem 0' : '1.5rem 1.5rem 0',
         flexShrink: 0
       }}>
-        <div style={{ width: isMobile ? '100%' : 'auto' }}>
-          <h1 style={{
-            margin: '0 0 0.5rem 0',
-            fontSize: isMobile ? '1.5rem' : '2rem',
-            fontWeight: 'bold',
-            color: 'var(--color-text-primary)',
-            lineHeight: 1.2
-          }}>
-            📅 {isMobile ? 'Timeline' : 'Erweiterte Timeline'}
-          </h1>
-          <p style={{
-            margin: 0,
-            color: 'var(--color-text-secondary)',
-            fontSize: isMobile ? '0.875rem' : '1rem',
-            lineHeight: 1.4
-          }}>
-            {isMobile ? (
-              <>
-                <div>{currentTrip.name}</div>
-                <div style={{ marginTop: '0.25rem' }}>
-                  {formatDate(currentTrip.startDate)} - {formatDate(currentTrip.endDate)}
-                </div>
-              </>
-            ) : (
-              `${currentTrip.name} • ${formatDate(currentTrip.startDate)} - ${formatDate(currentTrip.endDate)}`
-            )}
-          </p>
-        </div>
 
       </div>
 
-      {/* Compact Statistics */}
-      <div style={{
-        display: 'flex',
-        flexDirection: isMobile ? 'column' : 'row',
-        gap: isMobile ? '0.5rem' : '1rem',
-        marginBottom: isMobile ? '1rem' : '1.5rem',
-        padding: isMobile ? '0.75rem' : '1rem',
-        background: 'rgba(74, 144, 164, 0.05)',
-        border: '1px solid rgba(74, 144, 164, 0.2)',
-        borderRadius: '8px'
-      }}>
-        {/* Compact Trip Overview */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: isMobile ? '0.75rem' : '1rem',
-          flex: 1
-        }}>
-          <Route size={16} style={{ color: 'var(--color-primary-ocean)' }} />
-          <span style={{ fontSize: isMobile ? '0.875rem' : '1rem', fontWeight: '600', color: 'var(--color-text-primary)' }}>
-            Gesamt: <strong>{Math.round(overallStats.distance)}km</strong>
-          </span>
-          {overallStats.drivingDistance > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Car size={14} style={{ color: 'var(--color-primary-ocean)' }} />
-              <span style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: 'var(--color-text-secondary)' }}>
-                {Math.round(overallStats.drivingDistance)}km
-              </span>
-            </div>
-          )}
-          {overallStats.walkingDistance > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Mountain size={14} style={{ color: 'var(--color-success)' }} />
-              <span style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: 'var(--color-text-secondary)' }}>
-                {Math.round(overallStats.walkingDistance)}km
-              </span>
-            </div>
-          )}
-          {overallStats.bikingDistance > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-              <Bike size={14} style={{ color: 'var(--color-error)' }} />
-              <span style={{ fontSize: isMobile ? '0.75rem' : '0.875rem', color: 'var(--color-text-secondary)' }}>
-                {Math.round(overallStats.bikingDistance)}km
-              </span>
-            </div>
-          )}
-        </div>
-        
-        {/* Additional Stats */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: isMobile ? '0.5rem' : '0.75rem',
-          fontSize: isMobile ? '0.75rem' : '0.875rem',
-          color: 'var(--color-text-secondary)'
-        }}>
-          <span>{overallStats.destinations} Ziele</span>
-          <span>•</span>
-          <span>{overallStats.days} Tage</span>
-        </div>
-
-
-      </div>
 
       {/* Timeline Content */}
       <div style={{

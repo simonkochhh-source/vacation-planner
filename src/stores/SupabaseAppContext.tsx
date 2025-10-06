@@ -307,13 +307,19 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
         const savedUIState = loadFromLocalStorage<Partial<UIState>>('vacation-planner-ui-state');
         
         // Always show landing page after SSO login, regardless of saved state or trips
-        dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: 'landing' } });
+        dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, currentView: 'landing', activeView: undefined } });
         console.log('🎯 Post-SSO: All users directed to landing page, trips count:', trips?.length || 0);
         
         // If user has saved UI state, log it but don't apply it (they can navigate manually)
         if (savedUIState) {
           console.log('🎯 Previous UI state found but ignored for post-SSO landing:', savedUIState.currentView);
         }
+        
+        // Clear any potential localStorage that might interfere with landing view
+        setTimeout(() => {
+          console.log('🔧 Ensuring landing view persists after login...');
+          dispatch({ type: 'UPDATE_UI_STATE', payload: { currentView: 'landing', activeView: undefined } });
+        }, 100);
 
         // Load destinations from Supabase with fallback
         let destinations: Destination[] = [];
@@ -409,13 +415,14 @@ export const SupabaseAppProvider: React.FC<SupabaseAppProviderProps> = ({ childr
     }
   }, [state.uiState, isInitialized]);
 
-  // Auto-select first trip if no current trip is selected
+  // Auto-select first trip if no current trip is selected, but don't override landing view after login
   useEffect(() => {
     if (state.trips.length > 0 && !state.currentTrip) {
       const firstTrip = state.trips[0];
-      console.log('🚀 Auto-selecting first trip:', firstTrip.name);
+      console.log('🚀 Auto-selecting first trip (background):', firstTrip.name);
       dispatch({ type: 'SET_CURRENT_TRIP', payload: firstTrip.id });
       dispatch({ type: 'UPDATE_UI_STATE', payload: { activeTripId: firstTrip.id } });
+      // Note: We intentionally do NOT change currentView here to preserve landing view after login
     }
   }, [state.trips, state.currentTrip]);
 

@@ -275,7 +275,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     }
 
     if (savedUIState) {
-      dispatch({ type: 'UPDATE_UI_STATE', payload: { ...initialUIState, ...savedUIState } });
+      // Always force landing view on page refresh, but keep other saved state
+      dispatch({ type: 'UPDATE_UI_STATE', payload: { 
+        ...initialUIState, 
+        ...savedUIState, 
+        currentView: 'landing',
+        activeView: undefined 
+      } });
+      console.log('🎯 Page refresh: Forcing landing view while preserving other UI state');
+    } else {
+      // If no saved state, default to landing view
+      dispatch({ type: 'UPDATE_UI_STATE', payload: { 
+        ...initialUIState, 
+        currentView: 'landing',
+        activeView: undefined 
+      } });
     }
 
     if (savedSettings) {

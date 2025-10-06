@@ -9,7 +9,6 @@ import {
   Trash2,
   Search,
   Filter,
-  Download,
   Receipt,
   Calendar,
   MapPin,
@@ -288,7 +287,10 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
   }
 
   return (
-    <div style={{ padding: isMobile ? '1rem' : '1.5rem' }}>
+    <div style={{ 
+      padding: isMobile ? '1rem' : '1.5rem',
+      paddingBottom: isMobile ? '2rem' : '3rem' // Extra bottom padding to prevent cutoff
+    }}>
       {/* Header */}
       <div style={{
         display: 'flex',
@@ -543,18 +545,21 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
 
       {/* Expenses List */}
       <div style={{
-        background: 'var(--color-neutral-cream)',
-        border: '1px solid var(--color-neutral-mist)',
+        background: 'var(--color-neutral-mist)',
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: 'var(--color-border)',
         borderRadius: '8px',
         overflow: 'hidden'
       }}>
         <div style={{
-          background: '#f9fafb',
+          background: 'var(--color-neutral-cream)',
           padding: '1rem 1.5rem',
-          borderBottom: '1px solid var(--color-neutral-mist)',
+          borderBottomWidth: '1px',
+          borderBottomStyle: 'solid',
+          borderBottomColor: 'var(--color-border)',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
+          alignItems: 'center'
         }}>
           <h3 style={{
             margin: 0,
@@ -564,25 +569,6 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
           }}>
             Ausgaben ({filteredExpenses.length})
           </h3>
-
-          <button
-            style={{
-              background: 'transparent',
-              border: '1px solid #d1d5db',
-              borderRadius: '6px',
-              padding: '0.5rem',
-              cursor: 'pointer',
-              color: 'var(--color-text-secondary)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              fontSize: '0.875rem'
-            }}
-            title="Exportieren"
-          >
-            <Download size={14} />
-            Export
-          </button>
         </div>
 
         <div style={{ padding: '1.5rem' }}>
@@ -594,10 +580,11 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
             }}>
               {filteredExpenses.map(expense => (
                 <div key={expense.id} style={{
-                  background: '#f9fafb',
-                  border: '1px solid var(--color-neutral-mist)',
+                  background: 'var(--color-neutral-mist)',
+                  border: '1px solid var(--color-border)',
                   borderRadius: '8px',
-                  padding: '1rem'
+                  padding: '1rem',
+                  boxShadow: 'var(--shadow-sm)'
                 }}>
                   <div style={{
                     display: 'flex',
@@ -609,12 +596,13 @@ const ExpenseTracker: React.FC<ExpenseTrackerProps> = ({
                       width: '48px',
                       height: '48px',
                       borderRadius: '12px',
-                      background: 'var(--color-neutral-mist)',
+                      background: 'var(--color-neutral-cream)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '1.5rem',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      border: '1px solid var(--color-border)'
                     }}>
                       {getExpenseCategoryIcon(expense.category)}
                     </div>

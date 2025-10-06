@@ -389,16 +389,31 @@ const EnhancedPlaceSearch: React.FC<EnhancedPlaceSearchProps> = ({
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled}
-            className={`
-              w-full pl-12 pr-12 py-4 
-              text-base font-medium
-              bg-white border-2 border-gray-200 
-              rounded-xl shadow-sm
-              focus:border-blue-500 focus:ring-0 focus:outline-none
-              transition-all duration-200
-              ${disabled ? 'bg-gray-50 cursor-not-allowed' : 'hover:border-gray-300'}
-              ${isOpen ? 'border-blue-500 shadow-lg' : ''}
-            `}
+            style={{
+              width: '100%',
+              paddingLeft: '3rem',
+              paddingRight: '3rem',
+              paddingTop: '1rem',
+              paddingBottom: '1rem',
+              fontSize: '1rem',
+              fontWeight: '500',
+              backgroundColor: 'var(--color-background)',
+              color: 'var(--color-text-primary)',
+              border: '2px solid var(--color-border)',
+              borderRadius: '0.75rem',
+              boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              outline: 'none',
+              transition: 'all 0.2s',
+              ...(disabled ? {
+                backgroundColor: 'var(--color-neutral-mist)',
+                cursor: 'not-allowed'
+              } : {}),
+              ...(isOpen ? {
+                borderColor: 'var(--color-primary-ocean)',
+                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)'
+              } : {})
+            }}
+            className=""
           />
           {/* MOVED DROPDOWN HERE */}
           {isOpen && displayItems.length > 0 && (

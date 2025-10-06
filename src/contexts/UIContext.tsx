@@ -38,7 +38,7 @@ type UIAction =
 
 // Initial UI State
 const initialUIState: UIState = {
-  currentView: 'list',
+  currentView: 'landing', // Always start with landing view on page load/refresh
   activeDestination: undefined,
   activeTripId: undefined,
   filters: {
@@ -256,7 +256,7 @@ export const UIProvider: React.FC<UIProviderProps> = ({ children }) => {
 
   const goBack = useCallback(() => {
     // Simple implementation - could be enhanced with history stack
-    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'list' });
+    dispatch({ type: 'SET_CURRENT_VIEW', payload: 'landing' });
   }, []);
 
   // Active Elements

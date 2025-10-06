@@ -209,9 +209,12 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
 
   return (
     <div style={{ 
-      padding: isMobile ? '1rem' : '1.5rem',
+      // Padding is now handled by the parent budget-view-content class
+      padding: 0,
       background: 'var(--color-neutral-cream)',
-      minHeight: '100%'
+      minHeight: '100%',
+      height: 'auto',
+      paddingBottom: '1rem' // Add bottom padding to prevent cutoff
     }}>
       {/* Header */}
       <div style={{
@@ -289,16 +292,16 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       {/* Budget Statistics Cards */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(250px, 1fr))',
-        gap: isMobile ? '1rem' : '1.5rem',
-        marginBottom: isMobile ? '1.5rem' : '2rem'
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(200px, 1fr))',
+        gap: isMobile ? '0.75rem' : '1rem',
+        marginBottom: isMobile ? '1rem' : '1.5rem'
       }}>
         {/* Total Budget */}
         <div style={{
           background: 'var(--color-neutral-cream)',
           border: '1px solid var(--color-neutral-mist)',
-          borderRadius: '12px',
-          padding: '1.5rem',
+          borderRadius: '8px',
+          padding: '1rem',
           position: 'relative',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-sm)'
@@ -307,31 +310,31 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             position: 'absolute',
             top: 0,
             right: 0,
-            width: '100px',
-            height: '100px',
+            width: '60px',
+            height: '60px',
             background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%)',
-            borderRadius: '0 0 0 100px',
+            borderRadius: '0 0 0 60px',
             opacity: 0.1
           }} />
           
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '1rem',
+            gap: '0.5rem',
+            marginBottom: '0.75rem',
             position: 'relative'
           }}>
             <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
               background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-forest) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: 'white'
             }}>
-              <DollarSign size={24} />
+              <DollarSign size={18} />
             </div>
             <div>
               <h3 style={{
@@ -343,7 +346,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 Gesamtbudget
               </h3>
               <div style={{
-                fontSize: '2rem',
+                fontSize: '1.5rem',
                 fontWeight: 'bold',
                 color: 'var(--color-text-secondary)'
               }}>
@@ -368,8 +371,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
         <div style={{
           background: 'var(--color-neutral-cream)',
           border: '1px solid var(--color-neutral-mist)',
-          borderRadius: '12px',
-          padding: '1.5rem',
+          borderRadius: '8px',
+          padding: '1rem',
           position: 'relative',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-sm)'
@@ -378,26 +381,26 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             position: 'absolute',
             top: 0,
             right: 0,
-            width: '100px',
-            height: '100px',
+            width: '60px',
+            height: '60px',
             background: budgetStats.isOverBudget 
               ? 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)'
               : 'linear-gradient(135deg, var(--color-success) 0%, var(--color-secondary-forest) 100%)',
-            borderRadius: '0 0 0 100px',
+            borderRadius: '0 0 0 60px',
             opacity: 0.1
           }} />
           
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '1rem',
+            gap: '0.5rem',
+            marginBottom: '0.75rem',
             position: 'relative'
           }}>
             <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
               background: budgetStats.isOverBudget 
                 ? 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)'
                 : 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)',
@@ -406,7 +409,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
               justifyContent: 'center',
               color: 'white'
             }}>
-              {budgetStats.isOverBudget ? <TrendingUp size={24} /> : <TrendingDown size={24} />}
+              {budgetStats.isOverBudget ? <TrendingUp size={18} /> : <TrendingDown size={18} />}
             </div>
             <div>
               <h3 style={{
@@ -418,7 +421,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 Ausgegeben
               </h3>
               <div style={{
-                fontSize: '2rem',
+                fontSize: '1.5rem',
                 fontWeight: 'bold',
                 color: budgetStats.isOverBudget ? 'var(--color-error)' : 'var(--color-success)'
               }}>
@@ -443,8 +446,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
         <div style={{
           background: 'var(--color-neutral-cream)',
           border: '1px solid var(--color-neutral-mist)',
-          borderRadius: '12px',
-          padding: '1.5rem',
+          borderRadius: '8px',
+          padding: '1rem',
           position: 'relative',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-sm)'
@@ -453,26 +456,26 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             position: 'absolute',
             top: 0,
             right: 0,
-            width: '100px',
-            height: '100px',
+            width: '60px',
+            height: '60px',
             background: budgetStats.remaining >= 0 
               ? 'linear-gradient(135deg, var(--color-success) 0%, var(--color-secondary-forest) 100%)'
               : 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)',
-            borderRadius: '0 0 0 100px',
+            borderRadius: '0 0 0 60px',
             opacity: 0.1
           }} />
           
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '1rem',
+            gap: '0.5rem',
+            marginBottom: '0.75rem',
             position: 'relative'
           }}>
             <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
               background: budgetStats.remaining >= 0 
                 ? 'linear-gradient(135deg, #16a34a 0%, #15803d 100%)'
                 : 'linear-gradient(135deg, var(--color-error) 0%, var(--color-error) 100%)',
@@ -493,7 +496,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 Verbleibendes Budget
               </h3>
               <div style={{
-                fontSize: '2rem',
+                fontSize: '1.5rem',
                 fontWeight: 'bold',
                 color: budgetStats.remaining >= 0 ? 'var(--color-success)' : 'var(--color-error)'
               }}>
@@ -527,8 +530,8 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
         <div style={{
           background: 'var(--color-neutral-cream)',
           border: '1px solid var(--color-neutral-mist)',
-          borderRadius: '12px',
-          padding: '1.5rem',
+          borderRadius: '8px',
+          padding: '1rem',
           position: 'relative',
           overflow: 'hidden',
           boxShadow: 'var(--shadow-sm)'
@@ -537,24 +540,24 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             position: 'absolute',
             top: 0,
             right: 0,
-            width: '100px',
-            height: '100px',
+            width: '60px',
+            height: '60px',
             background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-sky) 100%)',
-            borderRadius: '0 0 0 100px',
+            borderRadius: '0 0 0 60px',
             opacity: 0.1
           }} />
           
           <div style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '0.75rem',
-            marginBottom: '1rem',
+            gap: '0.5rem',
+            marginBottom: '0.75rem',
             position: 'relative'
           }}>
             <div style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
+              width: '36px',
+              height: '36px',
+              borderRadius: '8px',
               background: 'linear-gradient(135deg, var(--color-primary-ocean) 0%, var(--color-secondary-sky) 100%)',
               display: 'flex',
               alignItems: 'center',
@@ -573,7 +576,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
                 Fahrtkosten
               </h3>
               <div style={{
-                fontSize: '2rem',
+                fontSize: '1.5rem',
                 fontWeight: 'bold',
                 color: 'var(--color-text-secondary)'
               }}>
@@ -598,20 +601,20 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
       {/* Budget by Category */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(400px, 1fr))',
-        gap: isMobile ? '1rem' : '1.5rem',
-        marginBottom: isMobile ? '1.5rem' : '2rem'
+        gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fit, minmax(350px, 1fr))',
+        gap: isMobile ? '0.75rem' : '1rem',
+        marginBottom: isMobile ? '1rem' : '1.5rem'
       }}>
         {/* Category Breakdown */}
         <div style={{
           background: 'var(--color-neutral-cream)',
           border: '1px solid var(--color-neutral-mist)',
-          borderRadius: '12px',
-          padding: '1.5rem',
+          borderRadius: '8px',
+          padding: '1rem',
           boxShadow: 'var(--shadow-sm)'
         }}>
           <h3 style={{
-            margin: '0 0 1rem 0',
+            margin: '0 0 0.75rem 0',
             fontSize: '1.125rem',
             fontWeight: '600',
             color: 'var(--color-text-secondary)',
@@ -756,7 +759,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
           boxShadow: 'var(--shadow-sm)'
         }}>
           <h3 style={{
-            margin: '0 0 1rem 0',
+            margin: '0 0 0.75rem 0',
             fontSize: isMobile ? '1rem' : '1.125rem',
             fontWeight: '600',
             color: 'var(--color-text-secondary)',
@@ -896,7 +899,7 @@ const BudgetOverview: React.FC<BudgetOverviewProps> = ({
             gap: '0.5rem',
             marginBottom: '0.5rem'
           }}>
-            <AlertTriangle size={20} style={{ color: 'var(--color-error)' }} />
+            <AlertTriangle size={16} style={{ color: 'var(--color-error)' }} />
             <h4 style={{
               margin: 0,
               fontSize: '1rem',

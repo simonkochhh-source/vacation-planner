@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useEffect, ReactNode } from 'react';
 import { Destination, UUID, CreateDestinationData, DestinationStatus, DestinationCategory } from '../types';
 import { SupabaseService } from '../services/supabaseService';
 import { getCurrentDateString, generateUUID } from '../utils';
@@ -288,12 +288,19 @@ export const DestinationProvider: React.FC<DestinationProviderProps> = ({ childr
       dispatch({ type: 'SET_LOADING', payload: true });
       const destinations = await SupabaseService.getDestinations();
       dispatch({ type: 'SET_DESTINATIONS', payload: destinations });
+      console.log('🎯 Destinations loaded:', destinations.length);
     } catch (error) {
-      console.error('Failed to refresh destinations:', error);
+      console.error('❌ Failed to refresh destinations:', error);
     } finally {
       dispatch({ type: 'SET_LOADING', payload: false });
     }
   }, []);
+
+  // Load destinations on mount
+  useEffect(() => {
+    console.log('🚀 DestinationContext: Loading destinations on mount...');
+    refreshDestinations();
+  }, [refreshDestinations]);
 
   // Get Destination Count
   const getDestinationCount = useCallback((tripId?: UUID): number => {

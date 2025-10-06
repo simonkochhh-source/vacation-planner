@@ -11,8 +11,7 @@ import {
   Receipt,
   Target,
   Edit,
-  AlertTriangle,
-  Download
+  AlertTriangle
 } from 'lucide-react';
 
 type BudgetTab = 'overview' | 'expenses';
@@ -65,10 +64,6 @@ const BudgetView: React.FC = () => {
     };
   }, [currentTrip, destinations]);
 
-  const handleExportData = () => {
-    // Export budget data (placeholder)
-    console.log('Exporting budget data...');
-  };
 
   const handleEditBudget = (destination: any) => {
     // Open edit budget form (placeholder)
@@ -93,18 +88,19 @@ const BudgetView: React.FC = () => {
   }
 
   return (
-    <div className="main-content" style={{
-      background: 'var(--color-neutral-cream)',
-      minHeight: '100vh',
+    <div style={{
+      height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      // Enable mobile scrolling
-      WebkitOverflowScrolling: isMobile ? 'touch' : 'auto'
+      background: 'var(--color-neutral-cream)',
+      overflow: 'hidden'
     }}>
       {/* Header with Tabs */}
       <div style={{
         background: 'var(--color-neutral-cream)',
-        borderBottom: '1px solid var(--color-neutral-mist)',
+        borderBottomWidth: '1px',
+        borderBottomStyle: 'solid',
+        borderBottomColor: 'var(--color-neutral-mist)',
         padding: isMobile ? '0 1rem' : '0 1.5rem',
         flexShrink: 0 // Prevent header from shrinking
       }}>
@@ -147,7 +143,9 @@ const BudgetView: React.FC = () => {
             }}>
               <div style={{
                 background: quickStats.isOverBudget ? 'rgba(220, 38, 38, 0.1)' : 'rgba(139, 195, 143, 0.1)',
-                border: `1px solid ${quickStats.isOverBudget ? 'var(--color-error)' : 'var(--color-success)'}`,
+                borderWidth: '1px',
+                borderStyle: 'solid',
+                borderColor: quickStats.isOverBudget ? 'var(--color-error)' : 'var(--color-success)',
                 borderRadius: '8px',
                 padding: isMobile ? '0.75rem' : '0.75rem 1rem',
                 textAlign: 'center',
@@ -172,7 +170,9 @@ const BudgetView: React.FC = () => {
               {quickStats.destinationsOverBudget > 0 && (
                 <div style={{
                   background: 'rgba(204, 139, 101, 0.1)',
-                  border: '1px solid var(--color-warning)',
+                  borderWidth: '1px',
+                  borderStyle: 'solid',
+                  borderColor: 'var(--color-warning)',
                   borderRadius: '8px',
                   padding: isMobile ? '0.75rem' : '0.75rem 1rem',
                   display: 'flex',
@@ -198,30 +198,6 @@ const BudgetView: React.FC = () => {
                   </div>
                 </div>
               )}
-
-              <button
-                onClick={handleExportData}
-                style={{
-                  background: 'var(--color-primary-ocean)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  padding: isMobile ? '0.75rem' : '0.75rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.5rem',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  minHeight: '48px', // Touch target
-                  flex: isMobile ? 1 : 'none'
-                }}
-                title="Budget-Daten exportieren"
-              >
-                <Download size={16} />
-                {isMobile ? 'Export' : 'Export'}
-              </button>
             </div>
           )}
         </div>
@@ -240,7 +216,9 @@ const BudgetView: React.FC = () => {
               style={{
                 background: 'transparent',
                 border: 'none',
-                borderBottom: activeTab === tab.id ? '2px solid var(--color-primary-ocean)' : '2px solid transparent',
+                borderBottomWidth: '2px',
+                borderBottomStyle: 'solid',
+                borderBottomColor: activeTab === tab.id ? 'var(--color-primary-ocean)' : 'transparent',
                 cursor: 'pointer',
                 padding: isMobile ? '0.875rem 1rem' : '0.75rem 1rem',
                 display: 'flex',
@@ -279,9 +257,8 @@ const BudgetView: React.FC = () => {
         flex: 1,
         overflow: 'auto',
         background: 'var(--color-neutral-cream)',
-        // Enhanced mobile scrolling
-        WebkitOverflowScrolling: isMobile ? 'touch' : 'auto',
-        minHeight: 0 // Allow flex item to shrink for proper scrolling
+        padding: '1.5rem',
+        paddingBottom: '3rem' // Extra bottom padding
       }}>
         {activeTab === 'overview' && (
           <BudgetOverview 
@@ -309,7 +286,9 @@ const BudgetView: React.FC = () => {
       {/* Footer Info */}
       <div style={{
         background: 'var(--color-neutral-cream)',
-        borderTop: '1px solid var(--color-neutral-mist)',
+        borderTopWidth: '1px',
+        borderTopStyle: 'solid',
+        borderTopColor: 'var(--color-neutral-mist)',
         padding: isMobile ? '1rem' : '1rem 1.5rem',
         fontSize: isMobile ? '0.8rem' : '0.875rem',
         color: 'var(--color-text-primary)',
@@ -317,7 +296,8 @@ const BudgetView: React.FC = () => {
         flexDirection: isMobile ? 'column' : 'row',
         alignItems: isMobile ? 'flex-start' : 'center',
         justifyContent: 'space-between',
-        gap: isMobile ? '0.75rem' : 0
+        gap: isMobile ? '0.75rem' : 0,
+        flexShrink: 0 // Prevent footer from shrinking
       }}>
         <div style={{ 
           fontSize: isMobile ? '0.8rem' : '0.875rem',

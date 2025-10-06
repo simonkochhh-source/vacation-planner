@@ -4,7 +4,6 @@ import { useTripContext } from '../../contexts/TripContext';
 import { useDestinationContext } from '../../contexts/DestinationContext';
 import { LatLngExpression, Icon } from 'leaflet';
 import RoutingMachine from '../Maps/RoutingMachine';
-import MobileTimeline from '../Maps/MobileTimeline';
 import MapLayerControl, { DynamicTileLayer } from '../Maps/MapLayerControl';
 import MapMeasurement from '../Maps/MapMeasurement';
 import MobileMapControls from '../Maps/MobileMapControls';
@@ -29,15 +28,13 @@ const MapView: React.FC = () => {
   const { isMobile, isTablet, isTouchDevice } = useResponsive();
   const [mapRef, setMapRef] = useState<any>(null);
   const [userLocation, setUserLocation] = useState<LatLngExpression | null>(null);
-  const [showRouting, setShowRouting] = useState(false);
+  const [showRouting, setShowRouting] = useState(true);
   
   // Debug logging for routing state
   useEffect(() => {
     console.log('🔄 MapView: showRouting state changed to:', showRouting);
     console.log('🔄 MapView: Current trip:', currentTrip?.name, 'Destinations:', currentDestinations.length);
   }, [showRouting]);
-  const [selectedDestination, setSelectedDestination] = useState<Destination | undefined>();
-  const [showTimeline, setShowTimeline] = useState(!isMobile); // Hide timeline by default on mobile
   const [showMeasurement, setShowMeasurement] = useState(false);
   const [showClustering, setShowClustering] = useState(isMobile); // Enable clustering by default on mobile
   const [currentMapLayer, setCurrentMapLayer] = useState('openstreetmap');
@@ -50,10 +47,6 @@ const MapView: React.FC = () => {
     enableClustering: isMobile
   }), [isMobile]);
 
-  // Performance-optimized clustering decision
-  const useOptimizedClustering = useMemo(() => {
-    return showClustering || adaptiveSettings.enableClustering;
-  }, [showClustering, adaptiveSettings.enableClustering]);
 
   // Get current trip destinations with coordinates - using same logic as EnhancedTimelineView
   const currentDestinations = currentTrip 
@@ -150,8 +143,7 @@ const MapView: React.FC = () => {
     }
   };
 
-  const handleTimelineDestinationSelect = (destination: Destination) => {
-    setSelectedDestination(destination);
+  const handleDestinationSelect = (destination: Destination) => {
     if (mapRef && destination.coordinates) {
       mapRef.setView([destination.coordinates.lat, destination.coordinates.lng], 15);
     }
@@ -256,7 +248,7 @@ const MapView: React.FC = () => {
               key={dest.id}
               position={[dest.coordinates.lat, dest.coordinates.lng]}
               eventHandlers={{
-                click: () => handleTimelineDestinationSelect(dest)
+                click: () => handleDestinationSelect(dest)
               }}
             >
               <Popup>
@@ -304,8 +296,6 @@ const MapView: React.FC = () => {
           setShowRouting(newState);
           console.log('🔘 setShowRouting called with:', newState);
         }}
-        showTimeline={showTimeline}
-        onToggleTimeline={() => setShowTimeline(!showTimeline)}
         showMeasurement={showMeasurement}
         onToggleMeasurement={() => setShowMeasurement(!showMeasurement)}
         showClustering={showClustering}
@@ -332,20 +322,6 @@ const MapView: React.FC = () => {
 
 
 
-      {/* Timeline - Mobile optimized with safe area support */}
-      {showTimeline && currentDestinations.length > 0 && (
-        <div style={{
-          // Add bottom safe area padding for iPhone devices
-          paddingBottom: isMobile ? 'max(0px, env(safe-area-inset-bottom))' : 0
-        }}>
-          <MobileTimeline
-            destinations={currentDestinations}
-            onDestinationSelect={handleTimelineDestinationSelect}
-            currentDestination={selectedDestination}
-            isMobile={isMobile || isTablet}
-          />
-        </div>
-      )}
     </div>
   );
 };
