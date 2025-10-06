@@ -25,7 +25,7 @@ type SocialAction =
   | { type: 'UPDATE_CHAT_MESSAGE'; payload: { id: string; data: Partial<ChatMessage> } }
   | { type: 'SET_ROOM_PARTICIPANTS'; payload: SocialUserProfile[] }
   | { type: 'SET_ACTIVITIES'; payload: ActivityFeedItem[] }
-  | { type: 'ADD_ACTIVITY'; payload: UserActivity }
+  | { type: 'ADD_ACTIVITY'; payload: ActivityFeedItem }
   | { type: 'SET_LOADING'; payload: boolean }
   | { type: 'SET_CHAT_LOADING'; payload: boolean }
   | { type: 'SET_ERROR'; payload: string | null };
