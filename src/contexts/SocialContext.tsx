@@ -212,7 +212,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
 
   const sendFriendRequest = useCallback(async (userId: UUID): Promise<void> => {
     try {
-      await socialService.sendFriendRequest(userId);
+      await socialService.sendFriendshipRequest(userId);
       // Refresh friend requests to show updated state
       const requests = await socialService.getFriendRequests();
       dispatch({ type: 'SET_FRIEND_REQUESTS', payload: requests });
