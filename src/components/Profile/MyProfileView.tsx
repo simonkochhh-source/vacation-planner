@@ -15,13 +15,20 @@ import {
   Share,
   TrendingUp,
   Trash2,
-  X
+  X,
+  MessageCircle,
+  Search,
+  Menu,
+  ChevronRight,
+  Target,
+  CheckCircle,
+  Clock
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTripContext } from '../../contexts/TripContext';
 import { useUIContext } from '../../contexts/UIContext';
 import { socialService } from '../../services/socialService';
-import { SocialUserProfile, Trip, TripPrivacy, ActivityFeedItem, ActivityType } from '../../types';
+import { SocialUserProfile, Trip, TripPrivacy, ActivityFeedItem, ActivityType, TripStatus } from '../../types';
 import AvatarUpload from '../User/AvatarUpload';
 import { formatDate } from '../../utils';
 
@@ -31,12 +38,14 @@ const MyProfileView: React.FC = () => {
   const { trips } = useTripContext();
   const { isMobile } = useResponsive();
   const [socialProfile, setSocialProfile] = useState<SocialUserProfile | null>(null);
+  const [friends, setFriends] = useState<SocialUserProfile[]>([]);
   const [myActivities, setMyActivities] = useState<ActivityFeedItem[]>([]);
   const [myPosts, setMyPosts] = useState<ActivityFeedItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'posts' | 'overview' | 'trips' | 'privacy'>('posts');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
+  const [friendsSearchQuery, setFriendsSearchQuery] = useState('');
 
   useEffect(() => {
     if (user) {
@@ -53,6 +62,10 @@ const MyProfileView: React.FC = () => {
       // Load social profile
       const profile = await socialService.getUserProfile(user.id);
       setSocialProfile(profile);
+      
+      // Load friends
+      const friendsList = await socialService.getFriends();
+      setFriends(friendsList);
       
       // Load my activities
       const activities = await socialService.getUserActivities(user.id, 20);
@@ -162,27 +175,45 @@ const MyProfileView: React.FC = () => {
     return trips.filter(trip => trip.privacy === TripPrivacy.PRIVATE);
   };
 
-  const getPrivacyIcon = (privacy: TripPrivacy) => {
-    switch (privacy) {
-      case TripPrivacy.PUBLIC:
-        return <Globe size={14} style={{ color: '#10b981' }} />;
-      case TripPrivacy.CONTACTS:
-        return <Users size={14} style={{ color: '#f59e0b' }} />;
-      case TripPrivacy.PRIVATE:
-        return <Lock size={14} style={{ color: 'var(--color-text-secondary)' }} />;
+  const getPlannedTrips = () => {
+    return trips.filter(trip => trip.status === TripStatus.PLANNING);
+  };
+
+  const getActiveTrips = () => {
+    return trips.filter(trip => trip.status === TripStatus.ACTIVE);
+  };
+
+  const getCompletedTrips = () => {
+    return trips.filter(trip => trip.status === TripStatus.COMPLETED);
+  };
+
+  const getTripStatusIcon = (status: TripStatus) => {
+    switch (status) {
+      case TripStatus.PLANNING:
+        return <Target size={14} style={{ color: 'var(--color-primary-ocean)' }} />;
+      case TripStatus.ACTIVE:
+        return <Clock size={14} style={{ color: 'var(--color-warning)' }} />;
+      case TripStatus.COMPLETED:
+        return <CheckCircle size={14} style={{ color: 'var(--color-success)' }} />;
+      default:
+        return <Target size={14} style={{ color: 'var(--color-text-secondary)' }} />;
     }
   };
 
-  const getPrivacyLabel = (privacy: TripPrivacy) => {
-    switch (privacy) {
-      case TripPrivacy.PUBLIC:
-        return 'Öffentlich';
-      case TripPrivacy.CONTACTS:
-        return 'Nur Freunde';
-      case TripPrivacy.PRIVATE:
-        return 'Privat';
+  const handleChatWithFriend = async (friend: SocialUserProfile) => {
+    try {
+      const roomId = await socialService.createFriendChatRoom(friend.id);
+      console.log('Navigate to chat room:', roomId, 'with friend:', friend.nickname);
+      // TODO: Integrate with chat interface
+    } catch (error) {
+      console.error('Failed to create chat with friend:', error);
     }
   };
+
+  const filteredFriends = friends.filter(friend =>
+    friend.nickname.toLowerCase().includes(friendsSearchQuery.toLowerCase()) ||
+    friend.display_name?.toLowerCase().includes(friendsSearchQuery.toLowerCase())
+  );
 
 
   if (loading) {
@@ -221,97 +252,83 @@ const MyProfileView: React.FC = () => {
 
   return (
     <div className="app-container" style={{ 
-      padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      overflow: 'hidden',
       // iPhone safe area support
-      paddingLeft: isMobile ? 'max(var(--space-md), env(safe-area-inset-left))' : 'var(--space-lg)',
-      paddingRight: isMobile ? 'max(var(--space-md), env(safe-area-inset-right))' : 'var(--space-lg)',
-      paddingBottom: isMobile ? 'max(var(--space-md), env(safe-area-inset-bottom))' : 'var(--space-lg)'
+      paddingLeft: isMobile ? 'env(safe-area-inset-left)' : '0',
+      paddingRight: isMobile ? 'env(safe-area-inset-right)' : '0',
+      paddingBottom: isMobile ? 'env(safe-area-inset-bottom)' : '0'
     }}>
       {/* Header */}
       <div style={{
         background: 'var(--color-surface)',
-        borderRadius: 'var(--radius-lg)',
-        padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)',
-        marginBottom: 'var(--space-lg)',
-        border: '1px solid var(--color-border)'
+        borderBottom: '1px solid var(--color-border)',
+        padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+        flexShrink: 0
       }}>
         <div style={{
           display: 'flex',
-          flexDirection: isMobile ? 'column' : 'row',
-          alignItems: isMobile ? 'center' : 'flex-start',
-          gap: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
-          marginBottom: 'var(--space-lg)',
-          textAlign: isMobile ? 'center' : 'left'
+          alignItems: 'center',
+          gap: 'var(--space-md)',
+          maxWidth: '1200px',
+          margin: '0 auto'
         }}>
+          {/* Mobile Menu Button */}
+          {isMobile && (
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                padding: 'var(--space-sm)',
+                borderRadius: 'var(--radius-md)',
+                color: 'var(--color-text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <Menu size={24} />
+            </button>
+          )}
+
           {/* Avatar */}
           <div style={{ flexShrink: 0 }}>
             <AvatarUpload
               currentAvatarUrl={userProfile.avatar_url}
-              size="large"
+              size={isMobile ? "medium" : "large"}
               editable={false}
             />
           </div>
 
           {/* Profile Info */}
-          <div style={{ flex: 1 }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{
               display: 'flex',
-              flexDirection: isMobile ? 'column' : 'row',
               alignItems: 'center',
-              gap: isMobile ? 'var(--space-sm)' : 'var(--space-md)',
-              marginBottom: 'var(--space-sm)'
+              gap: 'var(--space-sm)',
+              marginBottom: 'var(--space-xs)'
             }}>
               <h1 style={{
                 fontFamily: 'var(--font-heading)',
-                fontSize: isMobile ? 'var(--text-xl)' : 'var(--text-2xl)',
+                fontSize: isMobile ? 'var(--text-lg)' : 'var(--text-xl)',
                 fontWeight: 'var(--font-weight-bold)',
                 color: 'var(--color-text-primary)',
                 margin: 0
               }}>
                 @{userProfile.nickname || 'user'}
               </h1>
-              
-              <button
-                onClick={handleEditProfile}
-                style={{
-                  background: 'var(--color-primary-ocean)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: 'var(--radius-md)',
-                  padding: isMobile ? 'var(--space-md) var(--space-lg)' : 'var(--space-sm) var(--space-md)',
-                  fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-xs)',
-                  transition: 'background var(--transition-normal)',
-                  minHeight: isMobile ? '48px' : 'auto',
-                  // iOS Safari optimizations
-                  WebkitTapHighlightColor: 'transparent',
-                  WebkitTouchCallout: 'none',
-                  WebkitUserSelect: 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (!isMobile) {
-                    e.currentTarget.style.background = 'var(--color-primary-forest)';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (!isMobile) {
-                    e.currentTarget.style.background = 'var(--color-primary-ocean)';
-                  }
-                }}
-              >
-                <Edit3 size={isMobile ? 18 : 14} />
-                {isMobile ? 'Bearbeiten' : 'Profil bearbeiten'}
-              </button>
             </div>
 
             {userProfile.display_name && (
               <p style={{
-                fontSize: isMobile ? 'var(--text-base)' : 'var(--text-lg)',
+                fontSize: isMobile ? 'var(--text-sm)' : 'var(--text-base)',
                 color: 'var(--color-text-primary)',
-                margin: '0 0 var(--space-sm) 0'
+                margin: '0 0 var(--space-xs) 0',
+                fontWeight: 'var(--font-weight-medium)'
               }}>
                 {userProfile.display_name}
               </p>
@@ -319,753 +336,725 @@ const MyProfileView: React.FC = () => {
 
             {socialProfile?.bio && (
               <p style={{
-                fontSize: 'var(--text-base)',
+                fontSize: 'var(--text-sm)',
                 color: 'var(--color-text-secondary)',
-                margin: '0 0 var(--space-md) 0',
-                lineHeight: 1.5
+                margin: 0,
+                lineHeight: 1.4,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: isMobile ? 'nowrap' : 'normal'
               }}>
                 {socialProfile.bio}
               </p>
             )}
-
-            {/* Social Stats */}
-            <div style={{
-              display: 'flex',
-              gap: 'var(--space-lg)',
-              fontSize: 'var(--text-sm)',
-              color: 'var(--color-text-secondary)'
-            }}>
-              <div>
-                <span style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                  {socialProfile?.friend_count || 0}
-                </span> Freunde
-              </div>
-              <div>
-                <span style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                  {socialProfile?.pending_requests_count || 0}
-                </span> Anfragen
-              </div>
-              <div>
-                <span style={{ fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                  {trips.length}
-                </span> Reisen
-              </div>
-            </div>
           </div>
-        </div>
 
-        {/* Privacy Notice */}
-        <div style={{
-          background: 'var(--color-neutral-mist)',
-          borderRadius: 'var(--radius-md)',
-          padding: 'var(--space-md)',
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'var(--space-sm)'
-        }}>
-          <Eye size={16} style={{ color: 'var(--color-primary-ocean)' }} />
-          <span style={{ fontSize: 'var(--text-sm)', color: 'var(--color-text-secondary)' }}>
-            So sehen andere dein Profil. Nur öffentliche und Freunde-Inhalte sind für andere sichtbar.
-          </span>
+          {/* Edit Button */}
+          <button
+            onClick={handleEditProfile}
+            style={{
+              background: 'var(--color-primary-ocean)',
+              color: 'white',
+              border: 'none',
+              borderRadius: 'var(--radius-md)',
+              padding: isMobile ? 'var(--space-sm) var(--space-md)' : 'var(--space-sm) var(--space-lg)',
+              fontSize: 'var(--text-sm)',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-xs)',
+              transition: 'background var(--transition-normal)',
+              flexShrink: 0,
+              // iOS Safari optimizations
+              WebkitTapHighlightColor: 'transparent',
+              WebkitTouchCallout: 'none',
+              WebkitUserSelect: 'none'
+            }}
+            onMouseEnter={(e) => {
+              if (!isMobile) {
+                e.currentTarget.style.background = 'var(--color-secondary-forest)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!isMobile) {
+                e.currentTarget.style.background = 'var(--color-primary-ocean)';
+              }
+            }}
+          >
+            <Edit3 size={16} />
+            {!isMobile && 'Bearbeiten'}
+          </button>
         </div>
       </div>
 
-      {/* Tabs */}
+      {/* Main Content Area */}
       <div style={{
-        background: 'var(--color-surface)',
-        borderRadius: 'var(--radius-lg)',
-        border: '1px solid var(--color-border)',
-        overflow: 'hidden'
+        display: 'flex',
+        flex: 1,
+        overflow: 'hidden',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        width: '100%'
       }}>
-        {/* Tab Headers */}
+        {/* Sidebar */}
         <div style={{
+          width: isMobile ? (sidebarOpen ? '280px' : '0') : '300px',
+          transition: 'width 0.3s ease',
+          overflow: 'hidden',
+          borderRight: '1px solid var(--color-border)',
+          background: 'var(--color-surface)',
           display: 'flex',
-          borderBottom: '1px solid var(--color-border)',
-          background: 'var(--color-neutral-mist)'
+          flexDirection: 'column',
+          position: isMobile ? 'fixed' : 'relative',
+          top: isMobile ? '0' : 'auto',
+          left: isMobile ? '0' : 'auto',
+          height: isMobile ? '100vh' : 'auto',
+          zIndex: isMobile ? 1000 : 'auto',
+          paddingTop: isMobile ? '80px' : '0' // Account for fixed header on mobile
         }}>
-          {[
-            { id: 'posts', label: 'Meine Posts', icon: Share },
-            { id: 'overview', label: 'Übersicht', icon: User },
-            { id: 'trips', label: 'Meine Reisen', icon: MapPin },
-            { id: 'privacy', label: 'Privatsphäre', icon: Shield }
-          ].map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              style={{
-                background: activeTab === tab.id ? 'var(--color-surface)' : 'transparent',
-                border: 'none',
-                padding: isMobile ? 'var(--space-sm) var(--space-md)' : 'var(--space-md) var(--space-lg)',
-                fontSize: isMobile ? '16px' : 'var(--text-sm)', // Prevent zoom on iOS
-                fontWeight: 'var(--font-weight-medium)',
-                color: activeTab === tab.id ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: isMobile ? 'column' : 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: isMobile ? 'var(--space-xs)' : 'var(--space-xs)',
-                transition: 'all var(--transition-normal)',
-                borderBottom: activeTab === tab.id ? '2px solid var(--color-primary-ocean)' : '2px solid transparent',
-                minHeight: isMobile ? '48px' : 'auto',
-                flex: isMobile ? '1' : 'none',
-                whiteSpace: 'nowrap',
-                // iOS Safari optimizations
-                WebkitTapHighlightColor: 'transparent',
-                WebkitTouchCallout: 'none',
-                WebkitUserSelect: 'none'
-              }}
-            >
-              <tab.icon size={isMobile ? 14 : 16} />
-              <span style={{ fontSize: isMobile ? 'var(--text-xs)' : 'var(--text-sm)' }}>
-                {isMobile ? tab.label.replace('Meine ', '') : tab.label}
-              </span>
-            </button>
-          ))}
-        </div>
-
-        {/* Tab Content */}
-        <div style={{ padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)' }}>
-          {activeTab === 'posts' && (
-            <div>
+          {/* Friends Section */}
+          <div style={{
+            padding: 'var(--space-lg)',
+            borderBottom: '1px solid var(--color-border)',
+            flex: '0 0 auto'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-sm)',
+              marginBottom: 'var(--space-md)'
+            }}>
+              <Users size={18} style={{ color: 'var(--color-primary-ocean)' }} />
               <h3 style={{
-                fontSize: 'var(--text-lg)',
+                margin: 0,
+                fontSize: 'var(--text-base)',
                 fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)',
-                margin: '0 0 var(--space-lg) 0'
+                color: 'var(--color-text-primary)'
               }}>
-                Meine Posts
+                Freunde ({friends.length})
               </h3>
-              
-              {myPosts.length === 0 ? (
+            </div>
+
+            {/* Search Friends */}
+            {friends.length > 0 && (
+              <div style={{ position: 'relative', marginBottom: 'var(--space-md)' }}>
+                <Search 
+                  size={14} 
+                  style={{
+                    position: 'absolute',
+                    left: 'var(--space-sm)',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    color: 'var(--color-text-secondary)'
+                  }}
+                />
+                <input
+                  type="text"
+                  placeholder="Suchen..."
+                  value={friendsSearchQuery}
+                  onChange={(e) => setFriendsSearchQuery(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: 'var(--space-sm) var(--space-sm) var(--space-sm) var(--space-xl)',
+                    border: '1px solid var(--color-border)',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: 'var(--text-sm)',
+                    background: 'var(--color-surface)',
+                    outline: 'none'
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Friends List */}
+            <div style={{
+              maxHeight: '200px',
+              overflowY: 'auto'
+            }}>
+              {filteredFriends.length === 0 ? (
                 <div style={{
                   textAlign: 'center',
-                  padding: 'var(--space-2xl)',
-                  background: 'var(--color-neutral-mist)',
-                  borderRadius: 'var(--radius-md)',
-                  border: '1px solid var(--color-border)'
+                  padding: 'var(--space-lg)',
+                  color: 'var(--color-text-secondary)'
                 }}>
-                  <Share size={48} style={{ color: 'var(--color-text-secondary)', margin: '0 auto var(--space-md)', display: 'block', opacity: 0.5 }} />
-                  <h4 style={{ margin: '0 0 var(--space-sm) 0', color: 'var(--color-text-secondary)' }}>
-                    Noch keine Posts
-                  </h4>
-                  <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
-                    Du hast noch keine Fotos oder Reise-Updates geteilt.
-                  </p>
+                  {friends.length === 0 ? (
+                    <>
+                      <Users size={24} style={{ margin: '0 auto var(--space-sm)', display: 'block', opacity: 0.5 }} />
+                      <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>Noch keine Freunde</p>
+                    </>
+                  ) : (
+                    <p style={{ margin: 0, fontSize: 'var(--text-sm)' }}>Keine Treffer</p>
+                  )}
                 </div>
               ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
-                  {myPosts.map(post => (
-                    <div
-                      key={`${post.activity_type}-${post.activity_id}`}
-                      style={{
-                        background: 'var(--color-neutral-mist)',
-                        borderRadius: 'var(--radius-md)',
-                        padding: 'var(--space-lg)',
-                        border: '1px solid var(--color-border)'
-                      }}
-                    >
-                      <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
-                        <AvatarUpload
-                          currentAvatarUrl={post.user_avatar_url}
-                          size="small"
-                          editable={false}
+                filteredFriends.slice(0, 5).map((friend) => (
+                  <div
+                    key={friend.id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 'var(--space-sm)',
+                      padding: 'var(--space-sm)',
+                      borderRadius: 'var(--radius-md)',
+                      marginBottom: 'var(--space-xs)',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }}
+                  >
+                    {/* Avatar */}
+                    <div style={{
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      overflow: 'hidden',
+                      flexShrink: 0
+                    }}>
+                      {friend.avatar_url ? (
+                        <img
+                          src={friend.avatar_url}
+                          alt={friend.nickname}
+                          style={{
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'cover'
+                          }}
                         />
-                        
-                        <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                              <h4 style={{ margin: 0, fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
-                                {post.user_nickname || 'Du'}
-                              </h4>
-                              <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
-                                {formatDate(post.created_at)}
-                              </span>
-                            </div>
-                            
-                            {/* Delete button - only show for photo shares for now */}
-                            {post.activity_type === ActivityType.PHOTO_SHARED && (
-                              <button
-                                onClick={() => confirmDelete(post)}
-                                disabled={deleting === post.activity_id}
-                                style={{
-                                  background: 'transparent',
-                                  border: 'none',
-                                  padding: 'var(--space-xs)',
-                                  borderRadius: 'var(--radius-sm)',
-                                  color: 'var(--color-text-secondary)',
-                                  cursor: deleting === post.activity_id ? 'not-allowed' : 'pointer',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  opacity: deleting === post.activity_id ? 0.5 : 1,
-                                  transition: 'all var(--transition-normal)'
-                                }}
-                                onMouseEnter={(e) => {
-                                  if (deleting !== post.activity_id) {
-                                    e.currentTarget.style.background = 'var(--color-error-light)';
-                                    e.currentTarget.style.color = 'var(--color-error)';
-                                  }
-                                }}
-                                onMouseLeave={(e) => {
-                                  e.currentTarget.style.background = 'transparent';
-                                  e.currentTarget.style.color = 'var(--color-text-secondary)';
-                                }}
-                                title="Post löschen"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            )}
-                          </div>
-                          
-                          <p style={{ margin: 'var(--space-xs) 0', color: 'var(--color-text-primary)', fontSize: 'var(--text-sm)' }}>
-                            {post.title}
-                          </p>
-                          
-                          {post.destination_name && (
-                            <div style={{ 
-                              display: 'flex', 
-                              alignItems: 'center', 
-                              gap: 'var(--space-xs)',
-                              fontSize: 'var(--text-xs)',
-                              color: 'var(--color-text-secondary)',
-                              marginTop: 'var(--space-xs)'
-                            }}>
-                              <MapPin size={12} />
-                              {post.destination_location ? 
-                                `${post.destination_name}, ${post.destination_location}` : 
-                                post.destination_name
-                              }
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Photo Display for Photo Posts */}
-                      {post.activity_type === ActivityType.PHOTO_SHARED && post.metadata?.photo_url && (
+                      ) : (
                         <div style={{
-                          marginBottom: 'var(--space-md)',
-                          borderRadius: 'var(--radius-md)',
-                          overflow: 'hidden',
-                          border: '1px solid var(--color-border)'
-                        }}>
-                          <img
-                            src={post.metadata.photo_url}
-                            alt={post.metadata?.caption || 'Geteiltes Foto'}
-                            style={{
-                              width: '100%',
-                              maxWidth: '400px',
-                              height: '200px',
-                              objectFit: 'cover',
-                              cursor: 'pointer',
-                              display: 'block',
-                              borderRadius: 'var(--radius-md)'
-                            }}
-                            onClick={() => {
-                              // TODO: Open photo modal similar to SocialActivityFeed
-                              console.log('Open photo modal for:', post);
-                            }}
-                          />
-                          
-                          {post.metadata?.caption && (
-                            <div style={{
-                              padding: 'var(--space-sm)',
-                              background: 'var(--color-surface)',
-                              fontSize: 'var(--text-sm)',
-                              color: 'var(--color-text-primary)'
-                            }}>
-                              {post.metadata.caption}
-                            </div>
-                          )}
-                          
-                          {post.metadata.photo_count && post.metadata.photo_count > 1 && (
-                            <div style={{
-                              padding: 'var(--space-xs) var(--space-sm)',
-                              background: 'var(--color-surface)',
-                              fontSize: 'var(--text-xs)',
-                              color: 'var(--color-text-secondary)',
-                              borderTop: '1px solid var(--color-border)'
-                            }}>
-                              📸 {post.metadata.photo_count} Fotos
-                            </div>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Engagement Stats */}
-                      {post.metadata?.like_count !== undefined && (
-                        <div style={{
+                          width: '100%',
+                          height: '100%',
+                          background: 'var(--color-primary-ocean)',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: 'var(--space-md)',
-                          fontSize: 'var(--text-xs)',
-                          color: 'var(--color-text-secondary)',
-                          borderTop: '1px solid var(--color-border)',
-                          paddingTop: 'var(--space-sm)'
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontSize: 'var(--text-sm)',
+                          fontWeight: 'bold'
                         }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
-                            <Share size={12} style={{ color: '#ef4444' }} />
-                            {post.metadata.like_count} Like{post.metadata.like_count === 1 ? '' : 's'}
-                          </div>
-                          
-                          {post.trip_name && (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
-                              <Calendar size={12} />
-                              {post.trip_name}
-                            </div>
-                          )}
+                          {friend.nickname.charAt(0).toUpperCase()}
                         </div>
                       )}
+                    </div>
+
+                    {/* Friend Info */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{
+                        margin: 0,
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {friend.display_name || friend.nickname}
+                      </p>
+                    </div>
+
+                    {/* Chat Button */}
+                    <button
+                      onClick={() => handleChatWithFriend(friend)}
+                      style={{
+                        background: 'var(--color-primary-ocean)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '50%',
+                        width: '28px',
+                        height: '28px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s ease',
+                        flexShrink: 0
+                      }}
+                      title="Chat"
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                    >
+                      <MessageCircle size={14} />
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {friends.length > 5 && (
+              <button
+                style={{
+                  width: '100%',
+                  background: 'transparent',
+                  border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)',
+                  padding: 'var(--space-sm)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-text-secondary)',
+                  cursor: 'pointer',
+                  marginTop: 'var(--space-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 'var(--space-xs)'
+                }}
+              >
+                Alle Freunde <ChevronRight size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Trips Section */}
+          <div style={{
+            padding: 'var(--space-lg)',
+            flex: '1 1 auto',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-sm)',
+              marginBottom: 'var(--space-md)'
+            }}>
+              <MapPin size={18} style={{ color: 'var(--color-primary-ocean)' }} />
+              <h3 style={{
+                margin: 0,
+                fontSize: 'var(--text-base)',
+                fontWeight: 'var(--font-weight-semibold)',
+                color: 'var(--color-text-primary)'
+              }}>
+                Reisen ({trips.length})
+              </h3>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--space-md)',
+              overflowY: 'auto',
+              maxHeight: '300px'
+            }}>
+              {/* Planned Trips */}
+              {getPlannedTrips().length > 0 && (
+                <div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-xs)',
+                    marginBottom: 'var(--space-sm)'
+                  }}>
+                    <Target size={14} style={{ color: 'var(--color-primary-ocean)' }} />
+                    <span style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-secondary)'
+                    }}>
+                      Geplant ({getPlannedTrips().length})
+                    </span>
+                  </div>
+                  {getPlannedTrips().slice(0, 3).map(trip => (
+                    <div
+                      key={trip.id}
+                      style={{
+                        padding: 'var(--space-sm)',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--color-neutral-mist)',
+                        marginBottom: 'var(--space-xs)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <p style={{
+                        margin: 0,
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {trip.name}
+                      </p>
+                      <p style={{
+                        margin: '2px 0 0',
+                        fontSize: 'var(--text-xs)',
+                        color: 'var(--color-text-secondary)'
+                      }}>
+                        {trip.startDate}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Active Trips */}
+              {getActiveTrips().length > 0 && (
+                <div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-xs)',
+                    marginBottom: 'var(--space-sm)'
+                  }}>
+                    <Clock size={14} style={{ color: 'var(--color-warning)' }} />
+                    <span style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-secondary)'
+                    }}>
+                      Aktiv ({getActiveTrips().length})
+                    </span>
+                  </div>
+                  {getActiveTrips().slice(0, 2).map(trip => (
+                    <div
+                      key={trip.id}
+                      style={{
+                        padding: 'var(--space-sm)',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--color-warning)',
+                        color: 'white',
+                        marginBottom: 'var(--space-xs)',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      <p style={{
+                        margin: 0,
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {trip.name}
+                      </p>
+                      <p style={{
+                        margin: '2px 0 0',
+                        fontSize: 'var(--text-xs)',
+                        opacity: 0.9
+                      }}>
+                        Läuft gerade
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Completed Trips */}
+              {getCompletedTrips().length > 0 && (
+                <div>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 'var(--space-xs)',
+                    marginBottom: 'var(--space-sm)'
+                  }}>
+                    <CheckCircle size={14} style={{ color: 'var(--color-success)' }} />
+                    <span style={{
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-secondary)'
+                    }}>
+                      Beendet ({getCompletedTrips().length})
+                    </span>
+                  </div>
+                  {getCompletedTrips().slice(0, 2).map(trip => (
+                    <div
+                      key={trip.id}
+                      style={{
+                        padding: 'var(--space-sm)',
+                        borderRadius: 'var(--radius-md)',
+                        background: 'var(--color-neutral-mist)',
+                        marginBottom: 'var(--space-xs)',
+                        cursor: 'pointer',
+                        opacity: 0.8
+                      }}
+                    >
+                      <p style={{
+                        margin: 0,
+                        fontSize: 'var(--text-sm)',
+                        fontWeight: 'var(--font-weight-medium)',
+                        color: 'var(--color-text-primary)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {trip.name}
+                      </p>
+                      <p style={{
+                        margin: '2px 0 0',
+                        fontSize: 'var(--text-xs)',
+                        color: 'var(--color-text-secondary)'
+                      }}>
+                        {trip.endDate}
+                      </p>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          )}
 
-          {activeTab === 'overview' && (
-            <div>
-              <h3 style={{
-                fontSize: 'var(--text-lg)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)',
-                margin: '0 0 var(--space-lg) 0'
-              }}>
-                Dein öffentliches Profil
-              </h3>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Public Trips */}
-                <div style={{
-                  background: 'var(--color-neutral-cream)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--space-lg)',
-                  textAlign: 'center'
-                }}>
-                  <Globe size={32} style={{ 
-                    color: 'var(--color-primary-ocean)', 
-                    margin: '0 auto var(--space-sm)', 
-                    display: 'block' 
-                  }} />
-                  <div style={{
-                    fontSize: 'var(--text-2xl)',
-                    fontWeight: 'var(--font-weight-bold)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--space-xs)'
-                  }}>
-                    {getPublicTrips().length}
-                  </div>
-                  <div style={{
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--color-text-secondary)'
-                  }}>
-                    Öffentliche Reisen
-                  </div>
-                </div>
-
-                {/* Contacts Trips */}
-                <div style={{
-                  background: 'var(--color-neutral-cream)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--space-lg)',
-                  textAlign: 'center'
-                }}>
-                  <Users size={32} style={{ 
-                    color: 'var(--color-warning)', 
-                    margin: '0 auto var(--space-sm)', 
-                    display: 'block' 
-                  }} />
-                  <div style={{
-                    fontSize: 'var(--text-2xl)',
-                    fontWeight: 'var(--font-weight-bold)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--space-xs)'
-                  }}>
-                    {getContactsTrips().length}
-                  </div>
-                  <div style={{
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--color-text-secondary)'
-                  }}>
-                    Nur für Freunde
-                  </div>
-                </div>
-
-                {/* Private Trips */}
-                <div style={{
-                  background: 'var(--color-neutral-cream)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--space-lg)',
-                  textAlign: 'center'
-                }}>
-                  <Lock size={32} style={{ 
-                    color: 'var(--color-text-secondary)', 
-                    margin: '0 auto var(--space-sm)', 
-                    display: 'block' 
-                  }} />
-                  <div style={{
-                    fontSize: 'var(--text-2xl)',
-                    fontWeight: 'var(--font-weight-bold)',
-                    color: 'var(--color-text-primary)',
-                    marginBottom: 'var(--space-xs)'
-                  }}>
-                    {getPrivateTrips().length}
-                  </div>
-                  <div style={{
-                    fontSize: 'var(--text-sm)',
-                    color: 'var(--color-text-secondary)'
-                  }}>
-                    Private Reisen
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'trips' && (
-            <div>
-              <h3 style={{
-                fontSize: 'var(--text-lg)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)',
-                margin: '0 0 var(--space-lg) 0'
-              }}>
-                Deine Reisen nach Sichtbarkeit
-              </h3>
-
-              {/* Public Trips */}
-              {getPublicTrips().length > 0 && (
-                <div style={{ marginBottom: 'var(--space-xl)' }}>
-                  <h4 style={{
-                    fontSize: 'var(--text-md)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    margin: '0 0 var(--space-md) 0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-sm)'
-                  }}>
-                    <Globe size={16} style={{ color: '#10b981' }} />
-                    Öffentliche Reisen ({getPublicTrips().length})
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {getPublicTrips().map(trip => (
-                      <div
-                        key={trip.id}
-                        style={{
-                          background: 'var(--color-neutral-mist)',
-                          borderRadius: 'var(--radius-md)',
-                          padding: 'var(--space-md)',
-                          border: '1px solid var(--color-border)'
-                        }}
-                      >
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          marginBottom: 'var(--space-sm)'
-                        }}>
-                          <h5 style={{
-                            fontSize: 'var(--text-base)',
-                            fontWeight: 'var(--font-weight-semibold)',
-                            color: 'var(--color-text-primary)',
-                            margin: 0
-                          }}>
-                            {trip.name}
-                          </h5>
-                          {getPrivacyIcon(trip.privacy)}
-                        </div>
-                        
-                        {trip.description && (
-                          <p style={{
-                            fontSize: 'var(--text-sm)',
-                            color: 'var(--color-text-secondary)',
-                            margin: '0 0 var(--space-sm) 0'
-                          }}>
-                            {trip.description}
-                          </p>
-                        )}
-                        
-                        <div style={{
-                          fontSize: 'var(--text-xs)',
-                          color: 'var(--color-text-secondary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 'var(--space-xs)'
-                        }}>
-                          <Calendar size={12} />
-                          {trip.startDate} - {trip.endDate}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Contacts Trips */}
-              {getContactsTrips().length > 0 && (
-                <div style={{ marginBottom: 'var(--space-xl)' }}>
-                  <h4 style={{
-                    fontSize: 'var(--text-md)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    margin: '0 0 var(--space-md) 0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-sm)'
-                  }}>
-                    <Users size={16} style={{ color: '#f59e0b' }} />
-                    Nur für Freunde ({getContactsTrips().length})
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {getContactsTrips().map(trip => (
-                      <div
-                        key={trip.id}
-                        style={{
-                          background: 'var(--color-neutral-mist)',
-                          borderRadius: 'var(--radius-md)',
-                          padding: 'var(--space-md)',
-                          border: '1px solid var(--color-border)'
-                        }}
-                      >
-                        <div style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'flex-start',
-                          marginBottom: 'var(--space-sm)'
-                        }}>
-                          <h5 style={{
-                            fontSize: 'var(--text-base)',
-                            fontWeight: 'var(--font-weight-semibold)',
-                            color: 'var(--color-text-primary)',
-                            margin: 0
-                          }}>
-                            {trip.name}
-                          </h5>
-                          {getPrivacyIcon(trip.privacy)}
-                        </div>
-                        
-                        {trip.description && (
-                          <p style={{
-                            fontSize: 'var(--text-sm)',
-                            color: 'var(--color-text-secondary)',
-                            margin: '0 0 var(--space-sm) 0'
-                          }}>
-                            {trip.description}
-                          </p>
-                        )}
-                        
-                        <div style={{
-                          fontSize: 'var(--text-xs)',
-                          color: 'var(--color-text-secondary)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: 'var(--space-xs)'
-                        }}>
-                          <Calendar size={12} />
-                          {trip.startDate} - {trip.endDate}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Private Trips */}
-              {getPrivateTrips().length > 0 && (
-                <div>
-                  <h4 style={{
-                    fontSize: 'var(--text-md)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    margin: '0 0 var(--space-md) 0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 'var(--space-sm)'
-                  }}>
-                    <Lock size={16} style={{ color: 'var(--color-text-secondary)' }} />
-                    Private Reisen ({getPrivateTrips().length})
-                  </h4>
-                  <div style={{
-                    background: 'var(--color-neutral-mist)',
-                    borderRadius: 'var(--radius-md)',
-                    padding: 'var(--space-lg)',
-                    textAlign: 'center',
-                    border: '1px solid var(--color-border)'
-                  }}>
-                    <Lock size={32} style={{ 
-                      color: 'var(--color-text-secondary)', 
-                      margin: '0 auto var(--space-sm)', 
-                      display: 'block' 
-                    }} />
-                    <p style={{
-                      fontSize: 'var(--text-sm)',
-                      color: 'var(--color-text-secondary)',
-                      margin: 0
-                    }}>
-                      Diese {getPrivateTrips().length} Reisen sind privat und nur für dich sichtbar.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {trips.length === 0 && (
-                <div style={{
-                  textAlign: 'center',
-                  padding: 'var(--space-2xl)',
-                  color: 'var(--color-text-secondary)'
-                }}>
-                  <MapPin size={48} style={{ 
-                    margin: '0 auto var(--space-md)', 
-                    display: 'block', 
-                    opacity: 0.5 
-                  }} />
-                  <p>Du hast noch keine Reisen erstellt.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'privacy' && (
-            <div>
-              <h3 style={{
-                fontSize: 'var(--text-lg)',
-                fontWeight: 'var(--font-weight-semibold)',
-                color: 'var(--color-text-primary)',
-                margin: '0 0 var(--space-lg) 0'
-              }}>
-                Privatsphäre-Einstellungen
-              </h3>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
-                {/* Privacy Levels Explanation */}
-                <div style={{
-                  background: 'var(--color-neutral-cream)',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--space-lg)'
-                }}>
-                  <h4 style={{
-                    fontSize: 'var(--text-md)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    margin: '0 0 var(--space-md) 0'
-                  }}>
-                    Sichtbarkeits-Level
-                  </h4>
-                  
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                      <Globe size={16} style={{ color: '#10b981' }} />
-                      <strong>Öffentlich:</strong> Für alle Nutzer sichtbar, auch ohne Anmeldung
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                      <Users size={16} style={{ color: '#f59e0b' }} />
-                      <strong>Nur Freunde:</strong> Nur für Nutzer sichtbar, die mit dir befreundet sind
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
-                      <Lock size={16} style={{ color: 'var(--color-text-secondary)' }} />
-                      <strong>Privat:</strong> Nur für dich sichtbar
-                    </div>
-                  </div>
-                </div>
-
-                {/* Current Privacy Summary */}
-                <div style={{
+            {trips.length > 7 && (
+              <button
+                style={{
+                  width: '100%',
+                  background: 'transparent',
                   border: '1px solid var(--color-border)',
                   borderRadius: 'var(--radius-md)',
-                  padding: 'var(--space-lg)'
-                }}>
-                  <h4 style={{
-                    fontSize: 'var(--text-md)',
-                    fontWeight: 'var(--font-weight-medium)',
-                    color: 'var(--color-text-primary)',
-                    margin: '0 0 var(--space-md) 0'
-                  }}>
-                    Deine aktuelle Sichtbarkeit
-                  </h4>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{
-                        fontSize: 'var(--text-xl)',
-                        fontWeight: 'var(--font-weight-bold)',
-                        color: '#10b981',
-                        marginBottom: 'var(--space-xs)'
-                      }}>
-                        {getPublicTrips().length}
-                      </div>
-                      <div style={{
-                        fontSize: 'var(--text-sm)',
-                        color: 'var(--color-text-secondary)'
-                      }}>
-                        Öffentliche Reisen
-                      </div>
-                    </div>
+                  padding: 'var(--space-sm)',
+                  fontSize: 'var(--text-sm)',
+                  color: 'var(--color-text-secondary)',
+                  cursor: 'pointer',
+                  marginTop: 'var(--space-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 'var(--space-xs)'
+                }}
+              >
+                Alle Reisen <ChevronRight size={14} />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Main Feed Content */}
+        <div style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: isMobile ? 'var(--space-md)' : 'var(--space-lg)',
+          background: 'var(--color-background)'
+        }}>
+          {/* Feed Header */}
+          <div style={{
+            marginBottom: 'var(--space-lg)'
+          }}>
+            <h2 style={{
+              fontSize: 'var(--text-xl)',
+              fontWeight: 'var(--font-weight-bold)',
+              color: 'var(--color-text-primary)',
+              margin: '0 0 var(--space-sm) 0',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-sm)'
+            }}>
+              <Share size={20} style={{ color: 'var(--color-primary-ocean)' }} />
+              Mein Feed
+            </h2>
+            <p style={{
+              fontSize: 'var(--text-sm)',
+              color: 'var(--color-text-secondary)',
+              margin: 0
+            }}>
+              Deine Posts und Aktivitäten
+            </p>
+          </div>
+
+          {/* Posts Feed */}
+          {myPosts.length === 0 ? (
+            <div style={{
+              textAlign: 'center',
+              padding: 'var(--space-2xl)',
+              background: 'var(--color-surface)',
+              borderRadius: 'var(--radius-lg)',
+              border: '1px solid var(--color-border)'
+            }}>
+              <Share size={48} style={{ color: 'var(--color-text-secondary)', margin: '0 auto var(--space-md)', display: 'block', opacity: 0.5 }} />
+              <h4 style={{ margin: '0 0 var(--space-sm) 0', color: 'var(--color-text-secondary)' }}>
+                Noch keine Posts
+              </h4>
+              <p style={{ margin: 0, color: 'var(--color-text-secondary)' }}>
+                Du hast noch keine Fotos oder Reise-Updates geteilt.
+              </p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)' }}>
+              {myPosts.map(post => (
+                <div
+                  key={`${post.activity_type}-${post.activity_id}`}
+                  style={{
+                    background: 'var(--color-surface)',
+                    borderRadius: 'var(--radius-lg)',
+                    padding: 'var(--space-xl)',
+                    border: '1px solid var(--color-border)',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: 'var(--space-md)', marginBottom: 'var(--space-md)' }}>
+                    <AvatarUpload
+                      currentAvatarUrl={post.user_avatar_url}
+                      size="medium"
+                      editable={false}
+                    />
                     
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{
-                        fontSize: 'var(--text-xl)',
-                        fontWeight: 'var(--font-weight-bold)',
-                        color: '#f59e0b',
-                        marginBottom: 'var(--space-xs)'
-                      }}>
-                        {getContactsTrips().length}
+                    <div style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                          <h4 style={{ margin: 0, fontSize: 'var(--text-base)', fontWeight: 'var(--font-weight-semibold)', color: 'var(--color-text-primary)' }}>
+                            {post.user_nickname || 'Du'}
+                          </h4>
+                          <span style={{ fontSize: 'var(--text-xs)', color: 'var(--color-text-secondary)' }}>
+                            {formatDate(post.created_at)}
+                          </span>
+                        </div>
+                        
+                        {/* Delete button - only show for photo shares for now */}
+                        {post.activity_type === ActivityType.PHOTO_SHARED && (
+                          <button
+                            onClick={() => confirmDelete(post)}
+                            disabled={deleting === post.activity_id}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              padding: 'var(--space-xs)',
+                              borderRadius: 'var(--radius-sm)',
+                              color: 'var(--color-text-secondary)',
+                              cursor: deleting === post.activity_id ? 'not-allowed' : 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              opacity: deleting === post.activity_id ? 0.5 : 1,
+                              transition: 'all var(--transition-normal)'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (deleting !== post.activity_id) {
+                                e.currentTarget.style.background = 'var(--color-error)';
+                                e.currentTarget.style.color = 'white';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent';
+                              e.currentTarget.style.color = 'var(--color-text-secondary)';
+                            }}
+                            title="Post löschen"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
                       </div>
-                      <div style={{
-                        fontSize: 'var(--text-sm)',
-                        color: 'var(--color-text-secondary)'
-                      }}>
-                        Freunde-Reisen
-                      </div>
-                    </div>
-                    
-                    <div style={{ textAlign: 'center' }}>
-                      <div style={{
-                        fontSize: 'var(--text-xl)',
-                        fontWeight: 'var(--font-weight-bold)',
-                        color: 'var(--color-text-secondary)',
-                        marginBottom: 'var(--space-xs)'
-                      }}>
-                        {getPrivateTrips().length}
-                      </div>
-                      <div style={{
-                        fontSize: 'var(--text-sm)',
-                        color: 'var(--color-text-secondary)'
-                      }}>
-                        Private Reisen
-                      </div>
+                      
+                      <p style={{ margin: 'var(--space-xs) 0', color: 'var(--color-text-primary)', fontSize: 'var(--text-base)' }}>
+                        {post.title}
+                      </p>
+                      
+                      {post.destination_name && (
+                        <div style={{ 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          gap: 'var(--space-xs)',
+                          fontSize: 'var(--text-sm)',
+                          color: 'var(--color-text-secondary)',
+                          marginTop: 'var(--space-xs)'
+                        }}>
+                          <MapPin size={14} />
+                          {post.destination_location ? 
+                            `${post.destination_name}, ${post.destination_location}` : 
+                            post.destination_name
+                          }
+                        </div>
+                      )}
                     </div>
                   </div>
-                </div>
 
-                {/* Quick Actions */}
-                <div style={{
-                  display: 'flex',
-                  gap: 'var(--space-md)',
-                  flexWrap: 'wrap'
-                }}>
-                  <button
-                    onClick={() => setActiveTab('trips')}
-                    style={{
-                      background: 'var(--color-primary-ocean)',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: 'var(--radius-md)',
-                      padding: 'var(--space-md) var(--space-lg)',
-                      fontSize: 'var(--text-sm)',
-                      cursor: 'pointer',
+                  {/* Photo Display for Photo Posts */}
+                  {post.activity_type === ActivityType.PHOTO_SHARED && post.metadata?.photo_url && (
+                    <div style={{
+                      marginBottom: 'var(--space-md)',
+                      borderRadius: 'var(--radius-lg)',
+                      overflow: 'hidden',
+                      border: '1px solid var(--color-border)'
+                    }}>
+                      <img
+                        src={post.metadata.photo_url}
+                        alt={post.metadata?.caption || 'Geteiltes Foto'}
+                        style={{
+                          width: '100%',
+                          height: 'auto',
+                          maxHeight: '400px',
+                          objectFit: 'cover',
+                          cursor: 'pointer',
+                          display: 'block'
+                        }}
+                        onClick={() => {
+                          // TODO: Open photo modal similar to SocialActivityFeed
+                          console.log('Open photo modal for:', post);
+                        }}
+                      />
+                      
+                      {post.metadata?.caption && (
+                        <div style={{
+                          padding: 'var(--space-md)',
+                          background: 'var(--color-neutral-mist)',
+                          fontSize: 'var(--text-sm)',
+                          color: 'var(--color-text-primary)'
+                        }}>
+                          {post.metadata.caption}
+                        </div>
+                      )}
+                      
+                      {post.metadata.photo_count && post.metadata.photo_count > 1 && (
+                        <div style={{
+                          padding: 'var(--space-sm) var(--space-md)',
+                          background: 'var(--color-neutral-mist)',
+                          fontSize: 'var(--text-xs)',
+                          color: 'var(--color-text-secondary)',
+                          borderTop: '1px solid var(--color-border)'
+                        }}>
+                          📸 {post.metadata.photo_count} Fotos
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Engagement Stats */}
+                  {post.metadata?.like_count !== undefined && (
+                    <div style={{
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 'var(--space-sm)'
-                    }}
-                  >
-                    <MapPin size={16} />
-                    Reise-Sichtbarkeit verwalten
-                  </button>
+                      gap: 'var(--space-lg)',
+                      fontSize: 'var(--text-sm)',
+                      color: 'var(--color-text-secondary)',
+                      borderTop: '1px solid var(--color-border)',
+                      paddingTop: 'var(--space-md)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                        <Share size={14} style={{ color: '#ef4444' }} />
+                        {post.metadata.like_count} Like{post.metadata.like_count === 1 ? '' : 's'}
+                      </div>
+                      
+                      {post.trip_name && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+                          <Calendar size={14} />
+                          {post.trip_name}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
           )}
         </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {isMobile && sidebarOpen && (
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 999
+            }}
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
       </div>
 
       {/* Delete Confirmation Modal */}
