@@ -422,6 +422,8 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
         is_verified: false,
         friend_count: 0,
         pending_requests_count: 0,
+        follower_count: 0,
+        following_count: 0,
         trip_count: 0,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()

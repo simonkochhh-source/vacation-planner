@@ -290,17 +290,32 @@ class SocialService implements SocialServiceInterface {
       throw new Error('Failed to get following users');
     }
 
-    return follows?.map(f => ({
-      ...f.user_profiles,
-      followed_at: f.created_at,
-      // Ensure required fields have defaults
-      social_links: f.user_profiles?.social_links || {},
-      friend_count: 0,
-      pending_requests_count: 0,
-      follower_count: 0,
-      following_count: 0,
-      trip_count: 0
-    } as SocialUserProfile)) || [];
+    return follows?.map(f => {
+      const profile = Array.isArray(f.user_profiles) ? f.user_profiles[0] : f.user_profiles;
+      if (!profile) return null;
+      
+      return {
+        id: profile.id,
+        nickname: profile.nickname,
+        display_name: profile.display_name,
+        email: profile.email,
+        avatar_url: profile.avatar_url,
+        bio: profile.bio,
+        location: profile.location,
+        website: profile.website,
+        social_links: profile.social_links || {},
+        is_public_profile: profile.is_public_profile,
+        is_verified: profile.is_verified,
+        friend_count: 0,
+        pending_requests_count: 0,
+        follower_count: 0,
+        following_count: 0,
+        trip_count: profile.trip_count || 0,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
+        followed_at: f.created_at
+      } as SocialUserProfile;
+    }).filter(Boolean) as SocialUserProfile[];
   }
 
   /**
@@ -328,17 +343,32 @@ class SocialService implements SocialServiceInterface {
       throw new Error('Failed to get followers');
     }
 
-    return follows?.map(f => ({
-      ...f.user_profiles,
-      followed_at: f.created_at,
-      // Ensure required fields have defaults
-      social_links: f.user_profiles?.social_links || {},
-      friend_count: 0,
-      pending_requests_count: 0,
-      follower_count: 0,
-      following_count: 0,
-      trip_count: 0
-    } as SocialUserProfile)) || [];
+    return follows?.map(f => {
+      const profile = Array.isArray(f.user_profiles) ? f.user_profiles[0] : f.user_profiles;
+      if (!profile) return null;
+      
+      return {
+        id: profile.id,
+        nickname: profile.nickname,
+        display_name: profile.display_name,
+        email: profile.email,
+        avatar_url: profile.avatar_url,
+        bio: profile.bio,
+        location: profile.location,
+        website: profile.website,
+        social_links: profile.social_links || {},
+        is_public_profile: profile.is_public_profile,
+        is_verified: profile.is_verified,
+        friend_count: 0,
+        pending_requests_count: 0,
+        follower_count: 0,
+        following_count: 0,
+        trip_count: profile.trip_count || 0,
+        created_at: profile.created_at,
+        updated_at: profile.updated_at,
+        followed_at: f.created_at
+      } as SocialUserProfile;
+    }).filter(Boolean) as SocialUserProfile[];
   }
 
   /**
