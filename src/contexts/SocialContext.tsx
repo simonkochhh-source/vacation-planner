@@ -66,7 +66,7 @@ interface SocialContextType extends SocialState {
   
   // Chat Operations
   loadChatRooms: () => Promise<void>;
-  createChatRoom: (participantIds: UUID[], name?: string) => Promise<ChatRoomWithInfo>;
+  createChatRoom: (participantIds: UUID[], name?: string) => Promise<ChatRoom>;
   joinChatRoom: (roomId: string) => Promise<void>;
   leaveChatRoom: (roomId: string) => Promise<void>;
   setActiveChatRoom: (room: ChatRoomWithInfo | undefined) => void;
@@ -283,7 +283,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
     }
   }, [handleError]);
 
-  const createChatRoom = useCallback(async (participantIds: UUID[], name?: string): Promise<ChatRoomWithInfo> => {
+  const createChatRoom = useCallback(async (participantIds: UUID[], name?: string): Promise<ChatRoom> => {
     try {
       const room = await chatService.createChatRoom({
         name,
