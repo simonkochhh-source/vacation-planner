@@ -5,7 +5,6 @@ import {
   ChatRoom, 
   ChatMessage, 
   FriendshipStatus,
-  UserActivity,
   UserSearchResult,
   ActivityFeedItem
 } from '../types';
