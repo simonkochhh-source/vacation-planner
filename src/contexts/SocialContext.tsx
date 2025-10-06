@@ -9,7 +9,7 @@ import {
   ActivityFeedItem
 } from '../types';
 import { socialService } from '../services/socialService';
-import { chatService, ChatRoomWithInfo, ChatMessageWithSender } from '../services/chatService';
+import { chatService, ChatRoomWithInfo, ChatMessageWithSender, CreateChatRoomParams } from '../services/chatService';
 import { handleServiceError } from '../utils/errorHandling';
 
 // Social Action Types
@@ -285,7 +285,12 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
 
   const createChatRoom = useCallback(async (participantIds: UUID[], name?: string): Promise<ChatRoomWithInfo> => {
     try {
-      const room = await chatService.createChatRoom(participantIds[0]);
+      const room = await chatService.createChatRoom({
+        name,
+        type: 'direct',
+        is_private: true,
+        participant_user_ids: participantIds
+      });
       dispatch({ type: 'SET_CHAT_ROOMS', payload: [...state.chatRooms, room] });
       return room;
     } catch (error) {
