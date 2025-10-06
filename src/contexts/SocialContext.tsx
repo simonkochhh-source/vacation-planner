@@ -214,7 +214,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
     try {
       await socialService.sendFriendshipRequest(userId);
       // Refresh friend requests to show updated state
-      const requests = await socialService.getFriendRequests();
+      const requests = await socialService.getPendingFriendshipRequests();
       dispatch({ type: 'SET_FRIEND_REQUESTS', payload: requests });
     } catch (error) {
       handleError(error, 'sendFriendRequest');
@@ -226,7 +226,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
       await socialService.acceptFriendRequest(userId);
       // Refresh both friends and requests
       await getFriends();
-      const requests = await socialService.getFriendRequests();
+      const requests = await socialService.getPendingFriendshipRequests();
       dispatch({ type: 'SET_FRIEND_REQUESTS', payload: requests });
     } catch (error) {
       handleError(error, 'acceptFriendRequest');
@@ -236,7 +236,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
   const rejectFriendRequest = useCallback(async (userId: UUID): Promise<void> => {
     try {
       await socialService.rejectFriendRequest(userId);
-      const requests = await socialService.getFriendRequests();
+      const requests = await socialService.getPendingFriendshipRequests();
       dispatch({ type: 'SET_FRIEND_REQUESTS', payload: requests });
     } catch (error) {
       handleError(error, 'rejectFriendRequest');
