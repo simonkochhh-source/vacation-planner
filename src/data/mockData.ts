@@ -5,6 +5,7 @@ export const mockDestinations: Destination[] = [
   // Berlin Destinations
   {
     id: 'dest-1',
+    tripId: 'trip-1',
     name: 'Brandenburger Tor',
     location: 'Pariser Platz, 10117 Berlin',
     coordinates: { lat: 52.516275, lng: 13.377704 },
@@ -31,6 +32,7 @@ export const mockDestinations: Destination[] = [
   },
   {
     id: 'dest-2',
+    tripId: 'trip-1',
     name: 'Museumsinsel',
     location: 'Museum Island, 10178 Berlin',
     coordinates: { lat: 52.521918, lng: 13.397634 },
@@ -57,6 +59,7 @@ export const mockDestinations: Destination[] = [
   },
   {
     id: 'dest-3',
+    tripId: 'trip-1',
     name: 'Café Einstein',
     location: 'Kurfürstenstraße 58, 10785 Berlin',
     coordinates: { lat: 52.499026, lng: 13.364618 },
@@ -83,6 +86,7 @@ export const mockDestinations: Destination[] = [
   },
   {
     id: 'dest-4',
+    tripId: 'trip-1',
     name: 'Hotel Adlon Kempinski',
     location: 'Unter den Linden 77, 10117 Berlin',
     coordinates: { lat: 52.515833, lng: 13.378611 },
@@ -111,6 +115,7 @@ export const mockDestinations: Destination[] = [
   // München Destinations
   {
     id: 'dest-5',
+    tripId: 'trip-2',
     name: 'Marienplatz',
     location: 'Marienplatz, 80331 München',
     coordinates: { lat: 48.137154, lng: 11.575677 },
@@ -137,6 +142,7 @@ export const mockDestinations: Destination[] = [
   },
   {
     id: 'dest-6',
+    tripId: 'trip-2',
     name: 'Hofbräuhaus München',
     location: 'Platzl 9, 80331 München',
     coordinates: { lat: 48.137428, lng: 11.579706 },
@@ -163,6 +169,7 @@ export const mockDestinations: Destination[] = [
   },
   {
     id: 'dest-7',
+    tripId: 'trip-2',
     name: 'Schloss Neuschwanstein',
     location: 'Neuschwanstein, 87645 Schwangau',
     coordinates: { lat: 47.557574, lng: 10.749800 },
@@ -191,6 +198,7 @@ export const mockDestinations: Destination[] = [
   // Hamburg Destinations
   {
     id: 'dest-8',
+    tripId: 'trip-3',
     name: 'Speicherstadt',
     location: 'Speicherstadt, 20457 Hamburg',
     coordinates: { lat: 53.543889, lng: 9.996944 },
@@ -217,6 +225,7 @@ export const mockDestinations: Destination[] = [
   },
   {
     id: 'dest-9',
+    tripId: 'trip-3',
     name: 'Fischmarkt Hamburg',
     location: 'Große Elbstraße 9, 22767 Hamburg',
     coordinates: { lat: 53.544722, lng: 9.934167 },
@@ -245,6 +254,7 @@ export const mockDestinations: Destination[] = [
   // Köln Destinations  
   {
     id: 'dest-10',
+    tripId: 'trip-4',
     name: 'Kölner Dom',
     location: 'Domkloster 4, 50667 Köln',
     coordinates: { lat: 50.941278, lng: 6.958281 },
@@ -271,6 +281,7 @@ export const mockDestinations: Destination[] = [
   },
   {
     id: 'dest-11',
+    tripId: 'trip-4',
     name: 'Museum Ludwig',
     location: 'Heinrich-Böll-Platz, 50667 Köln',
     coordinates: { lat: 50.940833, lng: 6.958611 },
@@ -299,6 +310,7 @@ export const mockDestinations: Destination[] = [
   // Dresden Destinations
   {
     id: 'dest-12',
+    tripId: 'trip-5',
     name: 'Frauenkirche Dresden',
     location: 'Neumarkt, 01067 Dresden',
     coordinates: { lat: 51.051944, lng: 13.741389 },
