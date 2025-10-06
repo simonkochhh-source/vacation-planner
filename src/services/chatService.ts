@@ -12,6 +12,7 @@ export interface ChatRoom {
   description?: string;
   type: ChatRoomType;
   trip_id?: string;
+  is_group: boolean;
   is_private: boolean;
   max_participants: number;
   created_by: string;
@@ -145,6 +146,7 @@ class ChatService {
           description: params.description,
           type: params.type,
           trip_id: params.trip_id,
+          is_group: params.type === 'group',
           is_private: params.is_private ?? true,
           max_participants: params.max_participants ?? 50,
           created_by: user.id
@@ -479,6 +481,7 @@ class ChatService {
               description: 'Ein Test-Chat für die Entwicklung',
               type: 'group',
               trip_id: undefined,
+              is_group: true,
               is_private: false,
               max_participants: 10,
               created_by: user.id,
@@ -495,6 +498,7 @@ class ChatService {
               description: undefined,
               type: 'direct',
               trip_id: undefined,
+              is_group: false,
               is_private: true,
               max_participants: 2,
               created_by: user.id,
@@ -519,6 +523,7 @@ class ChatService {
       // Transform real data if available
       return (data || []).map(room => ({
         ...room,
+        is_group: room.is_group ?? (room.type === 'group'),
         participant_count: room.chat_participants?.length || 1,
         unread_count: 0,
         latest_message: 'Chat bereit...',
