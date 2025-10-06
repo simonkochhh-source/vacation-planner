@@ -350,12 +350,32 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
 
   const sendMessage = useCallback(async (roomId: string, content: string, type: 'text' | 'image' | 'file' = 'text'): Promise<void> => {
     try {
-      const message = await chatService.sendMessage(roomId, content, type);
-      dispatch({ type: 'ADD_CHAT_MESSAGE', payload: message });
+      const message = await chatService.sendMessage({
+        chat_room_id: roomId,
+        content: content,
+        message_type: type
+      });
+      
+      // Get current user profile for sender info
+      const currentUserProfile = await getUserProfile(message.sender_id);
+      
+      // Transform ChatMessage to ChatMessageWithSender
+      const messageWithSender = {
+        ...message,
+        sender: {
+          id: message.sender_id,
+          nickname: currentUserProfile?.nickname || undefined,
+          display_name: currentUserProfile?.display_name || undefined,
+          avatar_url: currentUserProfile?.avatar_url || undefined,
+          email: currentUserProfile?.email || undefined
+        }
+      };
+      
+      dispatch({ type: 'ADD_CHAT_MESSAGE', payload: messageWithSender });
     } catch (error) {
       handleError(error, 'sendMessage');
     }
-  }, [handleError]);
+  }, [handleError, getUserProfile]);
 
   const editMessage = useCallback(async (messageId: string, content: string): Promise<void> => {
     try {
