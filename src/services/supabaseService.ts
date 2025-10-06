@@ -79,7 +79,7 @@ const getCurrentUserId = async (): Promise<string | null> => {
 // Helper functions to convert between Supabase and local types
 const convertSupabaseToDestination = (dest: SupabaseDestination): Destination => ({
   id: dest.id,
-  tripId: dest.trip_id,
+  tripId: dest.trip_id || '',
   name: dest.name,
   location: dest.location,
   category: toDestinationCategory(dest.category),

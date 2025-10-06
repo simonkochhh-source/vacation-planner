@@ -67,6 +67,7 @@ export class TripImportService {
         const originalDest = originalDestinations[i];
         
         const newDestData: Omit<Destination, 'id'> = {
+          tripId: newTrip.id,
           name: originalDest.name,
           location: originalDest.location,
           coordinates: originalDest.coordinates,
@@ -177,6 +178,7 @@ export class TripImportService {
       
       for (const originalDest of originalDestinations) {
         const clonedDestData: Omit<Destination, 'id'> = {
+          tripId: clonedTrip.id,
           name: originalDest.name,
           location: originalDest.location,
           coordinates: originalDest.coordinates,
