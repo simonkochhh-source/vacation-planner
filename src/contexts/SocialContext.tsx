@@ -3,13 +3,12 @@ import {
   SocialUserProfile,
   UUID, 
   ChatRoom, 
-  ChatMessage, 
   FriendshipStatus,
   UserSearchResult,
   ActivityFeedItem
 } from '../types';
 import { socialService } from '../services/socialService';
-import { chatService, ChatRoomWithInfo, ChatMessageWithSender, CreateChatRoomParams } from '../services/chatService';
+import { chatService, ChatRoomWithInfo, ChatMessageWithSender, CreateChatRoomParams, ChatMessage } from '../services/chatService';
 import { handleServiceError } from '../utils/errorHandling';
 
 // Social Action Types
@@ -389,7 +388,7 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
   const deleteMessage = useCallback(async (messageId: string): Promise<void> => {
     try {
       await chatService.deleteMessage(messageId);
-      dispatch({ type: 'UPDATE_CHAT_MESSAGE', payload: { id: messageId, data: { isDeleted: true } } });
+      dispatch({ type: 'UPDATE_CHAT_MESSAGE', payload: { id: messageId, data: { is_deleted: true } } });
     } catch (error) {
       handleError(error, 'deleteMessage');
     }
