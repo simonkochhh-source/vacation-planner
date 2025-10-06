@@ -285,12 +285,26 @@ export const SocialProvider: React.FC<SocialProviderProps> = ({ children }) => {
 
   const createChatRoom = useCallback(async (participantIds: UUID[], name?: string): Promise<ChatRoom> => {
     try {
-      const room = await chatService.createChatRoom({
+      const serviceRoom = await chatService.createChatRoom({
         name,
         type: 'direct',
         is_private: true,
         participant_user_ids: participantIds
       });
+      
+      // Map service ChatRoom to main types ChatRoom
+      const room: ChatRoom = {
+        id: serviceRoom.id,
+        name: serviceRoom.name,
+        description: serviceRoom.description,
+        is_group: serviceRoom.type === 'group',
+        created_by: serviceRoom.created_by,
+        created_at: serviceRoom.created_at,
+        updated_at: serviceRoom.updated_at,
+        user1_id: participantIds[0],
+        user2_id: participantIds[1]
+      };
+      
       await loadChatRooms(); // Reload all rooms to get the updated list
       return room;
     } catch (error) {
