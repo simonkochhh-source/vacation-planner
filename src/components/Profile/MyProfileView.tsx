@@ -34,7 +34,7 @@ import { formatDate } from '../../utils';
 
 const MyProfileView: React.FC = () => {
   const { user, userProfile } = useAuth();
-  const { updateUIState } = useUIContext();
+  const { updateUIState, settings } = useUIContext();
   const { trips } = useTripContext();
   const { isMobile } = useResponsive();
   const [socialProfile, setSocialProfile] = useState<SocialUserProfile | null>(null);
@@ -820,6 +820,164 @@ const MyProfileView: React.FC = () => {
                 Alle Reisen <ChevronRight size={14} />
               </button>
             )}
+          </div>
+
+          {/* Reise-Setup Section */}
+          <div style={{
+            padding: 'var(--space-lg)',
+            borderTop: '1px solid var(--color-border)',
+            flex: '0 0 auto'
+          }}>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--space-sm)',
+              marginBottom: 'var(--space-md)'
+            }}>
+              <Settings size={18} style={{ color: 'var(--color-primary-ocean)' }} />
+              <h3 style={{
+                margin: 0,
+                fontSize: 'var(--text-base)',
+                fontWeight: 'var(--font-weight-semibold)',
+                color: 'var(--color-text-primary)'
+              }}>
+                Reise-Setup
+              </h3>
+            </div>
+
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--space-sm)'
+            }}>
+              {/* Homepoint */}
+              <button
+                onClick={() => updateUIState({ currentView: 'settings' })}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 'var(--space-sm)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-sm)'
+                }}>
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: settings?.homePoint ? 'var(--color-success)' : 'var(--color-neutral-mist)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <MapPin size={14} style={{ 
+                      color: settings?.homePoint ? 'white' : 'var(--color-text-secondary)' 
+                    }} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{
+                      margin: 0,
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)'
+                    }}>
+                      Homepoint
+                    </p>
+                    <p style={{
+                      margin: 0,
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--color-text-secondary)'
+                    }}>
+                      {settings?.homePoint ? 
+                        `📍 ${settings.homePoint.name}` : 
+                        'Nicht gesetzt'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={14} style={{ color: 'var(--color-text-secondary)' }} />
+              </button>
+
+              {/* Fahrzeugconfig */}
+              <button
+                onClick={() => updateUIState({ currentView: 'settings' })}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 'var(--space-sm)',
+                  borderRadius: 'var(--radius-md)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  transition: 'background-color 0.2s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
+              >
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 'var(--space-sm)'
+                }}>
+                  <div style={{
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
+                    background: settings?.fuelConsumption ? 'var(--color-success)' : 'var(--color-neutral-mist)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}>
+                    <Activity size={14} style={{ 
+                      color: settings?.fuelConsumption ? 'white' : 'var(--color-text-secondary)' 
+                    }} />
+                  </div>
+                  <div style={{ textAlign: 'left' }}>
+                    <p style={{
+                      margin: 0,
+                      fontSize: 'var(--text-sm)',
+                      fontWeight: 'var(--font-weight-medium)',
+                      color: 'var(--color-text-primary)'
+                    }}>
+                      Fahrzeug
+                    </p>
+                    <p style={{
+                      margin: 0,
+                      fontSize: 'var(--text-xs)',
+                      color: 'var(--color-text-secondary)'
+                    }}>
+                      {settings?.fuelConsumption ? 
+                        `🚗 ${settings.fuelConsumption}L/100km` : 
+                        'Nicht konfiguriert'
+                      }
+                    </p>
+                  </div>
+                </div>
+                <ChevronRight size={14} style={{ color: 'var(--color-text-secondary)' }} />
+              </button>
+            </div>
           </div>
         </div>
 
