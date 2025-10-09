@@ -40,12 +40,12 @@ const QUICK_CATEGORIES: Array<{
   icon: React.ReactNode;
   color: string;
 }> = [
-  { id: 'hotel', label: 'Hotel', icon: '🏨', color: '#3B82F6' },
-  { id: 'restaurant', label: 'Restaurant', icon: '🍽️', color: '#F59E0B' },
-  { id: 'fuel', label: 'Tankstelle', icon: '⛽', color: '#10B981' },
-  { id: 'sightseeing', label: 'Museum', icon: '🏛️', color: '#8B5CF6' },
-  { id: 'shopping', label: 'Shopping', icon: '🛍️', color: '#EC4899' },
-  { id: 'other', label: 'Mehr...', icon: '👀', color: '#6B7280' }
+  { id: DestinationCategory.HOTEL, label: 'Hotel', icon: '🏨', color: '#3B82F6' },
+  { id: DestinationCategory.RESTAURANT, label: 'Restaurant', icon: '🍽️', color: '#F59E0B' },
+  { id: DestinationCategory.TRANSPORT, label: 'Tankstelle', icon: '⛽', color: '#10B981' },
+  { id: DestinationCategory.MUSEUM, label: 'Museum', icon: '🏛️', color: '#8B5CF6' },
+  { id: DestinationCategory.SHOPPING, label: 'Shopping', icon: '🛍️', color: '#EC4899' },
+  { id: DestinationCategory.ATTRACTION, label: 'Mehr...', icon: '👀', color: '#6B7280' }
 ];
 
 type CreationStep = 'category' | 'location' | 'details';
@@ -72,18 +72,18 @@ const InlineDestinationCreator: React.FC<InlineDestinationCreatorProps> = ({
 
     // Time-based suggestions
     if (timeOfDay === 'evening') {
-      suggestions.push({ category: 'restaurant', reason: 'Abendessen Zeit' });
-      suggestions.push({ category: 'hotel', reason: 'Übernachtung' });
+      suggestions.push({ category: DestinationCategory.RESTAURANT, reason: 'Abendessen Zeit' });
+      suggestions.push({ category: DestinationCategory.HOTEL, reason: 'Übernachtung' });
     } else if (timeOfDay === 'morning') {
-      suggestions.push({ category: 'fuel', reason: 'Tanken für die Weiterfahrt' });
-      suggestions.push({ category: 'restaurant', reason: 'Frühstück' });
+      suggestions.push({ category: DestinationCategory.TRANSPORT, reason: 'Tanken für die Weiterfahrt' });
+      suggestions.push({ category: DestinationCategory.RESTAURANT, reason: 'Frühstück' });
     }
 
     // Location-based suggestions
     if (previous && next) {
       const distance = calculateRouteDistance(previous.coordinates, next.coordinates);
       if (distance > 200) { // > 200km
-        suggestions.push({ category: 'fuel', reason: 'Lange Strecke - Tanken empfohlen' });
+        suggestions.push({ category: DestinationCategory.TRANSPORT, reason: 'Lange Strecke - Tanken empfohlen' });
       }
     }
 
@@ -217,7 +217,7 @@ const InlineDestinationCreator: React.FC<InlineDestinationCreatorProps> = ({
                   gap: '0.25rem'
                 }}
               >
-                {getCategoryIcon(suggestion.category, 12)}
+{getCategoryIcon(suggestion.category)}
                 {getCategoryLabel(suggestion.category)}
               </button>
             ))}
@@ -285,7 +285,7 @@ const InlineDestinationCreator: React.FC<InlineDestinationCreatorProps> = ({
               background: 'var(--color-neutral-cream)',
               borderRadius: '8px'
             }}>
-              {getCategoryIcon(selectedCategory!, 20)}
+{getCategoryIcon(selectedCategory!)}
               <span style={{ fontWeight: '500', color: 'var(--color-text-primary)' }}>
                 {getCategoryLabel(selectedCategory!)} suchen
               </span>

@@ -11,7 +11,8 @@ import LeafletMapOnly from '../Maps/LeafletMapOnly';
 import MapErrorBoundary from '../Maps/MapErrorBoundary';
 import DestinationWeather from '../Weather/DestinationWeather';
 import TimelineInsertPoint from '../Timeline/TimelineInsertPoint';
-import InlineDestinationCreator from '../Timeline/InlineDestinationCreator';
+import NativeInlineDestinationCreator from '../Timeline/NativeInlineDestinationCreator';
+import NativeInlineDestinationEditor from '../Timeline/NativeInlineDestinationEditor';
 import {
   Calendar,
   MapPin,
@@ -159,8 +160,106 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   });
 
   const [showMapPicker, setShowMapPicker] = useState(false);
+  
+  // Inline destination creation state
+  const [activeInsertPoint, setActiveInsertPoint] = useState<{
+    day: string;
+    index: number;
+    between?: {
+      previous?: Destination;
+      next?: Destination;
+    };
+  } | null>(null);
 
   // Removed complex search functionality - now using simple EnhancedPlaceSearch
+  
+  // Inline creation handlers
+  const handleActivateInsertPoint = useCallback((day: string, index: number, previous?: Destination, next?: Destination) => {
+    setActiveInsertPoint({
+      day,
+      index,
+      between: { previous, next }
+    });
+  }, []);
+
+  const handleCancelInlineCreation = useCallback(() => {
+    setActiveInsertPoint(null);
+  }, []);
+
+  const handleInlineDestinationAdd = useCallback(async (destinationData: {
+    name: string;
+    location: string;
+    coordinates?: Coordinates;
+    category: DestinationCategory;
+    day: string;
+    index: number;
+    endDate?: string;
+    actualCost?: number;
+    isPaid: boolean;
+    transportMode: TransportMode;
+  }) => {
+    if (!currentTrip) return;
+
+    try {
+      // Create the destination
+      const newDestinationData: CreateDestinationData = {
+        name: destinationData.name,
+        location: destinationData.location,
+        coordinates: destinationData.coordinates,
+        category: destinationData.category,
+        startDate: destinationData.day,
+        endDate: destinationData.endDate || destinationData.day,
+        budget: destinationData.actualCost || 0,
+        status: DestinationStatus.PLANNED,
+        notes: destinationData.transportMode !== TransportMode.DRIVING 
+          ? `Transportmodus: ${getTransportLabel(destinationData.transportMode)}` 
+          : '',
+        tags: destinationData.transportMode !== TransportMode.DRIVING 
+          ? [getTransportLabel(destinationData.transportMode).toLowerCase()]
+          : [],
+        color: '#3B82F6'
+      };
+
+      const createdDestination = await createDestination(currentTrip.id, newDestinationData);
+      
+      if (createdDestination && onReorderDestinations) {
+        // Get current destinations for the trip
+        const currentDestinations = currentTrip.destinations
+          .map(id => destinations.find(dest => dest.id === id))
+          .filter((dest): dest is Destination => dest !== undefined);
+        
+        // Insert the new destination at the correct position
+        const dayDestinations = currentDestinations.filter(dest => dest.startDate === destinationData.day);
+        const otherDestinations = currentDestinations.filter(dest => dest.startDate !== destinationData.day);
+        
+        // Insert at the specified index
+        dayDestinations.splice(destinationData.index, 0, createdDestination);
+        
+        // Combine and reorder
+        const reorderedDestinations = [...otherDestinations, ...dayDestinations];
+        await onReorderDestinations(reorderedDestinations);
+      }
+
+      // Close the creator
+      setActiveInsertPoint(null);
+      
+      console.log('✅ Inline destination created successfully:', createdDestination);
+      
+      // Update destination with actualCost and transport mode if provided
+      if (createdDestination && (destinationData.actualCost !== undefined || destinationData.transportMode !== 'driving')) {
+        await updateDestination(createdDestination.id, {
+          actualCost: destinationData.actualCost,
+          transportToNext: {
+            mode: destinationData.transportMode as any,
+            duration: 0,
+            distance: 0
+          }
+        });
+      }
+    } catch (error) {
+      console.error('❌ Failed to create inline destination:', error);
+    }
+  }, [currentTrip, destinations, createDestination, updateDestination, onReorderDestinations]);
   
   // Pre-defined styles for better performance
   const dropZoneStyles = useMemo(() => ({
@@ -1621,6 +1720,40 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     }
   }, [editingDestination, editForm, updateDestination, destinations, currentTrip, settings, createDestination, deleteDestination, onReorderDestinations]);
 
+  const handleNativeEditorSave = useCallback(async (updatedData: {
+    name: string;
+    location: string;
+    coordinates?: Coordinates;
+    category: DestinationCategory;
+    endDate?: string;
+    actualCost?: number;
+    isPaid: boolean;
+    transportMode: TransportMode;
+  }) => {
+    if (!editingDestination) return;
+    
+    try {
+      await updateDestination(editingDestination, {
+        name: updatedData.name,
+        location: updatedData.location,
+        coordinates: updatedData.coordinates,
+        category: updatedData.category,
+        endDate: updatedData.endDate,
+        actualCost: updatedData.actualCost,
+        transportToNext: {
+          mode: updatedData.transportMode,
+          duration: 0,
+          distance: 0
+        }
+      });
+      
+      setEditingDestination(null);
+      console.log('✅ Destination updated successfully');
+    } catch (error) {
+      console.error('❌ Failed to update destination:', error);
+    }
+  }, [editingDestination, updateDestination]);
+
   const handleCancelEdit = useCallback(() => {
     setEditingDestination(null);
   }, []);
@@ -2453,42 +2586,41 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
               {/* Day Timeline */}
               <div style={{ padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem' }}>
-                {/* Add first destination button */}
-                {!creatingDestination && day.destinations.length > 0 && (
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    marginBottom: '0.5rem'
-                  }}>
-                    <button
-                      onClick={() => handleStartCreation(day.date, 'before', 0)}
-                      style={{
-                        background: 'var(--color-neutral-cream)',
-                        color: 'var(--color-primary-ocean)',
-                        border: '1px dashed var(--color-primary-ocean)',
-                        borderRadius: '20px',
-                        padding: '0.5rem 1rem',
-                        fontSize: '0.875rem',
-                        fontWeight: '500',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.5rem',
-                        transition: 'all 0.2s'
+                {/* Insert Point at Beginning of Day */}
+                {!dragState.isDragging && day.destinations.length > 0 && (
+                  activeInsertPoint?.day === day.date && activeInsertPoint?.index === 0 ? (
+                    <NativeInlineDestinationCreator
+                      isVisible={true}
+                      position={{
+                        between: {
+                          previous: undefined,
+                          next: day.destinations[0]
+                        },
+                        day: day.date,
+                        index: 0
                       }}
-                      onMouseOver={(e) => {
-                        e.currentTarget.style.background = 'var(--color-neutral-cream)';
-                        e.currentTarget.style.transform = 'scale(1.02)';
+                      onAdd={handleInlineDestinationAdd}
+                      onCancel={handleCancelInlineCreation}
+                    />
+                  ) : (
+                    <TimelineInsertPoint
+                      position={{
+                        between: {
+                          previous: undefined,
+                          next: day.destinations[0]
+                        },
+                        day: day.date,
+                        index: 0
                       }}
-                      onMouseOut={(e) => {
-                        e.currentTarget.style.background = 'var(--color-neutral-cream)';
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
-                    >
-                      <Plus size={14} />
-                      Ziel hinzufügen
-                    </button>
-                  </div>
+                      onActivate={() => handleActivateInsertPoint(
+                        day.date,
+                        0,
+                        undefined,
+                        day.destinations[0]
+                      )}
+                      isActive={activeInsertPoint?.day === day.date && activeInsertPoint?.index === 0}
+                    />
+                  )
                 )}
                 
                 {day.destinations.map((dest, destIndex) => (
@@ -2523,42 +2655,38 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       </div>
                     )}
                     
-                    {/* Add Destination Button - Between destinations only (not before first) */}
-                    {!creatingDestination && !dragState.isDragging && destIndex > 0 && (
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        marginBottom: '0.5rem'
-                      }}>
-                        <button
-                          onClick={() => handleStartCreation(day.date, 'before', destIndex)}
-                          style={{
-                            background: 'var(--color-neutral-cream)',
-                            color: 'var(--color-primary-ocean)',
-                            border: '1px dashed var(--color-primary-ocean)',
-                            borderRadius: '20px',
-                            padding: '0.5rem 1rem',
-                            fontSize: '0.875rem',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            transition: 'all 0.2s'
+                    {/* Insert Point Before Destination */}
+                    {!dragState.isDragging && (
+                      activeInsertPoint?.day === day.date && activeInsertPoint?.index === destIndex ? (
+                        <NativeInlineDestinationCreator
+                          isVisible={true}
+                          position={{
+                            between: activeInsertPoint.between,
+                            day: activeInsertPoint.day,
+                            index: activeInsertPoint.index
                           }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
-                            e.currentTarget.style.transform = 'scale(1.02)';
+                          onAdd={handleInlineDestinationAdd}
+                          onCancel={handleCancelInlineCreation}
+                        />
+                      ) : (
+                        <TimelineInsertPoint
+                          position={{
+                            between: {
+                              previous: destIndex > 0 ? day.destinations[destIndex - 1] : undefined,
+                              next: dest
+                            },
+                            day: day.date,
+                            index: destIndex
                           }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
-                            e.currentTarget.style.transform = 'scale(1)';
-                          }}
-                        >
-                          <Plus size={14} />
-                          Ziel hinzufügen
-                        </button>
-                      </div>
+                          onActivate={() => handleActivateInsertPoint(
+                            day.date,
+                            destIndex,
+                            destIndex > 0 ? day.destinations[destIndex - 1] : undefined,
+                            dest
+                          )}
+                          isActive={activeInsertPoint?.day === day.date && activeInsertPoint?.index === destIndex}
+                        />
+                      )
                     )}
 
                     {/* Inline Creation Form - Before */}
@@ -3354,6 +3482,15 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
 
                     {/* Inline Edit Form */}
                     {editingDestination === dest.id && (
+                      <NativeInlineDestinationEditor
+                        destination={dest}
+                        onSave={handleNativeEditorSave}
+                        onCancel={handleCancelEdit}
+                      />
+                    )}
+
+                    {/* OLD EDITING FORM - TO BE REMOVED */}
+                    {false && editingDestination === dest.id && (
                       <div style={{
                         background: 'var(--color-neutral-cream)',
                         border: '2px solid var(--color-primary-ocean)',
@@ -3795,42 +3932,41 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                       </div>
                     )}
                     
-                    {/* Add Destination Button - Only after the last destination */}
-                    {!creatingDestination && !dragState.isDragging && destIndex === day.destinations.length - 1 && (
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'center',
-                        margin: '0.5rem 0'
-                      }}>
-                        <button
-                          onClick={() => handleStartCreation(day.date, 'after', destIndex)}
-                          style={{
-                            background: 'var(--color-neutral-cream)',
-                            color: 'var(--color-primary-ocean)',
-                            border: '1px dashed var(--color-primary-ocean)',
-                            borderRadius: '20px',
-                            padding: '0.5rem 1rem',
-                            fontSize: '0.875rem',
-                            fontWeight: '500',
-                            cursor: 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '0.5rem',
-                            transition: 'all 0.2s'
+                    {/* Insert Point After Last Destination */}
+                    {!dragState.isDragging && destIndex === day.destinations.length - 1 && (
+                      activeInsertPoint?.day === day.date && activeInsertPoint?.index === day.destinations.length ? (
+                        <NativeInlineDestinationCreator
+                          isVisible={true}
+                          position={{
+                            between: {
+                              previous: dest,
+                              next: undefined
+                            },
+                            day: day.date,
+                            index: day.destinations.length
                           }}
-                          onMouseOver={(e) => {
-                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
-                            e.currentTarget.style.transform = 'scale(1.02)';
+                          onAdd={handleInlineDestinationAdd}
+                          onCancel={handleCancelInlineCreation}
+                        />
+                      ) : (
+                        <TimelineInsertPoint
+                          position={{
+                            between: {
+                              previous: dest,
+                              next: undefined
+                            },
+                            day: day.date,
+                            index: day.destinations.length
                           }}
-                          onMouseOut={(e) => {
-                            e.currentTarget.style.background = 'var(--color-neutral-cream)';
-                            e.currentTarget.style.transform = 'scale(1)';
-                          }}
-                        >
-                          <Plus size={14} />
-                          Ziel hinzufügen
-                        </button>
-                      </div>
+                          onActivate={() => handleActivateInsertPoint(
+                            day.date,
+                            day.destinations.length,
+                            dest,
+                            undefined
+                          )}
+                          isActive={activeInsertPoint?.day === day.date && activeInsertPoint?.index === day.destinations.length}
+                        />
+                      )
                     )}
 
                     {/* Inline Creation Form - After */}
@@ -4593,5 +4729,16 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     </>
   );
 };
+
+// Helper function for transport mode labels
+function getTransportLabel(mode: TransportMode): string {
+  switch (mode) {
+    case TransportMode.DRIVING: return 'Auto';
+    case TransportMode.WALKING: return 'Zu Fuß';
+    case TransportMode.BICYCLE: return 'Fahrrad';
+    case TransportMode.PUBLIC_TRANSPORT: return 'Öffentlich';
+    default: return 'Auto';
+  }
+}
 
 export default EnhancedTimelineView;

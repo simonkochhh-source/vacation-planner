@@ -62,6 +62,9 @@ const PlaceSearchDemo = React.lazy(() =>
 const ModernDesignDemo = React.lazy(() => 
   import(/* webpackChunkName: "design-demo" */ './components/Demo/ModernDesignDemo')
 );
+const InlineCreationDemo = React.lazy(() => 
+  import(/* webpackChunkName: "inline-demo" */ './components/Demo/InlineCreationDemo')
+);
 
 // Preload critical routes based on user behavior
 const preloadRoute = (routeName: string) => {
@@ -174,6 +177,8 @@ const AppContent: React.FC = () => {
         return <PlaceSearchDemo />;
       case 'design-demo':
         return <ModernDesignDemo />;
+      case 'inline-demo':
+        return <InlineCreationDemo />;
       case 'list':
       default:
         return (

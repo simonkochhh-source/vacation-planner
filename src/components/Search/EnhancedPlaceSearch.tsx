@@ -415,146 +415,13 @@ const EnhancedPlaceSearch: React.FC<EnhancedPlaceSearchProps> = ({
             }}
             className=""
           />
-          {/* MOVED DROPDOWN HERE */}
-          {isOpen && displayItems.length > 0 && (
-            <div style={{
-              position: 'absolute',
-              zIndex: 9999,
-              top: '100%',
-              left: 0,
-              right: 0,
-              width: '100%',
-              marginTop: '4px',
-              background: 'white',
-              border: '2px solid #3b82f6',
-              borderRadius: '12px',
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-              maxHeight: '320px',
-              overflow: 'hidden',
-              minHeight: '40px'
-            }}>
-              <div style={{
-                padding: '4px',
-                backgroundColor: '#dbeafe',
-                fontSize: '12px',
-                color: '#1e40af',
-                fontWeight: '600'
-              }}>
-                {displayItems.length} Ergebnis{displayItems.length !== 1 ? 'se' : ''} gefunden
-              </div>
-              
-              {/* Results List */}
-              <ul ref={listRef} style={{
-                maxHeight: '280px',
-                overflowY: 'auto'
-              }}>
-                {displayItems.map((prediction, index) => {
-                  const isHighlighted = index === highlightedIndex;
-                  const distance = calculateDistance(prediction.coordinates);
-                  
-                  return (
-                    <li
-                      key={prediction.place_id}
-                      style={{
-                        padding: '12px 16px',
-                        cursor: 'pointer',
-                        borderBottom: '1px solid #f9fafb',
-                        transition: 'background-color 0.15s',
-                        background: isHighlighted ? '#eff6ff' : 'white'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.background = '#f9fafb';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.background = isHighlighted ? '#eff6ff' : 'white';
-                      }}
-                      onClick={() => handlePlaceSelect(prediction)}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-                        <div style={{ flexShrink: 0, marginTop: '2px' }}>
-                          {getEnhancedPlaceIcon(prediction)}
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '8px' }}>
-                            <div style={{ minWidth: 0, flex: 1 }}>
-                              <p style={{
-                                fontSize: '14px',
-                                fontWeight: '600',
-                                color: '#111827',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {prediction.structured_formatting.main_text}
-                              </p>
-                              {prediction.structured_formatting.secondary_text && (
-                                <p style={{
-                                  fontSize: '12px',
-                                  color: '#6b7280',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis',
-                                  whiteSpace: 'nowrap'
-                                }}>
-                                  {prediction.structured_formatting.secondary_text}
-                                </p>
-                              )}
-                            </div>
-                            {distance && (
-                              <span style={{
-                                fontSize: '12px',
-                                color: '#6b7280',
-                                fontWeight: '500',
-                                flexShrink: 0,
-                                marginLeft: '8px',
-                                whiteSpace: 'nowrap'
-                              }}>
-                                {distance}
-                              </span>
-                            )}
-                          </div>
-                          
-                          {/* Place Type Badge */}
-                          <div style={{ marginTop: '8px' }}>
-                            <span style={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              padding: '2px 8px',
-                              borderRadius: '6px',
-                              fontSize: '12px',
-                              fontWeight: '500',
-                              background: '#f3f4f6',
-                              color: '#374151'
-                            }}>
-                              {getPlaceCategoryName(prediction.type, prediction.class)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-              
-              {/* No Results */}
-              {!isLoading && displayItems.length === 0 && value.trim() && (
-                <div style={{ padding: '24px', textAlign: 'center' }}>
-                  <p style={{ color: '#6b7280' }}>
-                    Keine Ergebnisse für "{value}"
-                  </p>
-                  <p style={{ fontSize: '14px', color: '#9ca3af', marginTop: '4px' }}>
-                    Versuchen Sie es mit anderen Suchbegriffen oder weniger spezifischen Angaben
-                  </p>
-                </div>
-              )}
-            </div>
-          )}
         </div>
         
         {/* Loading Spinner / Clear Button */}
         <div className="absolute inset-y-0 right-0 pr-4 flex items-center">
           {isLoading ? (
             <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500" />
-          ) : value ? (
+          ) : (value && isOpen && (displayItems.length > 0 || showRecentSearches)) ? (
             <button
               onClick={clearSearch}
               className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -601,8 +468,8 @@ const EnhancedPlaceSearch: React.FC<EnhancedPlaceSearchProps> = ({
         </div>
       )}
 
-      {/* Dropdown Results - ALWAYS SHOW FOR TESTING */}
-      {(isOpen && (displayItems.length > 0 || showRecentSearches)) || true && (
+      {/* Dropdown Results */}
+      {isOpen && (displayItems.length > 0 || showRecentSearches) && (
         <div style={{
           position: 'absolute',
           zIndex: 9999,
