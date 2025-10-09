@@ -3735,7 +3735,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                             >
                               <option value="">Kein Rückweg</option>
                               {settings.homePoint && (
-                                <option value="home">🏠 {settings.homePoint.name}</option>
+                                <option value="home">🏠 {settings.homePoint?.name || 'Home'}</option>
                               )}
                               {currentTrip && destinations
                                 .filter(dest => currentTrip.destinations.includes(dest.id) && dest.id !== editingDestination)
