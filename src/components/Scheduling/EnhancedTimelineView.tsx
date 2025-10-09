@@ -2874,7 +2874,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   width: '2rem',
                                   height: '2rem'
                                 }}
-                                title={`Home auswählen: ${settings.homePoint.name}`}
+                                title={`Home auswählen: ${settings.homePoint?.name || 'Home'}`}
                                 onMouseOver={(e) => {
                                   e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}
@@ -3566,7 +3566,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   alignItems: 'center',
                                   justifyContent: 'center'
                                 }}
-                                title={`Home auswählen: ${settings.homePoint.name}`}
+                                title={`Home auswählen: ${settings.homePoint?.name || 'Home'}`}
                                 onMouseOver={(e) => {
                                   e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}
@@ -4154,7 +4154,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                   width: '2rem',
                                   height: '2rem'
                                 }}
-                                title={`Home auswählen: ${settings.homePoint.name}`}
+                                title={`Home auswählen: ${settings.homePoint?.name || 'Home'}`}
                                 onMouseOver={(e) => {
                                   e.currentTarget.style.background = 'var(--color-secondary-forest)';
                                 }}
