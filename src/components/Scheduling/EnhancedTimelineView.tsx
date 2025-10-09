@@ -3738,7 +3738,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                 <option value="home">🏠 {settings.homePoint?.name || 'Home'}</option>
                               )}
                               {currentTrip && destinations
-                                .filter(dest => currentTrip.destinations.includes(dest.id) && dest.id !== editingDestination)
+                                .filter(dest => currentTrip?.destinations.includes(dest.id) && dest.id !== editingDestination)
                                 .map(dest => (
                                   <option key={dest.id} value={dest.id}>
                                     {getCategoryIcon(dest.category)} {dest.name}
