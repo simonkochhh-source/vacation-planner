@@ -116,7 +116,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
               onClick={handlePrevious}
               style={{
                 background: 'transparent',
-                border: '1px solid #d1d5db',
+                borderTop: '1px solid #d1d5db',
+                borderLeft: '1px solid #d1d5db',
+                borderRight: '1px solid #d1d5db',
+                borderBottom: '1px solid #d1d5db',
                 borderRadius: '6px',
                 padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                 cursor: 'pointer',
@@ -133,7 +136,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
               style={{
                 background: isPlaying ? '#3b82f6' : 'transparent',
                 color: isPlaying ? 'white' : '#374151',
-                border: '1px solid #d1d5db',
+                borderTop: '1px solid #d1d5db',
+                borderLeft: '1px solid #d1d5db',
+                borderRight: '1px solid #d1d5db',
+                borderBottom: '1px solid #d1d5db',
                 borderRadius: '6px',
                 padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                 cursor: 'pointer',
@@ -149,7 +155,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
               onClick={handleNext}
               style={{
                 background: 'transparent',
-                border: '1px solid #d1d5db',
+                borderTop: '1px solid #d1d5db',
+                borderLeft: '1px solid #d1d5db',
+                borderRight: '1px solid #d1d5db',
+                borderBottom: '1px solid #d1d5db',
                 borderRadius: '6px',
                 padding: '0.75rem', /* Touch-friendly: 12px + icon = 44px+ target */
                 cursor: 'pointer',
@@ -329,7 +338,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 onClick={handlePrevious}
                 style={{
                   background: '#f3f4f6',
-                  border: 'none',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  borderBottom: 'none',
                   borderRadius: '6px',
                   padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
@@ -352,7 +364,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 style={{
                   background: isPlaying ? '#3b82f6' : '#f3f4f6',
                   color: isPlaying ? 'white' : '#374151',
-                  border: 'none',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  borderBottom: 'none',
                   borderRadius: '6px',
                   padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
@@ -374,7 +389,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 onClick={handleNext}
                 style={{
                   background: '#f3f4f6',
-                  border: 'none',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  borderBottom: 'none',
                   borderRadius: '6px',
                   padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
@@ -396,7 +414,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 onClick={() => setIsExpanded(true)}
                 style={{
                   background: '#f3f4f6',
-                  border: 'none',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  borderBottom: 'none',
                   borderRadius: '6px',
                   padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
@@ -441,7 +462,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                 onClick={() => setIsExpanded(false)}
                 style={{
                   background: '#f3f4f6',
-                  border: 'none',
+                  borderTop: 'none',
+                  borderLeft: 'none',
+                  borderRight: 'none',
+                  borderBottom: 'none',
                   borderRadius: '6px',
                   padding: '0.875rem', // Increased from 0.75rem for better touch target
                   cursor: 'pointer',
@@ -469,7 +493,10 @@ const MobileTimeline: React.FC<MobileTimelineProps> = ({
                   style={{
                     width: '100%',
                     background: index === currentIndex ? '#eff6ff' : 'transparent',
-                    border: index === currentIndex ? '1px solid #3b82f6' : '1px solid transparent',
+                    borderTop: index === currentIndex ? '1px solid #3b82f6' : '1px solid transparent',
+                    borderLeft: index === currentIndex ? '1px solid #3b82f6' : '1px solid transparent',
+                    borderRight: index === currentIndex ? '1px solid #3b82f6' : '1px solid transparent',
+                    borderBottom: index === currentIndex ? '1px solid #3b82f6' : '1px solid transparent',
                     borderRadius: '8px',
                     padding: '0.75rem',
                     cursor: 'pointer',

@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KI-Reiseplanungs-Chatbot - Mock-up</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #121212;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: #1a1a1a;
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: #2a2a2a;
+            padding: 1rem 2rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .trip-info h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .trip-dates {
+            color: #999;
+            font-size: 0.9rem;
+        }
+        
+        .nav-tabs {
+            display: flex;
+            background: #333;
+            border-bottom: 1px solid #444;
+        }
+        
+        .tab {
+            padding: 1rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            background: #444;
+            color: #fff;
+            border-bottom: 2px solid #00bcd4;
+        }
+        
+        .main-content {
+            display: flex;
+            height: calc(100vh - 140px);
+        }
+        
+        .empty-state {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .empty-icon {
+            width: 80px;
+            height: 80px;
+            background: #333;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            font-size: 2rem;
+        }
+        
+        .empty-state h2 {
+            margin-bottom: 0.5rem;
+            color: #fff;
+        }
+        
+        .empty-state p {
+            color: #999;
+            margin-bottom: 2rem;
+            max-width: 400px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary {
+            background: #00bcd4;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #00acc1;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #444;
+            color: white;
+            border: 1px solid #666;
+        }
+        
+        .btn-secondary:hover {
+            background: #555;
+        }
+        
+        .btn-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-ai::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+        
+        .btn-ai:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        /* Chatbot Modal Overlay */
+        .chatbot-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+        
+        .chatbot-container {
+            background: #1a1a1a;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 900px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            border: 1px solid #333;
+        }
+        
+        .chatbot-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chatbot-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .ai-avatar {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .close-btn {
+            background: #333;
+            border: none;
+            color: #999;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .close-btn:hover {
+            background: #444;
+            color: #fff;
+        }
+        
+        .chat-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 1.5rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .message {
+            display: flex;
+            gap: 1rem;
+            max-width: 80%;
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+        
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        
+        .message-avatar.ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .message-avatar.user {
+            background: #00bcd4;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .message-content {
+            background: #2a2a2a;
+            padding: 1rem;
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+        
+        .message.user .message-content {
+            background: #00bcd4;
+            color: white;
+        }
+        
+        .suggestion-card {
+            background: #333;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .suggestion-card:hover {
+            background: #3a3a3a;
+            border-color: #00bcd4;
+        }
+        
+        .suggestion-card h4 {
+            color: #00bcd4;
+            margin-bottom: 0.5rem;
+        }
+        
+        .suggestion-card p {
+            color: #ccc;
+            font-size: 0.9rem;
+        }
+        
+        .suggestion-image {
+            width: 100%;
+            height: 120px;
+            background: #444;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23444" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%23999" font-size="12">📸 Foto</text></svg>');
+            background-size: cover;
+            background-position: center;
+        }
+        
+        .chat-input-area {
+            padding: 1.5rem;
+            border-top: 1px solid #333;
+        }
+        
+        .chat-input {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+        }
+        
+        .input-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        .chat-textarea {
+            width: 100%;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 12px;
+            padding: 1rem;
+            color: white;
+            resize: none;
+            min-height: 50px;
+            max-height: 120px;
+            font-family: inherit;
+        }
+        
+        .chat-textarea:focus {
+            outline: none;
+            border-color: #00bcd4;
+        }
+        
+        .send-btn {
+            background: #00bcd4;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            color: white;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+        
+        .send-btn:hover:not(:disabled) {
+            background: #00acc1;
+            transform: scale(1.05);
+        }
+        
+        .send-btn:disabled {
+            background: #444;
+            cursor: not-allowed;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .quick-action {
+            background: #333;
+            border: 1px solid #444;
+            color: #ccc;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .quick-action:hover {
+            background: #444;
+            border-color: #00bcd4;
+            color: #00bcd4;
+        }
+        
+        .progress-indicator {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #999;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-dots {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .progress-dot {
+            width: 6px;
+            height: 6px;
+            background: #444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .progress-dot:nth-child(2) { animation-delay: 0.2s; }
+        .progress-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+        
+        .route-preview {
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .route-stats {
+            display: flex;
+            gap: 2rem;
+            color: #999;
+            font-size: 0.9rem;
+        }
+        
+        .route-destinations {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .route-destination {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem;
+            background: #333;
+            border-radius: 6px;
+        }
+        
+        .destination-number {
+            width: 24px;
+            height: 24px;
+            background: #00bcd4;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .chatbot-container {
+                height: 90vh;
+                margin: 1rem;
+            }
+            
+            .chat-content {
+                flex-direction: column;
+            }
+            
+            .route-stats {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <div class="header">
+            <div class="trip-info">
+                <h1>Kroatien Rundreise</h1>
+                <div class="trip-dates">1.5.2026 - 17.5.2026</div>
+            </div>
+            <div style="display: flex; gap: 1rem;">
+                <button class="btn btn-secondary">🔄 Reisedaten anpassen</button>
+                <button class="btn btn-secondary">👥 1 Teilnehmer</button>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="tab active">📅 Timeline</button>
+            <button class="tab">💰 Budget</button>
+            <button class="tab">🗺️ Karte</button>
+            <button class="tab">📸 Fotos</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="empty-state">
+                <div class="empty-icon">📅</div>
+                <h2>Keine Ziele geplant</h2>
+                <p>Erstellen Sie Ihr erstes Reiseziel, um mit der Planung zu beginnen.</p>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="openManualCreation()">
+                        ➕ Erstes Ziel erstellen
+                    </button>
+                    <button class="btn btn-ai" onclick="openAIChatbot()">
+                        🤖 KI-Reiseplanung starten
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Overlay -->
+    <div class="chatbot-overlay hidden" id="chatbotOverlay">
+        <div class="chatbot-container">
+            <!-- Chatbot Header -->
+            <div class="chatbot-header">
+                <div class="chatbot-title">
+                    <div class="ai-avatar">🤖</div>
+                    <div>
+                        <h3>KI-Reiseassistent</h3>
+                        <div style="color: #999; font-size: 0.9rem;">Powered by GPT-4</div>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="closeChatbot()">×</button>
+            </div>
+
+            <!-- Chat Content -->
+            <div class="chat-content">
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Welcome Message -->
+                    <div class="message">
+                        <div class="message-avatar ai">🤖</div>
+                        <div class="message-content">
+                            <p>Hallo! Ich bin dein KI-Reiseassistent und helfe dir dabei, eine perfekte Kroatien-Rundreise zu planen. 🇭🇷</p>
+                            <p style="margin-top: 0.5rem;">Erzähl mir von deinen Interessen und Vorlieben, damit ich dir personalisierte Vorschläge machen kann!</p>
+                            
+                            <div class="quick-actions">
+                                <div class="quick-action" onclick="sendQuickMessage('Ich interessiere mich für Geschichte und Kultur')">🏛️ Geschichte & Kultur</div>
+                                <div class="quick-action" onclick="sendQuickMessage('Ich liebe Strände und Wassersport')">🏖️ Strand & Meer</div>
+                                <div class="quick-action" onclick="sendQuickMessage('Ich bin ein Naturliebhaber')">🌲 Natur & Wandern</div>
+                                <div class="quick-action" onclick="sendQuickMessage('Ich mag gutes Essen und Wein')">🍷 Kulinarik</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example conversation -->
+                    <div class="message user hidden" id="exampleUser">
+                        <div class="message-avatar user">👤</div>
+                        <div class="message-content">
+                            Ich interessiere mich für Geschichte und Kultur, aber auch für schöne Strände. Budget ist moderat, etwa 100€ pro Tag.
+                        </div>
+                    </div>
+
+                    <div class="message hidden" id="exampleAI">
+                        <div class="message-avatar ai">🤖</div>
+                        <div class="message-content">
+                            <p>Perfekt! Für eine Kombination aus Kultur und Strand habe ich tolle Vorschläge für dich:</p>
+                            
+                            <div class="route-preview">
+                                <div class="route-header">
+                                    <h4>Vorgeschlagene Route (16 Tage)</h4>
+                                    <div class="route-stats">
+                                        <span>📍 6 Ziele</span>
+                                        <span>🚗 ~800km</span>
+                                        <span>💰 ~1.600€</span>
+                                    </div>
+                                </div>
+                                <div class="route-destinations">
+                                    <div class="route-destination">
+                                        <div class="destination-number">1</div>
+                                        <div>
+                                            <strong>Zagreb (2 Tage)</strong>
+                                            <div style="color: #999; font-size: 0.9rem;">Hauptstadt, Museen, Architektur</div>
+                                        </div>
+                                    </div>
+                                    <div class="route-destination">
+                                        <div class="destination-number">2</div>
+                                        <div>
+                                            <strong>Plitvice Seen (2 Tage)</strong>
+                                            <div style="color: #999; font-size: 0.9rem;">UNESCO Welterbe, Wasserfälle</div>
+                                        </div>
+                                    </div>
+                                    <div class="route-destination">
+                                        <div class="destination-number">3</div>
+                                        <div>
+                                            <strong>Split (3 Tage)</strong>
+                                            <div style="color: #999; font-size: 0.9rem;">Diokletianpalast, Altstadt</div>
+                                        </div>
+                                    </div>
+                                    <div class="route-destination">
+                                        <div class="destination-number">4</div>
+                                        <div>
+                                            <strong>Hvar (3 Tage)</strong>
+                                            <div style="color: #999; font-size: 0.9rem;">Lavendelinsel, Strände</div>
+                                        </div>
+                                    </div>
+                                    <div class="route-destination">
+                                        <div class="destination-number">5</div>
+                                        <div>
+                                            <strong>Dubrovnik (4 Tage)</strong>
+                                            <div style="color: #999; font-size: 0.9rem;">Perle der Adria, Stadtmauer</div>
+                                        </div>
+                                    </div>
+                                    <div class="route-destination">
+                                        <div class="destination-number">6</div>
+                                        <div>
+                                            <strong>Rovinj (2 Tage)</strong>
+                                            <div style="color: #999; font-size: 0.9rem;">Romantische Altstadt, Meer</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p>Soll ich diese Route für dich erstellen und mit Details, Unterkünften und Aktivitäten ausarbeiten?</p>
+                            
+                            <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                                <button class="btn btn-primary" onclick="acceptRoute()">✅ Route übernehmen</button>
+                                <button class="btn btn-secondary" onclick="modifyRoute()">✏️ Anpassen</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Chat Input -->
+            <div class="chat-input-area">
+                <div class="chat-input">
+                    <div class="input-container">
+                        <textarea 
+                            class="chat-textarea" 
+                            placeholder="Beschreibe deine Reisewünsche..."
+                            rows="1"
+                            id="chatInput"
+                            onkeydown="handleKeyDown(event)"
+                        ></textarea>
+                    </div>
+                    <button class="send-btn" onclick="sendMessage()" id="sendBtn">
+                        ➤
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function openManualCreation() {
+            alert('Manuelles Erstellen eines Ziels...');
+        }
+
+        function openAIChatbot() {
+            document.getElementById('chatbotOverlay').classList.remove('hidden');
+            document.getElementById('chatInput').focus();
+        }
+
+        function closeChatbot() {
+            document.getElementById('chatbotOverlay').classList.add('hidden');
+        }
+
+        function sendQuickMessage(message) {
+            // Simulate sending the quick message
+            const userMessage = document.getElementById('exampleUser');
+            const aiResponse = document.getElementById('exampleAI');
+            
+            userMessage.classList.remove('hidden');
+            setTimeout(() => {
+                aiResponse.classList.remove('hidden');
+                document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+            }, 1000);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (message) {
+                // Add user message to chat
+                addMessageToChat(message, 'user');
+                input.value = '';
+                
+                // Simulate AI response
+                setTimeout(() => {
+                    addTypingIndicator();
+                    setTimeout(() => {
+                        removeTypingIndicator();
+                        addMessageToChat('Vielen Dank für deine Eingabe! Ich erstelle gerade personalisierte Vorschläge für deine Kroatien-Reise...', 'ai');
+                    }, 2000);
+                }, 500);
+            }
+        }
+
+        function handleKeyDown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function addMessageToChat(message, sender) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar ${sender}">${sender === 'ai' ? '🤖' : '👤'}</div>
+                <div class="message-content">
+                    <p>${message}</p>
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addTypingIndicator() {
+            const chatMessages = document.getElementById('chatMessages');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message';
+            typingDiv.id = 'typingIndicator';
+            
+            typingDiv.innerHTML = `
+                <div class="message-avatar ai">🤖</div>
+                <div class="message-content">
+                    <div class="progress-indicator">
+                        <span>KI denkt nach</span>
+                        <div class="progress-dots">
+                            <div class="progress-dot"></div>
+                            <div class="progress-dot"></div>
+                            <div class="progress-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const typingIndicator = document.getElementById('typingIndicator');
+            if (typingIndicator) {
+                typingIndicator.remove();
+            }
+        }
+
+        function acceptRoute() {
+            alert('Route wird in deine Reiseplanung übernommen! 🎉');
+            closeChatbot();
+        }
+
+        function modifyRoute() {
+            addMessageToChat('Welche Änderungen möchtest du an der Route vornehmen?', 'ai');
+        }
+
+        // Auto-resize textarea
+        document.getElementById('chatInput').addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+        });
+
+        // Close chatbot when clicking outside
+        document.getElementById('chatbotOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeChatbot();
+            }
+        });
+    </script>
+</body>
+</html>

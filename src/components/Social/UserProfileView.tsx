@@ -255,8 +255,10 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ userId, onBack }) => 
         <div style={{
           width: '40px',
           height: '40px',
-          border: '3px solid #f3f4f6',
           borderTop: '3px solid #3b82f6',
+          borderLeft: '3px solid #f3f4f6',
+          borderRight: '3px solid #f3f4f6',
+          borderBottom: '3px solid #f3f4f6',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }} />

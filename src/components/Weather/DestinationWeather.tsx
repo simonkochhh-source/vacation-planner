@@ -123,8 +123,10 @@ const DestinationWeather: React.FC<DestinationWeatherProps> = ({
         <div style={{
           width: '12px',
           height: '12px',
-          border: '2px solid var(--color-border)',
           borderTop: '2px solid var(--color-primary-ocean)',
+          borderLeft: '2px solid var(--color-border)',
+          borderRight: '2px solid var(--color-border)',
+          borderBottom: '2px solid var(--color-border)',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }} />

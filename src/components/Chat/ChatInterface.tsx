@@ -302,7 +302,9 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({
       zIndex: 800,
       display: 'flex',
       flexDirection: 'column' as const,
-      border: '1px solid var(--chat-border, #e5e7eb)', // Adaptive border
+      borderTop: '1px solid var(--chat-border, #e5e7eb)', // Adaptive border
+      borderRight: '1px solid var(--chat-border, #e5e7eb)', // Adaptive border
+      borderBottom: '1px solid var(--chat-border, #e5e7eb)', // Adaptive border
       borderLeft: '3px solid #2563eb', // Blue accent border
       borderRadius: '16px 0 0 0', // Rounded top-left corner
       transition: 'width 0.3s ease-out, box-shadow 0.2s ease-out',

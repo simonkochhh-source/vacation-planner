@@ -604,8 +604,10 @@ const PhotosView: React.FC = () => {
                       <div style={{
                         width: '16px',
                         height: '16px',
-                        border: '2px solid rgba(255,255,255,0.3)',
                         borderTop: '2px solid white',
+                        borderLeft: '2px solid rgba(255,255,255,0.3)',
+                        borderRight: '2px solid rgba(255,255,255,0.3)',
+                        borderBottom: '2px solid rgba(255,255,255,0.3)',
                         borderRadius: '50%',
                         animation: 'spin 1s linear infinite'
                       }} />
@@ -713,8 +715,10 @@ const PhotosView: React.FC = () => {
                 <div style={{
                   width: '32px',
                   height: '32px',
-                  border: '3px solid var(--color-border)',
                   borderTop: '3px solid var(--color-primary-ocean)',
+                  borderLeft: '3px solid var(--color-border)',
+                  borderRight: '3px solid var(--color-border)',
+                  borderBottom: '3px solid var(--color-border)',
                   borderRadius: '50%',
                   animation: 'spin 1s linear infinite',
                   marginRight: '1rem'

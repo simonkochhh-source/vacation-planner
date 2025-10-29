@@ -4,6 +4,8 @@ import { useDestinationContext } from '../../contexts/DestinationContext';
 import { useUIContext } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useResponsive } from '../../hooks/useResponsive';
+import { AIProvider } from '../../contexts/AIContext';
+import ChatbotModal from '../AI/ChatbotModal';
 import { Destination, CreateDestinationData, DestinationStatus, DestinationCategory, TransportMode, Coordinates, getTripPermissions, canUserEditTrip } from '../../types';
 import EnhancedPlaceSearch from '../Search/EnhancedPlaceSearch';
 import { PlacePrediction } from '../../services/openStreetMapService';
@@ -90,8 +92,8 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   onEditDestination,
   onReorderDestinations
 }) => {
-  const { currentTrip } = useTripContext();
-  const { destinations, createDestination, updateDestination, deleteDestination } = useDestinationContext();
+  const { currentTrip, refreshTrips, updateTrip } = useTripContext();
+  const { destinations, createDestination, updateDestination, deleteDestination, refreshDestinations } = useDestinationContext();
   const { settings } = useUIContext();
   
   // Mobile responsiveness
@@ -103,6 +105,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
   const tripPermissions = (currentTrip && currentTrip.id) ? getTripPermissions(currentTrip, currentUserId) : { canEdit: true, canView: true, canDelete: false, isOwner: true, isTagged: false };
   const isReadOnly = !tripPermissions.canEdit;
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
+  const [showChatbot, setShowChatbot] = useState(false);
   const [dragState, setDragState] = useState<DragState>({
     isDragging: false,
     draggedItem: null,
@@ -260,6 +263,102 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
       console.error('❌ Failed to create inline destination:', error);
     }
   }, [currentTrip, destinations, createDestination, updateDestination, onReorderDestinations]);
+
+  // AI Chatbot handlers
+  const handleOpenChatbot = useCallback(() => {
+    setShowChatbot(true);
+  }, []);
+
+  const handleCloseChatbot = useCallback(async () => {
+    setShowChatbot(false);
+    
+    console.log('🔄 Chatbot closed - starting refresh sequence...');
+    
+    try {
+      // Add a delay to ensure all database operations are complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Refresh in sequence: destinations first, then trips
+      console.log('🔄 Step 1: Refreshing destinations...');
+      await refreshDestinations();
+      
+      // Small delay between refreshes to ensure proper state update
+      await new Promise(resolve => setTimeout(resolve, 200));
+      
+      console.log('🔄 Step 2: Refreshing trips...');
+      await refreshTrips();
+      
+      console.log('✅ Refresh sequence completed');
+    } catch (error) {
+      console.error('❌ Error during refresh sequence:', error);
+    }
+  }, [refreshTrips, refreshDestinations]);
+
+  const handleRouteAccept = useCallback(async (route: any) => {
+    if (!currentTrip) return;
+    
+    try {
+      console.log('🎯 Creating AI destinations for trip:', currentTrip.id);
+      const createdDestinationIds: string[] = [];
+      
+      // Create destinations from AI-generated route
+      for (let i = 0; i < route.destinations.length; i++) {
+        const aiDestination = route.destinations[i];
+        const startDate = new Date(currentTrip.startDate);
+        startDate.setDate(startDate.getDate() + i * Math.ceil(aiDestination.duration));
+        
+        const endDate = new Date(startDate);
+        endDate.setDate(endDate.getDate() + Math.ceil(aiDestination.duration) - 1);
+        
+        const createdDestination = await createDestination(currentTrip.id, {
+          name: aiDestination.name,
+          location: aiDestination.location.address,
+          coordinates: {
+            lat: aiDestination.coordinates.lat,
+            lng: aiDestination.coordinates.lng
+          },
+          category: DestinationCategory.ATTRACTION, // Default category
+          startDate: startDate.toISOString().split('T')[0],
+          endDate: endDate.toISOString().split('T')[0],
+          status: DestinationStatus.PLANNED,
+          budget: aiDestination.estimatedCost,
+          notes: aiDestination.description,
+          tags: aiDestination.highlights || []
+        });
+        
+        createdDestinationIds.push(createdDestination.id);
+        console.log('✅ Created destination:', createdDestination.name, 'with ID:', createdDestination.id);
+      }
+      
+      // Update the current trip to include all new destination IDs
+      if (createdDestinationIds.length > 0) {
+        console.log('🔄 Updating trip to include new destination IDs:', createdDestinationIds);
+        const updatedDestinations = [...currentTrip.destinations, ...createdDestinationIds];
+        
+        // Update the trip with the new destinations array
+        await updateTrip(currentTrip.id, { 
+          destinations: updatedDestinations 
+        });
+        console.log('✅ Trip updated with new destinations');
+        
+        // Small delay to ensure database update is propagated
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+      
+      // Refresh data to show new destinations immediately - sequentially for better reliability
+      console.log('🔄 Starting immediate refresh after route accept...');
+      await refreshDestinations();
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await refreshTrips();
+      console.log('✅ Immediate refresh completed');
+      
+      // Close chatbot after successful import
+      setShowChatbot(false);
+      
+    } catch (error) {
+      console.error('Failed to import AI route:', error);
+    }
+  }, [currentTrip, createDestination, updateTrip, refreshTrips, refreshDestinations]);
   
   // Pre-defined styles for better performance
   const dropZoneStyles = useMemo(() => ({
@@ -649,7 +748,7 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           }
         };
       });
-  }, [destinations, currentTrip, calculateTravelTime]);
+  }, [currentTrip, destinations, calculateTravelTime]);
 
   // Drag and drop handlers
   const handleDragStart = useCallback((dest: TimelineDestination, e: React.DragEvent) => {
@@ -1950,36 +2049,79 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
             
             {/* Initial destination creation */}
             {!creatingDestination ? (
-              <button
-                onClick={() => handleStartCreation(currentTrip!.startDate, 'initial')}
-                style={{
-                  background: 'var(--color-primary-ocean)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '12px',
-                  padding: isMobile ? '1rem 1.5rem' : '1rem 2rem',
-                  fontSize: isMobile ? '0.95rem' : '1rem',
-                  minHeight: isMobile ? '48px' : 'auto',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  margin: '0 auto',
-                  transition: 'all 0.2s'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.background = 'var(--color-secondary-forest)';
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.background = 'var(--color-primary-ocean)';
-                  e.currentTarget.style.transform = 'translateY(0)';
-                }}
-              >
-                <Plus size={20} />
-                Erstes Ziel erstellen
-              </button>
+              <>
+                <button
+                  onClick={() => handleStartCreation(currentTrip!.startDate, 'initial')}
+                  style={{
+                    background: 'var(--color-primary-ocean)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: isMobile ? '1rem 1.5rem' : '1rem 2rem',
+                    fontSize: isMobile ? '0.95rem' : '1rem',
+                    minHeight: isMobile ? '48px' : 'auto',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    margin: '0 auto',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = 'var(--color-secondary-forest)';
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = 'var(--color-primary-ocean)';
+                    e.currentTarget.style.transform = 'translateY(0)';
+                  }}
+                >
+                  <Plus size={20} />
+                  Erstes Ziel erstellen
+                </button>
+                
+                {/* AI Travel Planning Button */}
+                <button
+                  onClick={handleOpenChatbot}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: isMobile ? '1rem 1.5rem' : '1rem 2rem',
+                    fontSize: isMobile ? '0.95rem' : '1rem',
+                    minHeight: isMobile ? '48px' : 'auto',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    margin: '1rem auto 0',
+                    transition: 'all 0.2s',
+                    position: 'relative',
+                    overflow: 'hidden'
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(102, 126, 234, 0.4)';
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <span 
+                    style={{
+                      fontSize: '1.2rem',
+                      animation: 'bounce 2s infinite'
+                    }}
+                  >
+                    🤖
+                  </span>
+                  Trailkeeper Assistent
+                </button>
+              </>
             ) : (
               <div style={{
                 background: 'var(--color-neutral-cream)',
@@ -2532,14 +2674,11 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
           </div>
         ) : (
           enhancedTimelineData.map((day, dayIndex) => (
-            <div key={day.date} style={{
-              borderBottom: dayIndex < enhancedTimelineData.length - 1 ? '1px solid var(--color-neutral-mist)' : 'none'
-            }}>
+            <div key={day.date}>
               {/* Day Header */}
               <div style={{
                 background: 'var(--color-neutral-cream)',
                 padding: isMobile ? '0.75rem 1rem' : '1rem 1.5rem',
-                borderBottom: '1px solid var(--color-neutral-mist)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
@@ -2749,8 +2888,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               left: 0,
                               right: 0,
                               background: 'var(--color-neutral-cream)',
-                              border: '1px solid var(--color-neutral-mist)',
                               borderTop: 'none',
+                              borderLeft: '1px solid var(--color-neutral-mist)',
+                              borderRight: '1px solid var(--color-neutral-mist)',
+                              borderBottom: '1px solid var(--color-neutral-mist)',
                               borderRadius: '0 0 6px 6px',
                               maxHeight: '150px',
                               overflowY: 'auto',
@@ -2768,7 +2909,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                     border: 'none',
                                     background: 'transparent',
                                     cursor: 'pointer',
-                                    borderBottom: 'none',
                                     fontSize: '0.75rem'
                                   }}
                                   onMouseOver={(e) => {
@@ -4029,8 +4169,10 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                               left: 0,
                               right: 0,
                               background: 'var(--color-neutral-cream)',
-                              border: '1px solid var(--color-neutral-mist)',
                               borderTop: 'none',
+                              borderLeft: '1px solid var(--color-neutral-mist)',
+                              borderRight: '1px solid var(--color-neutral-mist)',
+                              borderBottom: '1px solid var(--color-neutral-mist)',
                               borderRadius: '0 0 6px 6px',
                               maxHeight: '150px',
                               overflowY: 'auto',
@@ -4048,7 +4190,6 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
                                     border: 'none',
                                     background: 'transparent',
                                     cursor: 'pointer',
-                                    borderBottom: 'none',
                                     fontSize: '0.75rem'
                                   }}
                                   onMouseOver={(e) => {
@@ -4726,6 +4867,22 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
         </div>
       </div>
     )}
+      {/* AI Chatbot Modal */}
+      <AIProvider>
+        <ChatbotModal
+          isOpen={showChatbot}
+          onClose={handleCloseChatbot}
+          tripData={{
+            id: currentTrip?.id || '',
+            name: currentTrip?.name || '',
+            startDate: currentTrip?.startDate ? new Date(currentTrip.startDate) : new Date(),
+            endDate: currentTrip?.endDate ? new Date(currentTrip.endDate) : new Date(),
+            budget: currentTrip?.budget,
+            participants: currentTrip?.participants?.length || 1
+          }}
+          onRouteAccept={handleRouteAccept}
+        />
+      </AIProvider>
     </>
   );
 };

@@ -73,8 +73,10 @@ const FriendsList: React.FC<FriendsListProps> = ({ compact = false }) => {
         <div style={{
           width: '32px',
           height: '32px',
-          border: '3px solid var(--color-border)',
           borderTop: '3px solid var(--color-primary-ocean)',
+          borderLeft: '3px solid var(--color-border)',
+          borderRight: '3px solid var(--color-border)',
+          borderBottom: '3px solid var(--color-border)',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite',
           margin: '0 auto 1rem'

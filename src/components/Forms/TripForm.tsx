@@ -169,6 +169,9 @@ const TripForm: React.FC<TripFormProps> = ({
         {/* Header */}
         <div style={{
           padding: isMobile ? 'var(--space-lg)' : 'var(--space-xl)',
+          borderTop: 'none',
+          borderLeft: 'none',
+          borderRight: 'none',
           borderBottom: '1px solid var(--color-border)',
           background: 'linear-gradient(135deg, var(--color-primary-sage) 0%, var(--color-secondary-forest) 100%)',
           color: 'white',
@@ -818,6 +821,9 @@ const TripForm: React.FC<TripFormProps> = ({
           <div style={{
             marginTop: 'var(--space-xl)',
             padding: 'var(--space-lg) 0 0 0',
+            borderLeft: 'none',
+            borderRight: 'none',
+            borderBottom: 'none',
             borderTop: '1px solid var(--color-border)',
             display: 'flex',
             gap: 'var(--space-md)',

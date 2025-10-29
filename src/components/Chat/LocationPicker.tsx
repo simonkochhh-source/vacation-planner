@@ -248,7 +248,9 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
             style={{
               flex: 1,
               padding: '12px',
-              border: 'none',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
               borderBottom: `2px solid ${activeTab === 'current' ? '#2563eb' : 'transparent'}`,
               background: 'transparent',
               color: activeTab === 'current' ? '#2563eb' : '#6b7280',
@@ -265,7 +267,9 @@ const LocationPicker: React.FC<LocationPickerProps> = ({
             style={{
               flex: 1,
               padding: '12px',
-              border: 'none',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
               borderBottom: `2px solid ${activeTab === 'custom' ? '#2563eb' : 'transparent'}`,
               background: 'transparent',
               color: activeTab === 'custom' ? '#2563eb' : '#6b7280',

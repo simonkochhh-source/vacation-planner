@@ -67,13 +67,15 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             onClick={onZoomIn}
             style={{
               background: 'var(--color-neutral-cream)',
-              border: 'none',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderBottom: '1px solid #e5e7eb',
               padding: '0.75rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              borderBottom: '1px solid #e5e7eb'
+              justifyContent: 'center'
             }}
             title="Hineinzoomen"
           >
@@ -107,13 +109,15 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             onClick={onLocate}
             style={{
               background: 'var(--color-neutral-cream)',
-              border: 'none',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderBottom: '1px solid #e5e7eb',
               padding: '0.75rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              borderBottom: '1px solid #e5e7eb'
+              justifyContent: 'center'
             }}
             title="Meine Position"
           >
@@ -152,13 +156,15 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             style={{
               background: showRouting ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
               color: showRouting ? 'white' : '#374151',
-              border: 'none',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderBottom: '1px solid #e5e7eb',
               padding: '0.75rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              borderBottom: '1px solid #e5e7eb'
+              justifyContent: 'center'
             }}
             title="Alle Routen"
           >
@@ -169,13 +175,15 @@ const MobileMapControls: React.FC<MobileMapControlsProps> = ({
             style={{
               background: showMeasurement ? 'var(--color-primary-ocean)' : 'var(--color-neutral-cream)',
               color: showMeasurement ? 'white' : '#374151',
-              border: 'none',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderBottom: '1px solid #e5e7eb',
               padding: '0.75rem',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
-              borderBottom: '1px solid #e5e7eb'
+              justifyContent: 'center'
             }}
             title="Messen"
           >

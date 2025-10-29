@@ -787,6 +787,22 @@ export interface PhotoLike {
   created_at: DateString;
 }
 
+export interface ActivityLike {
+  id: UUID;
+  activity_id: string;
+  user_id: UUID;
+  created_at: DateString;
+}
+
+export interface ActivityComment {
+  id: UUID;
+  activity_id: string;
+  user_id: UUID;
+  content: string;
+  created_at: DateString;
+  user_nickname?: string;
+}
+
 export interface PhotoShareWithDetails extends PhotoShare {
   user_nickname: string;
   user_display_name?: string;

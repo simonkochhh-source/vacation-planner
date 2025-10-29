@@ -30,12 +30,49 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
   const [likeCount, setLikeCount] = useState(0);
   const [newComment, setNewComment] = useState('');
   const [comments, setComments] = useState<any[]>([]);
+  const [activityLikes, setActivityLikes] = useState<Map<string, { isLiked: boolean; count: number }>>(new Map());
+  const [activityComments, setActivityComments] = useState<Map<string, any[]>>(new Map());
+  const [newActivityComments, setNewActivityComments] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (user) {
       loadActivityFeed();
     }
   }, [user, maxItems]);
+
+  const loadActivityInteractions = async (activities: ActivityFeedItem[]) => {
+    try {
+      // Get all activity IDs
+      const activityIds = activities.map(a => a.id).filter(Boolean) as string[];
+      if (activityIds.length === 0) return;
+
+      // Load likes and comments for all activities
+      const [likesData, commentsData] = await Promise.all([
+        socialService.getActivityLikes(activityIds).catch(() => []),
+        socialService.getActivityComments(activityIds).catch(() => [])
+      ]);
+
+      // Update state with likes
+      const likesMap = new Map();
+      likesData.forEach((like: any) => {
+        likesMap.set(like.activity_id, {
+          isLiked: like.user_liked,
+          count: like.like_count
+        });
+      });
+      setActivityLikes(likesMap);
+
+      // Update state with comments
+      const commentsMap = new Map();
+      commentsData.forEach((comment: any) => {
+        const existing = commentsMap.get(comment.activity_id) || [];
+        commentsMap.set(comment.activity_id, [...existing, comment]);
+      });
+      setActivityComments(commentsMap);
+    } catch (error) {
+      console.error('Error loading activity interactions:', error);
+    }
+  };
 
   const loadActivityFeed = async () => {
     try {
@@ -84,7 +121,11 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
         .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
         .slice(0, maxItems);
       
+      
       setActivities(allActivities);
+      
+      // Load likes and comments for all activities
+      await loadActivityInteractions(allActivities);
     } catch (error) {
       console.error('Failed to load activity feed:', error);
       setError('Feed konnte nicht geladen werden');
@@ -323,6 +364,46 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
     }
   };
 
+  const handleLikeActivity = async (activity: ActivityFeedItem) => {
+    if (!activity.id) return;
+    
+    try {
+      const currentLike = activityLikes.get(activity.id) || { isLiked: false, count: 0 };
+      
+      // Use the new toggle method which handles both like and unlike
+      const result = await socialService.toggleActivityLike(activity.id);
+      
+      setActivityLikes(prev => new Map(prev.set(activity.id!, {
+        isLiked: result.isLiked,
+        count: result.isLiked ? currentLike.count + 1 : Math.max(0, currentLike.count - 1)
+      })));
+    } catch (error) {
+      console.error('Error toggling activity like:', error);
+      alert('Fehler beim Liken des Beitrags');
+    }
+  };
+
+  const handleAddActivityComment = async (activity: ActivityFeedItem) => {
+    if (!activity.id) return;
+    
+    const commentText = newActivityComments.get(activity.id)?.trim();
+    if (!commentText) return;
+
+    try {
+      const newComment = await socialService.addActivityComment(activity.id, commentText);
+      
+      // Update comments in state
+      const currentComments = activityComments.get(activity.id) || [];
+      setActivityComments(prev => new Map(prev.set(activity.id!, [...currentComments, newComment])));
+      
+      // Clear comment input
+      setNewActivityComments(prev => new Map(prev.set(activity.id!, '')));
+    } catch (error) {
+      console.error('Error adding comment:', error);
+      alert('Fehler beim Hinzufügen des Kommentars');
+    }
+  };
+
   const handleAddComment = async () => {
     if (!newComment.trim() || !selectedPhotoActivity?.metadata?.photo_share_id) return;
 
@@ -427,8 +508,10 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
             <div style={{
               width: '32px',
               height: '32px',
-              border: '3px solid var(--color-border)',
               borderTop: '3px solid var(--color-primary-ocean)',
+              borderLeft: '3px solid var(--color-border)',
+              borderRight: '3px solid var(--color-border)',
+              borderBottom: '3px solid var(--color-border)',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite',
               margin: '0 auto var(--space-md)'
@@ -627,6 +710,197 @@ const SocialActivityFeed: React.FC<SocialActivityFeedProps> = ({
                           </div>
                         )}
                       </div>
+
+                      {/* Like and Comment Buttons for Activity Feed */}
+                      {(() => {
+                        if (!activity.id) return null;
+                        
+                        const likeData = activityLikes.get(activity.id) || { isLiked: false, count: 0 };
+                        const comments = activityComments.get(activity.id) || [];
+                        const commentText = newActivityComments.get(activity.id) || '';
+
+                        return (
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 'var(--space-sm)',
+                            marginTop: 'var(--space-md)',
+                            paddingTop: 'var(--space-sm)',
+                            borderTop: '1px solid var(--color-border)'
+                          }}>
+                            {/* Like and Comment Buttons */}
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 'var(--space-lg)'
+                            }}>
+                              {/* Like Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleLikeActivity(activity);
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--space-xs)',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: 'var(--space-xs) var(--space-sm)',
+                                  borderRadius: 'var(--radius-md)',
+                                  fontSize: 'var(--text-sm)',
+                                  color: likeData.isLiked ? 'var(--color-error)' : 'var(--color-text-secondary)',
+                                  fontWeight: likeData.isLiked ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
+                                  transition: 'all var(--transition-fast)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  if (!likeData.isLiked) {
+                                    e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+                                    e.currentTarget.style.color = 'var(--color-error)';
+                                  }
+                                }}
+                                onMouseLeave={(e) => {
+                                  if (!likeData.isLiked) {
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                    e.currentTarget.style.color = 'var(--color-text-secondary)';
+                                  }
+                                }}
+                              >
+                                <Heart 
+                                  size={16} 
+                                  style={{ 
+                                    fill: likeData.isLiked ? 'currentColor' : 'none'
+                                  }} 
+                                />
+                                <span>{likeData.count > 0 ? `${likeData.count} Like${likeData.count === 1 ? '' : 's'}` : 'Like'}</span>
+                              </button>
+
+                              {/* Comment Button */}
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Focus comment input if it exists
+                                  const commentInput = e.currentTarget.parentElement?.parentElement?.querySelector('.comment-input') as HTMLInputElement;
+                                  if (commentInput) {
+                                    commentInput.focus();
+                                  }
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 'var(--space-xs)',
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: 'pointer',
+                                  padding: 'var(--space-xs) var(--space-sm)',
+                                  borderRadius: 'var(--radius-md)',
+                                  fontSize: 'var(--text-sm)',
+                                  color: 'var(--color-text-secondary)',
+                                  transition: 'all var(--transition-fast)'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+                                  e.currentTarget.style.color = 'var(--color-primary-ocean)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.backgroundColor = 'transparent';
+                                  e.currentTarget.style.color = 'var(--color-text-secondary)';
+                                }}
+                              >
+                                <MessageCircle size={16} />
+                                <span>{comments.length > 0 ? `${comments.length} Kommentar${comments.length === 1 ? '' : 'e'}` : 'Kommentieren'}</span>
+                              </button>
+                            </div>
+
+                            {/* Comment Input */}
+                            <div style={{
+                              display: 'flex',
+                              gap: 'var(--space-sm)',
+                              alignItems: 'center'
+                            }}>
+                              <input
+                                type="text"
+                                placeholder="Kommentar hinzufügen..."
+                                className="comment-input"
+                                value={commentText}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  setNewActivityComments(prev => new Map(prev.set(activity.id!, e.target.value)));
+                                }}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') {
+                                    e.stopPropagation();
+                                    handleAddActivityComment(activity);
+                                  }
+                                }}
+                                onClick={(e) => e.stopPropagation()}
+                                style={{
+                                  flex: 1,
+                                  padding: 'var(--space-sm) var(--space-md)',
+                                  border: '1px solid var(--color-border)',
+                                  borderRadius: 'var(--radius-full)',
+                                  fontSize: 'var(--text-sm)',
+                                  fontFamily: 'var(--font-family-system)',
+                                  background: 'var(--color-surface)',
+                                  color: 'var(--color-text-primary)'
+                                }}
+                              />
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAddActivityComment(activity);
+                                }}
+                                disabled={!commentText.trim()}
+                                style={{
+                                  background: 'transparent',
+                                  border: 'none',
+                                  cursor: commentText.trim() ? 'pointer' : 'not-allowed',
+                                  padding: 'var(--space-sm)',
+                                  borderRadius: 'var(--radius-md)',
+                                  color: commentText.trim() ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
+                                  transition: 'all var(--transition-fast)'
+                                }}
+                              >
+                                <ArrowUp size={16} />
+                              </button>
+                            </div>
+
+                            {/* Show Comments */}
+                            {comments.length > 0 && (
+                              <div style={{
+                                paddingTop: 'var(--space-sm)',
+                                borderTop: '1px solid var(--color-border)'
+                              }}>
+                                {comments.slice(0, 3).map((comment, idx) => (
+                                  <div key={comment.id || idx} style={{
+                                    display: 'flex',
+                                    gap: 'var(--space-sm)',
+                                    marginBottom: 'var(--space-sm)',
+                                    fontSize: 'var(--text-sm)'
+                                  }}>
+                                    <strong style={{ color: 'var(--color-text-primary)' }}>
+                                      {comment.user_nickname || 'User'}:
+                                    </strong>
+                                    <span style={{ color: 'var(--color-text-primary)' }}>
+                                      {comment.content}
+                                    </span>
+                                  </div>
+                                ))}
+                                {comments.length > 3 && (
+                                  <div style={{
+                                    fontSize: 'var(--text-xs)',
+                                    color: 'var(--color-text-secondary)',
+                                    marginTop: 'var(--space-xs)'
+                                  }}>
+                                    ... und {comments.length - 3} weitere Kommentare
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

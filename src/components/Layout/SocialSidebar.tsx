@@ -3,7 +3,6 @@ import { useTripContext } from '../../contexts/TripContext';
 import { useDestinationContext } from '../../contexts/DestinationContext';
 import { useUIContext } from '../../contexts/UIContext';
 import { useAuth } from '../../contexts/AuthContext';
-import { useResponsive } from '../../hooks/useResponsive';
 import { TripStatus, SocialUserProfile } from '../../types';
 import { userStatusService } from '../../services/userStatusService';
 import { chatService, ChatRoomWithInfo } from '../../services/chatService';
@@ -282,8 +281,8 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
   };
 
   const handleAvatarError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
-    console.error('❌ Avatar failed to load:', e.currentTarget.src);
-    console.error('❌ Error details:', e);
+    console.warn('⚠️ Avatar failed to load:', e.currentTarget.src);
+    console.warn('⚠️ This is normal for Google OAuth avatars due to CORS restrictions.');
     setAvatarError(true);
   };
 
@@ -358,16 +357,11 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
   const getAvatarUrl = () => {
     if (avatarError) return null;
     
-    // Debug logging - more detailed
-    console.log('🔍 SocialSidebar - Full User object:', JSON.stringify(user, null, 2));
-    console.log('🔍 SocialSidebar - User Profile from DB:', userProfile);
-    console.log('🔍 SocialSidebar - User metadata:', user?.user_metadata);
-    console.log('🔍 SocialSidebar - Identities:', user?.identities);
-    
     // Priority 1: Check if user has uploaded avatar to Supabase Storage (stored in user profile)
     const supabaseAvatarUrl = userProfile?.avatar_url;
     
     // Priority 2: Check OAuth provider avatar URLs from user metadata
+    // Skip Google OAuth avatars that commonly fail due to CORS
     const oauthAvatarUrl = user?.user_metadata?.avatar_url || 
                           user?.user_metadata?.picture ||
                           user?.user_metadata?.image_url ||
@@ -381,23 +375,18 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
                           user?.identities?.[0]?.identity_data?.photo ||
                           user?.identities?.[0]?.identity_data?.image;
     
-    // Use Supabase avatar first (from DB profile), then fallback to OAuth avatar
-    const finalAvatarUrl = supabaseAvatarUrl || oauthAvatarUrl;
+    // Filter out problematic Google OAuth avatar URLs
+    const isGoogleAvatarUrl = oauthAvatarUrl && oauthAvatarUrl.includes('googleusercontent.com');
+    const safeOAuthAvatarUrl = isGoogleAvatarUrl ? null : oauthAvatarUrl;
     
-    console.log('🔍 SocialSidebar - Avatar sources:', {
-      user_profile_avatar: supabaseAvatarUrl,
-      metadata_avatar_url: user?.user_metadata?.avatar_url,
-      metadata_picture: user?.user_metadata?.picture,
-      metadata_image_url: user?.user_metadata?.image_url,
-      metadata_profile_picture: user?.user_metadata?.profile_picture,
-      metadata_photo: user?.user_metadata?.photo,
-      metadata_image: user?.user_metadata?.image,
-      identity_avatar_url: user?.identities?.[0]?.identity_data?.avatar_url,
-      identity_picture: user?.identities?.[0]?.identity_data?.picture,
-      identity_image_url: user?.identities?.[0]?.identity_data?.image_url,
-      identity_profile_picture: user?.identities?.[0]?.identity_data?.profile_picture,
-      identity_photo: user?.identities?.[0]?.identity_data?.photo,
-      identity_image: user?.identities?.[0]?.identity_data?.image,
+    // Use Supabase avatar first (from DB profile), then fallback to safe OAuth avatar
+    const finalAvatarUrl = supabaseAvatarUrl || safeOAuthAvatarUrl;
+    
+    console.log('🔍 SocialSidebar - Avatar selection:', {
+      supabase_avatar: supabaseAvatarUrl,
+      oauth_avatar: oauthAvatarUrl,
+      is_google_avatar: isGoogleAvatarUrl,
+      safe_oauth_avatar: safeOAuthAvatarUrl,
       final_avatar_url: finalAvatarUrl,
       avatar_error_state: avatarError
     });
@@ -806,15 +795,17 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
             style={{
               flex: 1,
               padding: 'var(--space-3)',
-              borderWidth: '0',
+              borderTop: 'none',
+              borderLeft: 'none',
+              borderRight: 'none',
+              borderBottomWidth: '2px',
+              borderBottomStyle: 'solid',
+              borderBottomColor: isActive ? 'var(--color-primary-sage)' : 'transparent',
               background: 'transparent',
               cursor: 'pointer',
               fontSize: 'var(--text-sm)',
               fontWeight: 'var(--font-weight-medium)',
               color: isActive ? 'var(--color-primary-sage)' : 'var(--color-text-secondary)',
-              borderBottomWidth: '2px',
-              borderBottomStyle: 'solid',
-              borderBottomColor: isActive ? 'var(--color-primary-sage)' : 'transparent',
               transition: 'all var(--motion-duration-short) var(--motion-easing-standard)',
               display: 'flex',
               alignItems: 'center',

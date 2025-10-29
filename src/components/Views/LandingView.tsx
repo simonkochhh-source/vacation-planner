@@ -293,6 +293,7 @@ const LandingView: React.FC = () => {
         </p>
       </div>
 
+
       {/* Social Activity Feed Section */}
       <div style={{ 
         maxWidth: '1200px', 

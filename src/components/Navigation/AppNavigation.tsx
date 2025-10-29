@@ -119,6 +119,9 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
           alignItems: 'center',
           backgroundColor: 'var(--color-surface)',
           borderTop: '1px solid var(--color-border)',
+          borderLeft: 'none',
+          borderRight: 'none',
+          borderBottom: 'none',
           position: 'fixed' as const,
           bottom: 0,
           left: 0,
@@ -174,6 +177,9 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
         return {
           ...headerItemStyles,
           backgroundColor: 'rgba(255, 255, 255, 0.2)',
+          borderTop: '2px solid transparent',
+          borderLeft: '2px solid transparent',
+          borderRight: '2px solid transparent',
           borderBottom: '2px solid white'
         };
       }

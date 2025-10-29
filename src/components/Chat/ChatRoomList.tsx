@@ -391,14 +391,16 @@ const ChatRoomList: React.FC<ChatRoomListProps> = ({
                   width: '100%',
                   padding: '16px',
                   textAlign: 'left',
-                  border: 'none',
+                  borderTop: 'none',
+                  borderRight: 'none',
+                  borderBottom: 'none',
+                  borderLeft: activeRoomId === room.id ? '4px solid #2563eb' : '4px solid transparent',
                   borderRadius: '12px',
                   cursor: 'pointer',
                   transition: 'all 0.2s ease-out',
                   background: activeRoomId === room.id 
                     ? 'linear-gradient(135deg, #dbeafe 0%, #eff6ff 100%)'
                     : '#ffffff',
-                  borderLeft: activeRoomId === room.id ? '4px solid #2563eb' : '4px solid transparent',
                   boxShadow: activeRoomId === room.id 
                     ? '0 4px 12px rgba(37, 99, 235, 0.15)'
                     : '0 2px 4px rgba(0, 0, 0, 0.05)'

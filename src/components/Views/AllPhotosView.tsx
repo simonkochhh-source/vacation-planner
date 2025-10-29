@@ -414,8 +414,10 @@ const AllPhotosView: React.FC = () => {
         <div style={{
           width: '40px',
           height: '40px',
-          border: '3px solid var(--color-neutral-mist)',
           borderTop: '3px solid var(--color-primary-sage)',
+          borderLeft: '3px solid var(--color-neutral-mist)',
+          borderRight: '3px solid var(--color-neutral-mist)',
+          borderBottom: '3px solid var(--color-neutral-mist)',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite'
         }} />

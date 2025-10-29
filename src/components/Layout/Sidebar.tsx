@@ -5,6 +5,7 @@ import { useUIContext } from '../../contexts/UIContext';
 import TripForm from '../Forms/TripForm';
 import ModernButton from '../UI/ModernButton';
 import Card from '../Common/Card';
+import ActivityNotifications from '../Social/ActivityNotifications';
 import { 
   Plus,
   Plane,
@@ -256,7 +257,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           height: isMobile ? `calc(100vh - ${headerHeight + 4}px)` : '100%',
           width: isMobile ? '280px' : 'var(--sidebar-width)',
           background: 'var(--color-background)',
-          borderRight: isMobile ? 'none' : '1px solid var(--color-border)',
+          border: isMobile ? 'none' : '1px solid var(--color-border)',
+          borderLeft: 'none',
+          borderTop: 'none',
+          borderBottom: 'none',
           overflowY: 'auto',
           zIndex: isMobile ? 40 : 10,
           padding: 'var(--space-lg)',
@@ -465,6 +469,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, isMobile = false, onClose }) 
           </div>
         )}
       </Card>
+
+      {/* Activity Notifications */}
+      <div style={{ marginBottom: 'var(--space-lg)' }}>
+        <ActivityNotifications compact={true} />
+      </div>
 
       {/* Current Trip Section */}
       {currentTrip ? (

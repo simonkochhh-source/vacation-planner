@@ -22,7 +22,9 @@ import {
   ChevronRight,
   Target,
   CheckCircle,
-  Clock
+  Clock,
+  Heart,
+  ArrowUp
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTripContext } from '../../contexts/TripContext';
@@ -46,6 +48,11 @@ const MyProfileView: React.FC = () => {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [friendsSearchQuery, setFriendsSearchQuery] = useState('');
+  
+  // Activity interactions state
+  const [activityLikes, setActivityLikes] = useState<Map<string, { isLiked: boolean; count: number }>>(new Map());
+  const [activityComments, setActivityComments] = useState<Map<string, any[]>>(new Map());
+  const [newActivityComments, setNewActivityComments] = useState<Map<string, string>>(new Map());
 
   useEffect(() => {
     if (user) {
@@ -113,6 +120,9 @@ const MyProfileView: React.FC = () => {
           .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
         
         setMyPosts(allPosts);
+        
+        // Load likes and comments for all posts
+        await loadPostInteractions(allPosts);
       } catch (error) {
         console.error('Failed to load user posts:', error);
         setMyPosts([]);
@@ -122,6 +132,90 @@ const MyProfileView: React.FC = () => {
       console.error('Failed to load profile data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPostInteractions = async (posts: ActivityFeedItem[]) => {
+    if (!user || posts.length === 0) return;
+
+    try {
+      const activityIds = posts.map(post => post.id).filter(Boolean) as string[];
+      
+      if (activityIds.length > 0) {
+        // Load likes
+        const likes = await socialService.getActivityLikes(activityIds);
+        const likesMap = new Map();
+        likes.forEach(like => {
+          likesMap.set(like.activity_id, {
+            isLiked: like.user_liked,
+            count: like.like_count
+          });
+        });
+        setActivityLikes(likesMap);
+
+        // Load comments
+        const comments = await socialService.getActivityComments(activityIds);
+        const commentsMap = new Map();
+        activityIds.forEach(id => {
+          commentsMap.set(id, comments.filter(comment => comment.activity_id === id));
+        });
+        setActivityComments(commentsMap);
+      }
+    } catch (error) {
+      console.error('Failed to load post interactions:', error);
+    }
+  };
+
+  const handleLikeActivity = async (activity: ActivityFeedItem) => {
+    if (!activity.id) return;
+
+    try {
+      const currentData = activityLikes.get(activity.id) || { isLiked: false, count: 0 };
+      const newIsLiked = !currentData.isLiked;
+      const newCount = newIsLiked ? currentData.count + 1 : Math.max(0, currentData.count - 1);
+
+      // Optimistic update
+      setActivityLikes(prev => new Map(prev.set(activity.id!, {
+        isLiked: newIsLiked,
+        count: newCount
+      })));
+
+      // Call API
+      if (newIsLiked) {
+        await socialService.likeActivity(activity.id);
+      } else {
+        await socialService.unlikeActivity(activity.id);
+      }
+    } catch (error) {
+      console.error('Failed to toggle like:', error);
+      // Revert optimistic update on error
+      const currentData = activityLikes.get(activity.id!) || { isLiked: false, count: 0 };
+      setActivityLikes(prev => new Map(prev.set(activity.id!, {
+        isLiked: !currentData.isLiked,
+        count: currentData.isLiked ? currentData.count - 1 : currentData.count + 1
+      })));
+    }
+  };
+
+  const handleAddActivityComment = async (activity: ActivityFeedItem) => {
+    if (!activity.id) return;
+
+    const commentText = newActivityComments.get(activity.id) || '';
+    if (!commentText.trim()) return;
+
+    try {
+      const newComment = await socialService.addActivityComment(activity.id, commentText.trim());
+      
+      // Add to local state
+      setActivityComments(prev => {
+        const current = prev.get(activity.id!) || [];
+        return new Map(prev.set(activity.id!, [...current, newComment]));
+      });
+
+      // Clear input
+      setNewActivityComments(prev => new Map(prev.set(activity.id!, '')));
+    } catch (error) {
+      console.error('Failed to add comment:', error);
     }
   };
 
@@ -226,8 +320,10 @@ const MyProfileView: React.FC = () => {
         <div style={{
           width: '32px',
           height: '32px',
-          border: '3px solid var(--color-border)',
           borderTop: '3px solid var(--color-primary-ocean)',
+          borderLeft: '3px solid var(--color-border)',
+          borderRight: '3px solid var(--color-border)',
+          borderBottom: '3px solid var(--color-border)',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite',
           margin: '0 auto var(--space-md)'
@@ -1168,30 +1264,211 @@ const MyProfileView: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Engagement Stats */}
-                  {post.metadata?.like_count !== undefined && (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 'var(--space-lg)',
-                      fontSize: 'var(--text-sm)',
-                      color: 'var(--color-text-secondary)',
-                      borderTop: '1px solid var(--color-border)',
-                      paddingTop: 'var(--space-md)'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
-                        <Share size={14} style={{ color: '#ef4444' }} />
-                        {post.metadata.like_count} Like{post.metadata.like_count === 1 ? '' : 's'}
-                      </div>
-                      
-                      {post.trip_name && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
-                          <Calendar size={14} />
-                          {post.trip_name}
+                  {/* Like and Comment Interaction Section */}
+                  {(() => {
+                    if (!post.id) return null;
+                    
+                    const likeData = activityLikes.get(post.id) || { isLiked: false, count: 0 };
+                    const comments = activityComments.get(post.id) || [];
+                    const commentText = newActivityComments.get(post.id) || '';
+
+                    return (
+                      <div style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: 'var(--space-sm)',
+                        marginTop: 'var(--space-md)',
+                        paddingTop: 'var(--space-sm)',
+                        borderTop: '1px solid var(--color-border)'
+                      }}>
+                        {/* Like and Comment Buttons */}
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 'var(--space-lg)'
+                        }}>
+                          {/* Like Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleLikeActivity(post);
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 'var(--space-xs)',
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: 'var(--space-xs) var(--space-sm)',
+                              borderRadius: 'var(--radius-md)',
+                              fontSize: 'var(--text-sm)',
+                              color: likeData.isLiked ? 'var(--color-error)' : 'var(--color-text-secondary)',
+                              fontWeight: likeData.isLiked ? 'var(--font-weight-semibold)' : 'var(--font-weight-normal)',
+                              transition: 'all var(--transition-fast)'
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!likeData.isLiked) {
+                                e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+                                e.currentTarget.style.color = 'var(--color-error)';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!likeData.isLiked) {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = 'var(--color-text-secondary)';
+                              }
+                            }}
+                          >
+                            <Heart 
+                              size={16} 
+                              style={{ 
+                                fill: likeData.isLiked ? 'currentColor' : 'none'
+                              }} 
+                            />
+                            <span>{likeData.count > 0 ? `${likeData.count} Like${likeData.count === 1 ? '' : 's'}` : 'Like'}</span>
+                          </button>
+
+                          {/* Comment Button */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              // Focus comment input
+                              const commentInput = e.currentTarget.parentElement?.parentElement?.querySelector('.comment-input') as HTMLInputElement;
+                              if (commentInput) {
+                                commentInput.focus();
+                              }
+                            }}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 'var(--space-xs)',
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              padding: 'var(--space-xs) var(--space-sm)',
+                              borderRadius: 'var(--radius-md)',
+                              fontSize: 'var(--text-sm)',
+                              color: 'var(--color-text-secondary)',
+                              transition: 'all var(--transition-fast)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-neutral-mist)';
+                              e.currentTarget.style.color = 'var(--color-primary-ocean)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = 'var(--color-text-secondary)';
+                            }}
+                          >
+                            <MessageCircle size={16} />
+                            <span>{comments.length > 0 ? `${comments.length} Kommentar${comments.length === 1 ? '' : 'e'}` : 'Kommentieren'}</span>
+                          </button>
+
+                          {/* Trip Info */}
+                          {post.trip_name && (
+                            <div style={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              gap: 'var(--space-xs)',
+                              fontSize: 'var(--text-sm)',
+                              color: 'var(--color-text-secondary)',
+                              marginLeft: 'auto'
+                            }}>
+                              <Calendar size={14} />
+                              {post.trip_name}
+                            </div>
+                          )}
                         </div>
-                      )}
-                    </div>
-                  )}
+
+                        {/* Comment Input */}
+                        <div style={{
+                          display: 'flex',
+                          gap: 'var(--space-sm)',
+                          alignItems: 'center'
+                        }}>
+                          <input
+                            type="text"
+                            placeholder="Kommentar hinzufügen..."
+                            className="comment-input"
+                            value={commentText}
+                            onChange={(e) => {
+                              e.stopPropagation();
+                              setNewActivityComments(prev => new Map(prev.set(post.id!, e.target.value)));
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.stopPropagation();
+                                handleAddActivityComment(post);
+                              }
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{
+                              flex: 1,
+                              padding: 'var(--space-sm) var(--space-md)',
+                              border: '1px solid var(--color-border)',
+                              borderRadius: 'var(--radius-full)',
+                              fontSize: 'var(--text-sm)',
+                              fontFamily: 'var(--font-family-system)',
+                              background: 'var(--color-surface)',
+                              color: 'var(--color-text-primary)'
+                            }}
+                          />
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAddActivityComment(post);
+                            }}
+                            disabled={!commentText.trim()}
+                            style={{
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: commentText.trim() ? 'pointer' : 'not-allowed',
+                              padding: 'var(--space-sm)',
+                              borderRadius: 'var(--radius-md)',
+                              color: commentText.trim() ? 'var(--color-primary-ocean)' : 'var(--color-text-secondary)',
+                              transition: 'all var(--transition-fast)'
+                            }}
+                          >
+                            <ArrowUp size={16} />
+                          </button>
+                        </div>
+
+                        {/* Show Comments */}
+                        {comments.length > 0 && (
+                          <div style={{
+                            paddingTop: 'var(--space-sm)',
+                            borderTop: '1px solid var(--color-border)'
+                          }}>
+                            {comments.slice(0, 3).map((comment, idx) => (
+                              <div key={comment.id || idx} style={{
+                                display: 'flex',
+                                gap: 'var(--space-sm)',
+                                marginBottom: 'var(--space-sm)',
+                                fontSize: 'var(--text-sm)'
+                              }}>
+                                <strong style={{ color: 'var(--color-text-primary)' }}>
+                                  {comment.user_nickname || 'User'}:
+                                </strong>
+                                <span style={{ color: 'var(--color-text-primary)' }}>
+                                  {comment.content}
+                                </span>
+                              </div>
+                            ))}
+                            {comments.length > 3 && (
+                              <div style={{
+                                fontSize: 'var(--text-xs)',
+                                color: 'var(--color-text-secondary)',
+                                marginTop: 'var(--space-xs)'
+                              }}>
+                                ... und {comments.length - 3} weitere Kommentare
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               ))}
             </div>

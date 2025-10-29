@@ -1346,6 +1346,392 @@ class SocialService implements SocialServiceInterface {
 
     if (error) throw error;
   }
+
+  // =====================================================
+  // Activity Likes and Comments
+  // =====================================================
+
+  /**
+   * Like an activity
+   */
+  async likeActivity(activityId: string): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Check if already liked
+    const { data: existingLike } = await supabase
+      .from('activity_likes')
+      .select('id')
+      .eq('activity_id', activityId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingLike) {
+      throw new Error('Activity already liked');
+    }
+
+    const { data: like, error } = await supabase
+      .from('activity_likes')
+      .insert({
+        activity_id: activityId,
+        user_id: user.id
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return like;
+  }
+
+  /**
+   * Toggle activity like - likes if not liked, unlikes if already liked
+   */
+  async toggleActivityLike(activityId: string): Promise<{ isLiked: boolean; like?: any }> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Check if already liked
+    const { data: existingLike } = await supabase
+      .from('activity_likes')
+      .select('id')
+      .eq('activity_id', activityId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (existingLike) {
+      // Unlike the activity
+      await this.unlikeActivity(activityId);
+      return { isLiked: false };
+    } else {
+      // Like the activity
+      const { data: like, error } = await supabase
+        .from('activity_likes')
+        .insert({
+          activity_id: activityId,
+          user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return { isLiked: true, like };
+    }
+  }
+
+  /**
+   * Unlike an activity
+   */
+  async unlikeActivity(activityId: string): Promise<void> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    const { error } = await supabase
+      .from('activity_likes')
+      .delete()
+      .eq('activity_id', activityId)
+      .eq('user_id', user.id);
+
+    if (error) throw error;
+  }
+
+  /**
+   * Add a comment to an activity
+   */
+  async addActivityComment(activityId: string, content: string): Promise<any> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error('User not authenticated');
+
+    // Get user's nickname for the comment
+    const { data: userProfile } = await supabase
+      .from('user_profiles')
+      .select('nickname')
+      .eq('id', user.id)
+      .single();
+
+    const { data: comment, error } = await supabase
+      .from('activity_comments')
+      .insert({
+        activity_id: activityId,
+        user_id: user.id,
+        content: content.trim()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    return {
+      ...comment,
+      user_nickname: userProfile?.nickname || 'User'
+    };
+  }
+
+  /**
+   * Get likes for activities
+   */
+  async getActivityLikes(activityIds: string[]): Promise<any[]> {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return [];
+
+    if (activityIds.length === 0) return [];
+
+    try {
+      // Get like counts and user's like status for each activity
+      const { data, error } = await supabase
+        .from('activity_likes')
+        .select('activity_id, user_id')
+        .in('activity_id', activityIds);
+
+      if (error) {
+        console.warn('activity_likes table not found, returning empty array:', error);
+        return [];
+      }
+
+      // Process the data to get counts and user's like status
+      const likesMap = new Map();
+      
+      data?.forEach(like => {
+        const existing = likesMap.get(like.activity_id) || { count: 0, user_liked: false };
+        existing.count += 1;
+        if (like.user_id === user.id) {
+          existing.user_liked = true;
+        }
+        likesMap.set(like.activity_id, existing);
+      });
+
+      // Convert to array format
+      return activityIds.map(activityId => ({
+        activity_id: activityId,
+        like_count: likesMap.get(activityId)?.count || 0,
+        user_liked: likesMap.get(activityId)?.user_liked || false
+      }));
+    } catch (error) {
+      console.warn('Error fetching activity likes:', error);
+      return [];
+    }
+  }
+
+  // =====================================================
+  // Activity Notifications
+  // =====================================================
+
+  /**
+   * Get activity notifications for the current user
+   * Returns likes and comments on their posts
+   */
+  async getActivityNotifications(limit = 20): Promise<any[]> {
+    console.log('🔄 socialService.getActivityNotifications: Method called');
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      console.log('⚠️ socialService: No user found, returning empty array');
+      return [];
+    }
+    console.log('✅ socialService: User found:', user.id);
+
+    try {
+      // APPROACH: Find ALL likes and comments where someone else interacted with the current user's content
+      // Instead of looking for specific user_activities, we'll look for any activity_id that belongs to this user
+      
+      // Get ALL likes excluding user's own likes
+      const { data: allLikes, error: likesError } = await supabase
+        .from('activity_likes')
+        .select(`
+          activity_id,
+          user_id,
+          created_at
+        `)
+        .neq('user_id', user.id) // Exclude user's own likes
+        .order('created_at', { ascending: false })
+        .limit(50); // Get more to filter later
+
+
+      // Get ALL comments excluding user's own comments
+      const { data: allComments } = await supabase
+        .from('activity_comments')
+        .select(`
+          activity_id,
+          user_id,
+          content,
+          created_at
+        `)
+        .neq('user_id', user.id) // Exclude user's own comments
+        .order('created_at', { ascending: false })
+        .limit(50); // Get more to filter later
+
+
+      // Now we need to determine which activities belong to the current user
+      // We'll create notifications for ALL likes/comments and let the UI/logic determine relevance
+      const likes = allLikes || [];
+      const comments = allComments || [];
+
+      // Get all unique user IDs from likes and comments
+      const allUserIds = [
+        ...(likes?.map(l => l.user_id) || []),
+        ...(comments?.map(c => c.user_id) || [])
+      ];
+      const uniqueUserIds = Array.from(new Set(allUserIds));
+
+      // Get user profiles for all users who liked/commented
+      const userProfiles = new Map();
+      if (uniqueUserIds.length > 0) {
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('id, nickname, avatar_url')
+          .in('id', uniqueUserIds);
+
+        profiles?.forEach(profile => {
+          userProfiles.set(profile.id, profile);
+        });
+      }
+
+      // Combine and format notifications
+      const notifications: any[] = [];
+
+      // Process likes - create notifications for ALL likes (assume they're on user's content)
+      likes?.forEach(like => {
+        const userProfile = userProfiles.get(like.user_id);
+        
+        // For now, we'll assume all likes are on social posts and treat them as general posts
+        notifications.push({
+          id: `like_${like.activity_id}_${like.created_at}`,
+          type: 'like',
+          activityType: 'social_post', // Generic type for social posts
+          isPhoto: false, // We'll determine this later if needed
+          isTrip: false,  // We'll determine this later if needed
+          activityTitle: 'Post',
+          activityMetadata: {},
+          userName: userProfile?.nickname || 'Ein Nutzer',
+          userAvatar: userProfile?.avatar_url,
+          createdAt: like.created_at,
+          activityId: like.activity_id
+        });
+      });
+
+      // Process comments - create notifications for ALL comments (assume they're on user's content)
+      comments?.forEach(comment => {
+        const userProfile = userProfiles.get(comment.user_id);
+        
+        // For now, we'll assume all comments are on social posts and treat them as general posts
+        notifications.push({
+          id: `comment_${comment.activity_id}_${comment.created_at}`,
+          type: 'comment',
+          activityType: 'social_post', // Generic type for social posts
+          isPhoto: false, // We'll determine this later if needed
+          isTrip: false,  // We'll determine this later if needed
+          activityTitle: 'Post',
+          activityMetadata: {},
+          userName: userProfile?.nickname || 'Ein Nutzer',
+          userAvatar: userProfile?.avatar_url,
+          content: comment.content,
+          createdAt: comment.created_at,
+          activityId: comment.activity_id
+        });
+      });
+
+      // Sort by creation date (newest first) and limit
+      return notifications
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .slice(0, limit);
+
+    } catch (error) {
+      console.error('❌ Error loading activity notifications:', error);
+      console.error('❌ Error details:', error.message);
+      console.error('❌ Error stack:', error.stack);
+      return [];
+    }
+  }
+
+  /**
+   * Get unread notification count
+   */
+  async getUnreadNotificationCount(): Promise<number> {
+    try {
+      const notifications = await this.getActivityNotifications(50);
+      // For now, consider all notifications as unread
+      // In the future, you could add a read_at field to track read status
+      return notifications.length;
+    } catch (error) {
+      console.error('Error getting unread notification count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Get comments for activities
+   */
+  async getActivityComments(activityIds: string[]): Promise<any[]> {
+    if (activityIds.length === 0) return [];
+
+    try {
+      // Try with user_profiles join first - get ALL fields for debugging
+      const { data, error } = await supabase
+        .from('activity_comments')
+        .select(`
+          *,
+          user_profiles(*)
+        `)
+        .in('activity_id', activityIds)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      return (data || []).map(comment => {
+        const profile = (comment.user_profiles as any);
+        const displayName = profile?.display_name || profile?.nickname || profile?.name || profile?.username || 'User';
+        
+        return {
+          ...comment,
+          user_nickname: displayName
+        };
+      });
+    } catch (joinError) {
+      console.warn('Failed to join with user_profiles, falling back to manual profile lookup:', joinError);
+      
+      try {
+        // Fallback: Get comments first, then look up user profiles separately
+        const { data: comments, error } = await supabase
+          .from('activity_comments')
+          .select('*')
+          .in('activity_id', activityIds)
+          .order('created_at', { ascending: true });
+
+        if (error) throw error;
+
+        if (!comments || comments.length === 0) {
+          return [];
+        }
+
+        // Get all unique user IDs from comments
+        const userIds = Array.from(new Set(comments.map(comment => comment.user_id)));
+
+        // Fetch user profiles for all users who commented - including ALL fields for debugging
+        const { data: profiles, error: profileError } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .in('id', userIds);
+
+        // Create a map for quick lookup (ignore profile errors, just use 'User' as fallback)
+        const profileMap = new Map();
+        if (!profileError && profiles) {
+          profiles.forEach(profile => {
+            // Use display_name first for comments, then nickname as fallback
+            const displayName = profile.display_name || profile.nickname || profile.name || profile.username || 'User';
+            
+            profileMap.set(profile.id, displayName);
+          });
+        }
+
+        // Combine comments with nicknames
+        return comments.map(comment => ({
+          ...comment,
+          user_nickname: profileMap.get(comment.user_id) || 'User'
+        }));
+      } catch (tableError) {
+        console.warn('activity_comments table does not exist yet:', tableError);
+        return []; // Return empty array if table doesn't exist
+      }
+    }
+  }
 }
 
 // Export singleton instance

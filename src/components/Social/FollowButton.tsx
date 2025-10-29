@@ -228,8 +228,10 @@ const FollowButton: React.FC<FollowButtonProps> = ({
             <div style={{
               width: size === 'sm' ? '14px' : '16px',
               height: size === 'sm' ? '14px' : '16px',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
               borderTop: '2px solid white',
+              borderLeft: '2px solid rgba(255, 255, 255, 0.3)',
+              borderRight: '2px solid rgba(255, 255, 255, 0.3)',
+              borderBottom: '2px solid rgba(255, 255, 255, 0.3)',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite'
             }} />
@@ -255,8 +257,10 @@ const FollowButton: React.FC<FollowButtonProps> = ({
             <div style={{
               width: size === 'sm' ? '14px' : '16px',
               height: size === 'sm' ? '14px' : '16px',
-              border: '2px solid rgba(255, 255, 255, 0.3)',
               borderTop: '2px solid white',
+              borderLeft: '2px solid rgba(255, 255, 255, 0.3)',
+              borderRight: '2px solid rgba(255, 255, 255, 0.3)',
+              borderBottom: '2px solid rgba(255, 255, 255, 0.3)',
               borderRadius: '50%',
               animation: 'spin 1s linear infinite'
             }} />
