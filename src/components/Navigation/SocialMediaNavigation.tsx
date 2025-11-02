@@ -88,7 +88,7 @@ const SocialMediaNavigation: React.FC = () => {
         updateUIState({ currentView: 'photos' });
         break;
       case 'trip':
-        updateUIState({ currentView: 'trips', showCreateTripModal: true });
+        updateUIState({ currentView: 'trips' });
         break;
       case 'story':
         // Open story creation
