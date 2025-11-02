@@ -417,7 +417,7 @@ export class SupabaseService {
           end_date: trip.endDate,
           budget: trip.budget || null,
           participants: trip.participants || null,
-          status: toTripStatus(trip.status),
+          status: toSupabaseTripStatus(trip.status),
           tags: trip.tags || null,
           privacy: toTripPrivacy(trip.privacy),
           owner_id: userId, // Set current user as owner

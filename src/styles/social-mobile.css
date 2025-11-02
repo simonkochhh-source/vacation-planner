@@ -1,0 +1,602 @@
+/* Social Media Mobile Optimizations */
+/* Based on 75-95% smartphone usage analysis */
+
+:root {
+  /* Social Media specific variables */
+  --social-header-height: 60px;
+  --social-bottom-nav-height: calc(70px + env(safe-area-inset-bottom));
+  --social-content-padding: 0; /* Full-width content like Instagram */
+  --social-story-height: 100px;
+  --social-feed-gap: 0; /* No gaps between posts */
+  
+  /* Touch-optimized sizing for social interactions */
+  --social-touch-target: 48px;
+  --social-touch-comfortable: 52px;
+  --social-like-button: 44px;
+  --social-avatar-sm: 32px;
+  --social-avatar-md: 40px;
+  --social-avatar-lg: 56px;
+  
+  /* Social Media typography - optimized for quick scanning */
+  --social-text-xs: 11px;
+  --social-text-sm: 12px;
+  --social-text-base: 14px;
+  --social-text-lg: 16px;
+  --social-text-xl: 18px;
+  
+  /* Social Media specific colors */
+  --social-like-color: #ff3040;
+  --social-verified-color: #1da1f2;
+  --social-story-gradient: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  
+  /* Animation timings for social interactions */
+  --social-quick-feedback: 150ms;
+  --social-heart-animation: 300ms;
+  --social-swipe-threshold: 100px;
+}
+
+/* Full-screen mobile layout for social experience */
+@media (max-width: 768px) {
+  
+  /* Remove all gaps and padding for immersive experience */
+  .social-mobile-app {
+    padding: 0;
+    margin: 0;
+    background: var(--color-background);
+    overflow-x: hidden;
+  }
+  
+  /* Social Media Header - sticky and translucent */
+  .social-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(var(--social-header-height) + env(safe-area-inset-top));
+    background: rgba(var(--color-surface-rgb), 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--color-outline-variant);
+    z-index: 100;
+    display: flex;
+    align-items: flex-end;
+    padding: 0 var(--space-4) var(--space-3);
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  /* Full-width content area */
+  .social-content {
+    padding-top: calc(var(--social-header-height) + env(safe-area-inset-top));
+    padding-bottom: var(--social-bottom-nav-height);
+    min-height: 100vh;
+    background: var(--color-background);
+  }
+  
+  /* Story row (Instagram/WhatsApp style) */
+  .social-stories {
+    display: flex;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-outline-variant);
+  }
+  
+  .social-stories::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .social-story {
+    flex-shrink: 0;
+    width: var(--social-avatar-lg);
+    height: var(--social-avatar-lg);
+    border-radius: 50%;
+    background: var(--social-story-gradient);
+    padding: 2px;
+    cursor: pointer;
+    transition: transform var(--social-quick-feedback);
+  }
+  
+  .social-story:active {
+    transform: scale(0.95);
+  }
+  
+  .social-story-avatar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 3px solid var(--color-surface);
+    object-fit: cover;
+  }
+  
+  /* Feed posts - Instagram style */
+  .social-post {
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-outline-variant);
+    position: relative;
+  }
+  
+  /* Post header with user info */
+  .social-post-header {
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .social-user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex: 1;
+  }
+  
+  .social-avatar {
+    width: var(--social-avatar-md);
+    height: var(--social-avatar-md);
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--color-primary-container);
+  }
+  
+  .social-username {
+    font-weight: 600;
+    font-size: var(--social-text-base);
+    color: var(--color-on-surface);
+  }
+  
+  .social-verified {
+    color: var(--social-verified-color);
+    margin-left: var(--space-1);
+  }
+  
+  .social-time {
+    font-size: var(--social-text-xs);
+    color: var(--color-on-surface-variant);
+    margin-top: 2px;
+  }
+  
+  /* Image container - full width, aspect ratio maintained */
+  .social-image-container {
+    position: relative;
+    width: 100%;
+    background: var(--color-surface-variant);
+    overflow: hidden;
+  }
+  
+  .social-image {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    background: var(--color-surface-variant);
+  }
+  
+  /* Square aspect ratio for consistency */
+  .social-image-square {
+    aspect-ratio: 1 / 1;
+    object-fit: cover;
+  }
+  
+  /* Double-tap overlay for like animation */
+  .social-like-overlay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 60px;
+    color: var(--social-like-color);
+    opacity: 0;
+    pointer-events: none;
+    animation: socialHeartPop var(--social-heart-animation) ease-out;
+  }
+  
+  /* Actions row */
+  .social-actions {
+    padding: var(--space-3) var(--space-4);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .social-actions-left {
+    display: flex;
+    gap: var(--space-2);
+  }
+  
+  .social-action-button {
+    background: transparent;
+    border: none;
+    padding: var(--space-2);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all var(--social-quick-feedback);
+    min-width: var(--social-touch-target);
+    min-height: var(--social-touch-target);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .social-action-button:active {
+    transform: scale(0.9);
+    background: rgba(var(--color-on-surface-rgb), 0.05);
+  }
+  
+  .social-like-button {
+    color: var(--color-on-surface-variant);
+    transition: color var(--social-quick-feedback);
+  }
+  
+  .social-like-button.liked {
+    color: var(--social-like-color);
+    animation: socialLikeBounce var(--social-heart-animation) ease-out;
+  }
+  
+  .social-save-button {
+    color: var(--color-on-surface-variant);
+    transition: color var(--social-quick-feedback);
+  }
+  
+  .social-save-button.saved {
+    color: var(--color-primary);
+  }
+  
+  /* Engagement stats */
+  .social-engagement {
+    padding: 0 var(--space-4) var(--space-3);
+    font-size: var(--social-text-sm);
+  }
+  
+  .social-likes {
+    font-weight: 600;
+    color: var(--color-on-surface);
+    margin-bottom: 4px;
+  }
+  
+  .social-view-comments {
+    color: var(--color-on-surface-variant);
+    background: none;
+    border: none;
+    padding: 0;
+    font-size: var(--social-text-sm);
+    cursor: pointer;
+    text-align: left;
+  }
+  
+  /* Post content/caption */
+  .social-caption {
+    padding: 0 var(--space-4) var(--space-3);
+    font-size: var(--social-text-base);
+    line-height: 1.4;
+    color: var(--color-on-surface);
+  }
+  
+  .social-caption-username {
+    font-weight: 600;
+    margin-right: var(--space-2);
+  }
+  
+  /* Bottom navigation - Instagram style */
+  .social-bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(var(--color-surface-rgb), 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--color-outline-variant);
+    padding: var(--space-2) 0;
+    padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+    z-index: 100;
+  }
+  
+  .social-nav-items {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0 var(--space-2);
+  }
+  
+  .social-nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: var(--space-2);
+    min-width: 60px;
+    min-height: var(--social-touch-comfortable);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--social-quick-feedback);
+    background: transparent;
+    border: none;
+    color: var(--color-on-surface-variant);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .social-nav-item.active {
+    color: var(--color-primary);
+    background: rgba(var(--color-primary-rgb), 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .social-nav-item:active {
+    transform: scale(0.95);
+  }
+  
+  .social-nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    margin-top: var(--space-1);
+    text-align: center;
+    line-height: 1.2;
+  }
+  
+  /* Create button (Instagram style) */
+  .social-create-button {
+    background: linear-gradient(135deg, var(--color-primary), var(--color-secondary));
+    color: white;
+    border-radius: 50%;
+    min-width: 56px;
+    min-height: 56px;
+    box-shadow: 0 4px 12px rgba(var(--color-primary-rgb), 0.3);
+    border: none;
+    cursor: pointer;
+    transition: all var(--social-quick-feedback);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .social-create-button:active {
+    transform: scale(0.95);
+  }
+  
+  /* Badge for notifications */
+  .social-nav-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--color-error);
+    color: white;
+    border-radius: 50%;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--color-surface);
+  }
+  
+  /* Swipe gestures for posts */
+  .social-swipeable {
+    position: relative;
+    overflow: hidden;
+    touch-action: pan-y;
+  }
+  
+  .social-swipe-indicators {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity var(--social-quick-feedback);
+    pointer-events: none;
+    z-index: 10;
+  }
+  
+  .social-swipe-left {
+    left: var(--space-4);
+  }
+  
+  .social-swipe-right {
+    right: var(--space-4);
+  }
+  
+  .social-swipeable.swiping .social-swipe-indicators {
+    opacity: 1;
+  }
+  
+  /* Comments modal - full screen on mobile */
+  .social-comments-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--color-surface);
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .social-comments-header {
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--color-outline-variant);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  
+  .social-comments-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-3) 0;
+  }
+  
+  .social-comment-input {
+    padding: var(--space-3) var(--space-4);
+    border-top: 1px solid var(--color-outline-variant);
+    background: var(--color-surface);
+    padding-bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+  }
+  
+  /* Search page optimizations */
+  .social-search-page {
+    padding-top: calc(var(--social-header-height) + env(safe-area-inset-top));
+  }
+  
+  .social-search-input {
+    margin: var(--space-3) var(--space-4);
+    background: var(--color-surface-container);
+    border: 1px solid var(--color-outline-variant);
+    border-radius: var(--radius-full);
+    padding: var(--space-3) var(--space-4);
+    font-size: 16px; /* Prevent zoom on iOS */
+    width: calc(100% - 2 * var(--space-4));
+  }
+  
+  /* Discovery grid */
+  .social-discovery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2px;
+    padding: 0;
+  }
+  
+  .social-discovery-item {
+    aspect-ratio: 1;
+    overflow: hidden;
+    cursor: pointer;
+    position: relative;
+  }
+  
+  .social-discovery-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--social-quick-feedback);
+  }
+  
+  .social-discovery-item:active .social-discovery-image {
+    transform: scale(1.05);
+  }
+}
+
+/* Animations for social interactions */
+@keyframes socialHeartPop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+  30% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes socialLikeBounce {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+  .social-post {
+    border: 2px solid var(--color-outline);
+  }
+  
+  .social-action-button {
+    border: 1px solid var(--color-outline);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .social-like-overlay,
+  .social-like-button.liked,
+  .social-nav-item,
+  .social-create-button,
+  .social-story,
+  .social-action-button {
+    animation: none;
+    transition: none;
+  }
+  
+  .social-discovery-image {
+    transition: none;
+  }
+}
+
+/* Dark mode optimizations */
+@media (prefers-color-scheme: dark) {
+  .social-header,
+  .social-bottom-nav {
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+  }
+  
+  .social-stories {
+    background: rgba(20, 20, 20, 1);
+  }
+  
+  .social-post {
+    background: rgba(20, 20, 20, 1);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+/* Large phones (iPhone Pro Max, etc.) */
+@media (max-width: 430px) and (min-width: 390px) {
+  .social-header {
+    height: calc(var(--social-header-height) + 4px);
+  }
+  
+  .social-avatar {
+    width: calc(var(--social-avatar-md) + 4px);
+    height: calc(var(--social-avatar-md) + 4px);
+  }
+  
+  .social-action-button {
+    min-width: calc(var(--social-touch-target) + 4px);
+    min-height: calc(var(--social-touch-target) + 4px);
+  }
+}
+
+/* Small phones */
+@media (max-width: 375px) {
+  .social-header {
+    padding: 0 var(--space-3) var(--space-2);
+  }
+  
+  .social-stories {
+    padding: var(--space-2) var(--space-3);
+    gap: var(--space-2);
+  }
+  
+  .social-post-header,
+  .social-actions,
+  .social-engagement,
+  .social-caption {
+    padding-left: var(--space-3);
+    padding-right: var(--space-3);
+  }
+  
+  .social-avatar {
+    width: calc(var(--social-avatar-md) - 4px);
+    height: calc(var(--social-avatar-md) - 4px);
+  }
+}
