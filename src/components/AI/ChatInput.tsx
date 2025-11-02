@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { ArrowUp, Link, Mic, MicOff, Smile as SmileIcon } from 'lucide-react';
+import { ArrowUp, Link, Mic, MicOff, Heart } from 'lucide-react';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -177,7 +177,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             title="Emoji hinzufügen"
             disabled={disabled}
           >
-            <SmileIcon size={18} />
+            <Heart size={18} />
           </button>
 
           {/* Voice Recording Button */}
