@@ -426,7 +426,7 @@ Antworte auf Deutsch.`
     if (Object.keys(preferences).length > 0) {
       contextInfo += '\nCollected preferences:\n';
       
-      if (preferences.interests?.length > 0) {
+      if (preferences.interests && preferences.interests.length > 0) {
         contextInfo += `- Interests: ${preferences.interests.map(i => i.name).join(', ')}\n`;
       }
       
@@ -438,7 +438,7 @@ Antworte auf Deutsch.`
         contextInfo += `- Budget range: ${preferences.budgetRange.min}-${preferences.budgetRange.max} ${preferences.budgetRange.currency}\n`;
       }
       
-      if (preferences.accommodationType?.length > 0) {
+      if (preferences.accommodationType && preferences.accommodationType.length > 0) {
         contextInfo += `- Accommodation: ${preferences.accommodationType.join(', ')}\n`;
       }
     }
