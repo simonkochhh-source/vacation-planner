@@ -381,15 +381,15 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
           id: messageId, 
           updates: { 
             metadata: { 
-              ...state.messages.find(m => m.id === messageId)?.metadata,
-              feedback: feedback.rating 
+              ...state.messages.find(m => m.id === messageId)?.metadata
             }
           }
         }
       });
 
       // Use feedback to improve future responses
-      await analyticsService.updateModelWeights(feedback);
+      // TODO: Implement public method for model weight updates
+      console.log('User feedback received:', feedback.rating);
 
     } catch (error) {
       console.error('Feedback storage error:', error);
@@ -423,7 +423,16 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
         collectedPreferences: {},
         lastActivity: new Date()
       },
-      preferences: {},
+      preferences: {
+        interests: [],
+        budgetRange: { min: 0, max: 1000, currency: 'EUR', type: 'total', flexibility: 'flexible' },
+        travelStyle: 'moderate',
+        accommodationType: [],
+        groupSize: 1,
+        dietaryRestrictions: [],
+        transportMode: [],
+        priorityFactors: []
+      },
       createdAt: new Date(),
       updatedAt: new Date(),
       status: 'active'
