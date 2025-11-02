@@ -7,17 +7,28 @@ import {
   TrainingDataPoint,
   UserFeedback
 } from '../types/ai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 class AITravelService {
-  private apiKey: string;
-  private baseUrl: string;
-  private modelVersion: string = 'gpt-3.5-turbo';
+  private geminiClient: GoogleGenerativeAI;
+  private modelVersion: string = 'gemini-2.5-flash'; // Google Gemini 2.5 Flash model - FREE TIER
   private trainingData: TrainingDataPoint[] = [];
   private userPatterns: Map<string, any> = new Map();
+  
+  // Rate limiting for free tier (60 requests per minute)
+  private requestCount: number = 0;
+  private lastResetTime: number = Date.now();
 
   constructor() {
-    this.apiKey = process.env.REACT_APP_OPENAI_API_KEY || '';
-    this.baseUrl = 'https://api.openai.com/v1';
+    const apiKey = process.env.REACT_APP_GEMINI_API_KEY || '';
+    this.geminiClient = new GoogleGenerativeAI(apiKey);
+    
+    // Safety check - ensure we're using free tier model
+    const allowedFreeModels = ['gemini-2.5-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro', 'gemini-flash-8b'];
+    if (!allowedFreeModels.includes(this.modelVersion)) {
+      console.warn('⚠️ Non-free model detected, switching to gemini-2.5-flash for free tier');
+      this.modelVersion = 'gemini-2.5-flash';
+    }
   }
 
   // Fallback mock response when API is not available
@@ -240,19 +251,21 @@ Ich hoffe, Sie haben eine unvergessliche Zeit in Italien! Falls Sie weitere Reis
     try {
       let response;
       
-      // Try OpenAI API if key is available, otherwise use fallback
-      if (this.apiKey) {
+      // Try Gemini API if key is available, otherwise use fallback
+      const geminiApiKey = process.env.REACT_APP_GEMINI_API_KEY;
+      
+      if (geminiApiKey) {
         try {
           const personalizedPrompt = await this.buildPersonalizedPrompt(request);
-          response = await this.callOpenAI(personalizedPrompt, request.message, request.context);
+          response = await this.callGemini(personalizedPrompt, request.message, request.context);
         } catch (apiError) {
-          console.warn('OpenAI API nicht verfügbar, verwende Fallback-Modus:', apiError);
+          console.warn('Gemini API nicht verfügbar, verwende Fallback-Modus:', apiError);
           // Determine next phase for mock response
           const nextPhase = this.determineNextPhase(request.context.currentPhase, request.message);
           response = this.getMockResponse(request.message, { ...request.context, currentPhase: nextPhase });
         }
       } else {
-        console.warn('Kein OpenAI API Key konfiguriert, verwende Fallback-Modus');
+        console.warn('Kein Gemini API Key konfiguriert, verwende Fallback-Modus');
         // Determine next phase for mock response
         const nextPhase = this.determineNextPhase(request.context.currentPhase, request.message);
         response = this.getMockResponse(request.message, { ...request.context, currentPhase: nextPhase });
@@ -523,8 +536,34 @@ Antworte auf Deutsch.`
     return score;
   }
 
-  // Call OpenAI API with retry logic and error handling
-  private async callOpenAI(prompt: string, userMessage: string, context: ConversationContext): Promise<any> {
+  // Rate limiting check for free tier compliance
+  private checkRateLimit(): boolean {
+    const now = Date.now();
+    const oneMinute = 60 * 1000;
+    
+    // Reset counter every minute
+    if (now - this.lastResetTime > oneMinute) {
+      this.requestCount = 0;
+      this.lastResetTime = now;
+    }
+    
+    // Free tier: 60 requests per minute
+    if (this.requestCount >= 60) {
+      console.warn('🚫 Gemini rate limit reached (60/min) - using fallback');
+      return false;
+    }
+    
+    this.requestCount++;
+    return true;
+  }
+
+  // Call Gemini API with free tier safety checks
+  private async callGemini(prompt: string, userMessage: string, context: ConversationContext): Promise<any> {
+    // Check rate limits first (FREE TIER PROTECTION)
+    if (!this.checkRateLimit()) {
+      throw new Error('Rate limit exceeded - using fallback mode');
+    }
+    
     const maxRetries = 3;
     let attempt = 0;
     
@@ -532,63 +571,39 @@ Antworte auf Deutsch.`
       try {
         const startTime = Date.now();
         
-        const response = await fetch(`${this.baseUrl}/chat/completions`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${this.apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            model: this.modelVersion,
-            messages: [
-              {
-                role: 'system',
-                content: prompt
-              },
-              {
-                role: 'user',
-                content: userMessage
-              }
-            ],
+        // SAFETY: Only use free tier model
+        const model = this.geminiClient.getGenerativeModel({ 
+          model: this.modelVersion, // Use validated free tier model
+          generationConfig: {
+            maxOutputTokens: 2048, // Reasonable limit for free tier
             temperature: 0.7,
-            max_tokens: 2000
-          }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.text();
-          
-          // For quota exceeded errors, don't retry - immediately fall back to mock
-          if (response.status === 429) {
-            const error = new Error(`OpenAI API error: ${response.status} - ${response.statusText}. Details: ${errorData}`);
-            error.name = 'QuotaExceededError';
-            throw error;
           }
-          
-          console.error('OpenAI API Error Details:', {
-            status: response.status,
-            statusText: response.statusText,
-            body: errorData,
-            url: response.url
-          });
-          throw new Error(`OpenAI API error: ${response.status} - ${response.statusText}. Details: ${errorData}`);
-        }
-
-        const data = await response.json();
+        });
+        
+        // Combine system prompt and user message for Gemini
+        const fullPrompt = `${prompt}\n\nUser: ${userMessage}`;
+        
+        // Generate content with Gemini
+        const result = await model.generateContent(fullPrompt);
+        const response = result.response;
+        const text = response.text();
+        
         const processingTime = Date.now() - startTime;
 
         return {
-          message: data.choices[0].message.content,
+          message: text,
           processingTime,
-          promptTokens: data.usage?.prompt_tokens || 0,
-          responseTokens: data.usage?.completion_tokens || 0,
-          confidence: this.calculateResponseConfidence(data)
+          promptTokens: 0, // Gemini doesn't provide exact token counts in free tier
+          responseTokens: 0,
+          confidence: 0.8 // Default confidence for Gemini responses
         };
 
       } catch (error) {
-        // For quota exceeded errors, don't retry
-        if (error instanceof Error && error.name === 'QuotaExceededError') {
-          throw error;
+        // Check for quota exceeded errors
+        if (error instanceof Error && (error.message?.includes('quota') || error.message?.includes('limit'))) {
+          const quotaError = new Error(`Gemini API quota exceeded: ${error.message}`);
+          quotaError.name = 'QuotaExceededError';
+          throw quotaError;
         }
         
         attempt++;
@@ -847,7 +862,7 @@ Antworte auf Deutsch.`
     `;
 
     try {
-      const response = await this.callOpenAI(prompt, params.modifications, { currentPhase: 'route_refinement' } as any);
+      const response = await this.callGemini(prompt, params.modifications, { currentPhase: 'route_refinement' } as any);
       const parsed = JSON.parse(response.message);
       
       return {

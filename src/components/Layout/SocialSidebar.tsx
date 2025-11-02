@@ -265,9 +265,18 @@ const SocialSidebar: React.FC<SocialSidebarProps> = ({ isOpen, isMobile, onClose
       // Import chatService here to avoid circular dependencies
       const { chatService } = await import('../../services/chatService');
       
-      // Get or create direct message room
+      // First check if direct chat already exists
+      const existingRoom = await chatService.findExistingDirectChat(userId);
+      
+      if (existingRoom) {
+        console.log('✅ Found existing direct chat, navigating to:', existingRoom.id);
+        handleOpenChat(existingRoom.id);
+        return;
+      }
+      
+      // Create new direct message room if none exists
       const directRoom = await chatService.getOrCreateDirectRoom(userId);
-      console.log('✅ Direct room created/found:', directRoom.id);
+      console.log('✅ Direct room created:', directRoom.id);
       
       // Open chat with the specific room
       handleOpenChat(directRoom.id);

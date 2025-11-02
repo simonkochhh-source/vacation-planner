@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUIContext } from '../../contexts/UIContext';
 import { useTripContext } from '../../contexts/TripContext';
 import { useResponsive } from '../../hooks/useResponsive';
@@ -60,6 +60,32 @@ const TripsView: React.FC = () => {
   const { isMobile } = useResponsive();
   const [activeTab, setActiveTab] = useState<TripSubTab>('timeline');
   const [isCreatingChat, setIsCreatingChat] = useState(false);
+  const [existingTripChatId, setExistingTripChatId] = useState<string | null>(null);
+  const [isCheckingExistingChat, setIsCheckingExistingChat] = useState(false);
+
+  // Check for existing trip chat when currentTrip changes
+  useEffect(() => {
+    const checkExistingTripChat = async () => {
+      if (!currentTrip?.id) {
+        setExistingTripChatId(null);
+        return;
+      }
+
+      try {
+        setIsCheckingExistingChat(true);
+        const existingChat = await chatService.findExistingTripChat(currentTrip.id);
+        setExistingTripChatId(existingChat?.id || null);
+        console.log('🔍 Trip chat check:', existingChat ? `Found: ${existingChat.id}` : 'None found');
+      } catch (error) {
+        console.error('❌ Error checking existing trip chat:', error);
+        setExistingTripChatId(null);
+      } finally {
+        setIsCheckingExistingChat(false);
+      }
+    };
+
+    checkExistingTripChat();
+  }, [currentTrip?.id]);
 
   const handleReorderDestinations = async (reorderedDestinations: any[]) => {
     // Handle reordering logic - pass through to timeline
@@ -75,24 +101,37 @@ const TripsView: React.FC = () => {
     try {
       setIsCreatingChat(true);
 
+      // If existing chat found, navigate to it directly
+      if (existingTripChatId) {
+        console.log('✅ Navigating to existing trip chat:', existingTripChatId);
+        updateUIState({ 
+          chatOpen: true,
+          selectedChatRoomId: existingTripChatId 
+        });
+        return;
+      }
+
       // Get trip participants (for now, we'll just use the trip creator)
       // In a full implementation, you would get all trip participants
       const participantIds: string[] = []; // TODO: Get actual participants from trip
 
-      // Create or get existing trip chat room
-      const tripChatRoom = await chatService.createTripChatRoom(
+      // Create new trip chat room
+      const tripChatRoom = await chatService.getOrCreateTripChatRoom(
         currentTrip.id,
         currentTrip.name,
         participantIds
       );
+
+      // Update local state with the new chat ID
+      setExistingTripChatId(tripChatRoom.id);
 
       updateUIState({ 
         chatOpen: true,
         selectedChatRoomId: tripChatRoom.id 
       });
     } catch (error) {
-      console.error('Failed to create trip chat:', error);
-      alert('Fehler beim Erstellen des Reisechats. Bitte versuchen Sie es erneut.');
+      console.error('Failed to open trip chat:', error);
+      alert('Fehler beim Öffnen des Reisechats. Bitte versuchen Sie es erneut.');
     } finally {
       setIsCreatingChat(false);
     }
@@ -181,7 +220,7 @@ const TripsView: React.FC = () => {
               {/* Reisechat eröffnen Button */}
               <button
                 onClick={handleOpenTripChat}
-                disabled={isCreatingChat}
+                disabled={isCreatingChat || isCheckingExistingChat}
                 style={{
                   display: 'flex',
                   alignItems: 'center',
@@ -193,9 +232,9 @@ const TripsView: React.FC = () => {
                   color: 'white',
                   fontSize: 'var(--text-sm)',
                   fontWeight: 'var(--font-weight-medium)',
-                  cursor: isCreatingChat ? 'not-allowed' : 'pointer',
+                  cursor: (isCreatingChat || isCheckingExistingChat) ? 'not-allowed' : 'pointer',
                   transition: 'all var(--transition-fast)',
-                  opacity: isCreatingChat ? 0.7 : 1
+                  opacity: (isCreatingChat || isCheckingExistingChat) ? 0.7 : 1
                 }}
                 onMouseEnter={(e) => {
                   if (!isCreatingChat) {
@@ -209,10 +248,14 @@ const TripsView: React.FC = () => {
                     e.currentTarget.style.borderColor = 'var(--color-primary-sage)';
                   }
                 }}
-                title="Reisechat für alle Teilnehmer eröffnen"
+                title={existingTripChatId ? "Zum Reisechat" : "Reisechat für alle Teilnehmer eröffnen"}
               >
                 <MessageCircle size={16} />
-                {!isMobile && (isCreatingChat ? 'Erstelle...' : 'Reisechat eröffnen')}
+                {!isMobile && (() => {
+                  if (isCheckingExistingChat) return 'Prüfe...';
+                  if (isCreatingChat) return 'Erstelle...';
+                  return existingTripChatId ? 'Zum Reisechat' : 'Reisechat eröffnen';
+                })()}
               </button>
 
               {/* Participants indicator (placeholder for future participants feature) */}

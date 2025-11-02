@@ -162,7 +162,10 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
         textDecoration: 'none',
         cursor: 'pointer',
         transition: 'all var(--transition-normal)',
-        border: 'none',
+        borderTop: '2px solid transparent',
+        borderLeft: '2px solid transparent',
+        borderRight: '2px solid transparent',
+        borderBottom: '2px solid transparent',
         background: 'transparent',
         minHeight: isMobile ? '40px' : 'var(--touch-target-min-size)',
         fontSize: isMobile ? 'var(--text-xs)' : 'var(--text-sm)',
@@ -177,9 +180,6 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
         return {
           ...headerItemStyles,
           backgroundColor: 'rgba(255, 255, 255, 0.2)',
-          borderTop: '2px solid transparent',
-          borderLeft: '2px solid transparent',
-          borderRight: '2px solid transparent',
           borderBottom: '2px solid white'
         };
       }
@@ -202,7 +202,10 @@ const AppNavigation: React.FC<AppNavigationProps> = ({
       textDecoration: 'none',
       cursor: 'pointer',
       transition: 'all var(--transition-normal)',
-      border: 'none',
+      borderTop: 'none',
+      borderLeft: 'none',
+      borderRight: 'none',
+      borderBottom: 'none',
       background: 'transparent',
       width: variant === 'bottom' ? 'auto' : '100%',
       minHeight: 'var(--touch-target-min-size)',

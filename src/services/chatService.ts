@@ -231,6 +231,108 @@ class ChatService {
   }
 
   /**
+   * Find existing direct chat room between two users
+   */
+  async findExistingDirectChat(otherUserId: string): Promise<ChatRoom | null> {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user?.id) return null;
+      
+      const currentUserId = user.id;
+
+      const { data: existingRooms, error } = await supabase
+        .from('chat_rooms')
+        .select(`
+          *,
+          chat_participants (
+            user_id,
+            is_active
+          )
+        `)
+        .eq('type', 'direct')
+        .eq('is_group', false);
+
+      if (error) throw error;
+
+      // Find room where both users are participants
+      const directRoom = existingRooms?.find(room => {
+        const participants = room.chat_participants.filter((p: any) => p.is_active);
+        const participantIds = participants.map((p: any) => p.user_id);
+        return participantIds.length === 2 && 
+               participantIds.includes(currentUserId) && 
+               participantIds.includes(otherUserId);
+      });
+
+      return directRoom || null;
+    } catch (error) {
+      console.error('❌ Chat: Error finding existing direct chat:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Find existing trip chat room
+   */
+  async findExistingTripChat(tripId: string): Promise<ChatRoom | null> {
+    try {
+      // First try the direct approach
+      const { data: tripRoom, error } = await supabase
+        .from('chat_rooms')
+        .select('*')
+        .eq('type', 'trip')
+        .eq('trip_id', tripId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.warn('⚠️ Trip chat query failed, trying fallback approach:', error.message);
+        
+        // Fallback: Search all trip type rooms and filter by name
+        const { data: allTripRooms, error: fallbackError } = await supabase
+          .from('chat_rooms')
+          .select('*')
+          .eq('type', 'trip');
+          
+        if (fallbackError) throw fallbackError;
+        
+        // Find room that matches the trip (by name pattern or metadata)
+        const matchingRoom = allTripRooms?.find(room => 
+          room.trip_id === tripId || 
+          room.name?.includes(tripId) ||
+          room.metadata?.trip_id === tripId
+        );
+        
+        return matchingRoom || null;
+      }
+      
+      return tripRoom || null;
+    } catch (error) {
+      console.error('❌ Chat: Error finding existing trip chat:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Get or create trip chat room (checks for existing first)
+   */
+  async getOrCreateTripChatRoom(tripId: string, tripName: string, participantIds: string[]): Promise<ChatRoom> {
+    try {
+      // First check if trip chat already exists
+      const existingRoom = await this.findExistingTripChat(tripId);
+      
+      if (existingRoom) {
+        console.log('✅ Chat: Found existing trip chat room:', existingRoom.id);
+        return existingRoom;
+      }
+
+      // Create new trip chat if none exists
+      return await this.createTripChatRoom(tripId, tripName, participantIds);
+    } catch (error) {
+      console.error('❌ Chat: Error getting/creating trip chat:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Create trip-specific chat room
    */
   async createTripChatRoom(tripId: string, tripName: string, participantIds: string[]): Promise<ChatRoom> {

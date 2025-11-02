@@ -1533,7 +1533,7 @@ class SocialService implements SocialServiceInterface {
       // Instead of looking for specific user_activities, we'll look for any activity_id that belongs to this user
       
       // Get ALL likes excluding user's own likes
-      const { data: allLikes, error: likesError } = await supabase
+      const { data: allLikes } = await supabase
         .from('activity_likes')
         .select(`
           activity_id,
@@ -1635,8 +1635,10 @@ class SocialService implements SocialServiceInterface {
 
     } catch (error) {
       console.error('❌ Error loading activity notifications:', error);
-      console.error('❌ Error details:', error.message);
-      console.error('❌ Error stack:', error.stack);
+      if (error instanceof Error) {
+        console.error('❌ Error details:', error.message);
+        console.error('❌ Error stack:', error.stack);
+      }
       return [];
     }
   }
@@ -1663,73 +1665,52 @@ class SocialService implements SocialServiceInterface {
     if (activityIds.length === 0) return [];
 
     try {
-      // Try with user_profiles join first - get ALL fields for debugging
-      const { data, error } = await supabase
+      // Use manual profile lookup approach by default to avoid foreign key relationship issues
+      // Get comments first, then look up user profiles separately
+      const { data: comments, error } = await supabase
         .from('activity_comments')
-        .select(`
-          *,
-          user_profiles(*)
-        `)
+        .select('*')
         .in('activity_id', activityIds)
         .order('created_at', { ascending: true });
 
       if (error) throw error;
 
-      return (data || []).map(comment => {
-        const profile = (comment.user_profiles as any);
-        const displayName = profile?.display_name || profile?.nickname || profile?.name || profile?.username || 'User';
-        
-        return {
-          ...comment,
-          user_nickname: displayName
-        };
-      });
-    } catch (joinError) {
-      console.warn('Failed to join with user_profiles, falling back to manual profile lookup:', joinError);
-      
-      try {
-        // Fallback: Get comments first, then look up user profiles separately
-        const { data: comments, error } = await supabase
-          .from('activity_comments')
-          .select('*')
-          .in('activity_id', activityIds)
-          .order('created_at', { ascending: true });
-
-        if (error) throw error;
-
-        if (!comments || comments.length === 0) {
-          return [];
-        }
-
-        // Get all unique user IDs from comments
-        const userIds = Array.from(new Set(comments.map(comment => comment.user_id)));
-
-        // Fetch user profiles for all users who commented - including ALL fields for debugging
-        const { data: profiles, error: profileError } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .in('id', userIds);
-
-        // Create a map for quick lookup (ignore profile errors, just use 'User' as fallback)
-        const profileMap = new Map();
-        if (!profileError && profiles) {
-          profiles.forEach(profile => {
-            // Use display_name first for comments, then nickname as fallback
-            const displayName = profile.display_name || profile.nickname || profile.name || profile.username || 'User';
-            
-            profileMap.set(profile.id, displayName);
-          });
-        }
-
-        // Combine comments with nicknames
-        return comments.map(comment => ({
-          ...comment,
-          user_nickname: profileMap.get(comment.user_id) || 'User'
-        }));
-      } catch (tableError) {
-        console.warn('activity_comments table does not exist yet:', tableError);
-        return []; // Return empty array if table doesn't exist
+      if (!comments || comments.length === 0) {
+        return [];
       }
+
+      // Get all unique user IDs from comments
+      const userIds = Array.from(new Set(comments.map(comment => comment.user_id)));
+
+      // Fetch user profiles for all users who commented
+      const { data: profiles, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('id, nickname, display_name, avatar_url')
+        .in('id', userIds);
+
+      // Create a map for quick lookup (ignore profile errors, just use 'User' as fallback)
+      const profileMap = new Map();
+      if (!profileError && profiles) {
+        profiles.forEach(profile => {
+          // Use display_name first for comments, then nickname as fallback
+          const displayName = profile.display_name || profile.nickname || 'User';
+          
+          profileMap.set(profile.id, {
+            nickname: displayName,
+            avatar_url: profile.avatar_url
+          });
+        });
+      }
+
+      // Combine comments with user profile information
+      return comments.map(comment => ({
+        ...comment,
+        user_nickname: profileMap.get(comment.user_id)?.nickname || 'User',
+        user_avatar: profileMap.get(comment.user_id)?.avatar_url
+      }));
+    } catch (tableError) {
+      console.warn('activity_comments table access failed:', tableError);
+      return []; // Return empty array if table doesn't exist or can't be accessed
     }
   }
 }
