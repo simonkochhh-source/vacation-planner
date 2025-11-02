@@ -1,5 +1,5 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Send, Paperclip, Mic, MicOff, Smile } from 'lucide-react';
+import { ArrowUp, Link, Mic, MicOff, Smile as SmileIcon } from 'lucide-react';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -140,7 +140,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
           title="Datei anhängen"
           disabled={disabled}
         >
-          <Paperclip size={18} />
+          <Link size={18} />
         </button>
 
         {/* Text Input */}
@@ -177,7 +177,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             title="Emoji hinzufügen"
             disabled={disabled}
           >
-            <Smile size={18} />
+            <SmileIcon size={18} />
           </button>
 
           {/* Voice Recording Button */}
@@ -197,7 +197,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
             disabled={disabled || !message.trim()}
             title="Nachricht senden (Enter)"
           >
-            <Send size={18} />
+            <ArrowUp size={18} />
           </button>
         </div>
       </div>
