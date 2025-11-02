@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import SocialSidebar from './SocialSidebar';
-import SocialMediaNavigation from '../navigation/SocialMediaNavigation';
+import SocialMediaNavigation from '../Navigation/SocialMediaNavigation';
 import { useUIContext } from '../../contexts/UIContext';
 import { useResponsive } from '../../hooks/useResponsive';
 
