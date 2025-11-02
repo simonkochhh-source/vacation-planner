@@ -1,5 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from 'react';
 import { ArrowUp, Link, Mic, MicOff, Heart } from 'lucide-react';
+import { useResponsive } from '../../hooks/useResponsive';
+import MobileOptimizedChatInput from './MobileOptimizedChatInput';
 
 interface ChatInputProps {
   onSendMessage: (message: string) => void;
@@ -14,6 +16,7 @@ const ChatInput: React.FC<ChatInputProps> = ({
   placeholder = "Beschreibe deine Reisewünsche...",
   maxLength = 1000
 }) => {
+  const { isMobile } = useResponsive();
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -113,6 +116,18 @@ const ChatInput: React.FC<ChatInputProps> = ({
     if (ratio > 0.7) return '#ffa726';
     return '#999';
   };
+
+  // Use mobile-optimized component on mobile devices
+  if (isMobile) {
+    return (
+      <MobileOptimizedChatInput
+        onSendMessage={onSendMessage}
+        disabled={disabled}
+        placeholder={placeholder}
+        maxLength={maxLength}
+      />
+    );
+  }
 
   return (
     <div className="chat-input-container">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import SocialSidebar from './SocialSidebar';
+import SocialMediaNavigation from '../navigation/SocialMediaNavigation';
 import { useUIContext } from '../../contexts/UIContext';
 import { useResponsive } from '../../hooks/useResponsive';
 
@@ -112,6 +113,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             {children}
           </div>
         </main>
+        
+        {/* Social Media Navigation - Mobile Only */}
+        <SocialMediaNavigation />
       </div>
     </div>
   );

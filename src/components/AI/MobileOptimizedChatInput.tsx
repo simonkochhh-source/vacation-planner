@@ -71,7 +71,7 @@ const MobileOptimizedChatInput: React.FC<MobileOptimizedChatInputProps> = ({
     gap: 'var(--space-2)',
     transition: 'all var(--motion-duration-short)',
     // Mobile optimized z-index for keyboard
-    position: 'relative',
+    position: 'relative' as const,
     zIndex: 10,
     // Better shadow for mobile
     boxShadow: isMobile ? '0 4px 12px rgba(0, 0, 0, 0.15)' : '0 2px 8px rgba(0, 0, 0, 0.1)'

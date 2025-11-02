@@ -21,6 +21,7 @@ import './App.css';
 import './styles/responsive.css';
 import './styles/components.css';
 import './styles/mobile.css';
+import './styles/social-mobile.css';
 import { ChatInterface } from './components/Chat';
 // Lazy loaded components with performance optimizations and preloading
 const EnhancedTimelineView = React.lazy(() => 
