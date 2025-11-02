@@ -501,8 +501,8 @@ class AnalyticsService {
     }
   }
 
-  // Public method to update model weights (called from AI context)
-  async updateModelWeights(feedback: UserFeedback): Promise<void> {
+  // Public method to process user feedback (called from AI context)
+  async processFeedback(feedback: UserFeedback): Promise<void> {
     await this.learnFromFeedback(feedback);
   }
 
