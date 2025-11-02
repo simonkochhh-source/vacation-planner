@@ -76,7 +76,7 @@ const SocialMediaNavigation: React.FC = () => {
       return;
     }
     
-    setActiveTab(view);
+    setActiveTab(view as any);
     updateUIState({ currentView: view as any });
   };
 
