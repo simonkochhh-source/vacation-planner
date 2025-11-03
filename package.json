@@ -50,7 +50,11 @@
     "deploy:public": "vercel deploy --prod --public --confirm",
     "deploy:preview": "vercel deploy --public",
     "vercel:link": "vercel link",
-    "vercel:env": "vercel env ls"
+    "vercel:env": "vercel env ls",
+    "test:mobile": "playwright test tests/mobile-iphone.spec.ts",
+    "test:mobile:headed": "playwright test tests/mobile-iphone.spec.ts --headed",
+    "test:mobile:ui": "playwright test tests/mobile-iphone.spec.ts --ui",
+    "test:mobile:report": "playwright show-report"
   },
   "eslintConfig": {
     "extends": [
@@ -71,6 +75,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@supabase/supabase-js": "^2.76.1",
     "@types/google.maps": "^3.58.1",
     "eslint-plugin-import": "^2.32.0",

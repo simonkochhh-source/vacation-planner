@@ -114,8 +114,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           </div>
         </main>
         
-        {/* Social Media Navigation - Mobile Only */}
-        <SocialMediaNavigation />
+        {/* Social Media Navigation - Mobile Only - Always render on mobile */}
+        {isMobile && <SocialMediaNavigation />}
       </div>
     </div>
   );

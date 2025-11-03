@@ -294,7 +294,7 @@ const SocialMediaNavigation: React.FC = () => {
 
       {/* Main Navigation */}
       <nav style={navContainerStyle} role="navigation" aria-label="Hauptnavigation">
-        <ul style={navListStyle} role="tablist">
+        <ul style={navListStyle} role="tablist" aria-label="Haupt-Navigationstabs">
           {navItems.map((item) => {
             const isActive = activeTab === item.view;
             const isCreate = item.id === 'create';

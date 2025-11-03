@@ -532,18 +532,58 @@ const LoginPage: React.FC = () => {
         {/* Footer */}
         <div className="text-center" style={{ marginTop: 'var(--space-2xl)' }}>
           <p style={{ 
-            fontSize: 'var(--text-xs)', 
+            fontSize: 'var(--text-sm)', 
             color: 'var(--color-text-secondary)',
-            lineHeight: 1.5
+            lineHeight: 1.6
           }}>
             By continuing, you agree to our{' '}
-            <a href="#" style={{ color: 'var(--color-primary-ocean)', textDecoration: 'underline' }}>
+            <button 
+              type="button"
+              onClick={() => console.log('Terms of Service clicked')}
+              style={{ 
+                color: 'var(--color-primary-ocean)', 
+                textDecoration: 'underline',
+                padding: 'var(--space-2) var(--space-1)',
+                margin: '-var(--space-2) -var(--space-1)',
+                borderRadius: 'var(--radius-sm)',
+                display: 'inline-block',
+                minHeight: '44px',
+                lineHeight: '44px',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 'inherit',
+                fontFamily: 'inherit'
+              }}
+            >
               Terms of Service
-            </a>
+            </button>
             {' '}and{' '}
-            <a href="#" style={{ color: 'var(--color-primary-ocean)', textDecoration: 'underline' }}>
+            <button 
+              type="button"
+              onClick={() => console.log('Privacy Policy clicked')}
+              style={{ 
+                color: 'var(--color-primary-ocean)', 
+                textDecoration: 'underline',
+                padding: 'var(--space-2) var(--space-1)',
+                margin: '-var(--space-2) -var(--space-1)',
+                borderRadius: 'var(--radius-sm)',
+                display: 'inline-block',
+                minHeight: '44px',
+                lineHeight: '44px',
+                touchAction: 'manipulation',
+                WebkitTapHighlightColor: 'transparent',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 'inherit',
+                fontFamily: 'inherit'
+              }}
+            >
               Privacy Policy
-            </a>
+            </button>
           </p>
         </div>
       </div>
