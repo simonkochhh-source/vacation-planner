@@ -402,27 +402,88 @@ Wichtig:
 - Biete relevante Schnellaktionen basierend auf dem bisher Gelernten an
 - Antworte auf Deutsch`,
 
-      route_generation: `WICHTIG: Erstelle SOFORT eine konkrete, tagesstrukturierte Reiseroute! Keine weiteren Fragen!
+      route_generation: `WICHTIG: Erstelle SOFORT eine konkrete, strukturierte Reiseroute im JSON-Format! Keine weiteren Fragen!
 
-Basierend auf den bereits verfügbaren Trip-Daten und Präferenzen, erstelle eine detaillierte Route mit:
+Du MUSST eine vollständige JSON-Struktur zurückgeben, die exakt diesem Format entspricht:
 
-STRUKTUR (für jeden Tag):
-- Tag X (Datum): Tagesthema
-- Morgens (9:00-12:00): Aktivität + Ort
-- Mittags (12:00-15:00): Restaurant/Mittagspause + weitere Aktivität  
-- Nachmittags (15:00-18:00): Hauptattraktionen
-- Abends (18:00-22:00): Dinner + Abendaktivität
-- Übernachtung: Empfohlene Unterkunft + Kostenbereich
+{
+  "message": "Hier ist Ihre detaillierte tagesstrukturierte Reiseroute! 🗺️\\n\\n[Beschreibende Nachricht mit Highlights]",
+  "route": {
+    "id": "route_[unique_id]",
+    "destinations": [
+      {
+        "name": "Rom",
+        "location": {
+          "latitude": 41.9028,
+          "longitude": 12.4964,
+          "address": "Rom, Italien",
+          "country": "Italien",
+          "region": "Lazio"
+        },
+        "duration": 3,
+        "description": "Ewige Stadt mit antiken Wunder und lebendiger Kultur",
+        "highlights": ["Kolosseum", "Vatikanstadt", "Trevi-Brunnen", "Forum Romanum"],
+        "estimatedCost": 450,
+        "images": [],
+        "suggestedActivities": [
+          {
+            "id": "colosseum_tour",
+            "name": "Kolosseum & Forum Romanum Tour",
+            "description": "Geführte Tour durch die antiken Wahrzeichen",
+            "category": "Kultur",
+            "duration": 3,
+            "cost": 35,
+            "difficulty": "easy",
+            "images": [],
+            "bookingRequired": true,
+            "rating": 4.8
+          }
+        ],
+        "accommodation": [
+          {
+            "name": "Hotel Artemide",
+            "type": "hotel",
+            "priceRange": { "min": 120, "max": 180, "currency": "EUR" },
+            "rating": 4.2,
+            "description": "4-Sterne Hotel im Zentrum",
+            "amenities": ["WiFi", "Frühstück", "Klimaanlage"],
+            "images": []
+          }
+        ],
+        "bestTimeToVisit": "April-Juni, September-Oktober",
+        "localTips": ["Früh am Morgen zum Kolosseum", "Reservierung für Vatikan notwendig"]
+      }
+    ],
+    "totalDuration": 7,
+    "estimatedCost": {
+      "accommodation": 800,
+      "transport": 250,
+      "activities": 300,
+      "food": 450,
+      "other": 200,
+      "total": 2000,
+      "currency": "EUR",
+      "dailyAverage": 285
+    },
+    "travelDistance": 1200,
+    "routeType": "linear",
+    "optimizationNotes": ["Route wurde für kulturelle Interessen optimiert", "Berücksichtigt lokale Transportverbindungen"],
+    "confidence": 0.9,
+    "generatedAt": "${new Date().toISOString()}",
+    "modelVersion": "gemini-1.5-flash"
+  }
+}
 
-ZUSÄTZLICH:
-- Transportmöglichkeiten zwischen Orten
-- Geschätzte Kosten pro Tag
-- Geheimtipps und lokale Empfehlungen
-- Praktische Hinweise
+WICHTIGE REGELN:
+1. Verwende REALE Orte, Hotels, Restaurants und Aktivitäten
+2. Berechne realistische Kosten basierend auf der Destination
+3. Gib konkrete Koordinaten an (nutze bekannte Werte für große Städte)
+4. Erstelle 2-4 Destinations je nach Reisedauer
+5. Jede Destination sollte 1-4 Tage haben
+6. Antworte ausschließlich mit gültigem JSON
+7. Die message sollte eine freundliche Beschreibung der Route auf Deutsch sein
 
-Sei KONKRET und SPEZIFISCH mit Ortsnamen, Restaurants, Aktivitäten und Zeiten!
-Formatiere als strukturierten Text (nicht JSON).
-Antworte auf Deutsch.`,
+Basiere alles auf den verfügbaren Trip-Daten und Präferenzen aus dem Kontext!`,
 
       route_refinement: `Hilf bei der Verfeinerung und Anpassung der vorgeschlagenen Reiseroute basierend auf Nutzerfeedback. Sei flexibel und:
 - Höre auf spezifische Bedenken oder Wünsche
@@ -531,7 +592,7 @@ Antworte auf Deutsch.`
     
     // Add homepoint information
     const homepoint = (context as any).homepoint || 'Deutschland';
-    contextInfo += `- Start/End Location: ${homepoint} (user's home base)\n`;
+    contextInfo += `- Start/End Location: ${homepoint} (user\'s home base)\n`;
     
     // Trip duration and dates - already known from trip planning
     const durationDays = Math.ceil((context.tripDates.endDate.getTime() - context.tripDates.startDate.getTime()) / (1000 * 60 * 60 * 24));
@@ -737,6 +798,32 @@ Antworte auf Deutsch.`
         
         const processingTime = Date.now() - startTime;
 
+        // Try to parse JSON response for route generation
+        let parsedResponse = null;
+        if (context.currentPhase === 'route_generation' || text.trim().startsWith('{')) {
+          try {
+            parsedResponse = JSON.parse(text);
+            console.log('Successfully parsed JSON response:', parsedResponse);
+          } catch (jsonError) {
+            console.warn('Failed to parse JSON response, using text fallback:', jsonError);
+            // Fall back to text response if JSON parsing fails
+          }
+        }
+
+        // Return structured response for route generation
+        if (parsedResponse && parsedResponse.route) {
+          return {
+            message: parsedResponse.message || text,
+            route: parsedResponse.route,
+            processingTime,
+            promptTokens: 0,
+            responseTokens: 0,
+            confidence: parsedResponse.route.confidence || 0.8,
+            quickActions: this.generateQuickActions(context.currentPhase)
+          };
+        }
+
+        // Default text response
         return {
           message: text,
           processingTime,
@@ -1012,11 +1099,11 @@ Antworte auf Deutsch.`
     User modifications requested: ${params.modifications}
     User preferences: ${JSON.stringify(params.preferences)}
     
-    Provide an updated route that addresses the user's concerns while maintaining:
+    Provide an updated route that addresses the user\'s concerns while maintaining:
     - Logical geographical flow
     - Budget considerations
     - Time constraints
-    - User's core interests
+    - User\'s core interests
     
     Respond with a JSON object containing the modified route and an explanation message in German.
     `;
