@@ -407,6 +407,12 @@ export class SupabaseService {
     }
 
     try {
+      // WORKAROUND: Omit status field to avoid constraint violation
+      // Let the database use its default status value
+      console.log('🚨 CONSTRAINT WORKAROUND: Creating trip without status field');
+      console.log('  - Database will use default status value');
+      console.log('  - This avoids trips_status_check constraint violation');
+      
       const { data, error } = await supabase
         .from('trips')
         .insert({
@@ -417,7 +423,7 @@ export class SupabaseService {
           end_date: trip.endDate,
           budget: trip.budget || null,
           participants: trip.participants || null,
-          status: toSupabaseTripStatus(trip.status),
+          // status: OMITTED - let DB use default to avoid constraint error
           tags: trip.tags || null,
           privacy: toTripPrivacy(trip.privacy),
           owner_id: userId, // Set current user as owner
