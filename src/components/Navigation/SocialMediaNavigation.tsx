@@ -293,8 +293,8 @@ const SocialMediaNavigation: React.FC = () => {
       )}
 
       {/* Main Navigation */}
-      <nav style={navContainerStyle}>
-        <ul style={navListStyle}>
+      <nav style={navContainerStyle} role="navigation" aria-label="Hauptnavigation">
+        <ul style={navListStyle} role="tablist">
           {navItems.map((item) => {
             const isActive = activeTab === item.view;
             const isCreate = item.id === 'create';
@@ -305,6 +305,8 @@ const SocialMediaNavigation: React.FC = () => {
                   style={getNavItemStyle(item, isActive)}
                   onClick={() => handleNavClick(item.view, isCreate)}
                   aria-label={item.label}
+                  aria-current={isActive ? 'page' : undefined}
+                  role="tab"
                   onTouchStart={(e) => {
                     if (!isCreate) {
                       e.currentTarget.style.transform = isActive ? 'translateY(-2px) scale(0.95)' : 'scale(0.95)';

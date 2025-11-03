@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { TrendingUp, TrendingDown, Copy, MoreHorizontal, Star } from 'lucide-react';
+import { Copy, MoreHorizontal, Star } from 'lucide-react';
 import { ChatMessageProps, UserFeedback } from '../../types/ai';
 import { useAI } from '../../contexts/AIContext';
 

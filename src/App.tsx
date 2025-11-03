@@ -96,7 +96,7 @@ const AppContent: React.FC = () => {
     selectedChatRoomId,
     updateUIState 
   } = useUIContext();
-  const { currentTrip, getCurrentTrip } = useTripContext();
+  const { currentTrip } = useTripContext();
   const { reorderDestinations } = useDestinationContext();
   
   // Initialize theme system and performance monitoring

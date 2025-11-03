@@ -63,8 +63,8 @@ const SocialMediaFeed: React.FC<SocialMediaFeedProps> = ({
 
           if (entry.isIntersecting) {
             setVisiblePosts(prev => {
-              const newSet = new Set([...prev, postId]);
-              return Array.from(newSet);
+              if (prev.includes(postId)) return prev;
+              return [...prev, postId];
             });
           }
         });
