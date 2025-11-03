@@ -506,7 +506,7 @@ Antworte auf Deutsch.`
   private buildContextLayer(request: ChatRequest): string {
     const { context, preferences } = request;
     
-    let contextInfo = '\nTrip context (pre-filled from user's trip planning):\n';
+    let contextInfo = '\nTrip context (pre-filled from user\'s trip planning):\n';
     
     // Extract destination from context or user message
     const detectedDestination = (context as any).destination || this.extractDestinationFromMessage(request.message);
