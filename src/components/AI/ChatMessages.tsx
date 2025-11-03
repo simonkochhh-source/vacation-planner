@@ -53,9 +53,11 @@ const ChatMessages: React.FC<ChatMessagesProps> = ({
   // Get welcome message if no messages exist
   const getWelcomeMessage = (): ChatMessageType => ({
     id: 'welcome',
-    content: `Hallo! Ich bin dein Trailkeeper Assistent und helfe dir dabei, eine perfekte Kroatien-Rundreise zu planen. 🇭🇷
+    content: `Hallo! Ich bin dein Trailkeeper Assistent und helfe dir dabei, eine perfekte Reise zu planen. 🌍
 
-Erzähl mir von deinen Interessen und Vorlieben, damit ich dir personalisierte Vorschläge machen kann!`,
+Ich sehe, dass du bereits die wichtigsten Trip-Details festgelegt hast. Lass uns jetzt über deine Interessen und Vorlieben sprechen, damit ich dir eine maßgeschneiderte Route erstellen kann!
+
+Startest du deine Reise von zu Hause oder von einem anderen Ort?`,
     sender: 'ai',
     timestamp: new Date(),
     type: 'text',

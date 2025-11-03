@@ -67,29 +67,59 @@ Mit diesen Informationen kann ich Ihnen eine maßgeschneiderte Route zusammenste
         ]
       },
       route_generation: {
-        message: `Perfekt! Basierend auf Ihren Wünschen habe ich eine fantastische 7-tägige Italien-Reise für Sie zusammengestellt. Diese Route kombiniert Kultur, Kulinarik und wunderschöne Landschaften.
+        message: `Perfekt! Hier ist Ihre detaillierte tagesstrukturierte Reiseroute! 🗺️
 
-🗺️ **Ihre Reiseroute:**
+📅 **TAG 1 (Ankunftstag): Destination Start**
+🌅 **09:00-12:00**: Ankunft & Check-in + erste Orientierung
+🍽️ **12:00-15:00**: Willkommens-Lunch im lokalen Restaurant + Stadtviertel erkunden  
+🏛️ **15:00-18:00**: Erste Hauptattraktion & Panorama-Aussichtspunkt
+🍷 **19:00-22:00**: Authentisches Dinner + lokale Spezialitäten probieren
+🏨 **Übernachtung**: Zentral gelegenes Hotel (€120-150/Nacht)
 
-**Tag 1-2: Rom** - Die ewige Stadt
-- Kolosseum & Forum Romanum
-- Vatikan & Sixtinische Kapelle
-- Trevi-Brunnen & Spanische Treppe
+📅 **TAG 2: Kulturelle Highlights**
+🌅 **09:00-12:00**: Hauptmuseum/Sehenswürdigkeit (früh für weniger Touristen)
+🍽️ **12:30-15:00**: Traditionelles Mittagessen + historisches Viertel wandern
+🎨 **15:00-18:00**: Zweite wichtige Attraktion + lokale Kunstszene
+🌃 **19:30-22:00**: Rooftop-Dinner mit Stadtblick + Nachtspaziergang
 
-**Tag 3-4: Florenz** - Renaissance-Perle
-- Uffizien & Ponte Vecchio
-- Dom von Florenz
-- Toskana-Ausflug
+📅 **TAG 3: Naturerlebnis & Transfer**
+🚗 **09:00-12:00**: Transfer zur nächsten Destination (Scenic Route)
+🏞️ **12:00-15:00**: Naturpark/Landschaft + Picknick-Lunch
+🌊 **15:00-18:00**: Outdoor-Aktivität (Wandern/Bootstour/Radfahren)
+🍖 **19:00-22:00**: Traditionelle Grillspezialitäten + lokale Musik
 
-**Tag 5-7: Venedig** - Stadt der Kanäle
-- Markusplatz & Dogenpalast
-- Gondelfahrt durch die Kanäle
-- Insel Murano & Burano
+📅 **TAG 4: Kulinarik & Kultur**
+🍇 **09:00-12:00**: Food-Tour/Marktbesuch + Kochkurs möglich
+🍽️ **12:00-15:00**: Gourmet-Lunch + Weingut/Brauerei-Besichtigung
+🏛️ **15:30-18:00**: Kulturelle Stätte + handwerkliche Traditionen
+🎭 **19:30-22:00**: Kulturelle Veranstaltung + authentisches Dinner
 
-💰 **Geschätzte Kosten:** 1.200€ pro Person
-🏨 **Unterkünfte:** Zentrale 3-4 Sterne Hotels
+📅 **TAG 5-6: Entspannung & Highlights**
+🏖️ **Flexible Tagesgestaltung**: Strände, Wellness, Shopping
+🎯 **Must-See Attraktionen**: Je nach Destination angepasst
+🌅 **Sonnenuntergang-Spots**: Romantische Abendgestaltung
+💫 **Geheimtipps**: Lokale Insider-Empfehlungen
 
-Möchten Sie diese Route übernehmen oder soll ich Anpassungen vornehmen?`,
+📅 **TAG 7: Abschied & Abreise**
+🌅 **10:00-13:00**: Letzte Highlights + Souvenir-Shopping
+🍽️ **13:00-15:00**: Abschiedslunch in besonderem Restaurant
+✈️ **15:00+**: Transfer zum Flughafen/Bahnhof + Heimreise
+
+💰 **Kostenübersicht:**
+- Unterkünfte: €840 (7 Nächte á €120 Ø)
+- Essen & Trinken: €350 (€50/Tag)
+- Aktivitäten & Eintritt: €210 (€30/Tag)
+- Transport vor Ort: €140 (€20/Tag)
+**Gesamt: €1.540 pro Person**
+
+🎯 **Inklusive:**
+- Konkrete Uhrzeiten für bessere Planung
+- Restaurant-Empfehlungen für jede Mahlzeit
+- Mix aus Must-See & Geheimtipps
+- Budgetfreundliche & Premium-Optionen
+- Flexibilität für spontane Änderungen
+
+Soll ich diese Route übernehmen oder möchten Sie Anpassungen?`,
         quickActions: [
           { id: 'accept', label: '✅ Route übernehmen', icon: '✅', message: 'Diese Route gefällt mir, ich übernehme sie', category: 'action' },
           { id: 'modify', label: '🔄 Anpassen', icon: '🔄', message: 'Ich möchte einige Änderungen an der Route', category: 'action' },
@@ -242,8 +272,15 @@ Ich hoffe, Sie haben eine unvergessliche Zeit in Italien! Falls Sie weitere Reis
       promptTokens: 150,
       responseTokens: 200,
       confidence: 0.85,
-      quickActions: response.quickActions
+      quickActions: response.quickActions || this.generateQuickActions(currentPhase)
     };
+  }
+
+  // Reset conversation context for new trip planning session
+  resetSession(sessionId: string): void {
+    // Clear user patterns for this session to prevent cross-contamination
+    this.userPatterns.delete(sessionId);
+    console.log(`🔄 AI Session reset for sessionId: ${sessionId}`);
   }
 
   // Main message processing with learning capabilities
@@ -282,6 +319,9 @@ Ich hoffe, Sie haben eine unvergessliche Zeit in Italien! Falls Sie weitere Reis
       // Determine the next phase first, then use it for generating actions
       const nextPhase = this.determineNextPhase(request.context.currentPhase, request.message);
       
+      // Extract and update destination in context if found
+      const detectedDestination = (request.context as any).destination || this.extractDestinationFromMessage(request.message);
+      
       return {
         response: {
           message: response.message,
@@ -297,6 +337,7 @@ Ich hoffe, Sie haben eine unvergessliche Zeit in Italien! Falls Sie weitere Reis
         session: {
           context: {
             ...request.context,
+            destination: detectedDestination || undefined, // Update destination dynamically
             currentPhase: nextPhase,
             lastActivity: new Date(),
             conversationSummary: await this.generateConversationSummary(request)
@@ -326,10 +367,15 @@ Ich hoffe, Sie haben eine unvergessliche Zeit in Italien! Falls Sie weitere Reis
     const prompts = {
       welcome: `Du bist der Trailkeeper Assistent, ein intelligenter Reiseplanungsassistent. Du hilfst Benutzern bei der Planung ihrer Reisen mit Fachwissen und personalisierten Empfehlungen. 
 
+WICHTIG: Die Reisedaten (Datum, Dauer, Budget) sind bereits aus der Reiseplanung bekannt - frage NICHT nochmal nach diesen Informationen!
+
 Wichtige Richtlinien:
-- Verstehe zuerst die Interessen und den Reisestil des Benutzers
-- Stelle ansprechende Fragen, um Präferenzen zu sammeln
-- Biete 3-4 Schnellaktions-Buttons für häufige Präferenzen an
+- Die Trip-Daten (Daten, Budget) sind bereits verfügbar im Kontext
+- Frage zuerst, ob die Reise vom Heimatort startet und endet
+- Verstehe die Interessen und den Reisestil des Benutzers
+- Stelle ansprechende Fragen zu Präferenzen, NICHT zu Logistik
+- Nutze die vorhandenen Trip-Informationen in deinen Antworten
+- Biete relevante Schnellaktions-Buttons an
 - Sei warmherzig und einladend
 - Antworte immer auf Deutsch`,
 
@@ -344,16 +390,26 @@ Wichtige Richtlinien:
 Biete relevante Schnellaktionen basierend auf dem bisher Gelernten an.
 Antworte auf Deutsch.`,
 
-      route_generation: `Erstelle eine umfassende Reiseroute basierend auf den gesammelten Präferenzen. Beinhalte:
-- Logischen geografischen Verlauf
-- Angemessene Zeitaufteilung für jedes Ziel
-- Kostenschätzungen aufgeschlüsselt nach Kategorien
-- Vorgeschlagene Aktivitäten passend zu ihren Interessen
-- Unterkunftsempfehlungen
-- Transport zwischen den Orten
-- Lokale Tipps und beste Besuchszeiten
+      route_generation: `WICHTIG: Erstelle SOFORT eine konkrete, tagesstrukturierte Reiseroute! Keine weiteren Fragen!
 
-Formatiere die Route als strukturiertes JSON-Objekt mit allen Details.
+Basierend auf den bereits verfügbaren Trip-Daten und Präferenzen, erstelle eine detaillierte Route mit:
+
+STRUKTUR (für jeden Tag):
+- Tag X (Datum): Tagesthema
+- Morgens (9:00-12:00): Aktivität + Ort
+- Mittags (12:00-15:00): Restaurant/Mittagspause + weitere Aktivität  
+- Nachmittags (15:00-18:00): Hauptattraktionen
+- Abends (18:00-22:00): Dinner + Abendaktivität
+- Übernachtung: Empfohlene Unterkunft + Kostenbereich
+
+ZUSÄTZLICH:
+- Transportmöglichkeiten zwischen Orten
+- Geschätzte Kosten pro Tag
+- Geheimtipps und lokale Empfehlungen
+- Praktische Hinweise
+
+Sei KONKRET und SPEZIFISCH mit Ortsnamen, Restaurants, Aktivitäten und Zeiten!
+Formatiere als strukturierten Text (nicht JSON).
 Antworte auf Deutsch.`,
 
       route_refinement: `Hilf bei der Verfeinerung und Anpassung der vorgeschlagenen Reiseroute basierend auf Nutzerfeedback. Sei flexibel und:
@@ -410,14 +466,65 @@ Antworte auf Deutsch.`
     return personalization;
   }
 
+  // Extract destination from user message using pattern matching
+  private extractDestinationFromMessage(message: string): string | null {
+    const normalizedMessage = message.toLowerCase();
+    
+    // Common patterns for destinations
+    const destinationPatterns = [
+      // Direct mentions
+      /(?:nach|in|zu)\s+([a-zA-ZäöüÄÖÜß\s-]{2,}?)(?:\s|$|,|\.|!|\?)/,
+      /([a-zA-ZäöüÄÖÜß\s-]{2,}?)\s+(?:reise|trip|urlaub|fahren|besuchen|reisen)/,
+      /(?:eine reise nach|einen trip nach|urlaub in|fahrt nach)\s+([a-zA-ZäöüÄÖÜß\s-]{2,}?)(?:\s|$|,|\.|!|\?)/,
+      
+      // Country/City patterns
+      /(?:^|\s)(portugal|spanien|italien|frankreich|kroatien|griechenland|türkei|deutschland|österreich|schweiz|niederlande|belgien|dänemark|schweden|norwegen|polen|tschechien|ungarn|england|irland|schottland)(?:\s|$|,|\.|!|\?)/,
+      /(?:^|\s)(lissabon|porto|madrid|barcelona|rom|mailand|venedig|florenz|neapel|paris|lyon|marseille|zagreb|split|dubrovnik|athen|thessaloniki|istanbul|ankara|berlin|münchen|hamburg|köln|wien|salzburg|zürich|genf|amsterdam|rotterdam|brüssel|antwerpen|kopenhagen|stockholm|göteborg|oslo|bergen|warschau|krakau|prag|budapest|london|edinburgh|dublin|cork)(?:\s|$|,|\.|!|\?)/,
+    ];
+    
+    for (const pattern of destinationPatterns) {
+      const match = normalizedMessage.match(pattern);
+      if (match && match[1]) {
+        // Clean up the extracted destination
+        const destination = match[1].trim()
+          .replace(/^(der|die|das|den|dem|des)\s+/i, '') // Remove German articles
+          .replace(/\s+/g, ' ')
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+        
+        if (destination.length >= 2) {
+          return destination;
+        }
+      }
+    }
+    
+    return null;
+  }
+
   // Build context layer with current trip and conversation data
   private buildContextLayer(request: ChatRequest): string {
     const { context, preferences } = request;
     
-    let contextInfo = '\nTrip context:\n';
-    contextInfo += `- Destination: Croatia\n`;
-    contextInfo += `- Duration: ${Math.ceil((context.tripDates.endDate.getTime() - context.tripDates.startDate.getTime()) / (1000 * 60 * 60 * 24))} days\n`;
-    contextInfo += `- Dates: ${context.tripDates.startDate.toLocaleDateString()} - ${context.tripDates.endDate.toLocaleDateString()}\n`;
+    let contextInfo = '\nTrip context (pre-filled from user's trip planning):\n';
+    
+    // Extract destination from context or user message
+    const detectedDestination = (context as any).destination || this.extractDestinationFromMessage(request.message);
+    
+    if (detectedDestination) {
+      contextInfo += `- Destination: ${detectedDestination}\n`;
+    } else {
+      contextInfo += `- Destination: (to be determined based on user input)\n`;
+    }
+    
+    // Add homepoint information
+    const homepoint = (context as any).homepoint || 'Deutschland';
+    contextInfo += `- Start/End Location: ${homepoint} (user's home base)\n`;
+    
+    // Trip duration and dates - already known from trip planning
+    const durationDays = Math.ceil((context.tripDates.endDate.getTime() - context.tripDates.startDate.getTime()) / (1000 * 60 * 60 * 24));
+    contextInfo += `- Duration: ${durationDays} days (${durationDays - 1} nights)\n`;
+    contextInfo += `- Dates: ${context.tripDates.startDate.toLocaleDateString('de-DE')} - ${context.tripDates.endDate.toLocaleDateString('de-DE')}\n`;
     
     if (context.budget) {
       contextInfo += `- Budget: ${context.budget.total || context.budget.daily} ${context.budget.currency}\n`;
@@ -595,7 +702,8 @@ Antworte auf Deutsch.`
           processingTime,
           promptTokens: 0, // Gemini doesn't provide exact token counts in free tier
           responseTokens: 0,
-          confidence: 0.8 // Default confidence for Gemini responses
+          confidence: 0.8, // Default confidence for Gemini responses
+          quickActions: this.generateQuickActions(context.currentPhase) // Ensure quickActions are always provided
         };
 
       } catch (error) {
@@ -637,6 +745,8 @@ Antworte auf Deutsch.`
   private generateQuickActions(phase: ConversationContext['currentPhase']) {
     const actions = {
       welcome: [
+        { id: 'homepoint_confirm', label: '🏠 Von zu Hause starten', icon: '🏠', message: 'Ja, ich starte und ende die Reise von meinem Wohnort', category: 'general' as const },
+        { id: 'homepoint_custom', label: '✈️ Anderer Startort', icon: '✈️', message: 'Ich starte von einem anderen Ort (Flughafen, Hotel, etc.)', category: 'general' as const },
         { id: 'culture', label: '🏛️ Geschichte & Kultur', icon: '🏛️', message: 'Ich interessiere mich für Geschichte und Kultur', category: 'interest' as const },
         { id: 'beach', label: '🏖️ Strand & Meer', icon: '🏖️', message: 'Ich liebe Strände und Wassersport', category: 'interest' as const },
         { id: 'nature', label: '🌲 Natur & Wandern', icon: '🌲', message: 'Ich bin ein Naturliebhaber', category: 'interest' as const },
@@ -649,10 +759,12 @@ Antworte auf Deutsch.`
         { id: 'style_relaxed', label: '😌 Entspannt', icon: '😌', message: 'Ich reise gerne entspannt mit viel Zeit zum Genießen', category: 'style' as const }
       ],
       route_generation: [
-        { id: 'modify', label: '✏️ Route anpassen', icon: '✏️', message: 'Ich möchte einige Änderungen an der Route', category: 'style' as const },
+        { id: 'accept_route', label: '✅ Route übernehmen', icon: '✅', message: 'Diese Route gefällt mir perfekt, ich übernehme sie!', category: 'action' as const },
+        { id: 'modify_details', label: '🔄 Details anpassen', icon: '🔄', message: 'Die Route ist gut, aber ich möchte ein paar Details ändern', category: 'modification' as const },
         { id: 'more_culture', label: '🏛️ Mehr Kultur', icon: '🏛️', message: 'Können wir mehr kulturelle Sehenswürdigkeiten einbauen?', category: 'interest' as const },
-        { id: 'more_nature', label: '🌲 Mehr Natur', icon: '🌲', message: 'Ich hätte gerne mehr Naturerlebnisse', category: 'interest' as const },
-        { id: 'shorter_stays', label: '⏱️ Kürzere Aufenthalte', icon: '⏱️', message: 'Die Aufenthalte könnten kürzer sein, ich sehe gerne mehr Orte', category: 'style' as const }
+        { id: 'budget_adjust', label: '💰 Budget anpassen', icon: '💰', message: 'Können wir das Budget optimieren?', category: 'budget' as const },
+        { id: 'alternative_route', label: '🗺️ Alternative Route', icon: '🗺️', message: 'Zeig mir eine komplett andere Route', category: 'action' as const },
+        { id: 'export_route', label: '📤 Route exportieren', icon: '📤', message: 'Ich möchte die Route exportieren/teilen', category: 'export' as const }
       ],
       route_refinement: [
         { id: 'add_cities', label: '🏙️ Andere Städte', icon: '🏙️', message: 'Ich möchte andere Städte besuchen', category: 'modification' as const },
@@ -705,12 +817,20 @@ Antworte auf Deutsch.`
         return 'welcome';
       
       case 'preferences_collection':
-        // Move to route generation after any preference input
-        if (message.includes('€') || message.includes('hotel') || message.includes('entspannt') || 
-            message.includes('aktiv') || message.includes('kultur') || message.includes('strand') ||
-            message.includes('natur') || message.includes('abenteuer') || message.includes('gruppe') ||
-            message.includes('allein') || message.includes('paar') || message.includes('überrasch')) {
-          return 'route_generation';
+        // PROACTIVE: Move to route generation after ANY meaningful preference input
+        // The goal is to provide concrete suggestions quickly, not endless questions
+        if (message.length > 5 && (
+          message.includes('€') || message.includes('budget') || message.includes('hotel') || 
+          message.includes('entspannt') || message.includes('aktiv') || message.includes('kultur') || 
+          message.includes('strand') || message.includes('natur') || message.includes('abenteuer') || 
+          message.includes('gruppe') || message.includes('allein') || message.includes('paar') || 
+          message.includes('überrasch') || message.includes('ich') || message.includes('mag') || 
+          message.includes('liebe') || message.includes('interesse') || message.includes('gerne') || 
+          message.includes('möchte') || message.includes('ja') || message.includes('von zu hause') || 
+          message.includes('homepoint') || message.includes('1000') || message.includes('1500') ||
+          message.includes('2000') || message.includes('sparsam') || message.includes('komfortabel')
+        )) {
+          return 'route_generation'; // Generate route proactively!
         }
         return 'preferences_collection';
       
@@ -846,7 +966,7 @@ Antworte auf Deutsch.`
     preferences: TravelPreferences;
   }): Promise<{ route: GeneratedRoute; message: string }> {
     const prompt = `
-    Modify the following Croatia travel route based on user feedback:
+    Modify the following travel route based on user feedback:
     
     Current route: ${JSON.stringify(params.route)}
     User modifications requested: ${params.modifications}

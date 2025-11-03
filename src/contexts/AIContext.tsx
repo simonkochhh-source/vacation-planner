@@ -411,13 +411,15 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
       userId: 'current_user', // Should come from auth context
       messages: [],
       context: {
+        destination: tripData.destination || tripData.name, // Use trip destination if available
+        homepoint: tripData.homepoint || 'Deutschland', // Default homepoint, can be customized
         tripDates: {
           startDate: new Date(tripData.startDate),
           endDate: new Date(tripData.endDate)
         },
         budget: tripData.budget ? {
           total: tripData.budget,
-          currency: 'EUR'
+          currency: tripData.currency || 'EUR'
         } : undefined,
         currentPhase: 'welcome',
         collectedPreferences: {},

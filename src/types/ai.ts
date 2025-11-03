@@ -29,6 +29,8 @@ export interface ChatSession {
 }
 
 export interface ConversationContext {
+  destination?: string; // Travel destination - dynamically set based on user input
+  homepoint?: string; // Starting/ending point (usually user's home location)
   tripDates: {
     startDate: Date;
     endDate: Date;
@@ -203,7 +205,7 @@ export interface QuickAction {
   label: string;
   icon: string;
   message: string;
-  category: 'interest' | 'budget' | 'style' | 'transport' | 'accommodation';
+  category: 'interest' | 'budget' | 'style' | 'transport' | 'accommodation' | 'modification' | 'export' | 'action' | 'restart' | 'general';
   weight?: number; // For personalization
 }
 
