@@ -122,7 +122,7 @@ export interface Database {
           end_date: string
           budget: number | null
           participants: string[] | null
-          status: 'planning' | 'active' | 'completed' | 'cancelled' | null
+          status: 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' | null
           tags: string[] | null
           privacy: 'private' | 'public' | 'contacts' | null
           owner_id: string | null
@@ -139,7 +139,7 @@ export interface Database {
           end_date: string
           budget?: number | null
           participants?: string[] | null
-          status?: 'planning' | 'active' | 'completed' | 'cancelled' | null
+          status?: 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' | null
           tags?: string[] | null
           privacy?: 'private' | 'public' | 'contacts' | null
           owner_id?: string | null
@@ -155,7 +155,7 @@ export interface Database {
           end_date?: string
           budget?: number | null
           participants?: string[] | null
-          status?: 'planning' | 'active' | 'completed' | 'cancelled' | null
+          status?: 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' | null
           tags?: string[] | null
           privacy?: 'private' | 'public' | 'contacts' | null
           owner_id?: string | null
@@ -174,7 +174,7 @@ export interface Database {
     Enums: {
       destination_category: 'restaurant' | 'museum' | 'attraction' | 'hotel' | 'transport' | 'nature' | 'entertainment' | 'shopping' | 'cultural' | 'sports' | 'other'
       destination_status: 'geplant' | 'besucht' | 'uebersprungen' | 'in_bearbeitung'
-      trip_status: 'planning' | 'active' | 'completed' | 'cancelled'
+      trip_status: 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert'
     }
   }
 }

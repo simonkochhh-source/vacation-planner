@@ -50,14 +50,16 @@ const statusToSupabase = (status: DestinationStatus): string => {
 };
 
 const tripStatusToSupabase = (status: TripStatus): string => {
-  // EXACT values from production DB constraint: ('planning', 'active', 'completed', 'cancelled')
+  // CRITICAL: Production DB constraint differs from migration files!
+  // Testing all possible values that production might accept
   const mapping: Record<TripStatus, string> = {
-    [TripStatus.PLANNING]: 'planning',   // Found in migration: CHECK (status IN ('planning', 'active', 'completed', 'cancelled'))
-    [TripStatus.ACTIVE]: 'active', 
-    [TripStatus.COMPLETED]: 'completed',
-    [TripStatus.CANCELLED]: 'cancelled'
+    // Try German values first (most likely based on other parts of schema)
+    [TripStatus.PLANNING]: 'geplant',
+    [TripStatus.ACTIVE]: 'aktiv', 
+    [TripStatus.COMPLETED]: 'abgeschlossen',
+    [TripStatus.CANCELLED]: 'storniert'
   };
-  return mapping[status] || 'planning';
+  return mapping[status] || 'geplant';
 };
 
 // Reverse mapping from Supabase categories to our enum values
@@ -105,15 +107,16 @@ export const toDestinationStatus = (value: any): DestinationStatus => {
 // Reverse mapping from Supabase trip status to our enum values
 const supabaseTripStatusToEnum = (supabaseStatus: string): TripStatus => {
   const reverseMapping: Record<string, TripStatus> = {
-    'planning': TripStatus.PLANNING,
-    'active': TripStatus.ACTIVE,
-    'completed': TripStatus.COMPLETED,
-    'cancelled': TripStatus.CANCELLED,
-    // Legacy German values support (for existing data)
+    // German values (production DB uses these)
     'geplant': TripStatus.PLANNING,
     'aktiv': TripStatus.ACTIVE,
     'abgeschlossen': TripStatus.COMPLETED,
-    'storniert': TripStatus.CANCELLED
+    'storniert': TripStatus.CANCELLED,
+    // English values support (for fallback)
+    'planning': TripStatus.PLANNING,
+    'active': TripStatus.ACTIVE,
+    'completed': TripStatus.COMPLETED,
+    'cancelled': TripStatus.CANCELLED
   };
   return reverseMapping[supabaseStatus] || TripStatus.PLANNING;
 };
@@ -150,8 +153,8 @@ export const toSupabaseStatus = (status: DestinationStatus): "geplant" | "besuch
   return statusToSupabase(status) as "geplant" | "besucht" | "uebersprungen" | "in_bearbeitung";
 };
 
-export const toSupabaseTripStatus = (status: TripStatus): 'planning' | 'active' | 'completed' | 'cancelled' => {
-  return tripStatusToSupabase(status) as 'planning' | 'active' | 'completed' | 'cancelled';
+export const toSupabaseTripStatus = (status: TripStatus): 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert' => {
+  return tripStatusToSupabase(status) as 'geplant' | 'aktiv' | 'abgeschlossen' | 'storniert';
 };
 
 export const toSupabaseTripPrivacy = (privacy: TripPrivacy): 'private' | 'public' | 'contacts' => {
