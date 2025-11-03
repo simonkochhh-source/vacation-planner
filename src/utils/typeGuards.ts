@@ -50,9 +50,9 @@ const statusToSupabase = (status: DestinationStatus): string => {
 };
 
 const tripStatusToSupabase = (status: TripStatus): string => {
-  // DB constraint expects English values: ('planning', 'active', 'completed', 'cancelled')
+  // EXACT values from production DB constraint: ('planning', 'active', 'completed', 'cancelled')
   const mapping: Record<TripStatus, string> = {
-    [TripStatus.PLANNING]: 'planning',
+    [TripStatus.PLANNING]: 'planning',   // Found in migration: CHECK (status IN ('planning', 'active', 'completed', 'cancelled'))
     [TripStatus.ACTIVE]: 'active', 
     [TripStatus.COMPLETED]: 'completed',
     [TripStatus.CANCELLED]: 'cancelled'
