@@ -358,8 +358,9 @@ Ich hoffe, Sie haben eine unvergessliche Zeit in Italien! Falls Sie weitere Reis
     const basePrompt = this.getBasePrompt(request.context.currentPhase);
     const personalizationLayer = this.buildPersonalizationLayer(userPatterns, similarInteractions);
     const contextLayer = this.buildContextLayer(request);
+    const conversationHistory = this.buildConversationHistory(request.messageHistory || []);
     
-    return `${basePrompt}\n\n${personalizationLayer}\n\n${contextLayer}\n\nUser message: ${request.message}`;
+    return `${basePrompt}\n\n${personalizationLayer}\n\n${contextLayer}\n\n${conversationHistory}\n\nUser message: ${request.message}`;
   }
 
   // Base prompt templates for different conversation phases
@@ -369,26 +370,37 @@ Ich hoffe, Sie haben eine unvergessliche Zeit in Italien! Falls Sie weitere Reis
 
 WICHTIG: Die Reisedaten (Datum, Dauer, Budget) sind bereits aus der Reiseplanung bekannt - frage NICHT nochmal nach diesen Informationen!
 
+KONTEXT-ERHALTUNG: Du führst eine fortlaufende Unterhaltung. Beziehe dich auf vorherige Nachrichten und wiederhole keine bereits gestellten Fragen!
+
 Wichtige Richtlinien:
+- Beziehe dich auf die vorherige Unterhaltung und baue darauf auf
 - Die Trip-Daten (Daten, Budget) sind bereits verfügbar im Kontext
-- Frage zuerst, ob die Reise vom Heimatort startet und endet
-- Verstehe die Interessen und den Reisestil des Benutzers
+- Wiederhole KEINE bereits gestellten Fragen oder behandle bereits bekannte Informationen als neu
+- Verstehe die Interessen und den Reisestil des Benutzers basierend auf dem Gesprächsverlauf
 - Stelle ansprechende Fragen zu Präferenzen, NICHT zu Logistik
 - Nutze die vorhandenen Trip-Informationen in deinen Antworten
 - Biete relevante Schnellaktions-Buttons an
 - Sei warmherzig und einladend
 - Antworte immer auf Deutsch`,
 
-      preferences_collection: `Sammle weiterhin Reisepräferenzen für die Reiseplanung. Konzentriere dich auf:
-- Reiseinteressen (Kultur, Natur, Strände, Essen, Abenteuer)
-- Budget-Überlegungen und Flexibilität
-- Reisestil (entspannt, moderat, aktiv)
-- Unterkunftspräferenzen
-- Transportpräferenzen
-- Gruppendynamik und besondere Anforderungen
+      preferences_collection: `Sammle weiterhin Reisepräferenzen für die Reiseplanung basierend auf dem bisherigen Gesprächsverlauf.
 
-Biete relevante Schnellaktionen basierend auf dem bisher Gelernten an.
-Antworte auf Deutsch.`,
+KONTEXT-ERHALTUNG: Beziehe dich auf bereits bekannte Informationen aus der Unterhaltung!
+
+Konzentriere dich nur auf noch fehlende Informationen:
+- Reiseinteressen (Kultur, Natur, Strände, Essen, Abenteuer) - falls noch nicht besprochen
+- Budget-Überlegungen und Flexibilität - falls noch nicht geklärt
+- Reisestil (entspannt, moderat, aktiv) - falls noch nicht bekannt
+- Unterkunftspräferenzen - falls noch nicht besprochen
+- Transportpräferenzen - falls noch nicht geklärt
+- Gruppendynamik und besondere Anforderungen - falls relevant
+
+Wichtig: 
+- Nutze die vorhandenen Trip-Informationen und bereits gesammelte Präferenzen
+- Frage NICHT nach bereits bekannten Informationen
+- Baue auf dem bisherigen Gesprächsverlauf auf
+- Biete relevante Schnellaktionen basierend auf dem bisher Gelernten an
+- Antworte auf Deutsch`,
 
       route_generation: `WICHTIG: Erstelle SOFORT eine konkrete, tagesstrukturierte Reiseroute! Keine weiteren Fragen!
 
@@ -555,6 +567,34 @@ Antworte auf Deutsch.`
     }
     
     return contextInfo;
+  }
+
+  // Build conversation history for context preservation
+  private buildConversationHistory(messageHistory: any[]): string {
+    if (!messageHistory || messageHistory.length === 0) {
+      return 'Previous conversation: (This is the first message in the conversation)';
+    }
+
+    // Take the last 8 messages to avoid token limits while maintaining context
+    const recentMessages = messageHistory.slice(-8);
+    
+    let historyText = 'Previous conversation context:\n';
+    
+    recentMessages.forEach((msg, index) => {
+      if (msg.sender === 'user') {
+        historyText += `User: ${msg.content}\n`;
+      } else if (msg.sender === 'ai') {
+        // Include AI responses but keep them shorter to save tokens
+        const shortResponse = msg.content.length > 200 
+          ? msg.content.substring(0, 200) + '...' 
+          : msg.content;
+        historyText += `Assistant: ${shortResponse}\n`;
+      }
+    });
+    
+    historyText += '\nIMPORTANT: Continue this conversation naturally. Reference previous topics when relevant. Don\'t repeat basic questions already asked.';
+    
+    return historyText;
   }
 
   // Find similar successful interactions for learning

@@ -169,7 +169,8 @@ export function AIProvider({ children }: { children: React.ReactNode }) {
         message,
         sessionId: state.currentSession.id,
         context: state.currentSession.context,
-        preferences: state.preferences
+        preferences: state.preferences,
+        messageHistory: state.messages // Include previous messages for context
       });
 
       const processingTime = Date.now() - startTime;

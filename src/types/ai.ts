@@ -283,6 +283,7 @@ export interface ChatRequest {
   sessionId: string;
   context: ConversationContext;
   preferences: Partial<TravelPreferences>;
+  messageHistory?: ChatMessage[]; // Previous messages for context preservation
 }
 
 export interface ChatResponse {
