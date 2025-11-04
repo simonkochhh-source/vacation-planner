@@ -3,11 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = process.env.REACT_APP_SUPABASE_URL || '';
 const supabaseAnonKey = process.env.REACT_APP_SUPABASE_ANON_KEY || '';
 
-// Check for test environment (Playwright)
+// Check for test environment (Playwright only - NOT localhost development)
 const isTestMode = typeof window !== 'undefined' && (
   window.navigator.userAgent.includes('HeadlessChrome') ||
-  window.navigator.userAgent.includes('Playwright') ||
-  window.location.hostname === 'localhost' && window.location.port === '3000'
+  window.navigator.userAgent.includes('Playwright')
 );
 
 // Check for placeholder values or missing credentials
