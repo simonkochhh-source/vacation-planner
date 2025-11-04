@@ -139,8 +139,13 @@ Soll ich diese Route übernehmen oder möchten Sie Anpassungen?`,
               id: 'rome',
               name: 'Rom',
               description: 'Die ewige Stadt mit antiken Wunderwerken und lebendiger Kultur',
-              coordinates: { lat: 41.9028, lng: 12.4964 },
-              location: { address: 'Rom, Italien' },
+              location: { 
+                latitude: 41.9028, 
+                longitude: 12.4964, 
+                address: 'Rom, Italien',
+                country: 'Italien',
+                region: 'Lazio'
+              },
               duration: 3,
               estimatedCost: 420,
               highlights: ['Kolosseum', 'Forum Romanum', 'Vatikan', 'Trevi-Brunnen', 'Spanische Treppe'],
@@ -160,8 +165,13 @@ Soll ich diese Route übernehmen oder möchten Sie Anpassungen?`,
               id: 'florence',
               name: 'Florenz',
               description: 'Renaissance-Perle mit weltberühmter Kunst und Architektur',
-              coordinates: { lat: 43.7696, lng: 11.2558 },
-              location: { address: 'Florenz, Italien' },
+              location: { 
+                latitude: 43.7696, 
+                longitude: 11.2558, 
+                address: 'Florenz, Italien',
+                country: 'Italien',
+                region: 'Toskana'
+              },
               duration: 2,
               estimatedCost: 280,
               highlights: ['Uffizien', 'Ponte Vecchio', 'Dom von Florenz', 'Palazzo Pitti'],
@@ -181,8 +191,13 @@ Soll ich diese Route übernehmen oder möchten Sie Anpassungen?`,
               id: 'venice',
               name: 'Venedig',
               description: 'Einzigartige Lagunenstadt mit romantischen Kanälen',
-              coordinates: { lat: 45.4408, lng: 12.3155 },
-              location: { address: 'Venedig, Italien' },
+              location: { 
+                latitude: 45.4408, 
+                longitude: 12.3155, 
+                address: 'Venedig, Italien',
+                country: 'Italien',
+                region: 'Veneto'
+              },
               duration: 2,
               estimatedCost: 320,
               highlights: ['Markusplatz', 'Dogenpalast', 'Gondelfahrt', 'Murano & Burano'],
@@ -474,14 +489,16 @@ Du MUSST eine vollständige JSON-Struktur zurückgeben, die exakt diesem Format 
   }
 }
 
-WICHTIGE REGELN:
-1. Verwende REALE Orte, Hotels, Restaurants und Aktivitäten
-2. Berechne realistische Kosten basierend auf der Destination
-3. Gib konkrete Koordinaten an (nutze bekannte Werte für große Städte)
-4. Erstelle 2-4 Destinations je nach Reisedauer
-5. Jede Destination sollte 1-4 Tage haben
-6. Antworte ausschließlich mit gültigem JSON
-7. Die message sollte eine freundliche Beschreibung der Route auf Deutsch sein
+KRITISCHE REGELN:
+1. **CHRONOLOGISCHE REIHENFOLGE**: Destinations MÜSSEN in der exakten Reihenfolge der Reise sortiert sein (Tag 1, 2, 3...)
+2. Verwende REALE Orte, Hotels, Restaurants und Aktivitäten
+3. Berechne realistische Kosten basierend auf der Destination
+4. Gib konkrete Koordinaten an (nutze bekannte Werte für große Städte)
+5. Erstelle 2-4 Destinations je nach Reisedauer
+6. Jede Destination sollte 1-4 Tage haben
+7. Antworte ausschließlich mit gültigem JSON
+8. Die message sollte eine freundliche Beschreibung der Route auf Deutsch sein
+9. **WICHTIG**: Erste Destination = erste Tage der Reise, letzte Destination = letzte Tage
 
 Basiere alles auf den verfügbaren Trip-Daten und Präferenzen aus dem Kontext!`,
 

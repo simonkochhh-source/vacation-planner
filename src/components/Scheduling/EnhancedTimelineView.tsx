@@ -299,23 +299,28 @@ const EnhancedTimelineView: React.FC<EnhancedTimelineViewProps> = ({
     
     try {
       console.log('🎯 Creating AI destinations for trip:', currentTrip.id);
+      console.log('📋 Route received:', route);
+      console.log('📍 Destinations to create:', route.destinations?.length || 0);
       const createdDestinationIds: string[] = [];
       
-      // Create destinations from AI-generated route
+      // Create destinations from AI-generated route in chronological order
+      let cumulativeDays = 0;
       for (let i = 0; i < route.destinations.length; i++) {
         const aiDestination = route.destinations[i];
         const startDate = new Date(currentTrip.startDate);
-        startDate.setDate(startDate.getDate() + i * Math.ceil(aiDestination.duration));
+        startDate.setDate(startDate.getDate() + cumulativeDays);
         
         const endDate = new Date(startDate);
         endDate.setDate(endDate.getDate() + Math.ceil(aiDestination.duration) - 1);
+        
+        cumulativeDays += Math.ceil(aiDestination.duration); // Accumulate days for next destination
         
         const createdDestination = await createDestination(currentTrip.id, {
           name: aiDestination.name,
           location: aiDestination.location.address,
           coordinates: {
-            lat: aiDestination.coordinates.lat,
-            lng: aiDestination.coordinates.lng
+            lat: aiDestination.location.latitude,
+            lng: aiDestination.location.longitude
           },
           category: DestinationCategory.ATTRACTION, // Default category
           startDate: startDate.toISOString().split('T')[0],
